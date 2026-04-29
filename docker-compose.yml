@@ -1,0 +1,23 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: tenant-living-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tenant_living}
+      MYSQL_USER: ${MYSQL_USER:-tenant_living}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tenant_living}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - tenant_living_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  tenant_living_mysql_data:

@@ -29,27 +29,32 @@ Deliverables:
 
 ## Phase 1 - Core Platform Hardening
 
-Status: In progress
+Status: Done
 
 Completed:
 
 - Add standard API error response format.
 - Add global exception handling.
 - Add request validation support.
-
-Planned:
-
-- Add structured logging conventions.
+- Add Docker Compose support for local MySQL.
 - Add environment-specific configuration profiles.
 - Add CORS policy.
-- Add basic integration test setup.
+- Add structured logging conventions.
+- Add tests with real feature development.
+
+Notes:
+
+- Temporary platform-only tests were intentionally not kept.
+- Feature tests will be added when real Auth, Property, and Room behavior is implemented.
 
 ## Phase 2 - Auth Module
 
-Status: Not started
+Status: Planning
 
 Planned:
 
+- Discuss and document schema.
+- Discuss and document low-level design.
 - Define authentication requirements.
 - Add user/account domain model after requirements are finalized.
 - Add Flyway migrations for auth tables.

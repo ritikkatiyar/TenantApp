@@ -162,6 +162,195 @@ Result:
 BUILD SUCCESS
 ```
 
+## 2026-04-29 - Phase 2 Planning Docs
+
+Created:
+
+```text
+docs/SCHEMA_DESIGN.md
+docs/LOW_LEVEL_DESIGN.md
+```
+
+Purpose:
+
+- Track schema decisions before creating entities or migrations.
+- Track low-level design decisions before implementing Auth, Property, or Room modules.
+- Keep implementation aligned with agreed module boundaries and data model decisions.
+
+## Testing Decision
+
+Temporary platform-only tests were not kept. Tests will be introduced with real feature development so they validate production behavior instead of placeholder scaffolding.
+
+## 2026-04-29 - Structured Logging
+
+### Correlation ID Filter
+
+Created:
+
+```text
+backend/src/main/java/com/tenantliving/common/logging/CorrelationIdFilter.java
+backend/src/main/java/com/tenantliving/common/logging/package-info.java
+```
+
+Behavior:
+
+- Reads incoming `X-Correlation-Id` header when provided.
+- Generates a UUID correlation ID when the header is missing.
+- Adds the correlation ID to SLF4J MDC as `correlationId`.
+- Returns the correlation ID in the response header.
+- Clears MDC after request completion.
+
+### Log Pattern
+
+Updated:
+
+```text
+backend/src/main/resources/application.yml
+```
+
+Added a console log pattern that includes:
+
+- timestamp
+- level
+- thread
+- correlation ID
+- logger name
+- message
+
+The correlation header name is configurable with:
+
+```text
+APP_CORRELATION_HEADER_NAME
+```
+
+### Verification
+
+Ran:
+
+```bash
+mvn -f backend/pom.xml test
+```
+
+Result:
+
+```text
+BUILD SUCCESS
+```
+
+## 2026-04-29 - Docker MySQL Setup
+
+### Docker Compose
+
+Created:
+
+```text
+docker-compose.yml
+```
+
+Added a MySQL service for local development:
+
+- Image: `mysql:8.4`
+- Container name: `tenant-living-mysql`
+- Database: `tenant_living`
+- User: `tenant_living`
+- Default local port: `3306`
+- Named volume: `tenant_living_mysql_data`
+- Health check using `mysqladmin ping`
+
+### Environment Template
+
+Created:
+
+```text
+.env.example
+```
+
+This documents local environment variables for Docker MySQL and the Spring Boot datasource.
+
+### Git Ignore
+
+Updated:
+
+```text
+.gitignore
+```
+
+Added `.env` so local secrets and overrides are not committed.
+
+## 2026-04-29 - Environment Profiles and CORS
+
+### Spring Profiles
+
+Updated:
+
+```text
+backend/src/main/resources/application.yml
+```
+
+Created:
+
+```text
+backend/src/main/resources/application-dev.yml
+backend/src/main/resources/application-prod.yml
+```
+
+Profile behavior:
+
+- `dev` is the default profile for local development.
+- `dev` uses Docker MySQL friendly datasource defaults.
+- `prod` reads database configuration from environment variables.
+- Common JPA, Flyway, server, and CORS settings remain in `application.yml`.
+
+Production deployments should use:
+
+```bash
+SPRING_PROFILES_ACTIVE=prod
+```
+
+### CORS Configuration
+
+Created:
+
+```text
+backend/src/main/java/com/tenantliving/config/CorsProperties.java
+backend/src/main/java/com/tenantliving/config/CorsConfig.java
+```
+
+Updated:
+
+```text
+backend/src/main/java/com/tenantliving/config/SecurityConfig.java
+backend/src/main/java/com/tenantliving/TenantLivingApplication.java
+```
+
+CORS is now configurable through:
+
+- `APP_CORS_ALLOWED_ORIGINS`
+- `APP_CORS_ALLOWED_METHODS`
+- `APP_CORS_ALLOWED_HEADERS`
+- `APP_CORS_ALLOW_CREDENTIALS`
+
+Default local frontend origins:
+
+- `http://localhost:3000`
+- `http://localhost:5173`
+
+Spring Security now uses the shared CORS configuration while keeping `GET /health` public and all other endpoints authenticated.
+
+### Verification
+
+Ran:
+
+```bash
+mvn -f backend/pom.xml test
+```
+
+Result:
+
+```text
+BUILD SUCCESS
+```
+
 No tests exist yet, but the project compiles and dependencies resolve successfully.
 
 ## Open Notes
