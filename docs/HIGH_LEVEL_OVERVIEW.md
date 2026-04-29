@@ -52,6 +52,9 @@ com.tenantliving
 - Added initial empty Flyway migration.
 - Added a public `GET /health` endpoint returning `OK`.
 - Added basic Spring Security configuration.
+- Added validation support.
+- Added a common API error response model.
+- Added global exception handling for validation, business, not found, access denied, and unexpected errors.
 - Verified the project compiles with `mvn -f backend/pom.xml test`.
 
 ## Current Scope Boundaries
@@ -66,4 +69,3 @@ The backend intentionally does not include:
 - Property or room workflows
 
 These will be added phase by phase.
-

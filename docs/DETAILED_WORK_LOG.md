@@ -172,3 +172,81 @@ No tests exist yet, but the project compiles and dependencies resolve successful
 - No database tables exist yet.
 - No domain model has been introduced yet.
 
+## 2026-04-29 - Phase 1 Platform Error Handling
+
+### Validation Support
+
+Updated:
+
+```text
+backend/pom.xml
+```
+
+Added:
+
+```text
+spring-boot-starter-validation
+```
+
+This enables Jakarta Bean Validation for future request DTOs and controller parameters.
+
+### Common API Error Model
+
+Created:
+
+```text
+backend/src/main/java/com/tenantliving/common/exception/ApiError.java
+backend/src/main/java/com/tenantliving/common/exception/FieldErrorDetail.java
+```
+
+The standard error response now carries:
+
+- `timestamp`
+- `status`
+- `error`
+- `message`
+- `path`
+- `fieldErrors`
+
+### Business Exception Base
+
+Created:
+
+```text
+backend/src/main/java/com/tenantliving/common/exception/BusinessException.java
+```
+
+This gives future modules a simple way to raise expected domain/API errors with an explicit HTTP status.
+
+### Global Exception Handling
+
+Created:
+
+```text
+backend/src/main/java/com/tenantliving/common/exception/GlobalExceptionHandler.java
+```
+
+Currently handles:
+
+- Request body validation errors
+- Constraint validation errors
+- Business exceptions
+- Missing API resources
+- Access denied errors
+- Unexpected server errors
+
+Unexpected errors return a generic message instead of exposing internal exception details.
+
+### Verification
+
+Ran:
+
+```bash
+mvn -f backend/pom.xml test
+```
+
+Result:
+
+```text
+BUILD SUCCESS
+```

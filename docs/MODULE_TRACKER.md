@@ -7,7 +7,7 @@
 | Application Bootstrap | `com.tenantliving` | Done | Main Spring Boot application class created. |
 | Configuration | `com.tenantliving.config` | Started | Basic security configuration added. |
 | Common | `com.tenantliving.common` | Started | Shared package created. Health endpoint lives under common health. |
-| Common Exceptions | `com.tenantliving.common.exception` | Placeholder | Package created for future shared exceptions. |
+| Common Exceptions | `com.tenantliving.common.exception` | Started | Added API error model, field error details, business exception base, and global exception handler. |
 | Auth | `com.tenantliving.auth` | Placeholder | Package created. No business logic yet. |
 | Property | `com.tenantliving.property` | Placeholder | Package created. No business logic yet. |
 | Room | `com.tenantliving.room` | Placeholder | Package created. No business logic yet. |
@@ -82,9 +82,29 @@ No room business logic has been added yet.
 | --- | --- | --- | --- | --- |
 | GET | `/health` | Common Health | Public | `OK` |
 
+## Current Error Surface
+
+Standard error responses use `ApiError`.
+
+Current fields:
+
+- `timestamp`
+- `status`
+- `error`
+- `message`
+- `path`
+- `fieldErrors`
+
+Handled error categories:
+
+- Validation errors
+- Business exceptions
+- Missing resources
+- Access denied
+- Unexpected server errors
+
 ## Current Database Surface
 
 No tables exist yet.
 
 Flyway is configured and ready for future migrations.
-

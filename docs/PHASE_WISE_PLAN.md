@@ -29,13 +29,16 @@ Deliverables:
 
 ## Phase 1 - Core Platform Hardening
 
-Status: Not started
+Status: In progress
 
-Planned:
+Completed:
 
 - Add standard API error response format.
 - Add global exception handling.
 - Add request validation support.
+
+Planned:
+
 - Add structured logging conventions.
 - Add environment-specific configuration profiles.
 - Add CORS policy.
@@ -99,4 +102,3 @@ Planned:
 - Keep completed items concrete and tied to committed code.
 - Do not mark future domain work as done until entities, migrations, APIs, and tests exist.
 - Keep phase scope small enough that each phase can be reviewed independently.
-
