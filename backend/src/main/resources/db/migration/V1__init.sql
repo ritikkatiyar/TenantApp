@@ -1,2 +1,0 @@
--- Initial schema migration.
--- Intentionally empty until domain tables are introduced.

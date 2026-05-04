@@ -7,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
@@ -17,7 +17,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    baseline-on-migrate: false
+    baseline-on-migrate: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -27,6 +27,11 @@ logging:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] [%X{correlationId:-no-correlation-id}] %logger{36} - %msg%n"
 
 app:
+  jwt:
+    # HS256 requires a secret with enough entropy; use at least 32 bytes in production (APP_JWT_SECRET).
+    secret: ${APP_JWT_SECRET:dev-only-change-this-to-a-long-random-secret-32b-min}
+    access-expiration-ms: ${APP_JWT_ACCESS_MS:900000}
+    refresh-expiration-ms: ${APP_JWT_REFRESH_MS:604800000}
   logging:
     correlation-header-name: ${APP_CORRELATION_HEADER_NAME:X-Correlation-Id}
   cors:
