@@ -107,8 +107,7 @@ public class AuthController {
         AuthUserSummary summary = new AuthUserSummary(
                 currentUser.getId(),
                 currentUser.getUsername(),
-                currentUser.getFullName(),
-                currentUser.getRole()
+                currentUser.getFullName()
         );
         return ResponseEntity.ok(ApiResponse.success(summary));
     }

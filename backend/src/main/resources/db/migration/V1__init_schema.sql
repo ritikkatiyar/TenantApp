@@ -7,7 +7,6 @@ CREATE TABLE user_tbl (
     full_name VARCHAR(255),
     phone_number VARCHAR(50),
     password_hash VARCHAR(255),
-    role VARCHAR(50),
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
 );

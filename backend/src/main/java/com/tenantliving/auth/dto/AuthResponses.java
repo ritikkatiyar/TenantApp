@@ -13,9 +13,7 @@ public final class AuthResponses {
             @Schema(description = "Login email (auth_uid)", example = "tenant@example.com")
             String email,
             @Schema(example = "Ada Tenant")
-            String fullName,
-            @Schema(description = "UserRole enum name", example = "USER")
-            String role
+            String fullName
     ) {}
 
     @Schema(name = "TokenBundle", description = "Access JWT, rotated refresh token, and profile snapshot")
@@ -39,8 +37,6 @@ public final class AuthResponses {
             String userId,
             @Schema(nullable = true)
             String email,
-            @Schema(nullable = true)
-            String role,
             @Schema(description = "Unix seconds from JWT exp", nullable = true, example = "1715000000")
             Long expiresAtEpochSeconds,
             @Schema(description = "Reason when valid is false", nullable = true, example = "Token expired")

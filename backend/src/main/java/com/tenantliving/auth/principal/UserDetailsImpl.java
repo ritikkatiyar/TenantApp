@@ -21,18 +21,16 @@ public class UserDetailsImpl implements UserDetails {
     private final String username;
     private final String password;
     private final String fullName;
-    private final String role;
     private final boolean enabled;
     private final boolean accountNonLocked;
 
     private UserDetailsImpl(String id, String username, String password,
-                           String fullName, String role, boolean enabled,
+                           String fullName, boolean enabled,
                            boolean accountNonLocked) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.fullName = fullName;
-        this.role = role;
         this.enabled = enabled;
         this.accountNonLocked = accountNonLocked;
     }
@@ -50,7 +48,6 @@ public class UserDetailsImpl implements UserDetails {
                 user.getAuthUid(),
                 hash,
                 user.getFullName(),
-                user.getRole().name(),
                 true,
                 accountNonLocked
         );
@@ -58,7 +55,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override

@@ -12,7 +12,6 @@ import com.tenantliving.auth.repository.RefreshTokenRepository;
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.config.AuthProperties;
 import com.tenantliving.config.JwtProperties;
-import com.tenantliving.common.domain.UserRole;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserService;
 import com.tenantliving.auth.service.interfaces.AuthService;
@@ -67,7 +66,6 @@ public class AuthServiceImpl implements AuthService {
                 .authUid(email)
                 .fullName(request.fullName().trim())
                 .phoneNumber(phone)
-                .role(UserRole.USER)
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .build();
         userService.createUser(user);
@@ -168,7 +166,6 @@ public class AuthServiceImpl implements AuthService {
                     true,
                     claims.getSubject(),
                     claims.get("email", String.class),
-                    claims.get("role", String.class),
                     exp,
                     null
             );
@@ -212,8 +209,7 @@ public class AuthServiceImpl implements AuthService {
         return new AuthUserSummary(
                 user.getId().toString(),
                 user.getAuthUid(),
-                user.getFullName(),
-                user.getRole().name()
+                user.getFullName()
         );
     }
 

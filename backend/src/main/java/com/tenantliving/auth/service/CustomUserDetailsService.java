@@ -28,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         UserTbl user = userService.getUserByEmail(username);
 
-        log.debug("User found: {} with role: {}", user.getFullName(), user.getRole());
+        log.debug("User found: {}", user.getFullName());
         return UserDetailsImpl.fromUser(user);
     }
 

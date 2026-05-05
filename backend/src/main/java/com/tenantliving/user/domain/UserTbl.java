@@ -1,7 +1,6 @@
 package com.tenantliving.user.domain;
 
 import com.tenantliving.common.domain.BaseEntity;
-import com.tenantliving.common.domain.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,10 +22,6 @@ public class UserTbl extends BaseEntity {
 
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role;
 
     @Column(name = "password_hash")
     private String passwordHash;
