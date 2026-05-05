@@ -9,6 +9,7 @@ import com.tenantliving.auth.dto.AuthResponses.TokenBundle;
 import com.tenantliving.auth.dto.AuthResponses.ValidateResponse;
 import com.tenantliving.auth.domain.RefreshTokenTbl;
 import com.tenantliving.auth.repository.RefreshTokenRepository;
+import com.tenantliving.common.domain.UserRole;
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.config.AuthProperties;
 import com.tenantliving.config.JwtProperties;
@@ -67,6 +68,7 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(request.fullName().trim())
                 .phoneNumber(phone)
                 .passwordHash(passwordEncoder.encode(request.password()))
+                .globalRole(UserRole.USER)
                 .build();
         userService.createUser(user);
         return issueTokensForUser(user);
