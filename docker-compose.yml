@@ -9,11 +9,11 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tenant_living}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
     ports:
-      - "${MYSQL_PORT:-3306}:3306"
+      - "3307:3306"
     volumes:
       - tenant_living_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10

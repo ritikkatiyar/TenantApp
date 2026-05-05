@@ -1,9 +1,16 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    url: ${DB_URL:jdbc:mysql://localhost:3307/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
     username: ${DB_USERNAME:tenant_living}
     password: ${DB_PASSWORD:tenant_living}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    url: ${DB_URL:jdbc:mysql://localhost:3307/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    user: ${DB_USERNAME:tenant_living}
+    password: ${DB_PASSWORD:tenant_living}
+    baseline-on-migrate: false
+    validate-on-migrate: true
 
   jpa:
     properties:

@@ -170,9 +170,9 @@ public class AuthServiceImpl implements AuthService {
                     null
             );
         } catch (ExpiredJwtException e) {
-            return new ValidateResponse(false, null, null, null, null, "Token expired");
+            return new ValidateResponse(false, null, null, null, "Token expired");
         } catch (JwtException e) {
-            return new ValidateResponse(false, null, null, null, null, "Invalid token");
+            return new ValidateResponse(false, null, null, null, "Invalid token");
         }
     }
 
