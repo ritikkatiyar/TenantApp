@@ -4,9 +4,11 @@
 CREATE TABLE user_tbl (
     id VARCHAR(36) PRIMARY KEY,
     auth_uid VARCHAR(255) NOT NULL UNIQUE,
-    full_name VARCHAR(255),
-    phone_number VARCHAR(50),
+    full_name VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(50) UNIQUE,
     password_hash VARCHAR(255),
+    failed_login_attempts INT NOT NULL DEFAULT 0,
+    lockout_until DATETIME(6),
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
 );
