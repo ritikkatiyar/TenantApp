@@ -6,6 +6,7 @@ import com.tenantliving.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,10 +28,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<UserTbl> findByEmail(String email) {
+        return userRepository.findByAuthUid(normalizeEmail(email));
+    }
+
+    @Override
     public UserTbl createUser(UserTbl user) {
         if (existsByEmail(user.getAuthUid())) {
             throw new RuntimeException("Email already registered: " + user.getAuthUid());
         }
+        return userRepository.save(user);
+    }
+
+    @Override
+    public UserTbl saveUser(UserTbl user) {
         return userRepository.save(user);
     }
 

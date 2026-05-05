@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,15 +23,18 @@ public class UserDetailsImpl implements UserDetails {
     private final String fullName;
     private final String role;
     private final boolean enabled;
+    private final boolean accountNonLocked;
 
     private UserDetailsImpl(String id, String username, String password,
-                           String fullName, String role, boolean enabled) {
+                           String fullName, String role, boolean enabled,
+                           boolean accountNonLocked) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.fullName = fullName;
         this.role = role;
         this.enabled = enabled;
+        this.accountNonLocked = accountNonLocked;
     }
 
     /**
@@ -40,13 +44,15 @@ public class UserDetailsImpl implements UserDetails {
      */
     public static UserDetailsImpl fromUser(UserTbl user) {
         String hash = user.getPasswordHash() != null ? user.getPasswordHash() : "";
+        boolean accountNonLocked = user.getLockoutUntil() == null || !user.getLockoutUntil().isAfter(Instant.now());
         return new UserDetailsImpl(
                 user.getId().toString(),
                 user.getAuthUid(),
                 hash,
                 user.getFullName(),
                 user.getRole().name(),
-                true
+                true,
+                accountNonLocked
         );
     }
 
@@ -72,7 +78,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return accountNonLocked;
     }
 
     @Override

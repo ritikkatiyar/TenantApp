@@ -32,6 +32,9 @@ app:
     secret: ${APP_JWT_SECRET:dev-only-change-this-to-a-long-random-secret-32b-min}
     access-expiration-ms: ${APP_JWT_ACCESS_MS:900000}
     refresh-expiration-ms: ${APP_JWT_REFRESH_MS:604800000}
+  auth:
+    max-failed-login-attempts: ${APP_AUTH_MAX_FAILED_LOGIN_ATTEMPTS:5}
+    lockout-duration-ms: ${APP_AUTH_LOCKOUT_DURATION_MS:900000}
   logging:
     correlation-header-name: ${APP_CORRELATION_HEADER_NAME:X-Correlation-Id}
   cors:

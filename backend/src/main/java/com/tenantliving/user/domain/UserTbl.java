@@ -5,6 +5,8 @@ import com.tenantliving.common.domain.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "user_tbl")
 @Getter
@@ -28,4 +30,10 @@ public class UserTbl extends BaseEntity {
 
     @Column(name = "password_hash")
     private String passwordHash;
+
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts;
+
+    @Column(name = "lockout_until")
+    private Instant lockoutUntil;
 }

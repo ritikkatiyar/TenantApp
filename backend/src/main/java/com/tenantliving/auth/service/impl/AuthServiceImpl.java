@@ -10,6 +10,7 @@ import com.tenantliving.auth.dto.AuthResponses.ValidateResponse;
 import com.tenantliving.auth.domain.RefreshTokenTbl;
 import com.tenantliving.auth.repository.RefreshTokenRepository;
 import com.tenantliving.common.exception.BusinessException;
+import com.tenantliving.config.AuthProperties;
 import com.tenantliving.config.JwtProperties;
 import com.tenantliving.common.domain.UserRole;
 import com.tenantliving.user.domain.UserTbl;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Optional;
 
 /**
  * Application use-cases for registration, credential login, token refresh, and JWT validation.
@@ -49,6 +52,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
+    private final AuthProperties authProperties;
 
     @Transactional
     public TokenBundle signup(SignupRequest request) {
@@ -73,28 +77,70 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public TokenBundle login(LoginRequest request) {
         String email = normalizeEmail(request.email());
+        Optional<UserTbl> optionalUser = userService.findByEmail(email);
+        optionalUser.ifPresent(this::clearExpiredLock);
+
+        if (optionalUser.isPresent() && isLocked(optionalUser.get())) {
+            throw new BusinessException(HttpStatus.LOCKED,
+                    "Account temporarily locked due to repeated login attempts. Try again later.");
+        }
+
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, request.password())
             );
+        } catch (LockedException e) {
+            throw new BusinessException(HttpStatus.LOCKED,
+                    "Account temporarily locked due to repeated login attempts. Try again later.");
         } catch (BadCredentialsException e) {
+            optionalUser.ifPresent(this::recordFailedLogin);
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         } catch (AuthenticationException e) {
+            optionalUser.ifPresent(this::recordFailedLogin);
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        UserTbl user;
-        try {
-            user = userService.getUserByEmail(email);
-        } catch (RuntimeException ex) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
-        }
+        UserTbl user = optionalUser.orElseThrow(
+                () -> new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid email or password")
+        );
 
         if (user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "Password login is not enabled for this account");
         }
 
+        resetFailedLogin(user);
         return issueTokensForUser(user);
+    }
+
+    private boolean isLocked(UserTbl user) {
+        return user.getLockoutUntil() != null && user.getLockoutUntil().isAfter(Instant.now());
+    }
+
+    private void clearExpiredLock(UserTbl user) {
+        if (user.getLockoutUntil() != null && !user.getLockoutUntil().isAfter(Instant.now())) {
+            user.setFailedLoginAttempts(0);
+            user.setLockoutUntil(null);
+            userService.saveUser(user);
+        }
+    }
+
+    private void resetFailedLogin(UserTbl user) {
+        if (user.getFailedLoginAttempts() != 0 || user.getLockoutUntil() != null) {
+            user.setFailedLoginAttempts(0);
+            user.setLockoutUntil(null);
+            userService.saveUser(user);
+        }
+    }
+
+    private void recordFailedLogin(UserTbl user) {
+        int attempts = user.getFailedLoginAttempts() + 1;
+        if (attempts >= authProperties.maxFailedLoginAttempts()) {
+            user.setFailedLoginAttempts(0);
+            user.setLockoutUntil(Instant.now().plusMillis(authProperties.lockoutDurationMs()));
+        } else {
+            user.setFailedLoginAttempts(attempts);
+        }
+        userService.saveUser(user);
     }
 
     @Transactional
