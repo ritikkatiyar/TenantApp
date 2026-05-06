@@ -1,6 +1,7 @@
 package com.tenantliving.user.domain;
 
 import com.tenantliving.common.domain.BaseEntity;
+import com.tenantliving.common.domain.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,4 +32,9 @@ public class UserTbl extends BaseEntity {
 
     @Column(name = "lockout_until")
     private Instant lockoutUntil;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "global_role", nullable = false)
+    @Builder.Default
+    private UserRole globalRole = UserRole.USER;
 }

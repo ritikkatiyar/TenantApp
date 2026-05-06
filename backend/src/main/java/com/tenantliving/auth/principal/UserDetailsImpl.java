@@ -1,5 +1,6 @@
 package com.tenantliving.auth.principal;
 
+import com.tenantliving.common.domain.UserRole;
 import com.tenantliving.user.domain.UserTbl;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,16 +24,19 @@ public class UserDetailsImpl implements UserDetails {
     private final String fullName;
     private final boolean enabled;
     private final boolean accountNonLocked;
+    private final List<GrantedAuthority> authorities;
 
     private UserDetailsImpl(String id, String username, String password,
                            String fullName, boolean enabled,
-                           boolean accountNonLocked) {
+                           boolean accountNonLocked,
+                           List<GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.fullName = fullName;
         this.enabled = enabled;
         this.accountNonLocked = accountNonLocked;
+        this.authorities = authorities;
     }
 
     /**
@@ -49,13 +53,19 @@ public class UserDetailsImpl implements UserDetails {
                 hash,
                 user.getFullName(),
                 true,
-                accountNonLocked
+                accountNonLocked,
+                authoritiesFor(user)
         );
+    }
+
+    private static List<GrantedAuthority> authoritiesFor(UserTbl user) {
+        UserRole role = user.getGlobalRole() != null ? user.getGlobalRole() : UserRole.USER;
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return authorities;
     }
 
     @Override
