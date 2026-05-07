@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PropertyService {
-    PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID ownerId);
+    PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID ownerId, UUID creatorId);
+    PropertyTbl updateProperty(UUID propertyId, PropertyDTOs.UpdatePropertyRequest request);
     List<UnitTbl> generateBatchUnits(UUID propertyId, PropertyDTOs.BatchUnitRequest request);
 }

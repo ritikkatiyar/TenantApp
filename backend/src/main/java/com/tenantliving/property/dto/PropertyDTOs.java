@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.UUID;
+
 public class PropertyDTOs {
 
     @Schema(name = "CreatePropertyRequest", description = "Future: create property (endpoint not yet exposed)")
@@ -24,6 +26,34 @@ public class PropertyDTOs {
 
             @Schema(example = "Near metro")
             String landmark
+    ) {}
+
+    @Schema(name = "UpdatePropertyRequest", description = "Request payload to update an existing property")
+    public record UpdatePropertyRequest(
+            @Schema(example = "Sunrise PG")
+            @NotBlank(message = "Property name is required")
+            String name,
+
+            @Schema(example = "12 MG Road, Bengaluru")
+            @NotBlank(message = "Address is required")
+            String address,
+
+            @Schema(example = "Bengaluru")
+            @NotBlank(message = "City is required")
+            String city,
+
+            @Schema(example = "Near metro")
+            String landmark
+    ) {}
+
+    @Schema(name = "PropertyResponse", description = "Property details")
+    public record PropertyResponse(
+            UUID id,
+            String name,
+            String address,
+            String city,
+            String landmark,
+            UUID ownerId
     ) {}
 
     @Schema(name = "BatchUnitRequest", description = "Grid of units: floors × units per floor; Unit numbers derived from prefix, floor, and index")
