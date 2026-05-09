@@ -1,9 +1,24 @@
 import { apiUrl } from '../config/api';
 import type { ApiResponse } from '../types/api';
+import { ApiError } from '../utils/errors';
+
+const DEFAULT_TIMEOUT_MS = 15000;
 
 type ApiRequestOptions = RequestInit & {
   token?: string;
+  timeout?: number;
 };
+
+/**
+ * Generates a random UUID-like string for request correlation.
+ */
+function generateCorrelationId(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 async function parseResponse<T>(response: Response): Promise<ApiResponse<T> | null> {
   const responseText = await response.text();
@@ -19,23 +34,75 @@ async function parseResponse<T>(response: Response): Promise<ApiResponse<T> | nu
   }
 }
 
+export type AuthRefreshHandler = () => Promise<string | null>;
+
+let authRefreshHandler: AuthRefreshHandler | null = null;
+
+export function setAuthRefreshHandler(handler: AuthRefreshHandler) {
+  authRefreshHandler = handler;
+}
+
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { token, headers, ...requestOptions } = options;
+  const { token, headers, timeout = DEFAULT_TIMEOUT_MS, ...requestOptions } = options;
 
-  const response = await fetch(apiUrl(path), {
-    ...requestOptions,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  const data = await parseResponse<T>(response);
+  try {
+    const fetchOptions = {
+      ...requestOptions,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Correlation-Id': generateCorrelationId(),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+    };
 
-  if (!response.ok || data?.success === false) {
-    throw new Error(data?.error?.message || data?.message || 'Request failed.');
+    let response = await fetch(apiUrl(path), fetchOptions);
+
+    // Automatic Token Refresh Interceptor
+    if (response.status === 401 && authRefreshHandler) {
+      console.log(`[API] 401 Unauthorized for ${path}. Attempting token refresh...`);
+      const newToken = await authRefreshHandler();
+      
+      if (newToken) {
+        console.log('[API] Refresh successful. Retrying request...');
+        // Update the token in headers and retry
+        fetchOptions.headers = {
+          ...fetchOptions.headers,
+          Authorization: `Bearer ${newToken}`,
+        };
+        response = await fetch(apiUrl(path), fetchOptions);
+      }
+    }
+
+    const data = await parseResponse<T>(response);
+
+    if (!response.ok || data?.success === false) {
+      const message = data?.error?.message || data?.message || 'Request failed.';
+      const fieldErrors = data?.error?.fieldErrors;
+      
+      console.error(`[API ERROR] ${response.status} ${path} | ${message}`, {
+        correlationId: fetchOptions.headers['X-Correlation-Id'],
+      });
+
+      throw new ApiError(message, response.status, fieldErrors);
+    }
+
+    return data?.data as T;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please check your connection.');
+    }
+    
+    if (!(error instanceof ApiError)) {
+      console.error(`[API ERROR] Network/Unknown: ${path} | ${error.message}`);
+    }
+    
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return data?.data as T;
 }

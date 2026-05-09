@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { logout, refresh } from '../api/auth.api';
+import { setAuthRefreshHandler } from '../api/client';
 import type { AuthUserSummary, TokenBundle } from '../types/auth';
 import { clearStoredAuth, readStoredAuth, writeStoredAuth } from './tokenStorage';
 
@@ -43,6 +44,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isMounted = false;
     };
   }, []);
+
+  // Register the refresh handler with the API client
+  useEffect(() => {
+    setAuthRefreshHandler(async () => {
+      const result = await refreshSession();
+      return result?.accessToken || null;
+    });
+  }, [refreshSession]);
 
   const value = useMemo<AuthContextValue>(() => ({
     accessToken: authData?.accessToken || '',
