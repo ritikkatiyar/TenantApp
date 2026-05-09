@@ -35,6 +35,12 @@ public final class AuthRequests {
             @NotBlank String refreshToken
     ) {}
 
+    @Schema(name = "LogoutRequest", description = "Refresh token to revoke for the current session")
+    public record LogoutRequest(
+            @Schema(description = "The refreshToken string (not the hash)")
+            @NotBlank String refreshToken
+    ) {}
+
     @Schema(name = "ValidateRequest")
     public record ValidateRequest(
             @Schema(description = "JWT access token to introspect")

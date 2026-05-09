@@ -5,6 +5,8 @@
 This repository contains the backend service for the Tenant Living modular monolith.
 It provides authentication, user management, property management, unit leasing, rent cycles, and notification support.
 
+See [auth-flow.md](auth-flow.md) for the login, signup, refresh, logout, validate, and current-user flow.
+
 ## Tech stack
 
 - Java 21
@@ -17,6 +19,15 @@ It provides authentication, user management, property management, unit leasing, 
 - Springdoc OpenAPI
 
 ## How to run
+
+For everyday development, run all services from the repository root:
+
+```powershell
+.\dev.cmd
+```
+
+This starts MySQL with Docker Compose, then starts the backend and frontend web dev server together.
+Make sure Docker Desktop is running before using the script.
 
 1. Start MySQL using Docker Compose:
    ```bash

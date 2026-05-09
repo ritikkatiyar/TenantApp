@@ -1,6 +1,7 @@
 package com.tenantliving.auth.service.impl;
 
 import com.tenantliving.auth.dto.AuthRequests.LoginRequest;
+import com.tenantliving.auth.dto.AuthRequests.LogoutRequest;
 import com.tenantliving.auth.dto.AuthRequests.RefreshRequest;
 import com.tenantliving.auth.dto.AuthRequests.SignupRequest;
 import com.tenantliving.auth.dto.AuthRequests.ValidateRequest;
@@ -156,6 +157,13 @@ public class AuthServiceImpl implements AuthService {
         UserTbl user = stored.getUser();
         refreshTokenRepository.delete(stored);
         return issueTokensForUser(user);
+    }
+
+    @Transactional
+    public void logout(LogoutRequest request) {
+        String hash = TokenHasher.sha256Hex(request.refreshToken());
+        refreshTokenRepository.findByTokenHashAndRevokedIsFalse(hash)
+                .ifPresent(refreshTokenRepository::delete);
     }
 
     public ValidateResponse validate(ValidateRequest request) {

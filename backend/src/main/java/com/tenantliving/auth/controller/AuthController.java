@@ -1,6 +1,7 @@
 package com.tenantliving.auth.controller;
 
 import com.tenantliving.auth.dto.AuthRequests.LoginRequest;
+import com.tenantliving.auth.dto.AuthRequests.LogoutRequest;
 import com.tenantliving.auth.dto.AuthRequests.RefreshRequest;
 import com.tenantliving.auth.dto.AuthRequests.SignupRequest;
 import com.tenantliving.auth.dto.AuthRequests.ValidateRequest;
@@ -76,6 +77,18 @@ public class AuthController {
     })
     public ResponseEntity<ApiResponse<TokenBundle>> refresh(@Valid @RequestBody RefreshRequest request) {
         return ResponseEntity.ok(ApiResponse.success(authService.refresh(request)));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout current session", description = "Revokes the provided refresh token. The access token naturally expires.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Refresh token revoked"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation failed",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/validate")
