@@ -1,43 +1,146 @@
-# Engineering Standards (Production-Grade Spring Boot)
+# Senior Backend Engineer - Production-Grade Spring Boot Standards
 
-This document defines the strict engineering standards for the **TenantApp** project. All code modifications and new feature implementations MUST adhere to these rules.
-
----
-
-## 1. ARCHITECTURE & MODULE BOUNDARIES
-*   **Pattern**: Modular Monolith using Package-by-Feature.
-*   **Layering**: Controller -> Service (Interface) -> Service (Impl) -> Repository.
-*   **Communication**: Modules communicate ONLY via Service Interfaces. No direct cross-module repository access.
-*   **Thin Controllers**: Business logic must reside exclusively in the Service Layer.
-
-## 2. DATABASE STANDARDS
-*   **Naming**: Tables MUST end in `_tbl` (e.g., `user_tbl`). Columns use `snake_case`.
-*   **Primary Keys**: Always use **UUID**.
-*   **Migrations**: Schema changes are managed EXCLUSIVELY via **Flyway**. `ddl-auto` is strictly disabled for production.
-
-## 3. API STANDARDS
-*   **Response Format**: All APIs must return the standard envelope:
-    ```json
-    {
-      "success": true,
-      "data": {},
-      "error": null
-    }
-    ```
-*   **DTOs**: Never expose JPA Entities directly. Use DTOs for all request/response bodies.
-*   **Validation**: Use `@Valid` and JSR-303 annotations.
-
-## 4. LOGGING & OBSERVABILITY
-*   **Format**: Structured JSON logging.
-*   **Context**: Every log must include `correlationId`, `traceId`, and `spanId`.
-*   **Privacy**: Never log sensitive data (passwords, tokens, full request bodies).
-
-## 5. SECURITY & CODE QUALITY
-*   **Auth**: JWT-based. Extract user context from the security context, never trust a `userId` passed in a request body.
-*   **Passwords**: Always use **BCrypt**.
-*   **Injection**: Use **Constructor Injection** exclusively (no `@Autowired` on fields).
-*   **Clean Code**: No dead code, no commented-out code, and small, readable methods.
+Before generating or modifying any code, STRICTLY follow the engineering standards defined below.
 
 ---
 
-*This document is enforced by the Lead Engineer (Antigravity).*
+## ARCHITECTURE STANDARD
+
+* Architecture: Modular Monolith
+* Pattern:
+  * Package-by-feature
+  * Layered architecture
+  * DDD-lite
+
+Module structure:
+module/
+├── controller/
+├── service/
+│   ├── interface/
+│   └── impl/
+├── domain/
+├── repository/
+├── dto/
+├── mapper/
+
+---
+
+## MODULE BOUNDARY RULES
+
+* No direct repository access across modules
+* Modules communicate ONLY via service interfaces
+* Controllers must remain thin
+* Business logic only inside services
+
+---
+
+## DATABASE STANDARDS
+
+1. Table naming:
+* lowercase + "_tbl"
+  Example: user_tbl, property_tbl
+
+2. Column naming:
+* snake_case
+
+3. Primary keys:
+* UUID only
+
+4. Foreign keys:
+* *_id format
+
+5. Flyway:
+* schema changes ONLY via migrations
+* Never use ddl-auto=create/update
+
+---
+
+## API STANDARDS
+
+Standard response format:
+{
+"success": true,
+"data": {},
+"error": null
+}
+
+Rules:
+* Never expose entities directly
+* Use DTOs for all APIs
+* Use validation annotations
+* Use proper HTTP status codes
+
+---
+
+## LOGGING & OBSERVABILITY
+
+1. Structured JSON logging
+2. Correlation ID required
+3. Micrometer tracing enabled
+4. Do NOT log:
+* passwords
+* tokens
+* request bodies
+
+Include in logs:
+* correlationId
+* traceId
+* spanId
+
+---
+
+## NAMING CONVENTIONS
+
+Classes:
+* UserService
+* UserServiceImpl
+* CreatePropertyRequest
+* PropertyResponse
+
+Avoid:
+* Utils
+* CommonService
+* GenericManager
+
+---
+
+## SECURITY RULES
+
+* JWT-based auth
+* Passwords must use BCrypt
+* Never trust userId from request body
+* Extract authenticated user from JWT
+
+---
+
+## CODE QUALITY RULES
+
+* No commented-out code
+* No dead code
+* No duplicate logic
+* Keep methods small and readable
+* Use constructor injection only
+
+---
+
+## TESTING RULES
+
+* Every phase must:
+  * compile successfully
+  * run successfully
+  * expose working APIs
+
+---
+
+## IMPORTANT
+
+This project follows FAANG-grade engineering discipline.
+
+Prioritize:
+* clarity
+* maintainability
+* scalability
+* observability
+
+Do NOT overengineer.
+Do NOT introduce unnecessary abstractions.
