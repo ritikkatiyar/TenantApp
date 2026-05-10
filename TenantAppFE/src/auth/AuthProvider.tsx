@@ -45,6 +45,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
+  const signIn = React.useCallback(async (nextAuthData: TokenBundle) => {
+    setAuthData(nextAuthData);
+    await writeStoredAuth(nextAuthData);
+  }, []);
+
+  const signOut = React.useCallback(async () => {
+    const refreshToken = authData?.refreshToken;
+    setAuthData(null);
+    await clearStoredAuth();
+
+    if (refreshToken) {
+      try {
+        await logout({ refreshToken });
+      } catch (error) {
+        console.warn('Logout token revoke failed:', error);
+      }
+    }
+  }, [authData?.refreshToken]);
+
+  const refreshSession = React.useCallback(async () => {
+    if (!authData?.refreshToken) {
+      return null;
+    }
+
+    try {
+      const nextAuthData = await refresh({ refreshToken: authData.refreshToken });
+      setAuthData(nextAuthData);
+      await writeStoredAuth(nextAuthData);
+      return nextAuthData;
+    } catch (error) {
+      console.warn('Session refresh failed:', error);
+      setAuthData(null);
+      await clearStoredAuth();
+      return null;
+    }
+  }, [authData?.refreshToken]);
+
   // Register the refresh handler with the API client
   useEffect(() => {
     setAuthRefreshHandler(async () => {
@@ -58,41 +95,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user: authData?.user || null,
     isAuthenticated: Boolean(authData?.accessToken),
     isReady,
-    async signIn(nextAuthData) {
-      setAuthData(nextAuthData);
-      await writeStoredAuth(nextAuthData);
-    },
-    async signOut() {
-      const refreshToken = authData?.refreshToken;
-      setAuthData(null);
-      await clearStoredAuth();
-
-      if (refreshToken) {
-        try {
-          await logout({ refreshToken });
-        } catch (error) {
-          console.warn('Logout token revoke failed:', error);
-        }
-      }
-    },
-    async refreshSession() {
-      if (!authData?.refreshToken) {
-        return null;
-      }
-
-      try {
-        const nextAuthData = await refresh({ refreshToken: authData.refreshToken });
-        setAuthData(nextAuthData);
-        await writeStoredAuth(nextAuthData);
-        return nextAuthData;
-      } catch (error) {
-        console.warn('Session refresh failed:', error);
-        setAuthData(null);
-        await clearStoredAuth();
-        return null;
-      }
-    },
-  }), [authData, isReady]);
+    signIn,
+    signOut,
+    refreshSession,
+  }), [authData, isReady, signIn, signOut, refreshSession]);
 
   return (
     <AuthContext.Provider value={value}>
