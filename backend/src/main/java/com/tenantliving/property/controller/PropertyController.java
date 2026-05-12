@@ -73,23 +73,20 @@ public class PropertyController {
         return ResponseEntity.ok(ApiResponse.success(toResponse(updatedProperty)));
     }
 
-    @PostMapping("/{propertyId}/units/batch")
+    @GetMapping("/{propertyId}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Generate units in a grid", description = "Creates units per floor/grid for the property. Unit numbers combine optional prefix, floor, and index.")
+    @Operation(summary = "Get property", description = "Retrieves an existing property's basic details.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Units persisted"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation failed",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property returned"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role SUPER_ADMIN or ADMIN", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Property not found or server error (see logs)",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
-    public ResponseEntity<Void> batchCreateUnits(
+    public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> getProperty(
             @Parameter(description = "Property UUID", required = true, in = ParameterIn.PATH, example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
-            @PathVariable UUID propertyId,
-            @Valid @RequestBody PropertyDTOs.BatchUnitRequest request) {
-        propertyService.generateBatchUnits(propertyId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+            @PathVariable UUID propertyId) {
+        PropertyTbl property = propertyService.getPropertyById(propertyId);
+        return ResponseEntity.ok(ApiResponse.success(toResponse(property)));
     }
 
     private PropertyDTOs.PropertyResponse toResponse(PropertyTbl property) {
@@ -100,6 +97,7 @@ public class PropertyController {
                 property.getAddress(),
                 property.getCity(),
                 property.getLandmark(),
+                property.getTotalFloors(),
                 ownerId
         );
     }

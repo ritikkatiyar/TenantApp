@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '../theme/Theme';
 import { signup } from '../api/auth.api';
 
@@ -50,6 +51,12 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
   };
 
   return (
+    <LinearGradient
+      colors={['#d4f5f9', '#e8f8fb', '#f9ede0']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
+    >
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView 
         style={styles.container} 
@@ -183,6 +190,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 
@@ -323,7 +331,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.Colors.errorContainer,
+    backgroundColor: Theme.Colors.errorContainer, // #ffdad6
     padding: 12,
     borderRadius: Theme.Rounded.default,
     marginBottom: 20,

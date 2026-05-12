@@ -25,7 +25,10 @@ public class PropertyDTOs {
             String city,
 
             @Schema(example = "Near metro")
-            String landmark
+            String landmark,
+
+            @Schema(example = "5")
+            Integer totalFloors
     ) {}
 
     @Schema(name = "UpdatePropertyRequest", description = "Request payload to update an existing property")
@@ -43,7 +46,10 @@ public class PropertyDTOs {
             String city,
 
             @Schema(example = "Near metro")
-            String landmark
+            String landmark,
+
+            @Schema(example = "5")
+            Integer totalFloors
     ) {}
 
     @Schema(name = "PropertyResponse", description = "Property details")
@@ -53,6 +59,7 @@ public class PropertyDTOs {
             String address,
             String city,
             String landmark,
+            Integer totalFloors,
             UUID ownerId
     ) {}
 

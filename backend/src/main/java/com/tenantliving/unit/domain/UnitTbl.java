@@ -38,6 +38,14 @@ public class UnitTbl extends BaseEntity {
     @Column(name = "grid_y", nullable = false)
     private Integer gridY;
 
+    @Column(name = "grid_width", nullable = false)
+    @Builder.Default
+    private Integer gridWidth = 1;
+
+    @Column(name = "grid_height", nullable = false)
+    @Builder.Default
+    private Integer gridHeight = 1;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UnitType type;

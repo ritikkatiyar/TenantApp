@@ -27,6 +27,8 @@ public class PropertyTbl extends BaseEntity {
 
     private String landmark;
 
+    private Integer totalFloors;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = true)
     @ToString.Exclude

@@ -3,6 +3,15 @@ export type CreatePropertyRequest = {
   address: string;
   city: string;
   landmark?: string;
+  totalFloors?: number;
+};
+
+export type UpdatePropertyRequest = {
+  name: string;
+  address: string;
+  city: string;
+  landmark?: string;
+  totalFloors?: number;
 };
 
 export type PropertyResponse = {
@@ -11,5 +20,6 @@ export type PropertyResponse = {
   address: string;
   city: string;
   landmark?: string;
+  totalFloors?: number;
   ownerId?: string;
 };

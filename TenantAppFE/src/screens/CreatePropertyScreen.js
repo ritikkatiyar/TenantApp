@@ -68,12 +68,11 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
     >
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* Pinned header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={16} color="#00838f" />
-          <Text style={styles.backText}>BACK TO PORTFOLIO</Text>
+          <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
           <Text style={styles.titleLine}>Create</Text>
@@ -188,7 +187,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
                 style={styles.submitButtonWrapper}
               >
                 <LinearGradient
-                  colors={['#00d4e8', '#00a8d4', '#6366f1']}
+                  colors={['#00d4ff', '#0072ff']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={[styles.submitButton, loading && styles.submitButtonDisabled]}
@@ -196,7 +195,10 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
                   {loading ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={styles.submitButtonText}>SAVE & CONFIGURE FLOORS</Text>
+                    <>
+                      <Text style={styles.submitButtonText}>SAVE & CONFIGURE FLOORS</Text>
+                      <MaterialIcons name="check" size={20} color="#fff" />
+                    </>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
@@ -221,7 +223,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 32,
     paddingTop: 8,
-    paddingBottom: 60,
+    paddingBottom: 100,
   },
   header: {
     paddingHorizontal: 32,
@@ -229,16 +231,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   backButton: {
-    flexDirection: 'row',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-  },
-  backText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#00838f',
-    marginLeft: 6,
-    letterSpacing: 0.5,
+    marginBottom: 16,
   },
   titleContainer: {
     // tight line height wrap
@@ -342,12 +341,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   submitButtonText: {
-    fontSize: 13,
+    color: '#fff',
+    fontSize: 14,
     fontWeight: '700',
-    color: '#004f58',
-    textAlign: 'center',
     letterSpacing: 1,
-    lineHeight: 18,
   },
   errorContainer: {
     flexDirection: 'row',

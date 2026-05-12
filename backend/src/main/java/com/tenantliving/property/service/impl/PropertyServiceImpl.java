@@ -1,21 +1,19 @@
 package com.tenantliving.property.service.impl;
 
-import com.tenantliving.property.dto.PropertyDTOs;
-import com.tenantliving.common.domain.FacingDirection;
 import com.tenantliving.common.domain.PropertyRole;
 import com.tenantliving.property.domain.PropertyTbl;
+import com.tenantliving.property.dto.PropertyDTOs;
 import com.tenantliving.property.repository.PropertyRepository;
-import com.tenantliving.unit.domain.UnitTbl;
-import com.tenantliving.unit.service.interfaces.UnitService;
+import com.tenantliving.property.service.interfaces.PropertyService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserService;
 import com.tenantliving.userpropertyrole.domain.UserPropertyRoleTbl;
 import com.tenantliving.userpropertyrole.repository.UserPropertyRoleRepository;
-import com.tenantliving.property.service.interfaces.PropertyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.ArrayList;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,7 +21,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PropertyServiceImpl implements PropertyService {
     private final PropertyRepository propertyRepository;
-    private final UnitService unitService;
     private final UserService userService;
     private final UserPropertyRoleRepository userPropertyRoleRepository;
 
@@ -37,6 +34,7 @@ public class PropertyServiceImpl implements PropertyService {
                 .address(request.address())
                 .city(request.city())
                 .landmark(request.landmark())
+                .totalFloors(request.totalFloors())
                 .owner(owner)
                 .build();
         PropertyTbl savedProperty = propertyRepository.save(property);
@@ -61,34 +59,23 @@ public class PropertyServiceImpl implements PropertyService {
         property.setAddress(request.address());
         property.setCity(request.city());
         property.setLandmark(request.landmark());
+        property.setTotalFloors(request.totalFloors());
         return propertyRepository.save(property);
     }
 
     @Override
-    @Transactional
-    public List<UnitTbl> generateBatchUnits(UUID propertyId, PropertyDTOs.BatchUnitRequest request) {
-        PropertyTbl property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
-        List<UnitTbl> generatedUnits = new ArrayList<>();
-        for (int currentFloor = request.startingFloorNumber();
-             currentFloor < request.startingFloorNumber() + request.totalFloors();
-             currentFloor++) {
-            for (int unitIndex = 1; unitIndex <= request.unitsPerFloor(); unitIndex++) {
-                String prefix = request.prefix() != null ? request.prefix() : "";
-                String unitNumber = prefix + currentFloor + String.format("%02d", unitIndex);
-                UnitTbl unit = UnitTbl.builder()
-                        .property(property)
-                        .unitNumber(unitNumber)
-                        .floor(currentFloor)
-                        .gridY(currentFloor)
-                        .gridX(unitIndex)
-                        .type(request.unitType())
-                        .capacity(request.capacity())
-                        .facing(FacingDirection.UNKNOWN)
-                        .build();
-                generatedUnits.add(unit);
-            }
+    @Transactional(readOnly = true)
+    public List<PropertyTbl> getPropertiesByIds(Collection<UUID> propertyIds) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return List.of();
         }
-        return unitService.saveAll(generatedUnits);
+        return propertyRepository.findDistinctByIdIn(propertyIds);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PropertyTbl getPropertyById(UUID propertyId) {
+        return propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
     }
 }
