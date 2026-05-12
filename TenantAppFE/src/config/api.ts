@@ -11,6 +11,7 @@ function getDefaultBaseUrl(): string {
 }
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || getDefaultBaseUrl();
+console.log('[API] Using Base URL:', API_BASE_URL);
 
 export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
