@@ -4,22 +4,34 @@
 
     <springProperty scope="context" name="applicationName" source="spring.application.name"/>
 
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeContext>false</includeContext>
-            <includeCallerData>false</includeCallerData>
-            <customFields>{"application":"${applicationName}"}</customFields>
-            <fieldNames>
-                <timestamp>timestamp</timestamp>
-                <level>level</level>
-                <message>message</message>
-                <thread>thread</thread>
-                <logger>logger</logger>
-            </fieldNames>
-            <!-- Tracing and Correlation IDs -->
-            <includeMdc>true</includeMdc>
-        </encoder>
-    </appender>
+    <!-- Development Console Appender (Human Readable) -->
+    <springProfile name="dev">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+                <charset>utf8</charset>
+            </encoder>
+        </appender>
+    </springProfile>
+
+    <!-- Production JSON Appender (Machine Readable) -->
+    <springProfile name="prod">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeContext>false</includeContext>
+                <includeCallerData>false</includeCallerData>
+                <customFields>{"application":"${applicationName}"}</customFields>
+                <fieldNames>
+                    <timestamp>timestamp</timestamp>
+                    <level>level</level>
+                    <message>message</message>
+                    <thread>thread</thread>
+                    <logger>logger</logger>
+                </fieldNames>
+                <includeMdc>true</includeMdc>
+            </encoder>
+        </appender>
+    </springProfile>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
