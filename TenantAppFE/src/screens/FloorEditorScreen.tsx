@@ -63,6 +63,7 @@ export default function FloorEditorScreen({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nextUnitIndex, setNextUnitIndex] = useState(1);
+  const [newTenantName, setNewTenantName] = useState('');
   const [currentDrawBlock, setCurrentDrawBlock] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const drawBlockRef = useRef<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
@@ -572,8 +573,10 @@ export default function FloorEditorScreen({
                         style={styles.textInput}
                         placeholder="Add new tenant..."
                         placeholderTextColor="#9ba9ab"
-                        onSubmitEditing={(e) => {
-                          const name = e.nativeEvent.text.trim();
+                        value={newTenantName}
+                        onChangeText={setNewTenantName}
+                        onSubmitEditing={() => {
+                          const name = newTenantName.trim();
                           if (name) {
                             const newTenants = [...(selectedBlock.tenants || []), name];
                             updateUnitDetails(selectedBlock.id, { 
@@ -581,7 +584,7 @@ export default function FloorEditorScreen({
                               status: 'OCCUPIED'
                             });
                           }
-                          e.currentTarget.clear();
+                          setNewTenantName('');
                         }}
                       />
                     </View>
