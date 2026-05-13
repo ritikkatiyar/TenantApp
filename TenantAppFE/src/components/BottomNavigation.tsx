@@ -8,13 +8,19 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { useRouter, usePathname } from 'expo-router';
+import { useRouter, usePathname, Href } from 'expo-router';
 
-const NAV_ITEMS = [
-  { id: 'properties', icon: 'domain', label: 'PORTFOLIO', route: '/command-center' },
+interface NavItem {
+  id: string;
+  icon: string;
+  label: string;
+  route: Href;
+}
+
+const NAV_ITEMS: NavItem[] = [
   { id: 'insights', icon: 'insights', label: 'INSIGHTS', route: '/analytics' },
+  { id: 'properties', icon: 'domain', label: 'PROPERTIES', route: '/command-center' },
   { id: 'escalations', icon: 'error-outline', label: 'ESCALATIONS', route: '/escalations' },
-  { id: 'admin', icon: 'admin-panel-settings', label: 'ADMIN', route: '/admin' },
 ];
 
 export default function BottomNavigation() {
@@ -33,7 +39,7 @@ export default function BottomNavigation() {
 
   return (
     <View style={styles.wrapper}>
-      <BlurView intensity={80} tint="light" style={styles.container}>
+      <BlurView intensity={90} tint="light" style={styles.container}>
         <View style={styles.navContent}>
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.route;
@@ -69,11 +75,7 @@ const styles = StyleSheet.create({
     bottom: Platform.OS === 'ios' ? 40 : 25,
     left: 20,
     right: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
+    zIndex: 1000,
   },
   container: {
     borderRadius: 100,
@@ -81,7 +83,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
     overflow: 'hidden',
   },
   navContent: {
@@ -101,10 +103,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0, 229, 255, 0)', // Start with 0 opacity
   },
   activeIconPill: {
     backgroundColor: 'rgba(0, 229, 255, 0.15)',
+    borderRadius: 16, // Explicitly re-state for Android
   },
   navText: {
     fontSize: 9,

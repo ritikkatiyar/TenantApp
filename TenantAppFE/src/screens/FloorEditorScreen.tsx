@@ -6,13 +6,22 @@ import {
   TouchableOpacity,
   Alert,
   Dimensions,
-  ActivityIndicator
+  ActivityIndicator,
+  TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur'; // Ensure BlurView is available for web and mobile
 import { Gesture, GestureDetector, GestureHandlerRootView, ScrollView, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, runOnJS, withTiming } from 'react-native-reanimated';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  runOnJS, 
+  withTiming, 
+  FadeInUp, 
+  FadeOutDown 
+} from 'react-native-reanimated';
 import { apiRequest } from '../api/client';
 import { getFloorLayout } from '../api/unit.api';
 
@@ -31,12 +40,15 @@ interface FloorEditorScreenProps {
 type ToolType = 'PAN' | 'ADD' | 'ERASE';
 
 interface UnitBlock {
-  id: string; // unique local ID or unit number
+  id: string; 
   gridX: number;
   gridY: number;
   gridWidth: number;
   gridHeight: number;
   unitNumber: string;
+  rent?: string;
+  tenants?: string[];
+  status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
 }
 
 export default function FloorEditorScreen({
@@ -52,6 +64,7 @@ export default function FloorEditorScreen({
   const [saving, setSaving] = useState(false);
   const [nextUnitIndex, setNextUnitIndex] = useState(1);
   const [currentDrawBlock, setCurrentDrawBlock] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const drawBlockRef = useRef<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
 
   // Zoom Animation Values
@@ -254,12 +267,21 @@ export default function FloorEditorScreen({
   };
 
   const handleBlockPress = (blockIndex: number) => {
+    const block = blocks[blockIndex];
     if (activeTool === 'ERASE') {
       const newBlocks = [...blocks];
       newBlocks.splice(blockIndex, 1);
       setBlocks(newBlocks);
+    } else if (activeTool === 'PAN') {
+      setSelectedUnitId(block.id);
     }
   };
+
+  const updateUnitDetails = (id: string, updates: Partial<UnitBlock>) => {
+    setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+  };
+
+  const selectedBlock = blocks.find(b => b.id === selectedUnitId);
 
   const handleSave = async () => {
     setSaving(true);
@@ -320,7 +342,7 @@ export default function FloorEditorScreen({
           >
             {block && (
               <View
-                pointerEvents={activeTool === 'ERASE' ? 'auto' : 'none'}
+                pointerEvents={activeTool === 'ADD' ? 'none' : 'auto'}
                 style={{
                   position: 'absolute',
                   top: -1, 
@@ -333,11 +355,22 @@ export default function FloorEditorScreen({
                 <GHTouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => handleBlockPress(blocks.indexOf(block))}
-                  style={[styles.cellActive, { width: '100%', height: '100%' }]}
+                  style={[
+                    styles.cellActive, 
+                    { width: '100%', height: '100%' },
+                    selectedUnitId === block.id && styles.cellSelected
+                  ]}
                 >
                   <Text style={styles.cellText}>{block.unitNumber}</Text>
                   {(block.gridWidth >= 2 && block.gridHeight >= 2) && (
-                    <Text style={styles.cellSubtext}>UNIT</Text>
+                    <Text style={styles.cellSubtext}>
+                      {block.tenants && block.tenants.length > 0 
+                        ? `${block.tenants.length} ${block.tenants.length === 1 ? 'TENANT' : 'TENANTS'}`
+                        : 'VACANT'}
+                    </Text>
+                  )}
+                  {block.rent && (
+                    <Text style={styles.cellRentText}>₹{block.rent}</Text>
                   )}
                 </GHTouchableOpacity>
               </View>
@@ -464,7 +497,7 @@ export default function FloorEditorScreen({
                     <GestureDetector gesture={drawGesture}>
                       <View 
                         style={[styles.gridContainer, { width: gridWidth, height: gridHeight }]}
-                        pointerEvents={activeTool === 'PAN' ? 'none' : 'auto'}
+                        pointerEvents={activeTool === 'PAN' ? 'box-none' : 'auto'}
                       >
                         {renderGrid()}
                       </View>
@@ -474,6 +507,104 @@ export default function FloorEditorScreen({
               )}
             </View>
           </GestureDetector>
+
+          {/* Unit Management Sheet */}
+          {selectedBlock && (
+            <Animated.View 
+              entering={FadeInUp}
+              exiting={FadeOutDown}
+              style={styles.detailSheetWrapper}
+            >
+              <BlurView intensity={95} tint="light" style={styles.detailSheet}>
+                <View style={styles.sheetHeader}>
+                  <View>
+                    <Text style={styles.sheetUnitTitle}>Unit {selectedBlock.unitNumber}</Text>
+                    <Text style={styles.sheetSubtitle}>Floor {floorNumber}</Text>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => setSelectedUnitId(null)}
+                    style={styles.closeButton}
+                  >
+                    <MaterialIcons name="close" size={20} color="#6b7a7d" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.sheetContent}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>MONTHLY RENT (₹)</Text>
+                    <View style={styles.inputWrapper}>
+                      <MaterialIcons name="payments" size={18} color="#006875" />
+                      <TextInput 
+                        style={styles.textInput}
+                        value={selectedBlock.rent}
+                        onChangeText={(val) => updateUnitDetails(selectedBlock.id, { rent: val })}
+                        placeholder="e.g. 15000"
+                        keyboardType="numeric"
+                        placeholderTextColor="#9ba9ab"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>TENANTS</Text>
+                    <View style={styles.tenantList}>
+                      {(selectedBlock.tenants || []).map((tenant, idx) => (
+                        <View key={idx} style={styles.tenantTag}>
+                          <Text style={styles.tenantTagText}>{tenant}</Text>
+                          <TouchableOpacity 
+                            onPress={() => {
+                              const newTenants = [...(selectedBlock.tenants || [])];
+                              newTenants.splice(idx, 1);
+                              updateUnitDetails(selectedBlock.id, { 
+                                tenants: newTenants,
+                                status: newTenants.length === 0 ? 'VACANT' : 'OCCUPIED'
+                              });
+                            }}
+                          >
+                            <MaterialIcons name="cancel" size={16} color="#006875" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                    <View style={styles.inputWrapper}>
+                      <MaterialIcons name="person-add" size={18} color="#006875" />
+                      <TextInput 
+                        style={styles.textInput}
+                        placeholder="Add new tenant..."
+                        placeholderTextColor="#9ba9ab"
+                        onSubmitEditing={(e) => {
+                          const name = e.nativeEvent.text.trim();
+                          if (name) {
+                            const newTenants = [...(selectedBlock.tenants || []), name];
+                            updateUnitDetails(selectedBlock.id, { 
+                              tenants: newTenants,
+                              status: 'OCCUPIED'
+                            });
+                          }
+                          e.currentTarget.clear();
+                        }}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.statusContainer}>
+                    <TouchableOpacity 
+                      style={[styles.statusToggle, selectedBlock.status === 'VACANT' && styles.statusActiveVacant]}
+                      onPress={() => updateUnitDetails(selectedBlock.id, { status: 'VACANT' })}
+                    >
+                      <Text style={[styles.statusToggleText, selectedBlock.status === 'VACANT' && styles.statusTextActive]}>VACANT</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.statusToggle, selectedBlock.status === 'OCCUPIED' && styles.statusActiveOccupied]}
+                      onPress={() => updateUnitDetails(selectedBlock.id, { status: 'OCCUPIED' })}
+                    >
+                      <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextActive]}>OCCUPIED</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </BlurView>
+            </Animated.View>
+          )}
 
           {/* Save Button */}
           <TouchableOpacity 
@@ -659,12 +790,164 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#ffffff',
   },
+  cellRentText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#00e5ff',
+    marginTop: 2,
+  },
   cellSubtext: {
     fontSize: 10,
     fontWeight: '700',
     color: '#aee4eb',
     letterSpacing: 1,
     marginTop: 2,
+  },
+  cellSelected: {
+    borderColor: '#00e5ff',
+    borderWidth: 3,
+  },
+  detailSheetWrapper: {
+    position: 'absolute',
+    bottom: 80,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    paddingHorizontal: 20,
+  },
+  detailSheet: {
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: '#fff',
+    overflow: 'hidden',
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sheetUnitTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  sheetSubtitle: {
+    fontSize: 14,
+    color: '#6b7a7d',
+    fontWeight: '600',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f0f4f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sheetContent: {
+    gap: 16,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#6b7a7d',
+    letterSpacing: 1,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafb',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#edf2f4',
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: '#151d1e',
+    fontWeight: '600',
+    flex: 1,
+  },
+  editSmallButton: {
+    backgroundColor: 'rgba(0, 104, 117, 0.05)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  editSmallText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#006875',
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#151d1e',
+    fontWeight: '600',
+    paddingVertical: 4,
+  },
+  tenantList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 4,
+  },
+  tenantTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  tenantTagText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#006875',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  statusToggle: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: '#f8fafb',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#edf2f4',
+  },
+  statusActiveVacant: {
+    backgroundColor: 'rgba(46, 125, 50, 0.1)',
+    borderColor: 'rgba(46, 125, 50, 0.2)',
+  },
+  statusActiveOccupied: {
+    backgroundColor: 'rgba(0, 104, 117, 0.1)',
+    borderColor: 'rgba(0, 104, 117, 0.2)',
+  },
+  statusToggleText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#6b7a7d',
+  },
+  statusTextActive: {
+    color: '#006875',
   },
   saveButton: {
     height: 56,
