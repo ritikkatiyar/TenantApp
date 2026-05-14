@@ -10,7 +10,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "rent_cycle_tbl")
+@Table(name = "rent_cycle_tbl", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"lease_id", "billing_month"})
+})
 @Getter
 @Setter
 @Builder
@@ -24,11 +26,14 @@ public class RentCycleTbl extends BaseEntity {
     @ToString.Exclude
     private LeaseTbl lease;
 
-    @Column(length = 7, nullable = false)
-    private String month;
+    @Column(name = "billing_month", length = 7, nullable = false)
+    private String billingMonth;
 
-    @Column(nullable = false)
-    private BigDecimal amount;
+    @Column(name = "base_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal baseAmount;
+
+    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalAmount;
 
     @Column(name = "due_date", nullable = false)
     private LocalDate dueDate;

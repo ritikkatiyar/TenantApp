@@ -32,6 +32,13 @@ public class UnitServiceImpl implements UnitService {
     private final LeaseRepository leaseRepository;
 
     @Override
+    @Transactional(readOnly = true)
+    public UnitTbl getUnitById(UUID id) {
+        return unitRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
+    }
+
+    @Override
     public List<UnitTbl> saveAll(List<UnitTbl> units) {
         return unitRepository.saveAll(units);
     }

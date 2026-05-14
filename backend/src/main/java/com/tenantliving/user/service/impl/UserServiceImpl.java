@@ -1,9 +1,11 @@
 package com.tenantliving.user.service.impl;
 
+import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.repository.UserRepository;
 import com.tenantliving.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -18,13 +20,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserTbl getUserById(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @Override
     public UserTbl getUserByEmail(String email) {
         return userRepository.findByAuthUid(normalizeEmail(email))
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @Override
@@ -35,7 +37,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserTbl createUser(UserTbl user) {
         if (existsByEmail(user.getAuthUid())) {
-            throw new RuntimeException("Email already registered: " + user.getAuthUid());
+            throw new BusinessException(HttpStatus.CONFLICT, "Email already registered");
         }
         return userRepository.save(user);
     }

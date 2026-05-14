@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UnitService {
+    UnitTbl getUnitById(UUID id);
+
     List<UnitTbl> saveAll(List<UnitTbl> units);
 
     List<UnitDTOs.FloorSummaryResponse> getFloorSummaries(UUID propertyId, Integer throughFloor);

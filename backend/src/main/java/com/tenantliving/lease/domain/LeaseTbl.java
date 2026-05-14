@@ -2,6 +2,7 @@ package com.tenantliving.lease.domain;
 
 import com.tenantliving.common.domain.BaseEntity;
 import com.tenantliving.common.domain.LeaseStatus;
+import com.tenantliving.common.domain.LeaseSplitStrategy;
 import com.tenantliving.unit.domain.UnitTbl;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,4 +39,11 @@ public class LeaseTbl extends BaseEntity {
 
     @Column(name = "rent_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal rentAmount;
+
+    @Column(name = "security_deposit", nullable = false, precision = 10, scale = 2)
+    private BigDecimal securityDeposit;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "split_strategy", nullable = false, length = 50)
+    private LeaseSplitStrategy splitStrategy;
 }
