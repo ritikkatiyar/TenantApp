@@ -12,4 +12,5 @@ public interface PropertyService {
     PropertyTbl updateProperty(UUID propertyId, PropertyDTOs.UpdatePropertyRequest request);
     List<PropertyTbl> getPropertiesByIds(Collection<UUID> propertyIds);
     PropertyTbl getPropertyById(UUID propertyId);
+    boolean existsById(UUID propertyId);
 }

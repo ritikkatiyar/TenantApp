@@ -24,10 +24,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { apiRequest } from '../api/client';
 import { getFloorLayout } from '../api/unit.api';
+import { createLease } from '../api/lease.api';
+import { searchUserByPhone, UserSearchResponse } from '../api/user.api';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
 const CELL_SIZE = 60;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 interface FloorEditorScreenProps {
   propertyId: string;
@@ -48,6 +51,9 @@ interface UnitBlock {
   unitNumber: string;
   rent?: string;
   tenants?: string[];
+  activeLeaseId?: string;
+  tenantUserId?: string;
+  tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
 }
 
@@ -63,7 +69,12 @@ export default function FloorEditorScreen({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nextUnitIndex, setNextUnitIndex] = useState(1);
-  const [newTenantName, setNewTenantName] = useState('');
+  const [tenantPhoneSearch, setTenantPhoneSearch] = useState('');
+  const [tenantSearchResult, setTenantSearchResult] = useState<UserSearchResponse | null>(null);
+  const [tenantSearchLoading, setTenantSearchLoading] = useState(false);
+  const [tenantAssigning, setTenantAssigning] = useState(false);
+  const [leaseRentAmount, setLeaseRentAmount] = useState('');
+  const [securityDeposit, setSecurityDeposit] = useState('');
   const [currentDrawBlock, setCurrentDrawBlock] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const drawBlockRef = useRef<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
@@ -103,6 +114,12 @@ export default function FloorEditorScreen({
         gridWidth: u.gridWidth,
         gridHeight: u.gridHeight,
         unitNumber: u.unitNumber,
+        rent: u.activeLease?.rentAmount?.toString(),
+        tenants: u.activeLease?.tenantName ? [u.activeLease.tenantName] : [],
+        activeLeaseId: u.activeLease?.leaseId,
+        tenantUserId: u.activeLease?.tenantUserId,
+        tenantPhone: u.activeLease?.tenantPhone,
+        status: u.activeLease ? 'OCCUPIED' : 'VACANT',
       }));
       setBlocks(mappedBlocks);
       
@@ -275,11 +292,98 @@ export default function FloorEditorScreen({
       setBlocks(newBlocks);
     } else if (activeTool === 'PAN') {
       setSelectedUnitId(block.id);
+      setLeaseRentAmount(block.rent || '');
+      setSecurityDeposit('');
+      setTenantPhoneSearch('');
+      setTenantSearchResult(null);
     }
   };
 
   const updateUnitDetails = (id: string, updates: Partial<UnitBlock>) => {
     setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+  };
+
+  const [tenantSearchError, setTenantSearchError] = useState<string | null>(null);
+
+  const resetTenantAssignmentForm = () => {
+    setTenantPhoneSearch('');
+    setTenantSearchResult(null);
+    setTenantSearchError(null);
+    setLeaseRentAmount('');
+    setSecurityDeposit('');
+  };
+
+  const handleSearchTenant = async () => {
+    const phone = tenantPhoneSearch.trim();
+    if (!phone) {
+      setTenantSearchError('Enter a phone number to search.');
+      return;
+    }
+
+    setTenantSearchLoading(true);
+    setTenantSearchError(null);
+    try {
+      const user = await searchUserByPhone(phone, userToken);
+      setTenantSearchResult(user);
+      if (!user) {
+        setTenantSearchError('Tenant not found with this number.');
+      }
+    } catch (error: any) {
+      console.error('[Assign Tenant Search Error]', error);
+      setTenantSearchError(error.message || 'Failed to search user.');
+    } finally {
+      setTenantSearchLoading(false);
+    }
+  };
+
+  const handleAssignTenant = async () => {
+    if (!selectedBlock || !tenantSearchResult) {
+      return;
+    }
+    if (!UUID_PATTERN.test(selectedBlock.id)) {
+      Alert.alert('Save unit first', 'Save the floor layout before assigning a tenant to this unit.');
+      return;
+    }
+
+    const rentAmount = Number(leaseRentAmount);
+    const depositAmount = Number(securityDeposit || '0');
+    if (!rentAmount || rentAmount < 0 || depositAmount < 0) {
+      Alert.alert('Validation', 'Enter a valid monthly rent amount.');
+      return;
+    }
+
+    setTenantAssigning(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const payload = {
+        userId: tenantSearchResult.id,
+        unitId: selectedBlock.id,
+        rentAmount,
+        securityDeposit: depositAmount,
+        splitStrategy: 'FULL_UNIT' as const,
+        moveInDate: today,
+        status: 'ACTIVE' as const,
+      };
+      console.log('[Assign Tenant Payload]', payload);
+      
+      const lease = await createLease(payload, userToken);
+
+      updateUnitDetails(selectedBlock.id, {
+        rent: lease.rentAmount.toString(),
+        tenants: [tenantSearchResult.fullName],
+        tenantUserId: tenantSearchResult.id,
+        tenantPhone: tenantSearchResult.phoneNumber,
+        activeLeaseId: lease.id,
+        status: 'OCCUPIED',
+      });
+      resetTenantAssignmentForm();
+      Alert.alert('Success', `${tenantSearchResult.fullName} has been assigned to Unit ${selectedBlock.unitNumber}.`);
+    } catch (error: any) {
+      console.error('[Assign Tenant API Error]', error);
+      Alert.alert('Error', error.message || 'Failed to assign tenant.');
+    } finally {
+      setTenantAssigning(false);
+    }
   };
 
   const selectedBlock = blocks.find(b => b.id === selectedUnitId);
@@ -299,7 +403,7 @@ export default function FloorEditorScreen({
         facing: 'NORTH'  // Defaulting
       }));
 
-      await apiRequest(`/api/v1/properties/${propertyId}/floors/${floorNumber}/layout`, {
+      await apiRequest(`/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`, {
         method: 'PUT',
         token: userToken,
         body: JSON.stringify(payload)
@@ -523,7 +627,10 @@ export default function FloorEditorScreen({
                     <Text style={styles.sheetSubtitle}>Floor {floorNumber}</Text>
                   </View>
                   <TouchableOpacity 
-                    onPress={() => setSelectedUnitId(null)}
+                    onPress={() => {
+                      setSelectedUnitId(null);
+                      resetTenantAssignmentForm();
+                    }}
                     style={styles.closeButton}
                   >
                     <MaterialIcons name="close" size={20} color="#6b7a7d" />
@@ -532,74 +639,110 @@ export default function FloorEditorScreen({
 
                 <View style={styles.sheetContent}>
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>MONTHLY RENT (₹)</Text>
+                    <Text style={styles.inputLabel}>MONTHLY RENT</Text>
                     <View style={styles.inputWrapper}>
                       <MaterialIcons name="payments" size={18} color="#006875" />
                       <TextInput 
                         style={styles.textInput}
-                        value={selectedBlock.rent}
-                        onChangeText={(val) => updateUnitDetails(selectedBlock.id, { rent: val })}
+                        value={selectedBlock.activeLeaseId ? selectedBlock.rent : leaseRentAmount}
+                        onChangeText={setLeaseRentAmount}
                         placeholder="e.g. 15000"
                         keyboardType="numeric"
                         placeholderTextColor="#9ba9ab"
+                        editable={!selectedBlock.activeLeaseId}
                       />
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>TENANTS</Text>
-                    <View style={styles.tenantList}>
-                      {(selectedBlock.tenants || []).map((tenant, idx) => (
-                        <View key={idx} style={styles.tenantTag}>
-                          <Text style={styles.tenantTagText}>{tenant}</Text>
-                          <TouchableOpacity 
-                            onPress={() => {
-                              const newTenants = [...(selectedBlock.tenants || [])];
-                              newTenants.splice(idx, 1);
-                              updateUnitDetails(selectedBlock.id, { 
-                                tenants: newTenants,
-                                status: newTenants.length === 0 ? 'VACANT' : 'OCCUPIED'
-                              });
+                    <Text style={styles.inputLabel}>TENANT</Text>
+                    {selectedBlock.activeLeaseId ? (
+                      <View style={styles.tenantList}>
+                        <View style={styles.tenantTag}>
+                          <Text style={styles.tenantTagText}>{selectedBlock.tenants?.[0] || 'Assigned tenant'}</Text>
+                        </View>
+                        {selectedBlock.tenantPhone ? (
+                          <Text style={styles.sheetSubtitle}>{selectedBlock.tenantPhone}</Text>
+                        ) : null}
+                      </View>
+                    ) : (
+                      <>
+                        <View style={styles.inputWrapper}>
+                          <MaterialIcons name="phone" size={18} color="#006875" />
+                          <TextInput
+                            style={styles.textInput}
+                            placeholder="Search registered user by phone"
+                            placeholderTextColor="#9ba9ab"
+                            value={tenantPhoneSearch}
+                            onChangeText={(val) => {
+                              setTenantPhoneSearch(val);
+                              setTenantSearchError(null);
                             }}
-                          >
-                            <MaterialIcons name="cancel" size={16} color="#006875" />
+                            keyboardType="phone-pad"
+                            onSubmitEditing={handleSearchTenant}
+                          />
+                          <TouchableOpacity onPress={handleSearchTenant} disabled={tenantSearchLoading}>
+                            {tenantSearchLoading ? (
+                              <ActivityIndicator size="small" color="#006875" />
+                            ) : (
+                              <MaterialIcons name="search" size={20} color="#006875" />
+                            )}
                           </TouchableOpacity>
                         </View>
-                      ))}
-                    </View>
-                    <View style={styles.inputWrapper}>
-                      <MaterialIcons name="person-add" size={18} color="#006875" />
-                      <TextInput 
-                        style={styles.textInput}
-                        placeholder="Add new tenant..."
-                        placeholderTextColor="#9ba9ab"
-                        value={newTenantName}
-                        onChangeText={setNewTenantName}
-                        onSubmitEditing={() => {
-                          const name = newTenantName.trim();
-                          if (name) {
-                            const newTenants = [...(selectedBlock.tenants || []), name];
-                            updateUnitDetails(selectedBlock.id, { 
-                              tenants: newTenants,
-                              status: 'OCCUPIED'
-                            });
-                          }
-                          setNewTenantName('');
-                        }}
-                      />
-                    </View>
+                        {tenantSearchError && (
+                          <Text style={{ color: '#e53935', fontSize: 13, marginTop: -8, marginBottom: 12, paddingLeft: 4 }}>
+                            {tenantSearchError}
+                          </Text>
+                        )}
+
+                        {tenantSearchResult && (
+                          <View style={styles.tenantList}>
+                            <View style={styles.tenantTag}>
+                              <Text style={styles.tenantTagText}>{tenantSearchResult.fullName}</Text>
+                            </View>
+                            <Text style={styles.sheetSubtitle}>{tenantSearchResult.email}</Text>
+                          </View>
+                        )}
+
+                        <View style={styles.inputWrapper}>
+                          <MaterialIcons name="account-balance-wallet" size={18} color="#006875" />
+                          <TextInput
+                            style={styles.textInput}
+                            placeholder="Security deposit (optional)"
+                            placeholderTextColor="#9ba9ab"
+                            value={securityDeposit}
+                            onChangeText={setSecurityDeposit}
+                            keyboardType="numeric"
+                          />
+                        </View>
+
+                        <TouchableOpacity
+                          style={[styles.statusToggle, styles.statusActiveOccupied]}
+                          onPress={handleAssignTenant}
+                          disabled={!tenantSearchResult || tenantAssigning}
+                        >
+                          {tenantAssigning ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                          ) : (
+                            <Text style={[styles.statusToggleText, styles.statusTextActive]}>ASSIGN TENANT</Text>
+                          )}
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
 
                   <View style={styles.statusContainer}>
                     <TouchableOpacity 
                       style={[styles.statusToggle, selectedBlock.status === 'VACANT' && styles.statusActiveVacant]}
                       onPress={() => updateUnitDetails(selectedBlock.id, { status: 'VACANT' })}
+                      disabled={Boolean(selectedBlock.activeLeaseId)}
                     >
                       <Text style={[styles.statusToggleText, selectedBlock.status === 'VACANT' && styles.statusTextActive]}>VACANT</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
                       style={[styles.statusToggle, selectedBlock.status === 'OCCUPIED' && styles.statusActiveOccupied]}
                       onPress={() => updateUnitDetails(selectedBlock.id, { status: 'OCCUPIED' })}
+                      disabled={Boolean(selectedBlock.activeLeaseId)}
                     >
                       <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextActive]}>OCCUPIED</Text>
                     </TouchableOpacity>

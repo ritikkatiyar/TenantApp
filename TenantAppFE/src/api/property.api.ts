@@ -16,7 +16,7 @@ type UpdatePropertyParams = {
 export function createProperty(params: CreatePropertyParams): Promise<PropertyResponse> {
   const { ownerId, token, property } = params;
 
-  return apiRequest<PropertyResponse>(`/api/v1/properties?ownerId=${ownerId}`, {
+  return apiRequest<PropertyResponse>(`/api/v1/property/properties?ownerId=${ownerId}`, {
     method: 'POST',
     token,
     body: JSON.stringify(property),
@@ -26,7 +26,7 @@ export function createProperty(params: CreatePropertyParams): Promise<PropertyRe
 export function updateProperty(params: UpdatePropertyParams): Promise<PropertyResponse> {
   const { propertyId, token, property } = params;
 
-  return apiRequest<PropertyResponse>(`/api/v1/properties/${propertyId}`, {
+  return apiRequest<PropertyResponse>(`/api/v1/property/properties/${propertyId}`, {
     method: 'PUT',
     token,
     body: JSON.stringify(property),
@@ -34,7 +34,7 @@ export function updateProperty(params: UpdatePropertyParams): Promise<PropertyRe
 }
 
 export function getProperty(propertyId: string, token: string): Promise<PropertyResponse> {
-  return apiRequest<PropertyResponse>(`/api/v1/properties/${propertyId}`, {
+  return apiRequest<PropertyResponse>(`/api/v1/property/properties/${propertyId}`, {
     method: 'GET',
     token,
   });

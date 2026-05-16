@@ -7,8 +7,8 @@ import com.tenantliving.property.repository.PropertyRepository;
 import com.tenantliving.property.service.interfaces.PropertyService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserService;
-import com.tenantliving.userpropertyrole.domain.UserPropertyRoleTbl;
-import com.tenantliving.userpropertyrole.repository.UserPropertyRoleRepository;
+import com.tenantliving.property.domain.UserPropertyRoleTbl;
+import com.tenantliving.property.repository.UserPropertyRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,5 +77,11 @@ public class PropertyServiceImpl implements PropertyService {
     public PropertyTbl getPropertyById(UUID propertyId) {
         return propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsById(UUID propertyId) {
+        return propertyRepository.existsById(propertyId);
     }
 }

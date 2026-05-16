@@ -108,7 +108,7 @@ export default function InsightsScreen() {
                     colors={['#00d4ff', '#0072ff']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={[styles.progressBarFill, { width: stats.collectionRate }]}
+                    style={[styles.progressBarFill, { width: stats.collectionRate as `${number}%` }]}
                   />
                 </View>
                 <View style={styles.progressLabels}>

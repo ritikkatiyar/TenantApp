@@ -1,0 +1,105 @@
+package com.tenantliving.property.facade;
+
+import com.tenantliving.common.exception.BusinessException;
+import com.tenantliving.finance.domain.LeaseTbl;
+import com.tenantliving.finance.service.interfaces.LeaseService;
+import com.tenantliving.property.domain.UnitTbl;
+import com.tenantliving.property.dto.UnitDTOs;
+import com.tenantliving.property.service.interfaces.UnitService;
+import com.tenantliving.user.domain.UserTbl;
+import com.tenantliving.user.service.interfaces.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+/**
+ * Application Service / Facade to orchestrate cross-domain logic between
+ * Property, Finance, and User modules for Unit Layouts.
+ * This keeps the Controllers thin and Domain Services pure.
+ */
+@Service
+@RequiredArgsConstructor
+public class UnitLayoutFacade {
+
+    private final UnitService unitService;
+    private final LeaseService leaseService;
+    private final UserService userService;
+
+    public List<UnitDTOs.UnitResponse> getFloorLayout(UUID propertyId, int floorNumber) {
+        List<UnitTbl> units = unitService.getUnitsByFloor(propertyId, floorNumber);
+        return enrichUnits(units);
+    }
+
+    public List<UnitDTOs.UnitResponse> saveFloorLayout(
+            UUID propertyId,
+            int floorNumber,
+            List<UnitDTOs.FloorLayoutUnitRequest> items) {
+        
+        List<UnitTbl> existingUnits = unitService.getUnitsByFloor(propertyId, floorNumber);
+        Set<String> incomingNumbers = items.stream()
+                .map(UnitDTOs.FloorLayoutUnitRequest::unitNumber)
+                .collect(Collectors.toSet());
+        
+        for (UnitTbl unit : existingUnits) {
+            if (!incomingNumbers.contains(unit.getUnitNumber())) {
+                if (leaseService.existsByUnitId(unit.getId())) {
+                    throw new BusinessException(
+                            HttpStatus.CONFLICT,
+                            "Cannot remove unit " + unit.getUnitNumber() + " from the layout while leases reference it"
+                    );
+                }
+            }
+        }
+
+        List<UnitTbl> saved = unitService.saveFloorLayout(propertyId, floorNumber, items);
+        return enrichUnits(saved);
+    }
+
+    private List<UnitDTOs.UnitResponse> enrichUnits(List<UnitTbl> units) {
+        Map<UUID, LeaseTbl> activeLeaseByUnitId = leaseService.findActiveLeasesByUnitIds(
+                units.stream().map(UnitTbl::getId).collect(Collectors.toSet())
+        );
+        Map<UUID, UserTbl> usersById = userService.getUsersByIds(
+                activeLeaseByUnitId.values().stream().map(LeaseTbl::getUserId).collect(Collectors.toSet())
+        );
+
+        return units.stream()
+                .map(unit -> toResponse(unit, activeLeaseByUnitId.get(unit.getId()), usersById))
+                .collect(Collectors.toList());
+    }
+
+    private UnitDTOs.UnitResponse toResponse(UnitTbl u, LeaseTbl lease, Map<UUID, UserTbl> usersById) {
+        return new UnitDTOs.UnitResponse(
+                u.getId(),
+                u.getUnitNumber(),
+                u.getFloor(),
+                u.getGridX(),
+                u.getGridY(),
+                u.getGridWidth(),
+                u.getGridHeight(),
+                u.getType(),
+                u.getCapacity(),
+                u.getFacing(),
+                toActiveLeaseSummary(lease, usersById)
+        );
+    }
+
+    private UnitDTOs.ActiveLeaseSummary toActiveLeaseSummary(LeaseTbl lease, Map<UUID, UserTbl> usersById) {
+        if (lease == null) return null;
+        UserTbl tenant = usersById.get(lease.getUserId());
+        return new UnitDTOs.ActiveLeaseSummary(
+                lease.getId(),
+                lease.getUserId(),
+                tenant != null ? tenant.getFullName() : null,
+                tenant != null ? tenant.getPhoneNumber() : null,
+                lease.getRentAmount(),
+                lease.getStatus().name()
+        );
+    }
+}

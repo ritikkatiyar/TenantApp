@@ -32,6 +32,7 @@ export default function BottomNavigation() {
     pathname === '/' || 
     pathname === '/login' || 
     pathname === '/signup' || 
+    pathname === '/tenant-home' ||
     /^\/properties\/[^\/]+\/floors\/[^\/]+$/.test(pathname)
   ) {
     return null;

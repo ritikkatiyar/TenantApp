@@ -27,6 +27,13 @@ module/
 
 ## MODULE BOUNDARY RULES
 
+* **Bounded Contexts Only**: Modules must be organized by Domain (Bounded Contexts), NOT by individual database tables (Entity Services).
+* Approved Top-Level Modules:
+  1. `auth` - Identity & Access Management (Logins, Tokens).
+  2. `user` - Core User Profile and Global Roles.
+  3. `property` - Real Estate / Asset Management (Properties, Units, Layouts, Property Roles).
+  4. `finance` - Tenancy & Financials (Leases, Rent Cycles, Expenses, Splits).
+  5. `common` / `config` - Cross-cutting concerns.
 * No direct repository access across modules
 * Modules communicate ONLY via service interfaces
 * Controllers must remain thin
@@ -65,6 +72,7 @@ Standard response format:
 }
 
 Rules:
+* **Domain-Prefixed Paths**: All API endpoints MUST be prefixed with the domain name (e.g., `/api/v1/finance/leases`, `/api/v1/property/properties`).
 * Never expose entities directly
 * Use DTOs for all APIs
 * Use validation annotations

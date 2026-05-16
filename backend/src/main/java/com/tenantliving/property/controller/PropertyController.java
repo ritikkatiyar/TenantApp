@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/properties")
+@RequestMapping("/api/v1/property/properties")
 @RequiredArgsConstructor
 @Tag(name = "Properties (admin)", description = "Property administration; requires SUPER_ADMIN or ADMIN")
 @SecurityRequirement(name = "bearerAuth")

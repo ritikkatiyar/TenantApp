@@ -1,10 +1,25 @@
 param(
+    [Parameter(Position=0)]
+    [string]$Command = "start",
     [int]$FrontendPort = 3000,
     [int]$BackendPort = 8080,
     [switch]$SkipDocker
 )
 
 $ErrorActionPreference = "Stop"
+
+function Write-Step {
+    param([string]$Message)
+    Write-Host "[dev] $Message" -ForegroundColor Cyan
+}
+
+if ($Command -ieq "stop") {
+    Write-Step "Stopping all infrastructure..."
+    docker compose down
+    Stop-Process -Name "java", "node" -Force -ErrorAction SilentlyContinue
+    Write-Step "All services stopped successfully."
+    exit 0
+}
 
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $RootDir "backend"
@@ -17,10 +32,7 @@ $FrontendErrLog = Join-Path $LogDir "frontend.err.log"
 
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
-function Write-Step {
-    param([string]$Message)
-    Write-Host "[dev] $Message" -ForegroundColor Cyan
-}
+
 
 function Test-CommandExists {
     param([string]$Command)

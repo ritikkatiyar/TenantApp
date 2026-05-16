@@ -1,7 +1,7 @@
 package com.tenantliving.property.domain;
 
 import com.tenantliving.common.domain.BaseEntity;
-import com.tenantliving.unit.domain.UnitTbl;
+import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.user.domain.UserTbl;
 import jakarta.persistence.*;
 import lombok.*;

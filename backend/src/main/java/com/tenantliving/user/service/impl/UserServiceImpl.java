@@ -35,6 +35,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<UserTbl> findByPhoneNumber(String phoneNumber) {
+        return userRepository.findByPhoneNumber(normalizePhoneNumber(phoneNumber));
+    }
+
+    @Override
     public UserTbl createUser(UserTbl user) {
         if (existsByEmail(user.getAuthUid())) {
             throw new BusinessException(HttpStatus.CONFLICT, "Email already registered");
@@ -54,5 +59,16 @@ public class UserServiceImpl implements UserService {
 
     private static String normalizeEmail(String email) {
         return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private static String normalizePhoneNumber(String phoneNumber) {
+        return phoneNumber == null ? null : phoneNumber.trim();
+    }
+
+    @Override
+    public java.util.Map<UUID, UserTbl> getUsersByIds(java.util.Collection<UUID> ids) {
+        if (ids == null || ids.isEmpty()) return java.util.Collections.emptyMap();
+        return userRepository.findAllById(ids).stream()
+                .collect(java.util.stream.Collectors.toMap(UserTbl::getId, u -> u));
     }
 }
