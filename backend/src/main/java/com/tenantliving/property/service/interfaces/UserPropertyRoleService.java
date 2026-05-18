@@ -9,4 +9,5 @@ public interface UserPropertyRoleService {
     List<PropertyTbl> getPropertiesByUserId(UUID userId);
     List<com.tenantliving.property.domain.UserPropertyRoleTbl> getRolesByUserId(UUID userId);
     void ensureTenantRole(UUID tenantId, UUID propertyId, UUID assignedByUserId);
+    void removeTenantRole(UUID tenantId, UUID propertyId);
 }

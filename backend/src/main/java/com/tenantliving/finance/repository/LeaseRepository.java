@@ -33,4 +33,11 @@ public interface LeaseRepository extends JpaRepository<LeaseTbl, UUID> {
 
     boolean existsByUnit_Id(UUID unitId);
     List<LeaseTbl> findByUnit_IdInAndStatus(java.util.Collection<UUID> unitIds, LeaseStatus status);
+
+    @Query("SELECT COUNT(l) > 0 FROM LeaseTbl l JOIN l.unit u WHERE l.userId = :userId AND u.property.id = :propertyId AND l.status = :status")
+    boolean existsByUserIdAndPropertyIdAndStatus(
+            @Param("userId") UUID userId,
+            @Param("propertyId") UUID propertyId,
+            @Param("status") LeaseStatus status
+    );
 }

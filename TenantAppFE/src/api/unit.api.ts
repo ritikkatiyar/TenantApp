@@ -28,7 +28,7 @@ export interface UnitResponse {
   type: string;
   capacity: number;
   facing: string;
-  activeLease?: ActiveLeaseSummary | null;
+  activeLeases?: ActiveLeaseSummary[];
 }
 
 export interface ActiveLeaseSummary {

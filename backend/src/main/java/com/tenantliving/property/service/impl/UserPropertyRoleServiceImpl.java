@@ -60,4 +60,12 @@ public class UserPropertyRoleServiceImpl implements UserPropertyRoleService {
                             .build());
                 });
     }
+
+    @Override
+    @Transactional
+    public void removeTenantRole(UUID tenantId, UUID propertyId) {
+        userPropertyRoleRepository
+                .findByUser_IdAndProperty_IdAndRole(tenantId, propertyId, com.tenantliving.common.domain.PropertyRole.TENANT)
+                .ifPresent(userPropertyRoleRepository::delete);
+    }
 }

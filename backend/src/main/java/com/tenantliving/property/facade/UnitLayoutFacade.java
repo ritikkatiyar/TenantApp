@@ -62,19 +62,22 @@ public class UnitLayoutFacade {
     }
 
     private List<UnitDTOs.UnitResponse> enrichUnits(List<UnitTbl> units) {
-        Map<UUID, LeaseTbl> activeLeaseByUnitId = leaseService.findActiveLeasesByUnitIds(
+        Map<UUID, List<LeaseTbl>> activeLeasesByUnitId = leaseService.findActiveLeasesByUnitIds(
                 units.stream().map(UnitTbl::getId).collect(Collectors.toSet())
         );
         Map<UUID, UserTbl> usersById = userService.getUsersByIds(
-                activeLeaseByUnitId.values().stream().map(LeaseTbl::getUserId).collect(Collectors.toSet())
+                activeLeasesByUnitId.values().stream()
+                        .flatMap(List::stream)
+                        .map(LeaseTbl::getUserId)
+                        .collect(Collectors.toSet())
         );
 
         return units.stream()
-                .map(unit -> toResponse(unit, activeLeaseByUnitId.get(unit.getId()), usersById))
+                .map(unit -> toResponse(unit, activeLeasesByUnitId.getOrDefault(unit.getId(), List.of()), usersById))
                 .collect(Collectors.toList());
     }
 
-    private UnitDTOs.UnitResponse toResponse(UnitTbl u, LeaseTbl lease, Map<UUID, UserTbl> usersById) {
+    private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<LeaseTbl> leases, Map<UUID, UserTbl> usersById) {
         return new UnitDTOs.UnitResponse(
                 u.getId(),
                 u.getUnitNumber(),
@@ -86,20 +89,22 @@ public class UnitLayoutFacade {
                 u.getType(),
                 u.getCapacity(),
                 u.getFacing(),
-                toActiveLeaseSummary(lease, usersById)
+                toActiveLeaseSummaries(leases, usersById)
         );
     }
 
-    private UnitDTOs.ActiveLeaseSummary toActiveLeaseSummary(LeaseTbl lease, Map<UUID, UserTbl> usersById) {
-        if (lease == null) return null;
-        UserTbl tenant = usersById.get(lease.getUserId());
-        return new UnitDTOs.ActiveLeaseSummary(
-                lease.getId(),
-                lease.getUserId(),
-                tenant != null ? tenant.getFullName() : null,
-                tenant != null ? tenant.getPhoneNumber() : null,
-                lease.getRentAmount(),
-                lease.getStatus().name()
-        );
+    private List<UnitDTOs.ActiveLeaseSummary> toActiveLeaseSummaries(List<LeaseTbl> leases, Map<UUID, UserTbl> usersById) {
+        if (leases == null || leases.isEmpty()) return List.of();
+        return leases.stream().map(lease -> {
+            UserTbl tenant = usersById.get(lease.getUserId());
+            return new UnitDTOs.ActiveLeaseSummary(
+                    lease.getId(),
+                    lease.getUserId(),
+                    tenant != null ? tenant.getFullName() : null,
+                    tenant != null ? tenant.getPhoneNumber() : null,
+                    lease.getRentAmount(),
+                    lease.getStatus().name()
+            );
+        }).collect(Collectors.toList());
     }
 }

@@ -73,4 +73,23 @@ public class LeaseController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(LeaseMapper.toResponse(leaseService.getLeaseById(id))));
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
+    @Operation(
+            summary = "Delete lease",
+            description = "Removes/terminates a lease by UUID."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lease deleted"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Lease not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role")
+    })
+    public ResponseEntity<ApiResponse<Void>> deleteLease(
+            @Parameter(description = "Lease UUID", required = true, in = ParameterIn.PATH)
+            @PathVariable UUID id
+    ) {
+        leaseService.deleteLease(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

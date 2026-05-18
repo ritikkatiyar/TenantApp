@@ -45,8 +45,12 @@ public class LeaseServiceImpl implements LeaseService {
         if (request.moveOutDate() != null && request.moveOutDate().isBefore(request.moveInDate())) {
             throw new BusinessException("moveOutDate cannot be before moveInDate");
         }
-        if (!leaseRepository.findByUnitIdAndStatus(unit.getId(), LeaseStatus.ACTIVE).isEmpty()) {
-            throw new BusinessException(HttpStatus.CONFLICT, "Unit already has an active lease");
+        if (unit.getCapacity() == null || unit.getCapacity() <= 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Unit capacity must be defined before assigning tenants.");
+        }
+        int activeLeaseCount = leaseRepository.findByUnitIdAndStatus(unit.getId(), LeaseStatus.ACTIVE).size();
+        if (activeLeaseCount >= unit.getCapacity()) {
+            throw new BusinessException(HttpStatus.CONFLICT, "Unit capacity of " + unit.getCapacity() + " has been reached.");
         }
 
         userPropertyRoleService.ensureTenantRole(tenant.getId(), unit.getProperty().getId(), assignedByUserId);
@@ -88,10 +92,29 @@ public class LeaseServiceImpl implements LeaseService {
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.Map<UUID, LeaseTbl> findActiveLeasesByUnitIds(java.util.Collection<UUID> unitIds) {
+    public java.util.Map<UUID, java.util.List<LeaseTbl>> findActiveLeasesByUnitIds(java.util.Collection<UUID> unitIds) {
         if (unitIds == null || unitIds.isEmpty()) return java.util.Collections.emptyMap();
         return leaseRepository.findByUnit_IdInAndStatus(unitIds, LeaseStatus.ACTIVE)
                 .stream()
-                .collect(java.util.stream.Collectors.toMap(l -> l.getUnit().getId(), l -> l));
+                .collect(java.util.stream.Collectors.groupingBy(l -> l.getUnit().getId()));
+    }
+
+    @Override
+    @Transactional
+    public void deleteLease(UUID id) {
+        LeaseTbl lease = getLeaseById(id);
+        UUID tenantId = lease.getUserId();
+        UUID propertyId = lease.getUnit().getProperty().getId();
+
+        leaseRepository.delete(lease);
+
+        // Check if this tenant has any other active leases in any unit of the same property
+        boolean hasOtherLeases = leaseRepository.existsByUserIdAndPropertyIdAndStatus(
+                tenantId, propertyId, LeaseStatus.ACTIVE
+        );
+
+        if (!hasOtherLeases) {
+            userPropertyRoleService.removeTenantRole(tenantId, propertyId);
+        }
     }
 }

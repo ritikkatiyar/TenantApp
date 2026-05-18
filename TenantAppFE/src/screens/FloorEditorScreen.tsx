@@ -23,7 +23,7 @@ import Animated, {
   FadeOutDown 
 } from 'react-native-reanimated';
 import { apiRequest } from '../api/client';
-import { getFloorLayout } from '../api/unit.api';
+import { getFloorLayout, ActiveLeaseSummary } from '../api/unit.api';
 import { createLease } from '../api/lease.api';
 import { searchUserByPhone, UserSearchResponse } from '../api/user.api';
 
@@ -55,6 +55,8 @@ interface UnitBlock {
   tenantUserId?: string;
   tenantPhone?: string | null;
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
+  capacity?: number;
+  activeLeases?: ActiveLeaseSummary[];
 }
 
 export default function FloorEditorScreen({
@@ -107,20 +109,26 @@ export default function FloorEditorScreen({
     setLoading(true);
     try {
       const units = await getFloorLayout(propertyId, floorNumber, userToken);
-      const mappedBlocks: UnitBlock[] = units.map(u => ({
-        id: u.id,
-        gridX: u.gridX,
-        gridY: u.gridY,
-        gridWidth: u.gridWidth,
-        gridHeight: u.gridHeight,
-        unitNumber: u.unitNumber,
-        rent: u.activeLease?.rentAmount?.toString(),
-        tenants: u.activeLease?.tenantName ? [u.activeLease.tenantName] : [],
-        activeLeaseId: u.activeLease?.leaseId,
-        tenantUserId: u.activeLease?.tenantUserId,
-        tenantPhone: u.activeLease?.tenantPhone,
-        status: u.activeLease ? 'OCCUPIED' : 'VACANT',
-      }));
+      const mappedBlocks: UnitBlock[] = units.map(u => {
+        const leases = u.activeLeases || [];
+        const primaryLease = leases[0] || null;
+        return {
+          id: u.id,
+          gridX: u.gridX,
+          gridY: u.gridY,
+          gridWidth: u.gridWidth,
+          gridHeight: u.gridHeight,
+          unitNumber: u.unitNumber,
+          rent: primaryLease ? Math.round(primaryLease.rentAmount * u.capacity).toString() : undefined,
+          tenants: leases.map(l => l.tenantName).filter(Boolean) as string[],
+          activeLeaseId: primaryLease ? primaryLease.leaseId : undefined,
+          tenantUserId: primaryLease ? primaryLease.tenantUserId : undefined,
+          tenantPhone: primaryLease ? primaryLease.tenantPhone : undefined,
+          status: leases.length > 0 ? 'OCCUPIED' : 'VACANT',
+          capacity: u.capacity,
+          activeLeases: leases,
+        };
+      });
       setBlocks(mappedBlocks);
       
       let maxIndex = 0;
@@ -186,7 +194,8 @@ export default function FloorEditorScreen({
           gridY: minY,
           gridWidth: w,
           gridHeight: h,
-          unitNumber: newUnitNum
+          unitNumber: newUnitNum,
+          capacity: 2
         };
 
         setNextUnitIndex(prev => prev + 1);
@@ -309,8 +318,6 @@ export default function FloorEditorScreen({
     setTenantPhoneSearch('');
     setTenantSearchResult(null);
     setTenantSearchError(null);
-    setLeaseRentAmount('');
-    setSecurityDeposit('');
   };
 
   const handleSearchTenant = async () => {
@@ -320,40 +327,73 @@ export default function FloorEditorScreen({
       return;
     }
 
+    if (!selectedBlock) return;
+
+    if (!selectedBlock.capacity || selectedBlock.capacity <= 0) {
+      setTenantSearchError('Please define unit capacity first.');
+      return;
+    }
+    if (!UUID_PATTERN.test(selectedBlock.id)) {
+      setTenantSearchError('Save the floor layout before assigning tenants.');
+      return;
+    }
+
     setTenantSearchLoading(true);
     setTenantSearchError(null);
+    setTenantSearchResult(null);
     try {
       const user = await searchUserByPhone(phone, userToken);
-      setTenantSearchResult(user);
       if (!user) {
         setTenantSearchError('Tenant not found with this number.');
+        return;
       }
+      setTenantSearchResult(user);
     } catch (error: any) {
-      console.error('[Assign Tenant Search Error]', error);
-      setTenantSearchError(error.message || 'Failed to search user.');
+      console.error('[Search Tenant Error]', error);
+      setTenantSearchError(error.message || 'Search failed.');
     } finally {
       setTenantSearchLoading(false);
     }
   };
 
   const handleAssignTenant = async () => {
-    if (!selectedBlock || !tenantSearchResult) {
-      return;
-    }
-    if (!UUID_PATTERN.test(selectedBlock.id)) {
-      Alert.alert('Save unit first', 'Save the floor layout before assigning a tenant to this unit.');
-      return;
-    }
+    if (!selectedBlock || !tenantSearchResult) return;
 
-    const rentAmount = Number(leaseRentAmount);
-    const depositAmount = Number(securityDeposit || '0');
-    if (!rentAmount || rentAmount < 0 || depositAmount < 0) {
-      Alert.alert('Validation', 'Enter a valid monthly rent amount.');
+    const totalRent = Number(leaseRentAmount);
+    const totalDeposit = Number(securityDeposit || '0');
+    if (!totalRent || totalRent < 0 || totalDeposit < 0) {
+      setTenantSearchError('Enter a valid monthly rent amount first.');
       return;
     }
 
     setTenantAssigning(true);
+    setTenantSearchError(null);
     try {
+      const capacity = selectedBlock.capacity || 1;
+      const rentAmount = Math.round(totalRent / capacity);
+      const depositAmount = Math.round(totalDeposit / capacity);
+
+      // 1) Auto-save the floor layout first!
+      // This guarantees the modified unit capacity is permanently saved to the database unit table
+      // before creating the lease, preventing rent calculation/mismatch issues on reload.
+      const savePayload = blocks.map(b => ({
+        unitNumber: b.unitNumber,
+        gridX: b.gridX,
+        gridY: b.gridY,
+        gridWidth: b.gridWidth,
+        gridHeight: b.gridHeight,
+        type: 'ONE_BHK',
+        capacity: b.id === selectedBlock.id ? capacity : (b.capacity || 2),
+        facing: 'NORTH'
+      }));
+
+      await apiRequest(`/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`, {
+        method: 'PUT',
+        token: userToken,
+        body: JSON.stringify(savePayload)
+      });
+
+      // 2) Now create the lease, which will read the correct, updated unit capacity from the database.
       const today = new Date().toISOString().slice(0, 10);
       const payload = {
         userId: tenantSearchResult.id,
@@ -364,26 +404,85 @@ export default function FloorEditorScreen({
         moveInDate: today,
         status: 'ACTIVE' as const,
       };
-      console.log('[Assign Tenant Payload]', payload);
-      
+
       const lease = await createLease(payload, userToken);
 
       updateUnitDetails(selectedBlock.id, {
-        rent: lease.rentAmount.toString(),
-        tenants: [tenantSearchResult.fullName],
+        rent: totalRent.toString(),
+        tenants: [...(selectedBlock.tenants || []), tenantSearchResult.fullName],
         tenantUserId: tenantSearchResult.id,
         tenantPhone: tenantSearchResult.phoneNumber,
         activeLeaseId: lease.id,
         status: 'OCCUPIED',
+        activeLeases: [
+          ...(selectedBlock.activeLeases || []),
+          {
+            leaseId: lease.id,
+            tenantUserId: tenantSearchResult.id,
+            tenantName: tenantSearchResult.fullName,
+            tenantPhone: tenantSearchResult.phoneNumber,
+            rentAmount: lease.rentAmount,
+            status: 'ACTIVE',
+          }
+        ]
       });
+
+      const assignedName = tenantSearchResult.fullName;
       resetTenantAssignmentForm();
-      Alert.alert('Success', `${tenantSearchResult.fullName} has been assigned to Unit ${selectedBlock.unitNumber}.`);
+      Alert.alert('Success', `${assignedName} has been assigned to Unit ${selectedBlock.unitNumber}.`);
     } catch (error: any) {
-      console.error('[Assign Tenant API Error]', error);
-      Alert.alert('Error', error.message || 'Failed to assign tenant.');
+      console.error('[Assign Tenant Error]', error);
+      setTenantSearchError(error.message || 'Assignment failed.');
     } finally {
       setTenantAssigning(false);
     }
+  };
+
+  const handleRemoveTenant = async (leaseId: string, tenantName?: string | null) => {
+    if (!selectedBlock) return;
+    const displayName = tenantName || 'this tenant';
+    Alert.alert(
+      'Remove Tenant',
+      `Are you sure you want to remove ${displayName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              // Call delete lease API on backend
+              await apiRequest(`/api/v1/finance/leases/${leaseId}`, {
+                method: 'DELETE',
+                token: userToken,
+              });
+
+              // Update state locally
+              const remainingLeases = (selectedBlock.activeLeases || []).filter(l => l.leaseId !== leaseId);
+              const remainingTenants = (selectedBlock.tenants || []).filter(name => name !== tenantName);
+              
+              updateUnitDetails(selectedBlock.id, {
+                tenants: remainingTenants,
+                activeLeases: remainingLeases,
+                activeLeaseId: remainingLeases[0]?.leaseId || undefined,
+                tenantUserId: remainingLeases[0]?.tenantUserId || undefined,
+                tenantPhone: remainingLeases[0]?.tenantPhone || undefined,
+                rent: remainingLeases[0]?.rentAmount?.toString() || undefined,
+                status: remainingLeases.length > 0 ? 'OCCUPIED' : 'VACANT',
+              });
+
+              Alert.alert('Removed', `${displayName} has been removed from Unit ${selectedBlock.unitNumber}.`);
+            } catch (error: any) {
+              console.error('[Remove Tenant Error]', error);
+              Alert.alert('Error', error.message || 'Failed to remove tenant.');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const selectedBlock = blocks.find(b => b.id === selectedUnitId);
@@ -399,7 +498,7 @@ export default function FloorEditorScreen({
         gridWidth: b.gridWidth,
         gridHeight: b.gridHeight,
         type: 'ONE_BHK', // Defaulting for now
-        capacity: 2,     // Defaulting
+        capacity: b.capacity || 2,
         facing: 'NORTH'  // Defaulting
       }));
 
@@ -416,6 +515,37 @@ export default function FloorEditorScreen({
       Alert.alert('Error', error.message || 'Failed to save layout.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const getBlockColorStyles = (b: UnitBlock) => {
+    const activeCount = b.activeLeases ? b.activeLeases.length : 0;
+    const capacity = b.capacity || 1;
+
+    if (activeCount === 0) {
+      // Fully Vacant: Muted Emerald Green
+      return {
+        backgroundColor: '#43a047',
+        borderColor: '#2e7d32',
+        textColor: '#ffffff',
+        accentColor: '#c8e6c9'
+      };
+    } else if (activeCount < capacity) {
+      // Partially Occupied: Warm Amber Orange
+      return {
+        backgroundColor: '#fb8c00',
+        borderColor: '#e65100',
+        textColor: '#ffffff',
+        accentColor: '#fff3e0'
+      };
+    } else {
+      // Fully Occupied: Muted Crimson Red
+      return {
+        backgroundColor: '#e53935',
+        borderColor: '#b71c1c',
+        textColor: '#ffffff',
+        accentColor: '#ffcdd2'
+      };
     }
   };
 
@@ -445,7 +575,15 @@ export default function FloorEditorScreen({
             ]}
             pointerEvents="box-none"
           >
-            {block && (
+            {block && (() => {
+              const colorStyles = getBlockColorStyles(block);
+              const isSelected = selectedUnitId === block.id;
+              const activeCount = block.activeLeases ? block.activeLeases.length : 0;
+              const cap = block.capacity || 1;
+              const isVacant = activeCount === 0;
+              const rentDisplay = block.rent ? `₹${Number(block.rent).toLocaleString('en-IN')}` : null;
+
+              return (
               <View
                 pointerEvents={activeTool === 'ADD' ? 'none' : 'auto'}
                 style={{
@@ -454,32 +592,94 @@ export default function FloorEditorScreen({
                   left: -1, 
                   width: block.gridWidth * CELL_SIZE,
                   height: block.gridHeight * CELL_SIZE,
-                  zIndex: 10,
+                  zIndex: isSelected ? 50 : 10,
                 }}
               >
+                {/* ── Colored Block with Embedded Info Badge ── */}
                 <GHTouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => handleBlockPress(blocks.indexOf(block))}
                   style={[
                     styles.cellActive, 
-                    { width: '100%', height: '100%' },
-                    selectedUnitId === block.id && styles.cellSelected
+                    { 
+                      width: '100%', 
+                      height: '100%',
+                      backgroundColor: colorStyles.backgroundColor,
+                      borderColor: isSelected ? '#00e5ff' : colorStyles.borderColor,
+                      borderWidth: isSelected ? 3 : 2,
+                      justifyContent: 'space-between',
+                      paddingVertical: block.gridHeight >= 2 ? 6 : 2,
+                      paddingHorizontal: block.gridWidth >= 2 ? 6 : 2,
+                    }
                   ]}
                 >
-                  <Text style={styles.cellText}>{block.unitNumber}</Text>
-                  {(block.gridWidth >= 2 && block.gridHeight >= 2) && (
-                    <Text style={styles.cellSubtext}>
-                      {block.tenants && block.tenants.length > 0 
-                        ? `${block.tenants.length} ${block.tenants.length === 1 ? 'TENANT' : 'TENANTS'}`
-                        : 'VACANT'}
-                    </Text>
-                  )}
-                  {block.rent && (
-                    <Text style={styles.cellRentText}>₹{block.rent}</Text>
+                  {/* Unit Number — top area */}
+                  <Text style={[styles.cellText, { color: colorStyles.textColor }]}>{block.unitNumber}</Text>
+
+                  {/* ── Frosted Info Badge — bottom of block ── */}
+                  {(block.gridWidth >= 2 || block.gridHeight >= 2) ? (
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      alignSelf: 'stretch',
+                      backgroundColor: 'rgba(255,255,255,0.85)',
+                      borderRadius: 6,
+                      paddingHorizontal: 5,
+                      paddingVertical: 3,
+                      gap: 4,
+                    }}>
+                      {/* Status Dot */}
+                      <View style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: colorStyles.backgroundColor,
+                        borderWidth: 1,
+                        borderColor: colorStyles.borderColor,
+                      }} />
+                      {/* Occupancy */}
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#1a1a1a' }}>
+                        {isVacant ? 'OPEN' : `${activeCount}/${cap}`}
+                      </Text>
+                      {/* Rent */}
+                      {rentDisplay && (
+                        <>
+                          <View style={{ width: 1, height: 8, backgroundColor: 'rgba(0,0,0,0.15)' }} />
+                          <Text style={{ fontSize: 8, fontWeight: '700', color: '#444' }} numberOfLines={1}>
+                            {rentDisplay}
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  ) : (
+                    /* Small 1x1 blocks: compact dot indicator at bottom */
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      alignSelf: 'center',
+                      backgroundColor: 'rgba(255,255,255,0.85)',
+                      borderRadius: 4,
+                      paddingHorizontal: 4,
+                      paddingVertical: 2,
+                      gap: 3,
+                    }}>
+                      <View style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: 3,
+                        backgroundColor: colorStyles.backgroundColor,
+                        borderWidth: 1,
+                        borderColor: colorStyles.borderColor,
+                      }} />
+                      <Text style={{ fontSize: 7, fontWeight: '800', color: '#1a1a1a' }}>
+                        {isVacant ? '—' : `${activeCount}/${cap}`}
+                      </Text>
+                    </View>
                   )}
                 </GHTouchableOpacity>
               </View>
-            )}
+              );
+            })()}
             {isPreviewStart && previewBlockState && (
               <View
                 pointerEvents="none"
@@ -620,7 +820,7 @@ export default function FloorEditorScreen({
               exiting={FadeOutDown}
               style={styles.detailSheetWrapper}
             >
-              <BlurView intensity={95} tint="light" style={styles.detailSheet}>
+              <BlurView intensity={80} tint="light" style={styles.detailSheet}>
                 <View style={styles.sheetHeader}>
                   <View>
                     <Text style={styles.sheetUnitTitle}>Unit {selectedBlock.unitNumber}</Text>
@@ -629,6 +829,8 @@ export default function FloorEditorScreen({
                   <TouchableOpacity 
                     onPress={() => {
                       setSelectedUnitId(null);
+                      setLeaseRentAmount('');
+                      setSecurityDeposit('');
                       resetTenantAssignmentForm();
                     }}
                     style={styles.closeButton}
@@ -638,56 +840,132 @@ export default function FloorEditorScreen({
                 </View>
 
                 <View style={styles.sheetContent}>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>MONTHLY RENT</Text>
-                    <View style={styles.inputWrapper}>
-                      <MaterialIcons name="payments" size={18} color="#006875" />
-                      <TextInput 
-                        style={styles.textInput}
-                        value={selectedBlock.activeLeaseId ? selectedBlock.rent : leaseRentAmount}
-                        onChangeText={setLeaseRentAmount}
-                        placeholder="e.g. 15000"
-                        keyboardType="numeric"
-                        placeholderTextColor="#9ba9ab"
-                        editable={!selectedBlock.activeLeaseId}
-                      />
+                  <View style={{ gap: 12, marginBottom: 12 }}>
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <View style={[styles.inputGroup, { flex: 1 }]}>
+                        <Text style={styles.inputLabel}>MONTHLY RENT</Text>
+                        <View style={styles.inputWrapper}>
+                          <MaterialIcons name="payments" size={18} color="#006875" />
+                          <TextInput 
+                            style={styles.textInput}
+                            value={leaseRentAmount}
+                            onChangeText={setLeaseRentAmount}
+                            placeholder="e.g. 15000"
+                            keyboardType="numeric"
+                            placeholderTextColor="#9ba9ab"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={[styles.inputGroup, { flex: 1 }]}>
+                        <Text style={styles.inputLabel}>UNIT CAPACITY</Text>
+                        <View style={styles.inputWrapper}>
+                          <MaterialIcons name="people" size={18} color="#006875" />
+                          <TextInput 
+                            style={styles.textInput}
+                            value={selectedBlock.capacity ? selectedBlock.capacity.toString() : ''}
+                            onChangeText={(val) => {
+                              const cap = parseInt(val, 10);
+                              updateUnitDetails(selectedBlock.id, { capacity: isNaN(cap) ? undefined : cap });
+                            }}
+                            placeholder="e.g. 2"
+                            keyboardType="numeric"
+                            placeholderTextColor="#9ba9ab"
+                            editable={!selectedBlock.activeLeases || selectedBlock.activeLeases.length === 0}
+                          />
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>SECURITY DEPOSIT</Text>
+                      <View style={styles.inputWrapper}>
+                        <MaterialIcons name="account-balance-wallet" size={18} color="#006875" />
+                        <TextInput 
+                          style={styles.textInput}
+                          placeholder="e.g. 30000"
+                          placeholderTextColor="#9ba9ab"
+                          value={securityDeposit}
+                          onChangeText={setSecurityDeposit}
+                          keyboardType="numeric"
+                        />
+                      </View>
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>TENANT</Text>
-                    {selectedBlock.activeLeaseId ? (
-                      <View style={styles.tenantList}>
-                        <View style={styles.tenantTag}>
-                          <Text style={styles.tenantTagText}>{selectedBlock.tenants?.[0] || 'Assigned tenant'}</Text>
-                        </View>
-                        {selectedBlock.tenantPhone ? (
-                          <Text style={styles.sheetSubtitle}>{selectedBlock.tenantPhone}</Text>
-                        ) : null}
+                    <Text style={styles.inputLabel}>ASSIGNED TENANTS</Text>
+                    {selectedBlock.activeLeases && selectedBlock.activeLeases.length > 0 ? (
+                      <View style={{ gap: 10, marginBottom: 12 }}>
+                        {selectedBlock.activeLeases.map((l, index) => (
+                          <View key={l.leaseId || index} style={[styles.tenantList, { paddingVertical: 10, paddingHorizontal: 14, backgroundColor: 'rgba(255, 255, 255, 0.45)', borderRadius: 16, borderColor: 'rgba(255, 255, 255, 0.55)', borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+                            <View style={{ flex: 1, gap: 4 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                <View style={styles.tenantTag}>
+                                  <Text style={styles.tenantTagText}>{l.tenantName || 'Assigned tenant'}</Text>
+                                </View>
+                                {l.tenantPhone ? (
+                                  <Text style={[styles.sheetSubtitle, { marginVertical: 0 }]}>{l.tenantPhone}</Text>
+                                ) : null}
+                              </View>
+                              {l.rentAmount ? (
+                                <Text style={{ fontSize: 11, color: '#6b7a7d', paddingLeft: 4 }}>Rent Share: ₹{l.rentAmount}/mo</Text>
+                              ) : null}
+                            </View>
+
+                            <TouchableOpacity 
+                              onPress={() => handleRemoveTenant(l.leaseId, l.tenantName)}
+                              style={{ padding: 6, borderRadius: 10, backgroundColor: 'rgba(229, 57, 53, 0.1)' }}
+                            >
+                              <MaterialIcons name="close" size={16} color="#e53935" />
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </View>
+                    ) : (
+                      <Text style={[styles.sheetSubtitle, { marginBottom: 8, fontStyle: 'italic' }]}>No tenants assigned yet.</Text>
+                    )}
+
+                    {(!selectedBlock.capacity || selectedBlock.capacity <= 0) ? (
+                      <View style={styles.warningContainer}>
+                        <MaterialIcons name="warning" size={18} color="#e53935" />
+                        <Text style={styles.warningText}>
+                          Please define a unit capacity of at least 1 before you can search for and assign tenants.
+                        </Text>
+                      </View>
+                    ) : selectedBlock.activeLeases && selectedBlock.activeLeases.length >= selectedBlock.capacity ? (
+                      <View style={[styles.warningContainer, { backgroundColor: 'rgba(46, 125, 50, 0.08)', borderColor: 'rgba(46, 125, 50, 0.15)', marginTop: 8 }]}>
+                        <MaterialIcons name="check-circle" size={18} color="#2e7d32" />
+                        <Text style={[styles.warningText, { color: '#2e7d32' }]}>
+                          Unit is fully occupied (Capacity: {selectedBlock.capacity}/{selectedBlock.capacity} reached).
+                        </Text>
                       </View>
                     ) : (
                       <>
-                        <View style={styles.inputWrapper}>
-                          <MaterialIcons name="phone" size={18} color="#006875" />
-                          <TextInput
-                            style={styles.textInput}
-                            placeholder="Search registered user by phone"
-                            placeholderTextColor="#9ba9ab"
-                            value={tenantPhoneSearch}
-                            onChangeText={(val) => {
-                              setTenantPhoneSearch(val);
-                              setTenantSearchError(null);
-                            }}
-                            keyboardType="phone-pad"
-                            onSubmitEditing={handleSearchTenant}
-                          />
-                          <TouchableOpacity onPress={handleSearchTenant} disabled={tenantSearchLoading}>
-                            {tenantSearchLoading ? (
-                              <ActivityIndicator size="small" color="#006875" />
-                            ) : (
-                              <MaterialIcons name="search" size={20} color="#006875" />
-                            )}
-                          </TouchableOpacity>
+                        <View style={{ marginBottom: 12 }}>
+                          {/* Search & Add Tenant Field */}
+                          <View style={styles.inputWrapper}>
+                            <MaterialIcons name="phone" size={18} color="#006875" />
+                            <TextInput
+                              style={styles.textInput}
+                              placeholder="Search by 10-digit phone"
+                              placeholderTextColor="#9ba9ab"
+                              value={tenantPhoneSearch}
+                              onChangeText={(val) => {
+                                setTenantPhoneSearch(val);
+                                setTenantSearchError(null);
+                              }}
+                              keyboardType="phone-pad"
+                              onSubmitEditing={handleSearchTenant}
+                            />
+                            <TouchableOpacity onPress={handleSearchTenant} disabled={tenantSearchLoading}>
+                              {tenantSearchLoading ? (
+                                <ActivityIndicator size="small" color="#006875" />
+                              ) : (
+                                <MaterialIcons name="person-add" size={20} color="#006875" />
+                              )}
+                            </TouchableOpacity>
+                          </View>
                         </View>
                         {tenantSearchError && (
                           <Text style={{ color: '#e53935', fontSize: 13, marginTop: -8, marginBottom: 12, paddingLeft: 4 }}>
@@ -696,37 +974,30 @@ export default function FloorEditorScreen({
                         )}
 
                         {tenantSearchResult && (
-                          <View style={styles.tenantList}>
-                            <View style={styles.tenantTag}>
-                              <Text style={styles.tenantTagText}>{tenantSearchResult.fullName}</Text>
+                          <View style={{ gap: 10, marginTop: 4, marginBottom: 12 }}>
+                            <View style={{ paddingVertical: 10, paddingHorizontal: 14, backgroundColor: 'rgba(46, 125, 50, 0.05)', borderRadius: 16, borderColor: 'rgba(46, 125, 50, 0.15)', borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <View>
+                                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1b5e20' }}>{tenantSearchResult.fullName}</Text>
+                                <Text style={{ fontSize: 11, color: '#4e7051' }}>{tenantSearchResult.email}</Text>
+                              </View>
+                              <MaterialIcons name="check-circle" size={20} color="#2e7d32" />
                             </View>
-                            <Text style={styles.sheetSubtitle}>{tenantSearchResult.email}</Text>
+
+                            <TouchableOpacity
+                              style={[styles.statusToggle, styles.statusActiveOccupied, { marginHorizontal: 0, paddingVertical: 14, borderRadius: 16 }]}
+                              onPress={handleAssignTenant}
+                              disabled={tenantAssigning}
+                            >
+                              {tenantAssigning ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                              ) : (
+                                <Text style={[styles.statusToggleText, styles.statusTextActive]}>
+                                  ASSIGN {tenantSearchResult.fullName.toUpperCase()}
+                                </Text>
+                              )}
+                            </TouchableOpacity>
                           </View>
                         )}
-
-                        <View style={styles.inputWrapper}>
-                          <MaterialIcons name="account-balance-wallet" size={18} color="#006875" />
-                          <TextInput
-                            style={styles.textInput}
-                            placeholder="Security deposit (optional)"
-                            placeholderTextColor="#9ba9ab"
-                            value={securityDeposit}
-                            onChangeText={setSecurityDeposit}
-                            keyboardType="numeric"
-                          />
-                        </View>
-
-                        <TouchableOpacity
-                          style={[styles.statusToggle, styles.statusActiveOccupied]}
-                          onPress={handleAssignTenant}
-                          disabled={!tenantSearchResult || tenantAssigning}
-                        >
-                          {tenantAssigning ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                          ) : (
-                            <Text style={[styles.statusToggleText, styles.statusTextActive]}>ASSIGN TENANT</Text>
-                          )}
-                        </TouchableOpacity>
                       </>
                     )}
                   </View>
@@ -963,15 +1234,15 @@ const styles = StyleSheet.create({
   },
   detailSheet: {
     borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 10,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     overflow: 'hidden',
   },
   sheetHeader: {
@@ -994,7 +1265,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f0f4f5',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1013,13 +1284,13 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafb',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
     borderWidth: 1,
-    borderColor: '#edf2f4',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   placeholderText: {
     fontSize: 14,
@@ -1074,10 +1345,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: '#f8fafb',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#edf2f4',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   statusActiveVacant: {
     backgroundColor: 'rgba(46, 125, 50, 0.1)',
@@ -1111,5 +1382,23 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#fff',
     letterSpacing: 1,
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(229, 57, 53, 0.08)',
+    borderColor: 'rgba(229, 57, 53, 0.15)',
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 14,
+    gap: 10,
+    marginBottom: 8,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#c62828',
+    fontWeight: '600',
+    lineHeight: 16,
   }
 });

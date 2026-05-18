@@ -76,7 +76,7 @@ public class UnitDTOs {
             UnitType type,
             int capacity,
             FacingDirection facing,
-            ActiveLeaseSummary activeLease
+            java.util.List<ActiveLeaseSummary> activeLeases
     ) {}
 
     public record ActiveLeaseSummary(
