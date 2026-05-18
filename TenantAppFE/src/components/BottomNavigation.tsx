@@ -20,6 +20,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'insights', icon: 'insights', label: 'INSIGHTS', route: '/analytics' },
   { id: 'properties', icon: 'domain', label: 'PROPERTIES', route: '/command-center' },
+  { id: 'ai', icon: 'auto-awesome', label: 'AI', route: '/ai' },
   { id: 'escalations', icon: 'error-outline', label: 'ESCALATIONS', route: '/escalations' },
 ];
 

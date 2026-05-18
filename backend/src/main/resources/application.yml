@@ -2,6 +2,17 @@ spring:
   application:
     name: tenant-living-backend
 
+  ai:
+    model:
+      chat: ${SPRING_AI_MODEL_CHAT:none}
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:}
+        chat:
+          options:
+            model: ${GEMINI_MODEL:gemini-2.5-flash}
+            temperature: ${GEMINI_TEMPERATURE:0.2}
+
   profiles:
     default: dev
 
@@ -40,6 +51,8 @@ logging:
     com.tenantliving: DEBUG
 
 app:
+  ai:
+    enabled: ${APP_AI_ENABLED:false}
   jwt:
     # HS256 requires a secret with enough entropy; use at least 32 bytes in production (APP_JWT_SECRET).
     secret: ${APP_JWT_SECRET:dev-only-change-this-to-a-long-random-secret-32b-min}

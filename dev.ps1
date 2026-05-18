@@ -39,6 +39,29 @@ function Test-CommandExists {
     return [bool](Get-Command $Command -ErrorAction SilentlyContinue)
 }
 
+function Import-DotEnv {
+    param([string]$Path)
+
+    if (-not (Test-Path $Path)) {
+        return
+    }
+
+    Get-Content $Path | ForEach-Object {
+        $line = $_.Trim()
+        if (-not $line -or $line.StartsWith("#") -or -not $line.Contains("=")) {
+            return
+        }
+
+        $key, $value = $line.Split("=", 2)
+        $key = $key.Trim()
+        $value = $value.Trim().Trim('"').Trim("'")
+
+        if ($key) {
+            Set-Item -Path "Env:$key" -Value $value
+        }
+    }
+}
+
 function Wait-ForMysql {
     param([int]$TimeoutSeconds = 120)
 
@@ -82,6 +105,8 @@ if (-not (Test-CommandExists "npm")) {
     throw "npm was not found on PATH."
 }
 
+Import-DotEnv (Join-Path $RootDir ".env")
+
 if (-not $SkipDocker) {
     if (-not (Test-CommandExists "docker")) {
         throw "Docker was not found on PATH. Start MySQL yourself and rerun with -SkipDocker."
@@ -108,6 +133,11 @@ $backendCommand = @"
 `$env:DB_USERNAME='tenant_living'
 `$env:DB_PASSWORD='tenant_living'
 `$env:SERVER_PORT='$BackendPort'
+`$env:APP_AI_ENABLED='$env:APP_AI_ENABLED'
+`$env:SPRING_AI_MODEL_CHAT='$env:SPRING_AI_MODEL_CHAT'
+`$env:GEMINI_API_KEY='$env:GEMINI_API_KEY'
+`$env:GEMINI_MODEL='$env:GEMINI_MODEL'
+`$env:GEMINI_TEMPERATURE='$env:GEMINI_TEMPERATURE'
 mvn spring-boot:run
 "@
 

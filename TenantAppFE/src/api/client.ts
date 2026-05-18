@@ -82,7 +82,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
     if (!response.ok || data?.success === false) {
       const message = data?.error?.message || data?.message || 'Request failed.';
-      const fieldErrors = data?.error?.fieldErrors;
+      const fieldErrors = (data as any)?.fieldErrors || data?.error?.fieldErrors;
       
       console.error(`[API ERROR] ${response.status} ${path} | ${message}`, {
         correlationId: fetchOptions.headers['X-Correlation-Id'],

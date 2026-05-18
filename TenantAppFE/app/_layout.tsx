@@ -20,6 +20,7 @@ export default function RootLayout() {
             <Stack.Screen name="login" />
             <Stack.Screen name="signup" />
             <Stack.Screen name="command-center" />
+            <Stack.Screen name="ai" />
             <Stack.Screen name="tenant-home" />
             <Stack.Screen name="properties/create" />
           </Stack>
