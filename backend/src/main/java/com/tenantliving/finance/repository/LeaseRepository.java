@@ -40,4 +40,6 @@ public interface LeaseRepository extends JpaRepository<LeaseTbl, UUID> {
             @Param("propertyId") UUID propertyId,
             @Param("status") LeaseStatus status
     );
+
+    boolean existsByUnit_Property_Id(UUID propertyId);
 }

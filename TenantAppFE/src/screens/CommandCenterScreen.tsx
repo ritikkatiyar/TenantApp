@@ -7,8 +7,11 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
-  FlatList
+  FlatList,
+  Alert,
+  Animated
 } from 'react-native';
+import { useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -25,16 +28,59 @@ interface CommandCenterScreenProps {
 
 export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogout }: CommandCenterScreenProps) {
   const router = useRouter();
-  const { properties, isLoading, error, refreshProperties } = useProperties();
+  const { properties, isLoading, error, refreshProperties, deleteProperty } = useProperties();
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [40, 90],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const largeTitleOpacity = scrollY.interpolate({
+    inputRange: [0, 70],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const handleDeleteProperty = (propertyId: string, propertyName: string) => {
+    Alert.alert(
+      "Delete Property",
+      `Are you sure you want to delete ${propertyName}? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteProperty(propertyId);
+            } catch (error) {
+              Alert.alert("Delete Failed", (error as Error).message);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const renderPropertyItem = ({ item }: { item: PropertyResponse }) => (
     <BlurView intensity={60} tint="light" style={styles.propertyCard}>
-      <View style={styles.propertyInfo}>
-        <Text style={styles.propertyName}>{item.name}</Text>
-        <View style={styles.addressContainer}>
-          <MaterialIcons name="location-on" size={14} color="#6b7a7d" />
-          <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
+      <View style={styles.propertyHeaderRow}>
+        <View style={styles.propertyInfo}>
+          <Text style={styles.propertyName}>{item.name}</Text>
+          <View style={styles.addressContainer}>
+            <MaterialIcons name="location-on" size={14} color="#6b7a7d" />
+            <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
+          </View>
         </View>
+        <TouchableOpacity 
+          style={styles.deleteButton}
+          onPress={() => handleDeleteProperty(item.id, item.name)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <MaterialIcons name="delete-outline" size={24} color="#ff4444" />
+        </TouchableOpacity>
       </View>
       
       <TouchableOpacity 
@@ -56,10 +102,10 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   );
 
   const ListHeader = () => (
-    <View style={styles.titleContainer}>
+    <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
       <Text style={styles.mainTitle}>My Properties</Text>
       <Text style={styles.subtitle}>Overview of your real estate portfolio</Text>
-    </View>
+    </Animated.View>
   );
 
   const ListEmptyComponent = () => (
@@ -113,15 +159,17 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   return (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#f9ede0']}
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      end={{ x: 0, y: 1 }}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={{ flex: 1 }} />
+          <Animated.View style={{ flex: 1, opacity: headerOpacity, justifyContent: 'center' }}>
+            <Text style={styles.compactHeaderTitle}>My Properties</Text>
+          </Animated.View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.notificationButton}>
               <Ionicons name="notifications-outline" size={24} color="#333" />
@@ -138,10 +186,10 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
             <ActivityIndicator size="large" color="#00e5ff" />
           </View>
         ) : (
-          <FlatList
+          <Animated.FlatList
             data={properties}
             renderItem={renderPropertyItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item: PropertyResponse) => item.id}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={ListHeader}
             ListEmptyComponent={ListEmptyComponent}
@@ -149,6 +197,11 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
             showsVerticalScrollIndicator={false}
             refreshing={isLoading}
             onRefresh={refreshProperties}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+              { useNativeDriver: true }
+            )}
+            scrollEventThrottle={16}
           />
         )}
       </SafeAreaView>
@@ -180,6 +233,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#00e5ff',
     letterSpacing: 1,
+  },
+  compactHeaderTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#151d1e',
   },
   menuButton: {
     padding: 5,
@@ -231,8 +289,20 @@ const styles = StyleSheet.create({
     shadowRadius: 30,
     overflow: 'hidden',
   },
+  propertyHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  deleteButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 68, 68, 0.1)',
+    borderRadius: 8,
+  },
   propertyInfo: {
     marginBottom: 20,
+    flex: 1,
+    paddingRight: 10,
   },
   propertyName: {
     fontSize: 22,

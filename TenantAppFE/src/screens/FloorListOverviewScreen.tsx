@@ -7,8 +7,10 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   RefreshControl,
-  Alert
+  Alert,
+  Animated
 } from 'react-native';
+import { useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -36,6 +38,19 @@ export default function FloorListOverviewScreen({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [totalFloorsFromProperty, setTotalFloorsFromProperty] = useState<number | undefined>(undefined);
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [40, 90],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const largeTitleOpacity = scrollY.interpolate({
+    inputRange: [0, 70],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -124,9 +139,9 @@ export default function FloorListOverviewScreen({
 
   return (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#f9ede0']}
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      end={{ x: 0, y: 1 }}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -135,27 +150,35 @@ export default function FloorListOverviewScreen({
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
             <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
           </TouchableOpacity>
-          <View style={styles.titleContainer}>
-            <Text style={styles.titleLine}>Floor</Text>
-            <Text style={styles.titleLine}>Overview</Text>
-          </View>
-          
-          <View style={styles.propertyBadge}>
-            <View style={styles.propertyIconWrapper}>
-              <MaterialIcons name="business" size={14} color="#fff" />
-            </View>
-            <Text style={styles.propertyNameLabel}>{propertyName}</Text>
-          </View>
+          <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
+            <Text style={styles.compactTitleText}>Floor Overview</Text>
+          </Animated.View>
         </View>
 
-        <ScrollView 
+        <Animated.ScrollView 
           style={styles.container}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#006875" />
           }
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
         >
+          <Animated.View style={[styles.largeTitleContainer, { opacity: largeTitleOpacity }]}>
+            <Text style={styles.titleLine}>Floor</Text>
+            <Text style={styles.titleLine}>Overview</Text>
+            <View style={styles.propertyBadge}>
+              <View style={styles.propertyIconWrapper}>
+                <MaterialIcons name="business" size={14} color="#fff" />
+              </View>
+              <Text style={styles.propertyNameLabel}>{propertyName}</Text>
+            </View>
+          </Animated.View>
+          
           {loading ? (
             <ActivityIndicator size="large" color="#006875" style={{ marginTop: 40 }} />
           ) : (
@@ -163,7 +186,7 @@ export default function FloorListOverviewScreen({
               {floors.map(renderFloorCard)}
             </View>
           )}
-        </ScrollView>
+        </Animated.ScrollView>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -179,7 +202,19 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 32,
     paddingTop: 20,
-    paddingBottom: 20,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  compactTitleContainer: {
+    flex: 1,
+    paddingBottom: 16,
+  },
+  compactTitleText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#151d1e',
   },
   backButton: {
     width: 40,
@@ -189,6 +224,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  largeTitleContainer: {
+    marginBottom: 20,
   },
   titleContainer: {},
   titleLine: {

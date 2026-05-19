@@ -13,4 +13,5 @@ public interface PropertyService {
     List<PropertyTbl> getPropertiesByIds(Collection<UUID> propertyIds);
     PropertyTbl getPropertyById(UUID propertyId);
     boolean existsById(UUID propertyId);
+    void deleteProperty(UUID propertyId);
 }

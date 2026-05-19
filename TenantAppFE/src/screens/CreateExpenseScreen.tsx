@@ -1,0 +1,531 @@
+import React, { useRef, useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Animated, 
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  Switch
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons, Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { BlurView } from 'expo-blur';
+
+export default function CreateExpenseScreen({ token }: { token: string | null }) {
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const router = useRouter();
+
+  const [expenseName, setExpenseName] = useState('');
+  const [billingFrequency, setBillingFrequency] = useState('Monthly');
+  const [calcMethod, setCalcMethod] = useState('Fixed Rate');
+  const [baseRate, setBaseRate] = useState('');
+  const [applySalesTax, setApplySalesTax] = useState(true);
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [40, 90],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const largeTitleOpacity = scrollY.interpolate({
+    inputRange: [0, 70],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <LinearGradient
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {/* Pinned header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+          </TouchableOpacity>
+          <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
+            <Text style={styles.compactTitleText}>New Expense</Text>
+          </Animated.View>
+        </View>
+
+        <Animated.ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
+          scrollEventThrottle={16}
+        >
+          {/* Hero Titles */}
+          <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
+            <Text style={styles.mainTitle}>New Expense</Text>
+          </Animated.View>
+
+          {/* Card 1: Expense Identity */}
+          <BlurView intensity={40} tint="light" style={styles.card}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons name="file-document-outline" size={20} color="#006875" />
+              <Text style={styles.cardTitle}>Expense Identity</Text>
+            </View>
+
+            <Text style={styles.label}>EXPENSE NAME</Text>
+            <View style={styles.inputContainer}>
+              <TextInput 
+                style={styles.input} 
+                placeholder="e.g. Electricity, Sanitation Servic" 
+                placeholderTextColor="#849495"
+                value={expenseName}
+                onChangeText={setExpenseName}
+              />
+            </View>
+
+            <Text style={styles.label}>CATEGORY</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputText}>Consumables</Text>
+            </View>
+
+            <Text style={styles.label}>BILLING FREQUENCY</Text>
+            <View style={styles.segmentContainer}>
+              {['Monthly', 'Annual', 'Weekly'].map((freq) => {
+                const isActive = billingFrequency === freq;
+                return (
+                  <TouchableOpacity 
+                    key={freq}
+                    style={styles.segmentButtonWrapper}
+                    onPress={() => setBillingFrequency(freq)}
+                    activeOpacity={0.8}
+                  >
+                    {isActive ? (
+                      <LinearGradient
+                        colors={['#00d4ff', '#0072ff']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.segmentButtonGradient}
+                      >
+                        <Text style={styles.segmentTextActive}>{freq}</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View style={styles.segmentButtonInactive}>
+                        <Text style={styles.segmentText}>{freq}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </BlurView>
+
+          {/* Card 2: Rate & Calculation */}
+          <BlurView intensity={40} tint="light" style={styles.card}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons name="calculator-variant-outline" size={20} color="#006875" />
+              <Text style={styles.cardTitle}>Rate & Calculation</Text>
+            </View>
+
+            <Text style={styles.label}>CALCULATION METHOD</Text>
+            
+            <View style={styles.radioGroup}>
+              {[
+                { title: 'Fixed Rate', sub: 'Standard monthly fee' },
+                { title: 'Metered/Consumption', sub: 'Based on usage units' },
+                { title: 'Sq. Footage', sub: 'Calculated per area' }
+              ].map((method, index) => (
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.radioRow}
+                  onPress={() => setCalcMethod(method.title)}
+                >
+                  <View style={styles.radioCircle}>
+                    {calcMethod === method.title && <View style={styles.radioDot} />}
+                  </View>
+                  <View>
+                    <Text style={styles.radioTitle}>{method.title}</Text>
+                    <Text style={styles.radioSub}>{method.sub}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.label}>BASE RATE</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.currencySymbol}>$</Text>
+              <TextInput 
+                style={styles.inputWithIcon} 
+                placeholder="0.00" 
+                placeholderTextColor="#849495"
+                keyboardType="numeric"
+                value={baseRate}
+                onChangeText={setBaseRate}
+              />
+            </View>
+
+            <Text style={styles.label}>UNIT SELECTOR</Text>
+            <Text style={styles.unitText}>per <Text style={styles.unitTextBold}>kWh</Text></Text>
+          </BlurView>
+
+          {/* Card 3: Advanced Logic */}
+          <BlurView intensity={40} tint="light" style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="settings-outline" size={20} color="#006875" />
+              <Text style={[styles.cardTitle, { textTransform: 'uppercase', fontSize: 13 }]}>Advanced Logic</Text>
+            </View>
+
+            <View style={styles.rowBetween}>
+              <Text style={styles.settingText}>Apply Sales Tax</Text>
+              <Switch 
+                value={applySalesTax} 
+                onValueChange={setApplySalesTax}
+                trackColor={{ false: '#d1d5db', true: '#00F0FF' }}
+                thumbColor="#ffffff"
+              />
+            </View>
+
+            <View style={[styles.rowBetween, { marginTop: 24, marginBottom: 24 }]}>
+              <Text style={styles.settingText}>Late Fee Rules</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>5% / Monthly</Text>
+              </View>
+            </View>
+
+            <Text style={styles.label}>LATE FEE %</Text>
+            <View style={styles.sliderMock}>
+              <View style={styles.sliderTrack}>
+                <View style={[styles.sliderFill, { width: '40%' }]} />
+                <View style={styles.sliderThumb} />
+              </View>
+              <View style={styles.sliderLabels}>
+                <Text style={styles.sliderLabelText}>0%</Text>
+                <Text style={styles.sliderLabelText}>15%</Text>
+              </View>
+            </View>
+          </BlurView>
+
+          {/* Card 4: Preview */}
+          <BlurView intensity={50} tint="light" style={[styles.card, { padding: 0, overflow: 'hidden', borderWidth: 0 }]}>
+            <View style={styles.previewHeader}>
+              <Text style={styles.previewHeaderText}>PREVIEW</Text>
+              <Ionicons name="eye-outline" size={16} color="#ffffff" />
+            </View>
+            <View style={styles.previewBody}>
+              <Text style={styles.previewSub}>Estimated Monthly Charge</Text>
+              <Text style={styles.previewAmount}>$0.00</Text>
+              <Text style={styles.previewDisclaimer}>
+                *Based on current parameters and empty unit assumptions
+              </Text>
+              
+              <TouchableOpacity style={styles.submitButton}>
+                <Text style={styles.submitButtonText}>Create Expense Entity</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.draftButton}>
+                <Text style={styles.draftButtonText}>Save as Draft</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+
+          {/* Spacer to prevent bottom from being cut off */}
+          <View style={{ height: 40 }} />
+        </Animated.ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    zIndex: 10,
+  },
+  compactTitleContainer: {
+    flex: 1,
+    paddingBottom: 16,
+  },
+  compactTitleText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 120,
+  },
+  titleContainer: {
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  mainTitle: {
+    fontSize: 42,
+    fontWeight: '800',
+    color: '#151d1e',
+    letterSpacing: -1,
+  },
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    boxShadow: '0px 10px 30px rgba(0, 104, 117, 0.05)',
+    overflow: 'hidden',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    gap: 8,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#006875',
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#5b6b6d',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  inputContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  input: {
+    fontSize: 15,
+    color: '#151d1e',
+    flex: 1,
+  },
+  inputText: {
+    fontSize: 15,
+    color: '#151d1e',
+  },
+  segmentContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 4,
+    marginTop: 4,
+  },
+  segmentButtonWrapper: {
+    flex: 1,
+  },
+  segmentButtonGradient: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  segmentButtonInactive: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  segmentText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#151d1e',
+  },
+  segmentTextActive: {
+    color: '#ffffff',
+  },
+  radioGroup: {
+    marginBottom: 24,
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  radioCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#006875',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#006875',
+  },
+  radioTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#151d1e',
+  },
+  radioSub: {
+    fontSize: 13,
+    color: '#849495',
+  },
+  currencySymbol: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#6b7a7d',
+    marginRight: 8,
+  },
+  inputWithIcon: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#151d1e',
+    flex: 1,
+  },
+  unitText: {
+    fontSize: 15,
+    color: '#151d1e',
+  },
+  unitTextBold: {
+    fontWeight: '700',
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#151d1e',
+  },
+  badge: {
+    backgroundColor: '#e6fcfd',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#006875',
+  },
+  sliderMock: {
+    marginTop: 10,
+  },
+  sliderTrack: {
+    height: 4,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sliderFill: {
+    height: '100%',
+    backgroundColor: '#006875',
+    borderRadius: 2,
+  },
+  sliderThumb: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#006875',
+    marginLeft: -8,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  sliderLabelText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#151d1e',
+  },
+  previewHeader: {
+    backgroundColor: '#006875',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  previewHeaderText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  previewBody: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  previewSub: {
+    fontSize: 13,
+    color: '#5b6b6d',
+    marginBottom: 8,
+  },
+  previewAmount: {
+    fontSize: 48,
+    fontWeight: '800',
+    color: '#006875',
+    marginBottom: 16,
+  },
+  previewDisclaimer: {
+    fontSize: 11,
+    color: '#849495',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 32,
+  },
+  submitButton: {
+    backgroundColor: '#4338ca',
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  submitButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  draftButton: {
+    paddingVertical: 8,
+  },
+  draftButtonText: {
+    color: '#151d1e',
+    fontSize: 14,
+    fontWeight: '600',
+  }
+});

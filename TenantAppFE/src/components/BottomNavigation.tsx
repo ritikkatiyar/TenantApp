@@ -22,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'properties', icon: 'domain', label: 'PROPERTIES', route: '/command-center' },
   { id: 'ai', icon: 'auto-awesome', label: 'AI', route: '/ai' },
   { id: 'escalations', icon: 'error-outline', label: 'ESCALATIONS', route: '/escalations' },
+  { id: 'expenses', icon: 'settings', label: 'SETTINGS', route: '/expenses' },
 ];
 
 export default function BottomNavigation() {

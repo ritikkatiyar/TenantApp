@@ -12,6 +12,7 @@ import com.tenantliving.property.repository.UserPropertyRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.tenantliving.finance.repository.LeaseRepository;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,6 +24,7 @@ public class PropertyServiceImpl implements PropertyService {
     private final PropertyRepository propertyRepository;
     private final UserService userService;
     private final UserPropertyRoleRepository userPropertyRoleRepository;
+    private final LeaseRepository leaseRepository;
 
     @Override
     @Transactional
@@ -83,5 +85,18 @@ public class PropertyServiceImpl implements PropertyService {
     @Transactional(readOnly = true)
     public boolean existsById(UUID propertyId) {
         return propertyRepository.existsById(propertyId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteProperty(UUID propertyId) {
+        PropertyTbl property = getPropertyById(propertyId);
+        
+        if (leaseRepository.existsByUnit_Property_Id(propertyId)) {
+            throw new RuntimeException("Cannot delete property because it has assigned tenants or leases.");
+        }
+        
+        userPropertyRoleRepository.deleteByProperty_Id(propertyId);
+        propertyRepository.delete(property);
     }
 }

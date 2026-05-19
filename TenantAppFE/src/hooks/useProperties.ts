@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { getPropertiesByUser } from '../api/userPropertyRole.api';
+import { deletePropertyApi } from '../api/property.api';
 import type { PropertyResponse } from '../types/property';
 
 export function useProperties() {
@@ -29,10 +30,26 @@ export function useProperties() {
     fetchProperties();
   }, [fetchProperties]);
 
+  const deleteProperty = useCallback(async (propertyId: string) => {
+    if (!accessToken) return;
+    try {
+      setIsLoading(true);
+      await deletePropertyApi(propertyId, accessToken);
+      await fetchProperties(); // refresh after deletion
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(msg);
+      throw err; // re-throw so the caller can show an alert
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken, fetchProperties]);
+
   return {
     properties,
     isLoading,
     error,
-    refreshProperties: fetchProperties
+    refreshProperties: fetchProperties,
+    deleteProperty
   };
 }

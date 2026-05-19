@@ -101,4 +101,29 @@ public class PropertyController {
                 ownerId
         );
     }
+
+    @DeleteMapping("/{propertyId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @Operation(summary = "Delete property", description = "Deletes an existing property if it has no assigned tenants.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property deleted"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation failed (e.g. has tenants)",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role SUPER_ADMIN or ADMIN", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ResponseEntity<ApiResponse<Void>> deleteProperty(
+            @Parameter(description = "Property UUID", required = true, in = ParameterIn.PATH, example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+            @PathVariable UUID propertyId) {
+        try {
+            propertyService.deleteProperty(propertyId);
+            return ResponseEntity.ok(ApiResponse.success(null));
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("assigned tenants")) {
+                return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            }
+            throw e;
+        }
+    }
 }

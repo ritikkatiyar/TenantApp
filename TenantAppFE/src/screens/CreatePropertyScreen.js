@@ -12,8 +12,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Animated
 } from 'react-native';
+import { useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '../theme/Theme';
 import { createProperty } from '../api/property.api';
@@ -26,17 +28,66 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   const [totalFloors, setTotalFloors] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef(null);
+  const [showErrors, setShowErrors] = useState(false);
+
+  const shakeName = useRef(new Animated.Value(0)).current;
+  const shakeAddress = useRef(new Animated.Value(0)).current;
+  const shakeCity = useRef(new Animated.Value(0)).current;
+  const shakeFloors = useRef(new Animated.Value(0)).current;
+
+  const triggerShake = (anim) => {
+    anim.setValue(0);
+    Animated.sequence([
+      Animated.timing(anim, { toValue: 15, duration: 60, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: -15, duration: 60, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 15, duration: 60, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: -15, duration: 60, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 0, duration: 60, useNativeDriver: true })
+    ]).start();
+  };
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [40, 90],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const largeTitleOpacity = scrollY.interpolate({
+    inputRange: [0, 70],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
 
   const handleSave = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    if (!name || !address || !city || !totalFloors) {
-      setErrorMsg('Please fill in all required fields (Name, Address, City, Floors).');
+    let hasError = false;
+    let firstErrorField = null;
+
+    if (!name) { hasError = true; triggerShake(shakeName); if (!firstErrorField) firstErrorField = 'name'; }
+    if (!address) { hasError = true; triggerShake(shakeAddress); if (!firstErrorField) firstErrorField = 'address'; }
+    if (!city) { hasError = true; triggerShake(shakeCity); if (!firstErrorField) firstErrorField = 'city'; }
+    if (!totalFloors || parseInt(totalFloors, 10) < 1) { 
+      hasError = true; triggerShake(shakeFloors); if (!firstErrorField) firstErrorField = 'floors'; 
+    }
+
+    if (hasError) {
+      setShowErrors(true);
+      setErrorMsg('Please fill in all required fields properly.');
+      
+      if (firstErrorField === 'floors') {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      } else {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }
       return;
     }
 
     setLoading(true);
     setErrorMsg('');
+    setShowErrors(false);
 
     try {
       const property = await createProperty({
@@ -63,9 +114,9 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
 
   return (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#f9ede0']}
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      end={{ x: 0, y: 1 }}
       style={{ flex: 1 }}
     >
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -74,10 +125,9 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
         </TouchableOpacity>
-        <View style={styles.titleContainer}>
-          <Text style={styles.titleLine}>Create</Text>
-          <Text style={styles.titleLine}>Property</Text>
-        </View>
+        <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
+          <Text style={styles.compactTitleText}>Create Property</Text>
+        </Animated.View>
       </View>
 
       {/* KAV wraps only the scrollable form — header stays above it */}
@@ -86,11 +136,22 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
         behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
       >
-        <ScrollView
+        <Animated.ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
         >
+          <Animated.View style={[styles.largeTitleContainer, { opacity: largeTitleOpacity }]}>
+            <Text style={styles.titleLine}>Create</Text>
+            <Text style={styles.titleLine}>Property</Text>
+          </Animated.View>
+
           {/* Main Content Area — same glass style as Login */}
           <BlurView intensity={60} tint="light" style={styles.cardContainer}>
             <Text style={styles.description}>
@@ -110,43 +171,61 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
               {/* Property Name Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Property Name</Text>
-                <View style={styles.inputWrapper}>
+                <Animated.View style={[
+                  styles.inputWrapper,
+                  { transform: [{ translateX: shakeName }] }
+                ]}>
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      showErrors && !name ? { borderColor: '#e53935' } : null
+                    ]}
                     placeholder="e.g. Apex Tower"
                     placeholderTextColor="#bac9cc"
                     value={name}
-                    onChangeText={setName}
+                    onChangeText={(val) => { setName(val); setShowErrors(false); setErrorMsg(''); }}
                   />
-                </View>
+                </Animated.View>
               </View>
 
               {/* Address Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Address</Text>
-                <View style={styles.inputWrapper}>
+                <Animated.View style={[
+                  styles.inputWrapper,
+                  { transform: [{ translateX: shakeAddress }] }
+                ]}>
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      showErrors && !address ? { borderColor: '#e53935' } : null
+                    ]}
                     placeholder="e.g. 100 Horizon Boulevard"
                     placeholderTextColor="#bac9cc"
                     value={address}
-                    onChangeText={setAddress}
+                    onChangeText={(val) => { setAddress(val); setShowErrors(false); setErrorMsg(''); }}
                   />
-                </View>
+                </Animated.View>
               </View>
 
               {/* City Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>City</Text>
-                <View style={styles.inputWrapper}>
+                <Animated.View style={[
+                  styles.inputWrapper,
+                  { transform: [{ translateX: shakeCity }] }
+                ]}>
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      showErrors && !city ? { borderColor: '#e53935' } : null
+                    ]}
                     placeholder="e.g. Bengaluru"
                     placeholderTextColor="#bac9cc"
                     value={city}
-                    onChangeText={setCity}
+                    onChangeText={(val) => { setCity(val); setShowErrors(false); setErrorMsg(''); }}
                   />
-                </View>
+                </Animated.View>
               </View>
 
               {/* Landmark Input */}
@@ -166,17 +245,23 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
               {/* Total Floors Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Total Floors</Text>
-                <View style={styles.inputWrapper}>
+                <Animated.View style={[
+                  styles.inputWrapper,
+                  { transform: [{ translateX: shakeFloors }] }
+                ]}>
                   <TextInput
-                    style={styles.inputWithIconRight}
+                    style={[
+                      styles.inputWithIconRight,
+                      showErrors && (!totalFloors || parseInt(totalFloors, 10) < 1) ? { borderColor: '#e53935' } : null
+                    ]}
                     placeholder="0"
                     placeholderTextColor="#bac9cc"
                     value={totalFloors}
-                    onChangeText={setTotalFloors}
+                    onChangeText={(val) => { setTotalFloors(val); setShowErrors(false); setErrorMsg(''); }}
                     keyboardType="numeric"
                   />
                   <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIconRight} />
-                </View>
+                </Animated.View>
               </View>
 
               {/* Action Button - same gradient pill as dashboard CREATE PROPERTY */}
@@ -204,7 +289,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
               </TouchableOpacity>
             </View>
           </BlurView>
-        </ScrollView>
+        </Animated.ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
     </LinearGradient>
@@ -228,7 +313,19 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 32,
     paddingTop: 20,
-    paddingBottom: 20,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  compactTitleContainer: {
+    flex: 1,
+    paddingBottom: 16,
+  },
+  compactTitleText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#151d1e',
   },
   backButton: {
     width: 40,
@@ -238,6 +335,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  largeTitleContainer: {
+    marginBottom: 20,
   },
   titleContainer: {
     // tight line height wrap

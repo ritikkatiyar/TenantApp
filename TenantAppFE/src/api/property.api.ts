@@ -39,3 +39,10 @@ export function getProperty(propertyId: string, token: string): Promise<Property
     token,
   });
 }
+
+export function deletePropertyApi(propertyId: string, token: string): Promise<void> {
+  return apiRequest<void>(`/api/v1/property/properties/${propertyId}`, {
+    method: 'DELETE',
+    token,
+  });
+}

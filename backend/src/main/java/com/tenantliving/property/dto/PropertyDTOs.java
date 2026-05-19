@@ -28,6 +28,8 @@ public class PropertyDTOs {
             String landmark,
 
             @Schema(example = "5")
+            @NotNull(message = "Total floors is required")
+            @Min(value = 1, message = "Property must have at least 1 floor")
             Integer totalFloors
     ) {}
 
@@ -49,6 +51,8 @@ public class PropertyDTOs {
             String landmark,
 
             @Schema(example = "5")
+            @NotNull(message = "Total floors is required")
+            @Min(value = 1, message = "Property must have at least 1 floor")
             Integer totalFloors
     ) {}
 

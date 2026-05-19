@@ -81,12 +81,19 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     const data = await parseResponse<T>(response);
 
     if (!response.ok || data?.success === false) {
-      const message = data?.error?.message || data?.message || 'Request failed.';
-      const fieldErrors = (data as any)?.fieldErrors || data?.error?.fieldErrors;
+      const message = (data as any)?.message || 
+        (typeof data?.error === 'string' ? data.error : data?.error?.message) || 
+        'Request failed.';
+      const fieldErrors = (data as any)?.fieldErrors || (data?.error as any)?.fieldErrors;
       
-      console.error(`[API ERROR] ${response.status} ${path} | ${message}`, {
-        correlationId: fetchOptions.headers['X-Correlation-Id'],
-      });
+      const logMessage = `[API ERROR] ${response.status} ${path} | ${message}`;
+      const logData = { correlationId: fetchOptions.headers['X-Correlation-Id'] };
+      
+      if (response.status >= 400 && response.status < 500) {
+        console.warn(logMessage, logData);
+      } else {
+        console.error(logMessage, logData);
+      }
 
       throw new ApiError(message, response.status, fieldErrors);
     }

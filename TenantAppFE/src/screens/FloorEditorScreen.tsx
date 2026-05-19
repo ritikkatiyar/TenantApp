@@ -723,7 +723,7 @@ export default function FloorEditorScreen({
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LinearGradient
-        colors={['#d4f5f9', '#e8f8fb', '#f9ede0']}
+        colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -1024,24 +1024,26 @@ export default function FloorEditorScreen({
           )}
 
           {/* Save Button */}
-          <TouchableOpacity 
-            activeOpacity={0.8}
-            onPress={handleSave}
-            disabled={saving}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.saveButton}
+          {!selectedBlock && (
+            <TouchableOpacity 
+              activeOpacity={0.8}
+              onPress={handleSave}
+              disabled={saving}
             >
-              {saving ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.saveButtonText}>SAVE LAYOUT</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={['#00d4ff', '#0072ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.saveButton}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>SAVE LAYOUT</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
         </View>
         </SafeAreaView>
       </LinearGradient>

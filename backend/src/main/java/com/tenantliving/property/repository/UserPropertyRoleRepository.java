@@ -20,4 +20,6 @@ public interface UserPropertyRoleRepository extends JpaRepository<UserPropertyRo
 
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"property"})
     List<UserPropertyRoleTbl> findByUser_Id(UUID userId);
+
+    void deleteByProperty_Id(UUID propertyId);
 }
