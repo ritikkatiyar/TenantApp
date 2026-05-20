@@ -22,7 +22,7 @@ USER spring:spring
 COPY --from=build /app/target/*.jar app.jar
 
 # Environment variables with sensible defaults for production
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
+ENV JAVA_OPTS="-Xms256m -Xmx1024m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
 ENV SERVER_PORT=8080
 
 EXPOSE 8080
