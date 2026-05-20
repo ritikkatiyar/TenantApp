@@ -17,10 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/ai/commands")
@@ -35,7 +34,7 @@ public class AICommandController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
     @Operation(summary = "Run AI command", description = "Sends a natural-language command to the Tenant Living AI assistant.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "AI response returned"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "AI job queued successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation failed",
                     content = @Content(schema = @Schema(implementation = ApiError.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required", content = @Content),
@@ -51,7 +50,22 @@ public class AICommandController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        AICommandDTOs.AICommandResponse response = aiCommandService.handleCommand(request, currentUser);
+        AICommandDTOs.AICommandResponse response = aiCommandService.queueCommand(request, currentUser);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/jobs/{jobId}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
+    @Operation(summary = "Get AI job status", description = "Retrieves the execution status and response of a queued AI command job.")
+    public ResponseEntity<ApiResponse<AICommandDTOs.AIJobStatusResponse>> getJobStatus(
+            @AuthenticationPrincipal UserDetailsImpl currentUser,
+            @PathVariable UUID jobId
+    ) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        AICommandDTOs.AIJobStatusResponse response = aiCommandService.getJobStatus(jobId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

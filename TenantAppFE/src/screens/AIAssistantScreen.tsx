@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { runAICommand } from '../api/ai.api';
+import { getAIJobStatus, runAICommand } from '../api/ai.api';
 
 type AIAssistantScreenProps = {
   token: string;
@@ -61,21 +61,64 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
 
     try {
       const response = await runAICommand({ message: trimmedText }, token);
-      setMessages((current) => [
-        ...current,
-        {
-          id: `${Date.now()}-assistant`,
-          role: 'assistant',
-          text: response.message || 'I received the command, but no message came back.',
-        },
-      ]);
+      
+      if (response.jobId && response.status === 'PENDING') {
+        const jobId = response.jobId;
+        let pollCount = 0;
+        const maxPolls = 40; // 40 * 1.5s = 60s timeout limit
+
+        const poll = async (): Promise<string> => {
+          return new Promise((resolve, reject) => {
+            const interval = setInterval(async () => {
+              pollCount++;
+              if (pollCount > maxPolls) {
+                clearInterval(interval);
+                reject(new Error('AI command execution timed out. Please try again.'));
+                return;
+              }
+
+              try {
+                const jobStatus = await getAIJobStatus(jobId, token);
+                if (jobStatus.status === 'COMPLETED') {
+                  clearInterval(interval);
+                  resolve(jobStatus.response || 'Command completed successfully.');
+                } else if (jobStatus.status === 'FAILED') {
+                  clearInterval(interval);
+                  reject(new Error(jobStatus.errorMessage || 'AI execution failed.'));
+                }
+              } catch (pollErr) {
+                console.warn('AI polling transient error:', pollErr);
+              }
+            }, 1500);
+          });
+        };
+
+        const resultText = await poll();
+        setMessages((current) => [
+          ...current,
+          {
+            id: `${Date.now()}-assistant`,
+            role: 'assistant',
+            text: resultText,
+          },
+        ]);
+      } else {
+        setMessages((current) => [
+          ...current,
+          {
+            id: `${Date.now()}-assistant`,
+            role: 'assistant',
+            text: response.message || 'I received the command, but no response was returned.',
+          },
+        ]);
+      }
     } catch (error: any) {
       setMessages((current) => [
         ...current,
         {
           id: `${Date.now()}-error`,
           role: 'assistant',
-          text: error?.message || 'AI request failed. Check backend AI config and try again.',
+          text: error?.message || 'AI request failed. Check backend configuration.',
         },
       ]);
     } finally {
@@ -287,14 +330,21 @@ const styles = StyleSheet.create({
   },
   inputBar: {
     alignItems: 'flex-end',
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
-    borderColor: 'rgba(0, 104, 117, 0.12)',
-    borderTopWidth: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    borderColor: 'rgba(0, 104, 117, 0.16)',
+    borderWidth: 1,
+    borderRadius: 16,
     flexDirection: 'row',
     gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 18,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: Platform.OS === 'ios' ? 120 : 105,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   input: {
     backgroundColor: '#eef6f7',

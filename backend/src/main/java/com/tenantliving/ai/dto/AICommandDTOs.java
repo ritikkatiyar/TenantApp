@@ -15,7 +15,18 @@ public class AICommandDTOs {
 
     @Schema(name = "AICommandResponse", description = "AI assistant response")
     public record AICommandResponse(
-            String message
+            String message,
+            String jobId,
+            String status
+    ) {
+    }
+
+    @Schema(name = "AIJobStatusResponse", description = "Current status and result of the AI command job")
+    public record AIJobStatusResponse(
+            String jobId,
+            String status,
+            String response,
+            String errorMessage
     ) {
     }
 }

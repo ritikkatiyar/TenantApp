@@ -21,6 +21,23 @@ services:
       retries: 10
       start_period: 30s
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: tenant-living-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - tenant_living_redis_data:/data
+    networks:
+      - tenant-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
   backend:
     build:
       context: ./backend
@@ -41,8 +58,12 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
       - GEMINI_TEMPERATURE=${GEMINI_TEMPERATURE:-0.2}
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - tenant-network
@@ -53,3 +74,4 @@ networks:
 
 volumes:
   tenant_living_mysql_data:
+  tenant_living_redis_data:

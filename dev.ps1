@@ -8,19 +8,6 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Write-Step {
-    param([string]$Message)
-    Write-Host "[dev] $Message" -ForegroundColor Cyan
-}
-
-if ($Command -ieq "stop") {
-    Write-Step "Stopping all infrastructure..."
-    docker compose down
-    Stop-Process -Name "java", "node" -Force -ErrorAction SilentlyContinue
-    Write-Step "All services stopped successfully."
-    exit 0
-}
-
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $RootDir "backend"
 $FrontendDir = Join-Path $RootDir "TenantAppFE"
@@ -29,6 +16,75 @@ $BackendLog = Join-Path $LogDir "backend.log"
 $BackendErrLog = Join-Path $LogDir "backend.err.log"
 $FrontendLog = Join-Path $LogDir "frontend.log"
 $FrontendErrLog = Join-Path $LogDir "frontend.err.log"
+
+function Write-Step {
+    param([string]$Message)
+    Write-Host "[dev] $Message" -ForegroundColor Cyan
+}
+
+function Remove-DockerContainerIfExists {
+    param([string]$Name)
+
+        # Use docker inspect – swallow errors if container does not exist
+    try {
+        $inspectOutput = docker inspect $Name 2>$null
+    } catch {
+        return
+    }
+    if ($LASTEXITCODE -eq 0) {
+        Write-Step "Removing stale Docker container $Name..."
+        docker rm -f $Name | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to remove stale Docker container $Name."
+        }
+    }
+    docker inspect $Name 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Step "Removing stale Docker container $Name..."
+        docker rm -f $Name | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to remove stale Docker container $Name."
+        }
+    }
+}
+
+function Remove-StaleDockerContainerIfExists {
+    param([string]$Name)
+
+    # Use docker inspect instead of the unreliable name=^/$Name$ filter on Windows
+    try {
+        $inspectOutput = docker inspect $Name 2>$null
+    } catch {
+        $inspectOutput = $null
+    }
+    if ($LASTEXITCODE -ne 0 -or -not $inspectOutput) {
+        return
+    }
+
+    # Skip removal if container was created by Docker Compose (has compose service label)
+    try {
+        $info = ($inspectOutput | ConvertFrom-Json)[0]
+        if ($info.Config.Labels.'com.docker.compose.service') {
+            return
+        }
+    } catch {}
+
+    Remove-DockerContainerIfExists $Name
+}
+
+if ($Command -ieq "stop") {
+    Write-Step "Stopping all infrastructure..."
+    Push-Location $RootDir
+    try {
+        docker compose down
+
+    } finally {
+        Pop-Location
+    }
+    Stop-Process -Name "java", "node" -Force -ErrorAction SilentlyContinue
+    Write-Step "All services stopped successfully."
+    exit 0
+}
 
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
@@ -67,7 +123,7 @@ function Wait-ForMysql {
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     do {
-        $status = docker inspect --format "{{.State.Health.Status}}" tenant-living-mysql 2>$null
+        $status = Get-DockerHealthOrStatus "tenant-living-mysql"
         if ($status -eq "healthy") {
             return
         }
@@ -79,10 +135,60 @@ function Wait-ForMysql {
     throw "MySQL did not become healthy within $TimeoutSeconds seconds."
 }
 
+function Get-DockerHealthOrStatus {
+    param([string]$Name)
+
+    # Use plain 'docker inspect' — Go-template --format is unreliable in Windows PowerShell
+    $inspectOutput = docker inspect $Name 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $inspectOutput) {
+        return "not created"
+    }
+
+    try {
+        $info = ($inspectOutput | ConvertFrom-Json)[0]
+        if ($info.State.Health -and $info.State.Health.Status) {
+            return $info.State.Health.Status
+        }
+        if ($info.State.Status) {
+            return $info.State.Status
+        }
+    } catch {
+        return "unknown"
+    }
+
+    return "unknown"
+}
+
+function Wait-ForRedis {
+    param([int]$TimeoutSeconds = 60)
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    do {
+        $status = Get-DockerHealthOrStatus "tenant-living-redis"
+        if ($status -eq "healthy") {
+            return
+        }
+
+        Write-Step "Waiting for Redis health check... current status: $status"
+        Start-Sleep -Seconds 2
+    } while ((Get-Date) -lt $deadline)
+
+    throw "Redis did not become healthy within $TimeoutSeconds seconds."
+}
+
 function Get-MysqlHostPort {
     $portLine = docker port tenant-living-mysql 3306/tcp | Select-Object -First 1
     if (-not $portLine) {
         return 3307
+    }
+
+    return [int]($portLine -replace ".*:", "")
+}
+
+function Get-RedisHostPort {
+    $portLine = docker port tenant-living-redis 6379/tcp | Select-Object -First 1
+    if (-not $portLine) {
+        return 6379
     }
 
     return [int]($portLine -replace ".*:", "")
@@ -109,23 +215,31 @@ Import-DotEnv (Join-Path $RootDir ".env")
 
 if (-not $SkipDocker) {
     if (-not (Test-CommandExists "docker")) {
-        throw "Docker was not found on PATH. Start MySQL yourself and rerun with -SkipDocker."
+        throw "Docker was not found on PATH. Start MySQL and Redis yourself and rerun with -SkipDocker."
     }
 
-    Write-Step "Starting MySQL with Docker Compose..."
+    Write-Step "Starting MySQL and Redis with Docker Compose..."
     Push-Location $RootDir
     try {
-        docker compose up -d mysql
+        Remove-StaleDockerContainerIfExists "tenant-living-mysql"
+        Remove-StaleDockerContainerIfExists "tenant-living-redis"
+        docker compose up -d mysql redis
+        if ($LASTEXITCODE -ne 0) {
+            throw "Docker Compose failed to start MySQL and Redis."
+        }
         Wait-ForMysql
+        Wait-ForRedis
     } finally {
         Pop-Location
     }
 }
 
 $mysqlPort = if ($SkipDocker) { 3307 } else { Get-MysqlHostPort }
+$redisPort = if ($SkipDocker) { 6379 } else { Get-RedisHostPort }
 $dbUrl = "jdbc:mysql://localhost:$mysqlPort/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
 Write-Step "Using DB_URL=$dbUrl"
+Write-Step "Using Redis at localhost:$redisPort"
 Write-Step "Starting backend on http://localhost:$BackendPort"
 
 $backendCommand = @"
@@ -133,6 +247,8 @@ $backendCommand = @"
 `$env:DB_USERNAME='tenant_living'
 `$env:DB_PASSWORD='tenant_living'
 `$env:SERVER_PORT='$BackendPort'
+`$env:SPRING_REDIS_HOST='localhost'
+`$env:SPRING_REDIS_PORT='$redisPort'
 `$env:APP_AI_ENABLED='$env:APP_AI_ENABLED'
 `$env:SPRING_AI_MODEL_CHAT='$env:SPRING_AI_MODEL_CHAT'
 `$env:GEMINI_API_KEY='$env:GEMINI_API_KEY'
