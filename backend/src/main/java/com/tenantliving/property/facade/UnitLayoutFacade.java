@@ -36,6 +36,11 @@ public class UnitLayoutFacade {
         return enrichUnits(units);
     }
 
+    public List<UnitDTOs.UnitResponse> getAllFloorsLayout(UUID propertyId) {
+        List<UnitTbl> units = unitService.getUnitsByProperty(propertyId);
+        return enrichUnits(units);
+    }
+
     public List<UnitDTOs.UnitResponse> saveFloorLayout(
             UUID propertyId,
             int floorNumber,

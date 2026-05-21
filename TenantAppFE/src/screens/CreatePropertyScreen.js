@@ -143,7 +143,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: true }
+            { useNativeDriver: false }
           )}
           scrollEventThrottle={16}
         >

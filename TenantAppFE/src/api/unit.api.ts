@@ -47,3 +47,11 @@ export function getFloorLayout(propertyId: string, floorNumber: number, token: s
     token,
   });
 }
+
+export function getAllFloorsLayout(propertyId: string, token: string): Promise<UnitResponse[]> {
+  const path = `/api/v1/property/properties/${propertyId}/floors/layouts`;
+  return apiRequest<UnitResponse[]>(path, {
+    method: 'GET',
+    token,
+  });
+}

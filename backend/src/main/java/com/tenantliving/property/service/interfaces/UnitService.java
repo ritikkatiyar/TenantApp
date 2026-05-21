@@ -16,6 +16,8 @@ public interface UnitService {
 
     List<UnitTbl> getUnitsByFloor(UUID propertyId, int floorNumber);
 
+    List<UnitTbl> getUnitsByProperty(UUID propertyId);
+
     List<UnitTbl> saveFloorLayout(UUID propertyId, int floorNumber, List<UnitDTOs.FloorLayoutUnitRequest> items);
 
     List<UnitTbl> generateBatchUnits(UUID propertyId, PropertyDTOs.BatchUnitRequest request);

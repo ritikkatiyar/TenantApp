@@ -19,7 +19,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Theme } from '../theme/Theme';
 import { useProperties } from '../hooks/useProperties';
+import { useAuth } from '../auth/AuthProvider';
 import type { PropertyResponse } from '../types/property';
+import Building3DView from '../components/Building3DView';
 
 interface CommandCenterScreenProps {
   onNavigateToCreateProperty: () => void;
@@ -28,6 +30,7 @@ interface CommandCenterScreenProps {
 
 export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogout }: CommandCenterScreenProps) {
   const router = useRouter();
+  const { user, accessToken } = useAuth();
   const { properties, isLoading, error, refreshProperties, deleteProperty } = useProperties();
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -66,6 +69,18 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   const renderPropertyItem = ({ item }: { item: PropertyResponse }) => (
     <BlurView intensity={60} tint="light" style={styles.propertyCard}>
+      <View style={styles.buildingPreviewContainer}>
+        {accessToken && <Building3DView propertyId={item.id} token={accessToken} />}
+        
+        <TouchableOpacity 
+          style={styles.deleteButtonOverlay}
+          onPress={() => handleDeleteProperty(item.id, item.name)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.propertyHeaderRow}>
         <View style={styles.propertyInfo}>
           <Text style={styles.propertyName}>{item.name}</Text>
@@ -74,13 +89,6 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
             <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
           </View>
         </View>
-        <TouchableOpacity 
-          style={styles.deleteButton}
-          onPress={() => handleDeleteProperty(item.id, item.name)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <MaterialIcons name="delete-outline" size={24} color="#ff4444" />
-        </TouchableOpacity>
       </View>
       
       <TouchableOpacity 
@@ -199,7 +207,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
             onRefresh={refreshProperties}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: true }
+              { useNativeDriver: false }
             )}
             scrollEventThrottle={16}
           />
@@ -294,13 +302,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  deleteButton: {
+  buildingPreviewContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginTop: -10,
+    marginBottom: 5,
+    position: 'relative',
+  },
+  deleteButtonOverlay: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
     padding: 8,
     backgroundColor: 'rgba(255, 68, 68, 0.1)',
     borderRadius: 8,
+    zIndex: 10,
   },
   propertyInfo: {
-    marginBottom: 20,
+    marginBottom: 15,
     flex: 1,
     paddingRight: 10,
   },
@@ -330,10 +351,15 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     gap: 8,
   },
+  emptyButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
   manageButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
   },
   addNewCard: {

@@ -87,6 +87,15 @@ public class UnitServiceImpl implements UnitService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<UnitTbl> getUnitsByProperty(UUID propertyId) {
+        if (!propertyService.existsById(propertyId)) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
+        }
+        return unitRepository.findByPropertyId(propertyId);
+    }
+
+    @Override
     @Transactional
     public List<UnitTbl> saveFloorLayout(
             UUID propertyId,

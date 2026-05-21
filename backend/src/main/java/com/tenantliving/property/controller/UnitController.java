@@ -81,6 +81,24 @@ public class UnitController {
         return ResponseEntity.ok(ApiResponse.success(layout));
     }
 
+    @GetMapping("/floors/layouts")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @Operation(
+            summary = "Get all floors layout",
+            description = "Retrieves the saved layout of units for all floors of a property."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Layout returned"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> getAllFloorsLayout(
+            @PathVariable UUID propertyId) {
+        List<UnitDTOs.UnitResponse> layout = unitLayoutFacade.getAllFloorsLayout(propertyId);
+        return ResponseEntity.ok(ApiResponse.success(layout));
+    }
+
     @PutMapping("/floors/{floorNumber}/layout")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @Operation(
