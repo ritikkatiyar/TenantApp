@@ -41,7 +41,8 @@ public class AICommandServiceImpl implements AICommandService {
             """;
 
     private final AIProperties aiProperties;
-    private final ChatClient chatClient;
+    @Autowired(required = false)  // ← ChatClient may not exist when AI is disabled
+    private ChatClient chatClient;
     private final AIJobRepository aiJobRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final CustomUserDetailsService userDetailsService;
