@@ -21,6 +21,7 @@ public class RedisStreamConfig {
     public static final String GROUP_NAME = "ai-group";
 
     @Bean
+    @ConditionalOnProperty(name = "app.ai.enabled", havingValue = "true")
     public Subscription subscription(
             RedisConnectionFactory redisConnectionFactory,
             StringRedisTemplate redisTemplate,

@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "app.ai.enabled", havingValue = "true")
 public class ChatClientConfig {
 
     private final Builder chatClientBuilder;

@@ -16,6 +16,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnProperty(name = "app.ai.enabled", havingValue = "true")
 public class AICommandStreamListener implements StreamListener<String, MapRecord<String, String, String>> {
 
     private final AIJobRepository aiJobRepository;
