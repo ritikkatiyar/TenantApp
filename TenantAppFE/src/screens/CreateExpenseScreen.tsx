@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,23 +7,114 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Switch
+  Switch,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import { createChargeConfig, updateChargeConfig, getChargeConfigById } from '../api/charge.api';
 
 export default function CreateExpenseScreen({ token }: { token: string | null }) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+  const { propertyId, chargeId } = useLocalSearchParams<{ propertyId: string, chargeId?: string }>();
+  const isEditMode = !!chargeId;
 
   const [expenseName, setExpenseName] = useState('');
   const [billingFrequency, setBillingFrequency] = useState('Monthly');
   const [calcMethod, setCalcMethod] = useState('Fixed Rate');
   const [baseRate, setBaseRate] = useState('');
   const [applySalesTax, setApplySalesTax] = useState(true);
+  const [lateFee, setLateFee] = useState('5');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isEditMode && token && chargeId) {
+      loadChargeData();
+    }
+  }, [isEditMode, token, chargeId]);
+
+  const loadChargeData = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getChargeConfigById(chargeId as string, token as string);
+      setExpenseName(data.chargeName);
+      
+      let uiFreq = 'Monthly';
+      if (data.billingFrequency === 'ANNUAL') uiFreq = 'Annual';
+      if (data.billingFrequency === 'WEEKLY') uiFreq = 'Weekly';
+      setBillingFrequency(uiFreq);
+
+      let uiCalc = 'Fixed Rate';
+      if (data.calculationStrategy === 'METERED') uiCalc = 'Metered/Consumption';
+      setCalcMethod(uiCalc);
+
+      setBaseRate(data.baseRate.toString());
+      setApplySalesTax(data.applySalesTax);
+      setLateFee(data.lateFeePercentage ? data.lateFeePercentage.toString() : '');
+    } catch(e: any) {
+      Alert.alert("Error", "Failed to load charge details");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!token) {
+        Alert.alert("Error", "Authentication required");
+        return;
+    }
+    if (!propertyId) {
+        Alert.alert("Error", "Missing property ID context.");
+        return;
+    }
+    if (!expenseName || !baseRate) {
+        Alert.alert("Missing Fields", "Please provide a charge name and base rate.");
+        return;
+    }
+
+    try {
+        setIsLoading(true);
+        // Map UI labels to Backend Enums
+        let calcStrategyEnum = 'FIXED_RATE';
+        if (calcMethod === 'Metered/Consumption') calcStrategyEnum = 'METERED';
+        
+        let freqEnum = 'MONTHLY';
+        if (billingFrequency === 'Annual') freqEnum = 'ANNUAL';
+        if (billingFrequency === 'Weekly') freqEnum = 'WEEKLY';
+
+        const payload = {
+            propertyId: propertyId as string,
+            chargeName: expenseName,
+            chargeCategory: 'CUSTOM', 
+            billingFrequency: freqEnum,
+            calculationStrategy: calcStrategyEnum,
+            baseRate: parseFloat(baseRate),
+            applySalesTax: applySalesTax,
+            lateFeePercentage: lateFee ? parseFloat(lateFee) : null,
+        };
+
+        if (isEditMode && chargeId) {
+            await updateChargeConfig(chargeId as string, payload, token);
+            Alert.alert("Success", "Charge updated successfully!", [
+                { text: "OK", onPress: () => router.back() }
+            ]);
+        } else {
+            await createChargeConfig(payload, token);
+            Alert.alert("Success", "Charge configured successfully!", [
+                { text: "OK", onPress: () => router.back() }
+            ]);
+        }
+    } catch (e: any) {
+        Alert.alert("Error", e.response?.data?.message || e.message || "Failed to create charge.");
+    } finally {
+        setIsLoading(false);
+    }
+  };
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [40, 90],
@@ -51,7 +142,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
           </TouchableOpacity>
           <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
-            <Text style={styles.compactTitleText}>New Expense</Text>
+            <Text style={styles.compactTitleText}>{isEditMode ? 'Update Charge' : 'New Charge'}</Text>
           </Animated.View>
         </View>
 
@@ -66,17 +157,17 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         >
           {/* Hero Titles */}
           <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.mainTitle}>New Expense</Text>
+            <Text style={styles.mainTitle}>{isEditMode ? 'Update' : 'New'}{'\n'}Charge</Text>
           </Animated.View>
 
-          {/* Card 1: Expense Identity */}
+          {/* Card 1: Charge Identity */}
           <BlurView intensity={40} tint="light" style={styles.card}>
             <View style={styles.cardHeader}>
               <MaterialCommunityIcons name="file-document-outline" size={20} color="#006875" />
-              <Text style={styles.cardTitle}>Expense Identity</Text>
+              <Text style={styles.cardTitle}>Charge Identity</Text>
             </View>
 
-            <Text style={styles.label}>EXPENSE NAME</Text>
+            <Text style={styles.label}>CHARGE NAME</Text>
             <View style={styles.inputContainer}>
               <TextInput 
                 style={styles.input} 
@@ -135,8 +226,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             <View style={styles.radioGroup}>
               {[
                 { title: 'Fixed Rate', sub: 'Standard monthly fee' },
-                { title: 'Metered/Consumption', sub: 'Based on usage units' },
-                { title: 'Sq. Footage', sub: 'Calculated per area' }
+                { title: 'Metered/Consumption', sub: 'Based on usage units' }
               ].map((method, index) => (
                 <TouchableOpacity 
                   key={index} 
@@ -156,7 +246,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
             <Text style={styles.label}>BASE RATE</Text>
             <View style={styles.inputContainer}>
-              <Text style={styles.currencySymbol}>$</Text>
+              <Text style={styles.currencySymbol}>₹</Text>
               <TextInput 
                 style={styles.inputWithIcon} 
                 placeholder="0.00" 
@@ -191,45 +281,42 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             <View style={[styles.rowBetween, { marginTop: 24, marginBottom: 24 }]}>
               <Text style={styles.settingText}>Late Fee Rules</Text>
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>5% / Monthly</Text>
+                <Text style={styles.badgeText}>{lateFee || '0'}% / Monthly</Text>
               </View>
             </View>
 
             <Text style={styles.label}>LATE FEE %</Text>
-            <View style={styles.sliderMock}>
-              <View style={styles.sliderTrack}>
-                <View style={[styles.sliderFill, { width: '40%' }]} />
-                <View style={styles.sliderThumb} />
-              </View>
-              <View style={styles.sliderLabels}>
-                <Text style={styles.sliderLabelText}>0%</Text>
-                <Text style={styles.sliderLabelText}>15%</Text>
-              </View>
+            <View style={styles.inputContainer}>
+              <TextInput 
+                style={styles.inputWithIcon} 
+                placeholder="5" 
+                placeholderTextColor="#849495"
+                keyboardType="numeric"
+                value={lateFee}
+                onChangeText={setLateFee}
+              />
+              <Text style={[styles.currencySymbol, { marginRight: 0, marginLeft: 8 }]}>%</Text>
             </View>
           </BlurView>
 
-          {/* Card 4: Preview */}
-          <BlurView intensity={50} tint="light" style={[styles.card, { padding: 0, overflow: 'hidden', borderWidth: 0 }]}>
-            <View style={styles.previewHeader}>
-              <Text style={styles.previewHeaderText}>PREVIEW</Text>
-              <Ionicons name="eye-outline" size={16} color="#ffffff" />
-            </View>
-            <View style={styles.previewBody}>
-              <Text style={styles.previewSub}>Estimated Monthly Charge</Text>
-              <Text style={styles.previewAmount}>$0.00</Text>
-              <Text style={styles.previewDisclaimer}>
-                *Based on current parameters and empty unit assumptions
-              </Text>
-              
-              <TouchableOpacity style={styles.submitButton}>
-                <Text style={styles.submitButtonText}>Create Expense Entity</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.draftButton}>
-                <Text style={styles.draftButtonText}>Save as Draft</Text>
-              </TouchableOpacity>
-            </View>
-          </BlurView>
+          {/* Action Buttons */}
+          <View style={{ marginTop: 8, paddingHorizontal: 16 }}>
+            <TouchableOpacity 
+              style={[styles.submitButton, isLoading && { opacity: 0.7 }]}
+              onPress={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+              ) : (
+                  <Text style={styles.submitButtonText}>{isEditMode ? 'Update Charge Entity' : 'Create Charge Entity'}</Text>
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={[styles.draftButton, { alignItems: 'center', marginTop: 8 }]}>
+              <Text style={styles.draftButtonText}>Save as Draft</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Spacer to prevent bottom from being cut off */}
           <View style={{ height: 40 }} />
@@ -471,42 +558,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#151d1e',
   },
-  previewHeader: {
-    backgroundColor: '#006875',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  previewHeaderText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  previewBody: {
-    padding: 32,
-    alignItems: 'center',
-  },
-  previewSub: {
-    fontSize: 13,
-    color: '#5b6b6d',
-    marginBottom: 8,
-  },
-  previewAmount: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: '#006875',
-    marginBottom: 16,
-  },
-  previewDisclaimer: {
-    fontSize: 11,
-    color: '#849495',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginBottom: 32,
-  },
+  // Removed preview styles
   submitButton: {
     backgroundColor: '#4338ca',
     width: '100%',

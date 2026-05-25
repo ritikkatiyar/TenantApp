@@ -31,4 +31,8 @@ public class RentCycleChargeTbl extends BaseEntity {
     @Column
     private String description;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "charge_config_id")
+    @ToString.Exclude
+    private ChargeConfigTbl customChargeConfig;
 }

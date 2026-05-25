@@ -9,6 +9,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useRouter, usePathname, Href } from 'expo-router';
+import { useProperties } from '../hooks/useProperties';
 
 interface NavItem {
   id: string;
@@ -28,6 +29,8 @@ const NAV_ITEMS: NavItem[] = [
 export default function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
+  const { properties } = useProperties();
+  const activePropertyId = properties && properties.length > 0 ? properties[0].id : null;
 
   // Hide nav bar on auth screens and the floor editor canvas
   if (
@@ -45,12 +48,18 @@ export default function BottomNavigation() {
       <BlurView intensity={90} tint="light" style={styles.container}>
         <View style={styles.navContent}>
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.route;
+            const isActive = pathname === item.route || pathname.startsWith(item.route + '?');
+            
+            let targetRoute = item.route;
+            if (item.id === 'expenses' && activePropertyId) {
+                targetRoute = `${item.route}?propertyId=${activePropertyId}` as Href;
+            }
+
             return (
               <TouchableOpacity
                 key={item.id}
                 style={styles.navItem}
-                onPress={() => router.push(item.route)}
+                onPress={() => router.push(targetRoute)}
                 activeOpacity={0.7}
               >
                 <View style={[styles.iconPill, isActive && styles.activeIconPill]}>

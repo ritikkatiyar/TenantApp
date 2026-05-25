@@ -12,6 +12,7 @@ export default function Building3DView({ propertyId, token }: Building3DViewProp
   const [units, setUnits] = useState<UnitResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Animated values for 3D rotation
   const rotateZ = useRef(new Animated.Value(-45)).current;
   const rotateX = useRef(new Animated.Value(60)).current;
 
@@ -31,6 +32,7 @@ export default function Building3DView({ propertyId, token }: Building3DViewProp
         rotateX.setValue(newRotX);
       },
       onPanResponderRelease: () => {
+        // Smooth GPU-accelerated spring back
         Animated.spring(rotateZ, {
           toValue: -45,
           useNativeDriver: true,
@@ -142,15 +144,36 @@ export default function Building3DView({ propertyId, token }: Building3DViewProp
       {floorNumbers.map((floorNum) => (
         <View
           key={`floor-${floorNum}`}
-            style={{
-              position: 'absolute',
-              zIndex: floorNum, // Higher floors should render on top
-              transform: [
-                // Elevate each floor, but shift everything down by half the stack height to perfectly center it
-                { translateY: -(floorNum - minFloor) * dynamicFloorHeight + (stackHeightOffset / 2) },
-              ],
-            }}
+          style={{
+            position: 'absolute',
+            zIndex: floorNum, // Higher floors should render on top
+            transform: [
+              // Elevate each floor, but shift everything down by half the stack height to perfectly center it
+              { translateY: -(floorNum - minFloor) * dynamicFloorHeight + (stackHeightOffset / 2) },
+            ],
+          }}
         >
+          {/* 3D Slab Thickness Extrusion (layer stacking) */}
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <Animated.View
+              key={`floor-slab-extrusion-${floorNum}-${idx}`}
+              style={[
+                styles.isometricWrapper,
+                styles.slabExtrusion,
+                {
+                  position: 'absolute',
+                  zIndex: -1 - idx, // Render behind/below the units
+                  width: buildingWidth,
+                  height: buildingHeight,
+                  transform: [{ rotateX: tilt }, { rotateZ: spin }],
+                  top: (idx + 1) * 1.5, // Translate downward on screen
+                  opacity: 0.9 - idx * 0.15,
+                }
+              ]}
+            />
+          ))}
+
+          {/* Main Floor Plate & Units */}
           <Animated.View 
             style={[
               styles.isometricWrapper, 
@@ -228,7 +251,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
   },
   isometricWrapper: {
-    // Width and height are set dynamically inline now
+    // Width and height are set dynamically inline
   },
   floorLayer: {
     position: 'absolute',
@@ -236,10 +259,17 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
+    zIndex: 5,
   },
   unitBlock: {
     position: 'absolute',
     borderWidth: 0.5,
     borderRadius: 1,
+  },
+  slabExtrusion: {
+    backgroundColor: 'rgba(0, 60, 70, 0.4)',
+    borderColor: 'rgba(0, 229, 255, 0.15)',
+    borderWidth: 1,
+    borderRadius: 2,
   },
 });

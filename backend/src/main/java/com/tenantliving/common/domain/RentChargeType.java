@@ -6,5 +6,6 @@ public enum RentChargeType {
     FOOD,
     MAINTENANCE,
     PENALTY,
-    DISCOUNT
+    DISCOUNT,
+    CUSTOM
 }
