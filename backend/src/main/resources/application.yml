@@ -1,6 +1,8 @@
 spring:
   application:
     name: tenant-living-backend
+  main:
+    lazy-initialization: true
 
   ai:
     model:

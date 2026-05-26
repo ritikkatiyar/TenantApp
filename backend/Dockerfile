@@ -22,9 +22,9 @@ USER spring:spring
 COPY --from=build /app/target/*.jar app.jar
 
 # Environment variables with sensible defaults for production
-ENV JAVA_OPTS="-Xms256m -Xmx1024m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
+ENV JAVA_TOOL_OPTIONS="-Xms128m -Xmx320m -XX:+UseSerialGC"
 ENV SERVER_PORT=8080
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
