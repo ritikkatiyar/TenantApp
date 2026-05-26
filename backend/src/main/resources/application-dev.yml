@@ -11,12 +11,16 @@ spring:
     password: ${DB_PASSWORD:tenant_living}
     baseline-on-migrate: false
     validate-on-migrate: true
-
   jpa:
     properties:
       hibernate:
         format_sql: true
-
+  redis:
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
+    password: ${SPRING_REDIS_PASSWORD:}
+    timeout: 5s
+    ssl: false
 logging:
   level:
     com.tenantliving: DEBUG

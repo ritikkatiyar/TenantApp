@@ -26,7 +26,7 @@ export interface ChargeConfigResponse {
 }
 
 export const createChargeConfig = async (request: ChargeConfigRequest, token: string): Promise<ChargeConfigResponse> => {
-    return apiRequest<ChargeConfigResponse>('/api/v1/charge-configs', {
+    return apiRequest<ChargeConfigResponse>('/api/v1/finance/charge-configs', {
         method: 'POST',
         token,
         body: JSON.stringify(request)
@@ -34,21 +34,21 @@ export const createChargeConfig = async (request: ChargeConfigRequest, token: st
 };
 
 export const getActiveChargesForProperty = async (propertyId: string, token: string): Promise<ChargeConfigResponse[]> => {
-    return apiRequest<ChargeConfigResponse[]>(`/api/v1/charge-configs/property/${propertyId}`, {
+    return apiRequest<ChargeConfigResponse[]>(`/api/v1/finance/charge-configs/property/${propertyId}`, {
         method: 'GET',
         token
     });
 };
 
 export const deactivateChargeConfig = async (id: string, token: string): Promise<void> => {
-    return apiRequest<void>(`/api/v1/charge-configs/${id}`, {
+    return apiRequest<void>(`/api/v1/finance/charge-configs/${id}`, {
         method: 'DELETE',
         token
     });
 };
 
 export const updateChargeConfig = async (id: string, request: ChargeConfigRequest, token: string): Promise<ChargeConfigResponse> => {
-    return apiRequest<ChargeConfigResponse>(`/api/v1/charge-configs/${id}`, {
+    return apiRequest<ChargeConfigResponse>(`/api/v1/finance/charge-configs/${id}`, {
         method: 'PUT',
         token,
         body: JSON.stringify(request)
@@ -56,7 +56,7 @@ export const updateChargeConfig = async (id: string, request: ChargeConfigReques
 };
 
 export const getChargeConfigById = async (id: string, token: string): Promise<ChargeConfigResponse> => {
-    return apiRequest<ChargeConfigResponse>(`/api/v1/charge-configs/${id}`, {
+    return apiRequest<ChargeConfigResponse>(`/api/v1/finance/charge-configs/${id}`, {
         method: 'GET',
         token
     });

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/charge-configs")
+@RequestMapping("/api/v1/finance/charge-configs")
 public class ChargeConfigController {
 
     private final ChargeConfigService chargeConfigService;
