@@ -1,0 +1,15 @@
+package com.tenantliving.billing.repository;
+
+import com.tenantliving.billing.domain.SaasSubscriptionTbl;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface SaasSubscriptionRepository extends JpaRepository<SaasSubscriptionTbl, UUID> {
+    Optional<SaasSubscriptionTbl> findByUserIdAndStatus(UUID userId, String status);
+    Optional<SaasSubscriptionTbl> findByUserId(UUID userId);
+    Optional<SaasSubscriptionTbl> findByGatewaySubscriptionId(String gatewaySubscriptionId);
+}

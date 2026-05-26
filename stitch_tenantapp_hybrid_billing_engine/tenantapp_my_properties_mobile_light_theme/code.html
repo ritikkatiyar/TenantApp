@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Properties - TenantApp</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Manrope:wght@400;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-tertiary-container": "#3e5a63",
+                "surface-container-low": "#ecf5fb",
+                "surface": "#f4faff",
+                "outline-variant": "#bac9cd",
+                "secondary-container": "#0070ea",
+                "secondary-fixed": "#d8e2ff",
+                "primary": "#006877",
+                "surface-container-high": "#e0e9ef",
+                "outline": "#6b7a7d",
+                "surface-container-highest": "#dbe4ea",
+                "on-surface-variant": "#3b494c",
+                "primary-fixed": "#a5eeff",
+                "on-error": "#ffffff",
+                "tertiary-container": "#b3d1db",
+                "error-container": "#ffdad6",
+                "on-tertiary-fixed-variant": "#2e4b53",
+                "primary-fixed-dim": "#00daf8",
+                "on-secondary-fixed": "#001a41",
+                "on-secondary": "#ffffff",
+                "on-secondary-container": "#fefcff",
+                "background": "#f4faff",
+                "surface-variant": "#dbe4ea",
+                "on-error-container": "#93000a",
+                "primary-container": "#00e0ff",
+                "error": "#ba1a1a",
+                "on-tertiary-fixed": "#001f27",
+                "surface-bright": "#f4faff",
+                "on-background": "#141d21",
+                "inverse-primary": "#00daf8",
+                "inverse-surface": "#293236",
+                "secondary-fixed-dim": "#adc7ff",
+                "tertiary-fixed-dim": "#adcbd6",
+                "secondary": "#0059bb",
+                "on-primary-fixed-variant": "#004e5a",
+                "on-surface": "#141d21",
+                "on-tertiary": "#ffffff",
+                "surface-dim": "#d2dbe1",
+                "on-primary-container": "#005f6d",
+                "surface-container-lowest": "#ffffff",
+                "surface-tint": "#006877",
+                "tertiary": "#46636c",
+                "on-secondary-fixed-variant": "#004493",
+                "inverse-on-surface": "#e9f2f8",
+                "on-primary-fixed": "#001f25",
+                "tertiary-fixed": "#c9e8f2",
+                "on-primary": "#ffffff",
+                "surface-container": "#e6eff5",
+                "cyan-accent": "#00ccff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-mobile": "20px",
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "unit": "8px",
+                    "container-max": "1440px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope", "Inter"],
+                    "display-lg-mobile": ["Manrope", "Inter"],
+                    "display-lg": ["Manrope", "Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["JetBrains Mono"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display-lg-mobile": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f4faff;
+            color: #141d21;
+            -webkit-font-smoothing: antialiased;
+        }
+        .mesh-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 0% 0%, rgba(0, 204, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(236, 245, 251, 1) 0%, transparent 50%);
+        }
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #bac9cd;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav-glow {
+            text-shadow: 0 0 10px rgba(0, 204, 255, 0.3);
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden bg-background selection:bg-primary-container/30">
+<div class="mesh-gradient"></div>
+<!-- Top Navigation Shell -->
+<header class="w-full top-0 sticky z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 h-20 flex justify-between items-center px-5">
+<div class="flex items-center gap-3">
+<span class="font-headline-md text-xl font-bold text-primary">PropPay SaaS</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-surface-container transition-all active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary/20">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmd7uoVB1mmwFeBadcobIJcKUGr2TaNpV3Iz5GAqshGxJVTKJS24DEdCV17clDwHJ4gDmO6-4_klEuoixQDvljUx4YejzDr2I_xGeDoDvpcD8mssvT4z-fJYWIk8O1tDZ7aJG5sJmIoM98mfpkxzDfvcjqyDMFaxvOBQ5PHHrL9kPH21VZ150yXtM_7IJdrMfhLM-TEK5ld8sk-j_guhFMgaPmxqbLoEwQp9BYYihr5bJy-oeR4dby3_-WgvEPLeCEa3lfKHVeDPo"/>
+</div>
+</div>
+</header>
+<main class="px-5 py-8 pb-32 max-w-md mx-auto">
+<!-- Header Section -->
+<section class="mb-8">
+<h1 class="font-display-lg-mobile text-display-lg-mobile text-on-surface mb-2 uppercase tracking-tight">My Properties</h1>
+<p class="text-on-surface-variant font-body-md">Manage your real estate portfolio assets.</p>
+</section>
+<!-- Search & Filter Area -->
+<div class="mb-8 flex gap-3">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm" data-icon="search">search</span>
+<input class="w-full bg-white border border-outline-variant rounded-xl py-3 pl-10 pr-4 text-on-surface focus:ring-1 focus:ring-cyan-accent focus:border-cyan-accent outline-none transition-all placeholder:text-outline" placeholder="Search assets..." type="text"/>
+</div>
+<button class="bg-white p-3 rounded-xl border border-outline-variant active:scale-95 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined text-cyan-accent" data-icon="filter_list">filter_list</span>
+</button>
+</div>
+<!-- Property List -->
+<div class="flex flex-col gap-6">
+<!-- Property Card: Sunrise PG -->
+<div class="glass-card rounded-2xl overflow-hidden group">
+<div class="relative h-48 w-full">
+<img class="w-full h-full object-cover" data-alt="A luxurious modern residential building with large glass windows reflecting a warm orange sunset." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD37Fojn8G5wxGA-AMwUa28z0zgNDZ97DKJdtJcPMs3rcrv1pMLKrVPdaPMBnnzACpbkhhhOLzS3RlSSAkSkndHdkkZ3i7CmI7n90Rkvnh3QqPeEqAZsBUL1-_63e9Bns-X7olCki72WhQbF38YU3UjNAKaKvZG5eH4RnzFhJbjWFLU9fVhfKwb6hb4XqdYZcAzS0XM1hunJU3m51bF6s_tuHfSf_c67veJmYkulOU9aDbDS3mMBm3CE7ktHkYBQO0sLQ2-ByPFnPE"/>
+<div class="absolute top-4 right-4">
+<span class="bg-white/80 text-emerald-600 backdrop-blur-md px-3 py-1 rounded-full font-label-sm text-[10px] border border-emerald-500/30 uppercase tracking-widest font-bold">Active</span>
+</div>
+</div>
+<div class="p-6">
+<div class="mb-4">
+<h3 class="font-headline-md text-headline-md text-primary">Sunrise PG</h3>
+<div class="flex items-center gap-1 text-on-surface-variant text-sm mt-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+<span>122 Orchid Valley, Sector 4</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30">
+<p class="text-on-surface-variant text-[10px] uppercase tracking-wider mb-1 font-bold">Tenants</p>
+<p class="font-headline-md text-on-surface">24</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30">
+<p class="text-on-surface-variant text-[10px] uppercase tracking-wider mb-1 font-bold">Revenue</p>
+<p class="font-headline-md text-on-surface">$12.4k</p>
+</div>
+</div>
+<button class="w-full bg-cyan-accent text-white font-bold py-4 rounded-xl active:scale-[0.98] transition-all shadow-lg shadow-cyan-accent/20 hover:brightness-110">
+                        Manage Property
+                    </button>
+</div>
+</div>
+<!-- Property Card: Libsys -->
+<div class="glass-card rounded-2xl overflow-hidden group">
+<div class="relative h-48 w-full">
+<img class="w-full h-full object-cover" data-alt="A sleek glass-fronted commercial office tower in a metropolitan business district." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuv6JzPM9xGF5H-JU3HGR6lxq43HUGNTCDXikBAc2-2VC3MJtXdiKG7u7KMFUlqqe1oTIG-3GzJFOxQ5O2iahRB82ga8AhxwCTdvkT82wPfilCSuTssTWQVvuKrfIwivqjFsV0INdcsE7yXxc7QdWFer2sV8O5oh-1uqHlA0hwLRj4p5tDq5wrvyop0w4NmQOR1UFRuKYesYcSmgX6CpxE6lwqHZHjFzoXutiADDfizWz7em9mi1N8SDa2--pHIxlt4RUPvE3Fhwo"/>
+<div class="absolute top-4 right-4">
+<span class="bg-white/80 text-on-surface-variant backdrop-blur-md px-3 py-1 rounded-full font-label-sm text-[10px] border border-outline/30 uppercase tracking-widest font-bold">Pending</span>
+</div>
+</div>
+<div class="p-6">
+<div class="mb-4">
+<h3 class="font-headline-md text-headline-md text-primary">Libsys</h3>
+<div class="flex items-center gap-1 text-on-surface-variant text-sm mt-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+<span>45 Corporate Plaza, Highline</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30">
+<p class="text-on-surface-variant text-[10px] uppercase tracking-wider mb-1 font-bold">Tenants</p>
+<p class="font-headline-md text-on-surface">08</p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30">
+<p class="text-on-surface-variant text-[10px] uppercase tracking-wider mb-1 font-bold">Revenue</p>
+<p class="font-headline-md text-on-surface">$8.2k</p>
+</div>
+</div>
+<button class="w-full bg-white text-primary font-bold py-4 rounded-xl border border-outline-variant active:scale-[0.98] transition-all hover:bg-surface-container-low">
+                        Manage Property
+                    </button>
+</div>
+</div>
+<!-- Add New Property Placeholder -->
+<button class="relative border-2 border-dashed border-outline-variant/50 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-white hover:bg-surface-container-low transition-colors group">
+<div class="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-cyan-accent text-3xl" data-icon="add">add</span>
+</div>
+<div class="text-center">
+<h4 class="text-on-surface font-semibold">Add New Property</h4>
+<p class="text-on-surface-variant text-sm">Expand your real estate portfolio</p>
+</div>
+</button>
+</div>
+</main>
+<!-- Bottom Navigation Bar Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center py-4 px-6 bg-white/80 backdrop-blur-2xl border-t border-outline-variant/30 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+<a class="flex flex-col items-center text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-label-sm text-[10px] tracking-widest uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center text-cyan-accent transition-all" href="#">
+<span class="material-symbols-outlined mb-1 active-nav-glow font-variation-fill" data-icon="location_city" style="font-variation-settings: 'FILL' 1;">location_city</span>
+<span class="font-label-sm text-[10px] tracking-widest uppercase font-bold">Assets</span>
+</a>
+<a class="flex flex-col items-center text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="error_outline">error_outline</span>
+<span class="font-label-sm text-[10px] tracking-widest uppercase">Alerts</span>
+</a>
+<a class="flex flex-col items-center text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="layers">layers</span>
+<span class="font-label-sm text-[10px] tracking-widest uppercase">Setup</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for property card hover/tap
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('touchstart', () => {
+                card.style.transform = 'scale(0.98)';
+                card.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            });
+            card.addEventListener('touchend', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>
