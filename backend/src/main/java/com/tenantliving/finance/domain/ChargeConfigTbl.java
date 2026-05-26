@@ -42,6 +42,9 @@ public class ChargeConfigTbl extends BaseEntity {
     @Column(name = "base_rate", nullable = false, precision = 10, scale = 2)
     private BigDecimal baseRate;
 
+    @Column(name = "unit_type", length = 50)
+    private String unitType;
+
     @Column(name = "apply_sales_tax", nullable = false)
     private Boolean applySalesTax;
 

@@ -39,6 +39,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
                 .chargeCategory(request.getChargeCategory())
                 .billingFrequency(request.getBillingFrequency())
                 .calculationStrategy(request.getCalculationStrategy())
+                .unitType(request.getUnitType())
                 .baseRate(request.getBaseRate())
                 .applySalesTax(request.getApplySalesTax())
                 .lateFeePercentage(request.getLateFeePercentage())
@@ -60,6 +61,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
         config.setChargeCategory(request.getChargeCategory());
         config.setBillingFrequency(request.getBillingFrequency());
         config.setCalculationStrategy(request.getCalculationStrategy());
+        config.setUnitType(request.getUnitType());
         config.setBaseRate(request.getBaseRate());
         config.setApplySalesTax(request.getApplySalesTax());
         config.setLateFeePercentage(request.getLateFeePercentage());
@@ -105,6 +107,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
                 .chargeCategory(config.getChargeCategory())
                 .billingFrequency(config.getBillingFrequency())
                 .calculationStrategy(config.getCalculationStrategy())
+                .unitType(config.getUnitType())
                 .baseRate(config.getBaseRate())
                 .applySalesTax(config.getApplySalesTax())
                 .lateFeePercentage(config.getLateFeePercentage())

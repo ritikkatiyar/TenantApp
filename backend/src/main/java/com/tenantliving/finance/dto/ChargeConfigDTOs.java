@@ -18,6 +18,7 @@ public class ChargeConfigDTOs {
         private ChargeCategory chargeCategory;
         private BillingFrequency billingFrequency;
         private CalculationStrategyType calculationStrategy;
+        private String unitType;
         private BigDecimal baseRate;
         private Boolean applySalesTax;
         private BigDecimal lateFeePercentage;
@@ -32,6 +33,7 @@ public class ChargeConfigDTOs {
         private ChargeCategory chargeCategory;
         private BillingFrequency billingFrequency;
         private CalculationStrategyType calculationStrategy;
+        private String unitType;
         private BigDecimal baseRate;
         private Boolean applySalesTax;
         private BigDecimal lateFeePercentage;

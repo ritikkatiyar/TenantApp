@@ -187,20 +187,34 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                       </View>
                       <View style={styles.amountContainer}>
                         <Text style={styles.amountBold}>₹{charge.baseRate}</Text>
-                        {charge.calculationStrategy === 'METERED' ? <Text style={styles.amountSuffix}>/ unit</Text> : <Text style={styles.amountSuffix}>/ mo</Text>}
+                        {charge.calculationStrategy === 'METERED' ? <Text style={styles.amountSuffix}>/ {charge.unitType || 'unit'}</Text> : <Text style={styles.amountSuffix}>/ mo</Text>}
                       </View>
                     </View>
                   </View>
                   
                   {/* Subtle Glass Actions Row */}
-                  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', paddingTop: 16 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: charge.calculationStrategy === 'METERED' ? 'space-between' : 'flex-end', marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', paddingTop: 16 }}>
+                    
+                    {charge.calculationStrategy === 'METERED' && (
+                      <TouchableOpacity 
+                        onPress={(e) => {
+                          e.stopPropagation(); // Prevent opening the edit screen
+                          router.push(`/properties/${propertyId}/meter-readings`);
+                        }} 
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                      >
+                        <MaterialCommunityIcons name="speedometer" size={16} color="#00bcd4" />
+                        <Text style={{ color: '#00bcd4', fontSize: 13, fontWeight: '700' }}>Record Readings</Text>
+                      </TouchableOpacity>
+                    )}
+
                     {!charge.isSystemRequired ? (
-                      <TouchableOpacity onPress={() => handleDelete(charge.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDelete(charge.id); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Feather name="trash-2" size={14} color="#ef4444" />
                         <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>Delete</Text>
                       </TouchableOpacity>
                     ) : (
-                      <Text style={{ color: '#849495', fontSize: 11, fontStyle: 'italic' }}>System Required Charge</Text>
+                      <Text style={{ color: '#849495', fontSize: 11, fontStyle: 'italic' }}>System Required</Text>
                     )}
                   </View>
                   </BlurView>

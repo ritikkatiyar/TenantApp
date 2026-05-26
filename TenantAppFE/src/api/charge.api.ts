@@ -6,6 +6,7 @@ export interface ChargeConfigRequest {
     chargeCategory: string;
     billingFrequency: string;
     calculationStrategy: string;
+    unitType?: string;
     baseRate: number;
     applySalesTax: boolean;
     lateFeePercentage: number | null;
@@ -18,6 +19,7 @@ export interface ChargeConfigResponse {
     chargeCategory: string;
     billingFrequency: string;
     calculationStrategy: string;
+    unitType?: string;
     baseRate: number;
     applySalesTax: boolean;
     lateFeePercentage: number | null;

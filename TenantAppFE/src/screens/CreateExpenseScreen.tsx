@@ -9,7 +9,8 @@ import {
   TextInput,
   Switch,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,9 +29,12 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const [billingFrequency, setBillingFrequency] = useState('Monthly');
   const [calcMethod, setCalcMethod] = useState('Fixed Rate');
   const [baseRate, setBaseRate] = useState('');
+  const [unitType, setUnitType] = useState('kWh');
   const [applySalesTax, setApplySalesTax] = useState(true);
   const [lateFee, setLateFee] = useState('5');
   const [isLoading, setIsLoading] = useState(false);
+  const unitScrollRef = useRef<ScrollView>(null);
+  const scrollTimeout = useRef<any>(null);
 
   useEffect(() => {
     if (isEditMode && token && chargeId) {
@@ -93,6 +97,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             chargeCategory: 'CUSTOM', 
             billingFrequency: freqEnum,
             calculationStrategy: calcStrategyEnum,
+            unitType: unitType,
             baseRate: parseFloat(baseRate),
             applySalesTax: applySalesTax,
             lateFeePercentage: lateFee ? parseFloat(lateFee) : null,
@@ -244,21 +249,107 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
               ))}
             </View>
 
-            <Text style={styles.label}>BASE RATE</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.currencySymbol}>₹</Text>
-              <TextInput 
-                style={styles.inputWithIcon} 
-                placeholder="0.00" 
-                placeholderTextColor="#849495"
-                keyboardType="numeric"
-                value={baseRate}
-                onChangeText={setBaseRate}
-              />
-            </View>
+            {calcMethod === 'Fixed Rate' ? (
+              <>
+                <Text style={styles.label}>BASE RATE</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.currencySymbol}>₹</Text>
+                  <TextInput 
+                    style={styles.inputWithIcon} 
+                    placeholder="0.00" 
+                    placeholderTextColor="#849495"
+                    keyboardType="numeric"
+                    value={baseRate}
+                    onChangeText={setBaseRate}
+                  />
+                </View>
+              </>
+            ) : (
+              <View>
+                <Text style={styles.label}>RATE PER UNIT / TYPE</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={[styles.inputContainer, { flex: 1, marginBottom: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRightWidth: 0 }]}>
+                    <Text style={styles.currencySymbol}>₹</Text>
+                    <TextInput 
+                      style={styles.inputWithIcon} 
+                      placeholder="0.00" 
+                      placeholderTextColor="#849495"
+                      keyboardType="numeric"
+                      value={baseRate}
+                      onChangeText={setBaseRate}
+                    />
+                  </View>
+                  
+                  <View style={{ width: 100, height: 90, position: 'relative' }}>
+                    {/* Fading Glass Background */}
+                    <LinearGradient 
+                      colors={['transparent', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.6)', 'transparent']} 
+                      locations={[0, 0.22, 0.78, 1]}
+                      style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, borderRadius: 12 }} 
+                    />
+                    
+                    {/* Left Fading Border Divider */}
+                    <LinearGradient 
+                      colors={['transparent', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)', 'transparent']} 
+                      locations={[0, 0.22, 0.78, 1]}
+                      style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 1 }} 
+                    />
 
-            <Text style={styles.label}>UNIT SELECTOR</Text>
-            <Text style={styles.unitText}>per <Text style={styles.unitTextBold}>kWh</Text></Text>
+                    {/* Right Fading Border */}
+                    <LinearGradient 
+                      colors={['transparent', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)', 'transparent']} 
+                      locations={[0, 0.22, 0.78, 1]}
+                      style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 1 }} 
+                    />
+
+                    <ScrollView 
+                      ref={unitScrollRef}
+                      showsVerticalScrollIndicator={false}
+                      nestedScrollEnabled={true}
+                      snapToInterval={40}
+                      decelerationRate="fast"
+                      contentContainerStyle={{ paddingVertical: 25 }}
+                      scrollEventThrottle={16}
+                      onScroll={(e) => {
+                        if (Platform.OS === 'web') {
+                          if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+                          const y = e.nativeEvent.contentOffset.y;
+                          scrollTimeout.current = setTimeout(() => {
+                            const index = Math.max(0, Math.round(y / 40));
+                            const units = ['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'];
+                            if(units[index]) {
+                              setUnitType(units[index]);
+                              unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
+                            }
+                          }, 150);
+                        }
+                      }}
+                      onMomentumScrollEnd={(e) => {
+                        const index = Math.round(e.nativeEvent.contentOffset.y / 40);
+                        const units = ['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'];
+                        if(units[index]) setUnitType(units[index]);
+                      }}
+                    >
+                      {['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'].map((unit, index) => {
+                        const isActive = unitType === unit;
+                        return (
+                          <TouchableOpacity 
+                            key={unit} 
+                            style={{ height: 40, justifyContent: 'center', alignItems: 'center', width: '100%' }}
+                            onPress={() => {
+                              setUnitType(unit);
+                              unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
+                            }}
+                          >
+                            <Text style={{ fontSize: isActive ? 16 : 13, fontWeight: isActive ? '700' : '500', color: isActive ? '#006875' : 'rgba(132, 148, 149, 0.4)' }}>{unit}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                </View>
+              </View>
+            )}
           </BlurView>
 
           {/* Card 3: Advanced Logic */}
@@ -579,5 +670,25 @@ const styles = StyleSheet.create({
     color: '#151d1e',
     fontSize: 14,
     fontWeight: '600',
+  },
+  unitPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  unitPillActive: {
+    backgroundColor: '#00bcd4',
+    borderColor: '#00bcd4',
+  },
+  unitPillText: {
+    fontSize: 12,
+    color: '#5b6b6d',
+    fontWeight: '600',
+  },
+  unitPillTextActive: {
+    color: '#fff',
   }
 });
