@@ -4,7 +4,8 @@ import {
   TouchableOpacity, 
   StyleSheet, 
   Platform,
-  Text
+  Text,
+  useWindowDimensions
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -29,11 +30,13 @@ const NAV_ITEMS: NavItem[] = [
 export default function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
+  const { width } = useWindowDimensions();
   const { properties } = useProperties();
   const activePropertyId = properties && properties.length > 0 ? properties[0].id : null;
 
   // Hide nav bar on auth screens and the floor editor canvas
   if (
+    width >= 900 ||
     pathname === '/' || 
     pathname === '/login' || 
     pathname === '/signup' || 
