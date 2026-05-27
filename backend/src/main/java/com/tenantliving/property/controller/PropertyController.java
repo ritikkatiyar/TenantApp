@@ -5,6 +5,9 @@ import com.tenantliving.common.response.ApiResponse;
 import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
+import com.tenantliving.billing.annotation.EnforceSubscription;
+import com.tenantliving.billing.annotation.OwnerId;
+import com.tenantliving.billing.annotation.SubscriptionFeature;
 import com.tenantliving.property.service.interfaces.PropertyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +37,7 @@ public class PropertyController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @EnforceSubscription(feature = SubscriptionFeature.PROPERTIES)
     @Operation(summary = "Create property", description = "Creates a new property for the provided owner.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Property created"),
@@ -43,7 +47,7 @@ public class PropertyController {
     })
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> createProperty(
             @Parameter(description = "Owner UUID", required = true, in = ParameterIn.QUERY, example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
-            @RequestParam UUID ownerId,
+            @OwnerId @RequestParam UUID ownerId,
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody PropertyDTOs.CreatePropertyRequest request) {
         if (currentUser == null) {

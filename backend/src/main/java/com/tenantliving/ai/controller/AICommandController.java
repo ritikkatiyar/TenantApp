@@ -3,6 +3,8 @@ package com.tenantliving.ai.controller;
 import com.tenantliving.ai.dto.AICommandDTOs;
 import com.tenantliving.ai.service.AICommandService;
 import com.tenantliving.auth.principal.UserDetailsImpl;
+import com.tenantliving.billing.annotation.EnforceSubscription;
+import com.tenantliving.billing.annotation.SubscriptionFeature;
 import com.tenantliving.common.exception.ApiError;
 import com.tenantliving.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +34,7 @@ public class AICommandController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
+    @EnforceSubscription(feature = SubscriptionFeature.AI_COMMANDS)
     @Operation(summary = "Run AI command", description = "Sends a natural-language command to the Tenant Living AI assistant.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "AI job queued successfully"),

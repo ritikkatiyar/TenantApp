@@ -9,7 +9,9 @@ import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserService;
 import com.tenantliving.property.domain.UserPropertyRoleTbl;
 import com.tenantliving.property.repository.UserPropertyRoleRepository;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.tenantliving.finance.repository.LeaseRepository;
@@ -20,6 +22,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PropertyServiceImpl implements PropertyService {
     private final PropertyRepository propertyRepository;
     private final UserService userService;
@@ -31,6 +34,7 @@ public class PropertyServiceImpl implements PropertyService {
     public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID ownerId, UUID creatorId) {
         UserTbl owner = userService.getUserById(ownerId);
         UserTbl creator = userService.getUserById(creatorId);
+
         PropertyTbl property = PropertyTbl.builder()
                 .name(request.name())
                 .address(request.address())
@@ -49,6 +53,8 @@ public class PropertyServiceImpl implements PropertyService {
                 .assignedBy(creator)
                 .build();
         userPropertyRoleRepository.save(creatorMapping);
+        
+        log.info("[PROPERTY] User {} created property: {} on plan", ownerId, savedProperty.getId());
         return savedProperty;
     }
 
