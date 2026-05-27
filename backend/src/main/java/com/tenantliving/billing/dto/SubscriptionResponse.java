@@ -1,4 +1,4 @@
-package com.tenantliving.billing.domain;
+package com.tenantliving.billing.dto;
 
 public record SubscriptionResponse(
     String subscriptionId,

@@ -1,6 +1,10 @@
 package com.tenantliving.billing.service;
 
-import com.tenantliving.billing.domain.*;
+import com.tenantliving.billing.domain.PaymentGatewayType;
+import com.tenantliving.billing.dto.PaymentIntentRequest;
+import com.tenantliving.billing.dto.PaymentIntentResponse;
+import com.tenantliving.billing.dto.SubscriptionRequest;
+import com.tenantliving.billing.dto.SubscriptionResponse;
 
 public interface PaymentGatewayService {
     

@@ -1,4 +1,6 @@
-package com.tenantliving.billing.domain;
+package com.tenantliving.billing.dto;
+
+import com.tenantliving.billing.domain.PaymentGatewayType;
 
 public record SubscriptionRequest(
     String userId,
