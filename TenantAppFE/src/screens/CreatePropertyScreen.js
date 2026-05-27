@@ -97,7 +97,8 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
           name,
           address,
           city,
-          landmark
+          landmark,
+          totalFloors: parseInt(totalFloors, 10),
         },
       });
 
