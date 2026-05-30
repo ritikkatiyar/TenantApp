@@ -15,12 +15,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  redis:
-    host: ${SPRING_REDIS_HOST:localhost}
-    port: ${SPRING_REDIS_PORT:6379}
-    password: ${SPRING_REDIS_PASSWORD:}
-    timeout: 5s
-    ssl: false
 logging:
   level:
     com.tenantliving: DEBUG

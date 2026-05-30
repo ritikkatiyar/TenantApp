@@ -20,9 +20,6 @@ spring:
     properties:
       hibernate:
         format_sql: false
-  data:
-    redis:
-      url: ${REDIS_URL}
 
 server:
   tomcat:

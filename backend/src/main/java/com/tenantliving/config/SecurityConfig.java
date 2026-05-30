@@ -17,6 +17,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Security: stateless JWT for API access; login uses DAO provider + BCrypt.
@@ -36,6 +46,9 @@ public class SecurityConfig {
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource
     ) throws Exception {
+        // Insert an internal token filter before JWT processing to allow trusted services
+        InternalServiceAuthFilter internalFilter = new InternalServiceAuthFilter();
+
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
@@ -53,6 +66,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(internalFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -67,5 +81,28 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    // Simple internal auth filter that checks a pre-shared token header and grants ADMIN role.
+    private class InternalServiceAuthFilter extends OncePerRequestFilter {
+
+        private final String header = "Authorization";
+        private final String expected;
+
+        public InternalServiceAuthFilter() {
+            this.expected = System.getenv().getOrDefault("APP_INTERNAL_AUTH_TOKEN", "");
+        }
+
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+                throws ServletException, IOException {
+            String auth = request.getHeader(header);
+            if (auth != null && !expected.isEmpty() && auth.equals("Bearer " + expected)) {
+                var token = new UsernamePasswordAuthenticationToken(
+                        "internal-service", null, AuthorityUtils.createAuthorityList("ROLE_ADMIN"));
+                SecurityContextHolder.getContext().setAuthentication(token);
+            }
+            filterChain.doFilter(request, response);
+        }
     }
 }

@@ -159,36 +159,10 @@ function Get-DockerHealthOrStatus {
     return "unknown"
 }
 
-function Wait-ForRedis {
-    param([int]$TimeoutSeconds = 60)
-
-    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-    do {
-        $status = Get-DockerHealthOrStatus "tenant-living-redis"
-        if ($status -eq "healthy") {
-            return
-        }
-
-        Write-Step "Waiting for Redis health check... current status: $status"
-        Start-Sleep -Seconds 2
-    } while ((Get-Date) -lt $deadline)
-
-    throw "Redis did not become healthy within $TimeoutSeconds seconds."
-}
-
 function Get-MysqlHostPort {
     $portLine = docker port tenant-living-mysql 3306/tcp | Select-Object -First 1
     if (-not $portLine) {
         return 3307
-    }
-
-    return [int]($portLine -replace ".*:", "")
-}
-
-function Get-RedisHostPort {
-    $portLine = docker port tenant-living-redis 6379/tcp | Select-Object -First 1
-    if (-not $portLine) {
-        return 6379
     }
 
     return [int]($portLine -replace ".*:", "")
@@ -218,28 +192,24 @@ if (-not $SkipDocker) {
         throw "Docker was not found on PATH. Start MySQL and Redis yourself and rerun with -SkipDocker."
     }
 
-    Write-Step "Starting MySQL and Redis with Docker Compose..."
+    Write-Step "Starting MySQL with Docker Compose..."
     Push-Location $RootDir
     try {
         Remove-StaleDockerContainerIfExists "tenant-living-mysql"
-        Remove-StaleDockerContainerIfExists "tenant-living-redis"
-        docker compose up -d mysql redis
+        docker compose up -d mysql
         if ($LASTEXITCODE -ne 0) {
-            throw "Docker Compose failed to start MySQL and Redis."
+            throw "Docker Compose failed to start MySQL."
         }
         Wait-ForMysql
-        Wait-ForRedis
     } finally {
         Pop-Location
     }
 }
 
 $mysqlPort = if ($SkipDocker) { 3307 } else { Get-MysqlHostPort }
-$redisPort = if ($SkipDocker) { 6379 } else { Get-RedisHostPort }
 $dbUrl = "jdbc:mysql://localhost:$mysqlPort/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
 Write-Step "Using DB_URL=$dbUrl"
-Write-Step "Using Redis at localhost:$redisPort"
 Write-Step "Starting backend on http://localhost:$BackendPort"
 
 $backendCommand = @"
@@ -247,8 +217,6 @@ $backendCommand = @"
 `$env:DB_USERNAME='tenant_living'
 `$env:DB_PASSWORD='tenant_living'
 `$env:SERVER_PORT='$BackendPort'
-`$env:SPRING_REDIS_HOST='localhost'
-`$env:SPRING_REDIS_PORT='$redisPort'
 `$env:APP_AI_ENABLED='$env:APP_AI_ENABLED'
 `$env:SPRING_AI_MODEL_CHAT='$env:SPRING_AI_MODEL_CHAT'
 `$env:GEMINI_API_KEY='$env:GEMINI_API_KEY'

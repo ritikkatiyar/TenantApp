@@ -68,7 +68,7 @@ public class AICommandController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        AICommandDTOs.AIJobStatusResponse response = aiCommandService.getJobStatus(jobId);
+        AICommandDTOs.AIJobStatusResponse response = aiCommandService.getJobStatus(jobId, currentUser);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

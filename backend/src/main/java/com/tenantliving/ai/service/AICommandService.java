@@ -18,5 +18,5 @@ public interface AICommandService {
 
     String executeAIJob(UUID jobId, String prompt, UUID userId);
 
-    AICommandDTOs.AIJobStatusResponse getJobStatus(UUID jobId);
+    AICommandDTOs.AIJobStatusResponse getJobStatus(UUID jobId, UserDetailsImpl currentUser);
 }

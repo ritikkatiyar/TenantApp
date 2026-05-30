@@ -21,6 +21,20 @@ public class AICommandDTOs {
     ) {
     }
 
+    @Schema(name = "AIJobCreateRequest", description = "AI job creation request")
+    public record AIJobCreateRequest(
+            String message,
+            String userId
+    ) {
+    }
+
+    @Schema(name = "AIJobCreateResponse", description = "AI job creation response")
+    public record AIJobCreateResponse(
+            String jobId,
+            String status
+    ) {
+    }
+
     @Schema(name = "AIJobStatusResponse", description = "Current status and result of the AI command job")
     public record AIJobStatusResponse(
             String jobId,

@@ -31,4 +31,8 @@ public class AIJobTbl extends BaseEntity {
 
     @Column(name = "error_message")
     private String errorMessage;
+
+    @Builder.Default
+    @Column(name = "retry_count", nullable = false)
+    private Integer retryCount = 0;
 }
