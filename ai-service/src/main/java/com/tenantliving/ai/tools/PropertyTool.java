@@ -19,9 +19,10 @@ public class PropertyTool {
     private final BackendAdminClient backendAdminClient;
 
     @Tool(name = "createPropertyTool",
-          description = "Creates a new property/building in the system with a name and location.")
+          description = "Creates a new property/building in the system. Requires name, address, city, and total floors. If any required information is missing, ask the user before calling this tool.")
     public ToolExecutionResponse createProperty(CreatePropertyInput input) {
-        log.info("[AI TOOL] (ai-service) Received createPropertyTool request: name={}, location={}", input.getName(), input.getLocation());
+        log.info("[AI TOOL] (ai-service) Received createPropertyTool request: name={}, address={}, city={}, floors={}", 
+                 input.getName(), input.getAddress(), input.getCity(), input.getTotalFloors());
 
         // Resolve the actual userId from the job context (set by AIJobEventListener)
         UUID ownerId = AIJobContext.getUserId();
@@ -31,7 +32,7 @@ public class PropertyTool {
         }
 
         try {
-            var response = backendAdminClient.createProperty(ownerId, input.getName(), input.getLocation(), "Unknown City", "", 3);
+            var response = backendAdminClient.createProperty(ownerId, input.getName(), input.getAddress(), input.getCity(), input.getLandmark(), input.getTotalFloors());
             String ref = response != null && response.containsKey("data") ? response.get("data").toString() : UUID.randomUUID().toString();
             String message = "Property '" + input.getName() + "' created successfully. Reference: " + ref;
             return new ToolExecutionResponse(true, message, ref);
