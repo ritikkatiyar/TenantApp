@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3307/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:tenant_living}
+    password: ${DB_PASSWORD:tenant_living}
+
+logging:
+  level:
+    com.tenantliving: DEBUG
+    org.springframework.security: INFO

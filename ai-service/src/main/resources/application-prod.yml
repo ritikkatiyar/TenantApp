@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+server:
+  tomcat:
+    threads:
+      max: 20
+    max-connections: 50
+
+logging:
+  level:
+    com.tenantliving: INFO
+    org.springframework.security: WARN
