@@ -10,8 +10,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.Map;
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class BackendAdminClient {
 
     private final WebClient.Builder webClientBuilder;
@@ -30,8 +33,12 @@ public class BackendAdminClient {
         WebClient.RequestBodySpec req = client.post()
                 .uri(uriBuilder -> uriBuilder.path("/api/v1/property/properties").queryParam("ownerId", ownerId.toString()).build());
 
-        if (StringUtils.hasText(properties.authToken())) {
-            req = req.header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.authToken());
+        String tokenToUse = com.tenantliving.ai.config.AIJobContext.getUserToken();
+        if (StringUtils.hasText(tokenToUse)) {
+            req = req.header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenToUse);
+        } else {
+            // Log a warning if strict token relaying fails
+            log.warn("No user token found in AIJobContext for tool call to {}", req);
         }
 
         return req

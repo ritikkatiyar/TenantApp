@@ -40,17 +40,14 @@ spring:
             temperature: ${GEMINI_TEMPERATURE:0.2}
 
 app:
+  jwt:
+    secret: ${APP_JWT_SECRET:dev-only-change-this-to-a-long-random-secret-32b-min}
+    access-expiration-ms: ${APP_JWT_ACCESS_MS:900000}
   ai:
     enabled: ${APP_AI_ENABLED:false}
-  ai-service:
-    base-url: ${APP_AI_SERVICE_URL:http://localhost:8081}
-    auth-token: ${APP_AI_SERVICE_AUTH_TOKEN:}
-    user-header-name: ${APP_AI_SERVICE_USER_HEADER_NAME:X-User-Id}
   backend:
     client:
       base-url: ${BACKEND_BASE_URL:http://localhost:8080}
-      auth-token: ${BACKEND_AUTH_TOKEN:}
-      user-header-name: ${BACKEND_USER_HEADER_NAME:X-User-Id}
 
 management:
   endpoints:

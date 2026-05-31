@@ -1,7 +1,7 @@
 package com.tenantliving.ai.service.impl;
 
 import com.tenantliving.ai.config.AIProperties;
-import com.tenantliving.ai.domain.AIJob;
+import com.tenantliving.ai.domain.AIJobTbl;
 import com.tenantliving.ai.dto.AICommandDTOs.AICommandRequest;
 import com.tenantliving.ai.dto.AICommandDTOs.AICommandResponse;
 import com.tenantliving.ai.dto.AICommandDTOs.AIJobCreateRequest;
@@ -63,13 +63,20 @@ public class AIServiceImpl implements AIService {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "AI service is disabled");
         }
 
+        String token = null;
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getCredentials() instanceof String jwt) {
+            token = jwt;
+        }
+
         UUID jobId = UUID.randomUUID();
-        AIJob job = AIJob.builder()
+        AIJobTbl job = AIJobTbl.builder()
                 .id(jobId)
                 .userId(UUID.fromString(request.getUserId()))
+                .userToken(token)
                 .prompt(request.getMessage())
                 .status("PENDING")
-            .retryCount(0)
+                .retryCount(0)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -86,7 +93,7 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public AIJobStatusResponse getJobStatus(UUID jobId) {
-        AIJob job = aiJobRepository.findById(jobId)
+        AIJobTbl job = aiJobRepository.findById(jobId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "AI job not found"));
 
         return AIJobStatusResponse.builder()
@@ -98,7 +105,7 @@ public class AIServiceImpl implements AIService {
     }
 
     public String executeJob(UUID jobId) {
-        AIJob job = aiJobRepository.findById(jobId)
+        AIJobTbl job = aiJobRepository.findById(jobId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "AI job not found"));
 
         if (chatClient == null) {
@@ -124,7 +131,7 @@ public class AIServiceImpl implements AIService {
     }
 
     private void updateStatus(UUID jobId, String status, String response, String errorMessage, Integer retryCount) {
-        AIJob job = aiJobRepository.findById(jobId)
+        AIJobTbl job = aiJobRepository.findById(jobId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "AI job not found"));
         job.setStatus(status);
         job.setResponse(response);

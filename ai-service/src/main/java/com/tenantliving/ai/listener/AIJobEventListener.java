@@ -4,7 +4,7 @@ import com.tenantliving.ai.config.AIJobContext;
 import com.tenantliving.ai.events.AIJobCreatedEvent;
 import com.tenantliving.ai.service.impl.AIServiceImpl;
 import com.tenantliving.ai.repository.AIJobRepository;
-import com.tenantliving.ai.domain.AIJob;
+import com.tenantliving.ai.domain.AIJobTbl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -36,12 +36,13 @@ public class AIJobEventListener {
         aiService.markJobProcessing(event.getJobId());
 
         // Resolve the userId from the persisted job and set it in the thread-local context
-        AIJob job = aiJobRepository.findById(event.getJobId()).orElse(null);
+        AIJobTbl job = aiJobRepository.findById(event.getJobId()).orElse(null);
         if (job == null) {
             log.error("AI job not found: {}", event.getJobId());
             return;
         }
         AIJobContext.setUserId(job.getUserId());
+        AIJobContext.setUserToken(job.getUserToken());
 
         try {
             String response = aiService.executeJob(event.getJobId());

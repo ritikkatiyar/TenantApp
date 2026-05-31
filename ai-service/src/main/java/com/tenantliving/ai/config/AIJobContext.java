@@ -10,6 +10,7 @@ import java.util.UUID;
 public final class AIJobContext {
 
     private static final ThreadLocal<UUID> CURRENT_USER_ID = new ThreadLocal<>();
+    private static final ThreadLocal<String> CURRENT_USER_TOKEN = new ThreadLocal<>();
 
     private AIJobContext() {}
 
@@ -21,7 +22,16 @@ public final class AIJobContext {
         return CURRENT_USER_ID.get();
     }
 
+    public static void setUserToken(String token) {
+        CURRENT_USER_TOKEN.set(token);
+    }
+
+    public static String getUserToken() {
+        return CURRENT_USER_TOKEN.get();
+    }
+
     public static void clear() {
         CURRENT_USER_ID.remove();
+        CURRENT_USER_TOKEN.remove();
     }
 }

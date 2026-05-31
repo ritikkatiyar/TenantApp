@@ -3,6 +3,7 @@ param(
     [string]$Command = "start",
     [int]$FrontendPort = 3000,
     [int]$BackendPort = 8080,
+    [int]$AiServicePort = 8081,
     [switch]$SkipDocker
 )
 
@@ -10,10 +11,13 @@ $ErrorActionPreference = "Stop"
 
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $RootDir "backend"
+$AiServiceDir = Join-Path $RootDir "ai-service"
 $FrontendDir = Join-Path $RootDir "TenantAppFE"
 $LogDir = Join-Path $RootDir "logs\dev"
 $BackendLog = Join-Path $LogDir "backend.log"
 $BackendErrLog = Join-Path $LogDir "backend.err.log"
+$AiServiceLog = Join-Path $LogDir "ai-service.log"
+$AiServiceErrLog = Join-Path $LogDir "ai-service.err.log"
 $FrontendLog = Join-Path $LogDir "frontend.log"
 $FrontendErrLog = Join-Path $LogDir "frontend.err.log"
 
@@ -83,6 +87,30 @@ if ($Command -ieq "stop") {
     }
     Stop-Process -Name "java", "node" -Force -ErrorAction SilentlyContinue
     Write-Step "All services stopped successfully."
+    exit 0
+}
+
+if ($Command -ieq "ai") {
+    Write-Step "Starting ai-service only on http://localhost:$AiServicePort"
+    Import-DotEnv (Join-Path $RootDir ".env")
+    $mysqlPort = Get-MysqlHostPort
+    $dbUrl = "jdbc:mysql://localhost:$mysqlPort/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+    Push-Location $AiServiceDir
+    try {
+        $env:DB_URL = $dbUrl
+        $env:DB_USERNAME = 'tenant_living'
+        $env:DB_PASSWORD = 'tenant_living'
+        $env:SERVER_PORT = $AiServicePort
+        $env:APP_AI_ENABLED = $env:APP_AI_ENABLED
+        $env:SPRING_AI_MODEL_CHAT = $env:SPRING_AI_MODEL_CHAT
+        $env:GEMINI_API_KEY = $env:GEMINI_API_KEY
+        $env:GEMINI_MODEL = $env:GEMINI_MODEL
+        $env:GEMINI_TEMPERATURE = $env:GEMINI_TEMPERATURE
+        $env:BACKEND_BASE_URL = "http://localhost:8080"
+        mvn spring-boot:run
+    } finally {
+        Pop-Location
+    }
     exit 0
 }
 
@@ -177,6 +205,37 @@ function Stop-ChildProcess {
     }
 }
 
+function Ensure-MavenModuleCompiled {
+    param(
+        [string]$ModuleDir,
+        [string[]]$RequiredClassRelativePaths
+    )
+
+    $missing = @(
+        foreach ($relativePath in $RequiredClassRelativePaths) {
+            $classFile = Join-Path $ModuleDir "target\classes\$relativePath"
+            if (-not (Test-Path $classFile)) {
+                $relativePath
+            }
+        }
+    )
+
+    if ($missing.Count -eq 0) {
+        return
+    }
+
+    Write-Step "Compiled classes missing in $ModuleDir ($($missing -join ', ')); running mvn clean compile..."
+    Push-Location $ModuleDir
+    try {
+        mvn -DskipTests clean compile
+        if ($LASTEXITCODE -ne 0) {
+            throw "Maven compile failed for $ModuleDir."
+        }
+    } finally {
+        Pop-Location
+    }
+}
+
 if (-not (Test-CommandExists "mvn")) {
     throw "Maven was not found on PATH."
 }
@@ -210,6 +269,14 @@ $mysqlPort = if ($SkipDocker) { 3307 } else { Get-MysqlHostPort }
 $dbUrl = "jdbc:mysql://localhost:$mysqlPort/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
 Write-Step "Using DB_URL=$dbUrl"
+Ensure-MavenModuleCompiled -ModuleDir $BackendDir -RequiredClassRelativePaths @(
+    "com\tenantliving\TenantLivingApplication.class",
+    "com\tenantliving\user\service\impl\UserServiceImpl.class"
+)
+Ensure-MavenModuleCompiled -ModuleDir $AiServiceDir -RequiredClassRelativePaths @(
+    "com\tenantliving\ai\AiServiceApplication.class"
+)
+
 Write-Step "Starting backend on http://localhost:$BackendPort"
 
 $backendCommand = @"
@@ -217,12 +284,7 @@ $backendCommand = @"
 `$env:DB_USERNAME='tenant_living'
 `$env:DB_PASSWORD='tenant_living'
 `$env:SERVER_PORT='$BackendPort'
-`$env:APP_AI_ENABLED='$env:APP_AI_ENABLED'
-`$env:SPRING_AI_MODEL_CHAT='$env:SPRING_AI_MODEL_CHAT'
-`$env:GEMINI_API_KEY='$env:GEMINI_API_KEY'
-`$env:GEMINI_MODEL='$env:GEMINI_MODEL'
-`$env:GEMINI_TEMPERATURE='$env:GEMINI_TEMPERATURE'
-mvn spring-boot:run
+mvn -DskipTests compile spring-boot:run
 "@
 
 $backendProcess = Start-Process `
@@ -231,6 +293,30 @@ $backendProcess = Start-Process `
     -WorkingDirectory $BackendDir `
     -RedirectStandardOutput $BackendLog `
     -RedirectStandardError $BackendErrLog `
+    -PassThru
+
+Write-Step "Starting ai-service on http://localhost:$AiServicePort"
+
+$aiServiceCommand = @"
+`$env:DB_URL='$dbUrl'
+`$env:DB_USERNAME='tenant_living'
+`$env:DB_PASSWORD='tenant_living'
+`$env:SERVER_PORT='$AiServicePort'
+`$env:APP_AI_ENABLED='$env:APP_AI_ENABLED'
+`$env:SPRING_AI_MODEL_CHAT='$env:SPRING_AI_MODEL_CHAT'
+`$env:GEMINI_API_KEY='$env:GEMINI_API_KEY'
+`$env:GEMINI_MODEL='$env:GEMINI_MODEL'
+`$env:GEMINI_TEMPERATURE='$env:GEMINI_TEMPERATURE'
+`$env:BACKEND_BASE_URL='http://localhost:$BackendPort'
+mvn -DskipTests compile spring-boot:run
+"@
+
+$aiServiceProcess = Start-Process `
+    -FilePath "powershell.exe" `
+    -ArgumentList "-NoProfile", "-Command", $aiServiceCommand `
+    -WorkingDirectory $AiServiceDir `
+    -RedirectStandardOutput $AiServiceLog `
+    -RedirectStandardError $AiServiceErrLog `
     -PassThru
 
 Write-Step "Starting frontend on http://localhost:$FrontendPort"
@@ -243,13 +329,15 @@ $frontendProcess = Start-Process `
     -RedirectStandardError $FrontendErrLog `
     -PassThru
 
-Write-Step "Backend log: $BackendLog"
-Write-Step "Frontend log: $FrontendLog"
-Write-Step "Press Ctrl+C to stop backend and frontend."
+Write-Step "Backend log:     $BackendLog"
+Write-Step "AI Service log:  $AiServiceLog"
+Write-Step "Frontend log:    $FrontendLog"
+Write-Step "Press Ctrl+C to stop all services."
 
 try {
-    Get-Content $BackendLog, $BackendErrLog, $FrontendLog, $FrontendErrLog -Wait -Tail 0
+    Get-Content $BackendLog, $BackendErrLog, $AiServiceLog, $AiServiceErrLog, $FrontendLog, $FrontendErrLog -Wait -Tail 0
 } finally {
     Stop-ChildProcess $backendProcess "backend"
+    Stop-ChildProcess $aiServiceProcess "ai-service"
     Stop-ChildProcess $frontendProcess "frontend"
 }

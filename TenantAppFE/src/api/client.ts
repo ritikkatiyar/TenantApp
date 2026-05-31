@@ -1,4 +1,4 @@
-import { apiUrl } from '../config/api';
+import { apiUrl, aiApiUrl } from '../config/api';
 import type { ApiResponse } from '../types/api';
 import { ApiError } from '../utils/errors';
 
@@ -7,6 +7,7 @@ const DEFAULT_TIMEOUT_MS = 15000;
 type ApiRequestOptions = RequestInit & {
   token?: string;
   timeout?: number;
+  useAiApi?: boolean;
 };
 
 /**
@@ -43,10 +44,12 @@ export function setAuthRefreshHandler(handler: AuthRefreshHandler) {
 }
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { token, headers, timeout = DEFAULT_TIMEOUT_MS, ...requestOptions } = options;
+  const { token, headers, timeout = DEFAULT_TIMEOUT_MS, useAiApi, ...requestOptions } = options;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  const targetUrl = useAiApi ? aiApiUrl(path) : apiUrl(path);
 
   try {
     const fetchOptions = {
@@ -60,7 +63,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       },
     };
 
-    let response = await fetch(apiUrl(path), fetchOptions);
+    let response = await fetch(targetUrl, fetchOptions);
 
     // Automatic Token Refresh Interceptor
     if (response.status === 401 && authRefreshHandler) {
@@ -74,7 +77,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
           ...fetchOptions.headers,
           Authorization: `Bearer ${newToken}`,
         };
-        response = await fetch(apiUrl(path), fetchOptions);
+        response = await fetch(targetUrl, fetchOptions);
       }
     }
 

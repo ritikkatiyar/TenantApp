@@ -21,6 +21,7 @@ export function runAICommand(payload: AICommandRequest, token: string): Promise<
   return apiRequest<AICommandResponse>('/api/v1/ai/commands', {
     method: 'POST',
     token,
+    useAiApi: true,
     timeout: 30000, // Reduced from 60s since queuing is <50ms
     body: JSON.stringify(payload),
   });
@@ -30,5 +31,6 @@ export function getAIJobStatus(jobId: string, token: string): Promise<AIJobStatu
   return apiRequest<AIJobStatusResponse>(`/api/v1/ai/commands/jobs/${jobId}`, {
     method: 'GET',
     token,
+    useAiApi: true,
   });
 }
