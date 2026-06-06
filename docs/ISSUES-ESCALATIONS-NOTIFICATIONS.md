@@ -4,6 +4,90 @@ This document describes the unified design and architecture for the **Issue Mana
 
 ---
 
+## Implementation Status
+
+> Last Updated: 2026-06-06
+
+| Phase | Description | Backend | Frontend | Status |
+| :---- | :---------- | :------ | :------- | :----- |
+| **Phase 1** | Notification Infrastructure (Skeleton) | ✅ Done | ➖ Not applicable | **COMPLETE** |
+| **Phase 2** | Announcements & Notice Board | ⏳ Pending | ⏳ Pending | **NEXT UP** |
+| **Phase 3** | Issues & Comment Timelines | ⏳ Pending | ⏳ Pending | Queued |
+| **Phase 4** | Escalations & SLA Engine | ⏳ Pending | ⏳ Pending | Queued |
+
+---
+
+### Phase 1 — Notification Infrastructure ✅ COMPLETE
+> Commit: `dd7a439` on `main` branch
+
+**What was built:**
+- `com.tenantliving.common.event` — Shared Spring `ApplicationEvent` classes:
+  - `IssueCreatedEvent`, `IssueEscalatedEvent`, `AnnouncementBroadcastEvent`
+- `com.tenantliving.notification` module — Full infrastructure:
+  - `NotificationChannel` enum (`EMAIL`, `WHATSAPP`, `PUSH`, `SMS`)
+  - `NotificationStatus` enum (`PENDING`, `SENT`, `FAILED`)
+  - `NotificationLogTbl` entity + `NotificationLogRepository` (JPA audit trail)
+  - `NotificationChannelSender` — **Strategy interface** (OCP, DIP compliant)
+  - `ConsoleNotificationSender` — **Mock dev sender** (prints to console log, no real API calls)
+  - `NotificationServiceImpl` — **Orchestrator** (resolves strategy at runtime, persists logs)
+  - `NotificationEventListener` — **Async @EventListener** (Observer pattern, decoupled from business modules)
+- `V18__create_notification_schema.sql` — Flyway DB migration for `notification_log_tbl`
+- `NotificationIntegrationTest` — Integration test verifying event flow and audit log persistence
+- `@EnableAsync` added to `TenantLivingApplication`
+
+**Design patterns applied:** Strategy, Observer, SRP, OCP, DIP, LSP
+
+**Secrets needed to switch from mock to real:** See Section 6 below.
+
+---
+
+### Phase 2 — Announcements & Notice Board ⏳ NEXT UP
+
+**Backend to build:**
+- Flyway migration for `announcement_tbl` + `announcement_receipt_tbl`
+- `com.tenantliving.announcement` module (domain, repository, service, controller)
+- REST APIs:
+  - `POST /announcements` — Landlord/caretaker creates and broadcasts a notice
+  - `GET /announcements` — Tenant fetches notices for their property
+  - `POST /announcements/{id}/read` — Tenant marks a notice as read
+- Publishes `AnnouncementBroadcastEvent` to trigger notifications
+
+**Frontend to build:**
+- Notice Board widget on `TenantHomeScreen` (sticky `CRITICAL` banners + info feed)
+- Broadcast Composer modal on `CommandCenterScreen` (scope + severity selectors)
+- Auto read-receipt trigger on notice detail open
+
+---
+
+### Phase 3 — Issues & Comment Timelines ⏳ Queued
+
+**Backend to build:**
+- Flyway migration for `issue_tbl` + `issue_timeline_tbl`
+- `com.tenantliving.issue` module (full CRUD + state machine lifecycle)
+- REST APIs for ticket creation, timeline comments, status updates
+- Publishes `IssueCreatedEvent` + `IssueEscalatedEvent`
+
+**Frontend to build:**
+- Ticket Composer form (category-driven dynamic fields) for Tenants
+- Conversational timeline view (speech bubble rendering per action type)
+- Landlord Triage Board (grouped by status / escalation level)
+
+---
+
+### Phase 4 — Escalations & SLA Engine ⏳ Queued
+
+**Backend to build:**
+- `@Scheduled` cron job scanning for SLA violations (HIGH priority tickets open > 48hrs)
+- Manual escalation endpoint + dispute reason capture
+- `EscalationStrategy` interface with `SlaAutoEscalationStrategy`, `SafetyEmergencyStrategy`, `FinancialDisputeStrategy` implementations
+- Wire real Email (SMTP/Brevo) and WhatsApp (Twilio/Meta) senders into the notification module
+
+**Frontend to build:**
+- Escalate button appearing after SLA breach on Tenant ticket view
+- Escalation alert banners on Landlord dashboard (red priority indicator)
+
+---
+
 ## 1. High-Level Architecture & Decoupling
 
 To prevent tight coupling between business modules (such as `issue` or `announcement`) and communication providers (such as SMTP, Twilio, or Firebase), the system uses an **event-driven design** built on **Spring Application Events**.
