@@ -90,6 +90,24 @@ if ($Command -ieq "stop") {
     exit 0
 }
 
+if ($Command -ieq "clean") {
+    Write-Step "Stopping all services before cleanup..."
+    Push-Location $RootDir
+    try {
+        docker compose down
+    } finally {
+        Pop-Location
+    }
+    Stop-Process -Name "java", "node" -Force -ErrorAction SilentlyContinue
+    
+    Write-Step "Cleaning all log files in $LogDir..."
+    if (Test-Path $LogDir) {
+        Remove-Item -Path "$LogDir\*" -Force -Recurse -ErrorAction SilentlyContinue
+    }
+    Write-Step "Cleanup complete."
+    exit 0
+}
+
 if ($Command -ieq "ai") {
     Write-Step "Starting ai-service only on http://localhost:$AiServicePort"
     Import-DotEnv (Join-Path $RootDir ".env")
