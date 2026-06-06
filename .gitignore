@@ -2,6 +2,9 @@
 .idea/
 .env
 *.log
+*.err.log
+logs/
 backend/target/
+
 
 ai-service/target/
