@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -10,7 +10,9 @@ import {
   FlatList,
   Alert,
   Animated,
-  useWindowDimensions
+  useWindowDimensions,
+  Modal,
+  TextInput
 } from 'react-native';
 import { useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +25,7 @@ import { useProperties } from '../hooks/useProperties';
 import { useAuth } from '../auth/AuthProvider';
 import type { PropertyResponse } from '../types/property';
 import Building3DView from '../components/Building3DView';
+import { createAnnouncement } from '../api/announcement.api';
 
 const LUMINOUS_BACKGROUND = ['#f4faff', '#ecf5fb', '#d8e2ff'] as const;
 
@@ -38,6 +41,52 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const { user, accessToken } = useAuth();
   const { properties, isLoading, error, refreshProperties, deleteProperty } = useProperties();
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Notice Board Composer State
+  const [selectedPropertyForBroadcast, setSelectedPropertyForBroadcast] = useState<PropertyResponse | null>(null);
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastContent, setBroadcastContent] = useState('');
+  const [broadcastCategory, setBroadcastCategory] = useState<'GENERAL' | 'MAINTENANCE' | 'EMERGENCY' | 'BILLING' | 'EVENT'>('GENERAL');
+  const [broadcastSeverity, setBroadcastSeverity] = useState<'INFO' | 'WARNING' | 'CRITICAL'>('INFO');
+  const [broadcastTargetType, setBroadcastTargetType] = useState<'PROPERTY' | 'FLOOR' | 'UNIT'>('PROPERTY');
+  const [broadcastTargetValue, setBroadcastTargetValue] = useState('');
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
+
+  const handleSendBroadcast = async () => {
+    if (!selectedPropertyForBroadcast || !accessToken) return;
+    if (!broadcastTitle.trim() || !broadcastContent.trim()) {
+      Alert.alert('Validation', 'Title and Content are required.');
+      return;
+    }
+
+    setSendingBroadcast(true);
+    try {
+      await createAnnouncement(accessToken, {
+        propertyId: selectedPropertyForBroadcast.id,
+        title: broadcastTitle,
+        content: broadcastContent,
+        category: broadcastCategory,
+        severity: broadcastSeverity,
+        targetType: broadcastTargetType,
+        targetValue: broadcastTargetType !== 'PROPERTY' ? broadcastTargetValue : undefined,
+      });
+
+      Alert.alert('Success', 'Announcement broadcasted successfully!');
+      
+      setBroadcastTitle('');
+      setBroadcastContent('');
+      setBroadcastCategory('GENERAL');
+      setBroadcastSeverity('INFO');
+      setBroadcastTargetType('PROPERTY');
+      setBroadcastTargetValue('');
+      setSelectedPropertyForBroadcast(null);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to send broadcast');
+    } finally {
+      setSendingBroadcast(false);
+    }
+  };
+
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [40, 90],
@@ -147,6 +196,17 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
           <Text style={styles.manageButtonText}>{isDesktop ? 'MANAGE' : 'Manage Property'}</Text>
           <MaterialIcons name="arrow-forward" size={16} color="#fff" />
         </LinearGradient>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={[styles.broadcastButtonWrapper, !isDesktop && styles.broadcastButtonWrapperMobile, isDesktop && styles.broadcastButtonWrapperDesktop]}
+        onPress={() => setSelectedPropertyForBroadcast(item)}
+      >
+        <View style={styles.broadcastButton}>
+          <MaterialIcons name="campaign" size={16} color="#006875" />
+          <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
+        </View>
       </TouchableOpacity>
     </BlurView>
   );
@@ -314,53 +374,187 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   }
 
   return (
-    <LinearGradient
-      colors={LUMINOUS_BACKGROUND}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={styles.mobileHeader}>
-          <Text style={styles.mobileBrand}>PropPay SaaS</Text>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} />
-              <View style={styles.notificationBadge} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-              <View style={styles.mobileAvatar}>
-                <Text style={styles.mobileAvatarText}>{user?.fullName?.[0] || 'A'}</Text>
+    <>
+      <LinearGradient
+        colors={LUMINOUS_BACKGROUND}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <View style={styles.mobileHeader}>
+            <Text style={styles.mobileBrand}>PropPay SaaS</Text>
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.notificationButton}>
+                <Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} />
+                <View style={styles.notificationBadge} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+                <View style={styles.mobileAvatar}>
+                  <Text style={styles.mobileAvatarText}>{user?.fullName?.[0] || 'A'}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {isLoading ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color="#00e5ff" />
+            </View>
+          ) : (
+            <Animated.FlatList
+              data={properties}
+              renderItem={renderPropertyItem}
+              keyExtractor={(item: PropertyResponse) => item.id}
+              contentContainerStyle={styles.listContent}
+              ListHeaderComponent={ListHeader}
+              ListEmptyComponent={ListEmptyComponent}
+              ListFooterComponent={ListFooter}
+              showsVerticalScrollIndicator={false}
+              refreshing={isLoading}
+              onRefresh={refreshProperties}
+              onScroll={Animated.event(
+                [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                { useNativeDriver: false }
+              )}
+              scrollEventThrottle={16}
+            />
+          )}
+        </SafeAreaView>
+      </LinearGradient>
+
+      {/* Broadcast Notice Composer Modal */}
+      <Modal
+        transparent
+        visible={!!selectedPropertyForBroadcast}
+        animationType="slide"
+        onRequestClose={() => setSelectedPropertyForBroadcast(null)}
+      >
+        <View style={styles.composerOverlay}>
+          <View style={styles.composerSheet}>
+            {/* Header */}
+            <View style={styles.composerHeader}>
+              <View>
+                <Text style={styles.composerTitle}>Broadcast Notice</Text>
+                <Text style={styles.composerSubtitle}>{selectedPropertyForBroadcast?.name}</Text>
               </View>
+              <TouchableOpacity onPress={() => setSelectedPropertyForBroadcast(null)}>
+                <MaterialIcons name="close" size={24} color="#163235" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.composerScroll}>
+              {/* Title */}
+              <Text style={styles.composerLabel}>TITLE</Text>
+              <TextInput
+                style={styles.composerInput}
+                placeholder="e.g. Water supply shut-off notice"
+                value={broadcastTitle}
+                onChangeText={setBroadcastTitle}
+                maxLength={255}
+              />
+
+              {/* Content */}
+              <Text style={styles.composerLabel}>CONTENT</Text>
+              <TextInput
+                style={[styles.composerInput, styles.composerTextarea]}
+                placeholder="Describe the notice in detail..."
+                value={broadcastContent}
+                onChangeText={setBroadcastContent}
+                multiline
+                numberOfLines={5}
+                textAlignVertical="top"
+              />
+
+              {/* Category row */}
+              <Text style={styles.composerLabel}>CATEGORY</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+                {(['GENERAL', 'MAINTENANCE', 'EMERGENCY', 'BILLING', 'EVENT'] as const).map(cat => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[styles.chip, broadcastCategory === cat && styles.chipActive]}
+                    onPress={() => setBroadcastCategory(cat)}
+                  >
+                    <Text style={[styles.chipText, broadcastCategory === cat && styles.chipTextActive]}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Severity row */}
+              <Text style={styles.composerLabel}>SEVERITY</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+                {([
+                  { val: 'INFO' as const, color: '#006875' },
+                  { val: 'WARNING' as const, color: '#e28743' },
+                  { val: 'CRITICAL' as const, color: '#ba1a1a' },
+                ]).map(({ val, color }) => (
+                  <TouchableOpacity
+                    key={val}
+                    style={[styles.chip, broadcastSeverity === val && { ...styles.chipActive, backgroundColor: color, borderColor: color }]}
+                    onPress={() => setBroadcastSeverity(val)}
+                  >
+                    <Text style={[styles.chipText, broadcastSeverity === val && styles.chipTextActive]}>{val}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Target scope row */}
+              <Text style={styles.composerLabel}>TARGET SCOPE</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+                {(['PROPERTY', 'FLOOR', 'UNIT'] as const).map(t => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[styles.chip, broadcastTargetType === t && styles.chipActive]}
+                    onPress={() => setBroadcastTargetType(t)}
+                  >
+                    <Text style={[styles.chipText, broadcastTargetType === t && styles.chipTextActive]}>{t}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {broadcastTargetType !== 'PROPERTY' && (
+                <>
+                  <Text style={styles.composerLabel}>
+                    {broadcastTargetType === 'FLOOR' ? 'FLOOR NUMBER' : 'UNIT ID'}
+                  </Text>
+                  <TextInput
+                    style={styles.composerInput}
+                    placeholder={broadcastTargetType === 'FLOOR' ? 'e.g. 3' : 'e.g. uuid of unit'}
+                    value={broadcastTargetValue}
+                    onChangeText={setBroadcastTargetValue}
+                    keyboardType={broadcastTargetType === 'FLOOR' ? 'numeric' : 'default'}
+                  />
+                </>
+              )}
+            </ScrollView>
+
+            {/* Send button */}
+            <TouchableOpacity
+              style={styles.composerSendBtn}
+              onPress={handleSendBroadcast}
+              disabled={sendingBroadcast}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={broadcastSeverity === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : ['#006875', '#00bcd4']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.composerSendGradient}
+              >
+                {sendingBroadcast ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <MaterialIcons name="send" size={18} color="#fff" />
+                    <Text style={styles.composerSendText}>BROADCAST NOW</Text>
+                  </>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
-
-        {isLoading ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#00e5ff" />
-          </View>
-        ) : (
-          <Animated.FlatList
-            data={properties}
-            renderItem={renderPropertyItem}
-            keyExtractor={(item: PropertyResponse) => item.id}
-            contentContainerStyle={styles.listContent}
-            ListHeaderComponent={ListHeader}
-            ListEmptyComponent={ListEmptyComponent}
-            ListFooterComponent={ListFooter}
-            showsVerticalScrollIndicator={false}
-            refreshing={isLoading}
-            onRefresh={refreshProperties}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: false }
-            )}
-            scrollEventThrottle={16}
-          />
-        )}
-      </SafeAreaView>
-    </LinearGradient>
+      </Modal>
+    </>
   );
 }
 
@@ -1044,4 +1238,154 @@ const styles = StyleSheet.create({
     color: '#006875',
     letterSpacing: 0.5,
   },
+
+  // ─── Broadcast Notice button on property card ───────────────────────────────
+  broadcastButtonWrapper: {
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  broadcastButtonWrapperMobile: {
+    marginHorizontal: 24,
+    marginBottom: 20,
+  },
+  broadcastButtonWrapperDesktop: {
+    marginHorizontal: 30,
+    marginBottom: 26,
+    borderRadius: Theme.Rounded.lg,
+  },
+  broadcastButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 13,
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#006875',
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 104, 117, 0.06)',
+  },
+  broadcastButtonText: {
+    color: '#006875',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
+  // ─── Broadcast Composer Modal ────────────────────────────────────────────────
+  composerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  composerSheet: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '92%',
+    paddingTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 24,
+  },
+  composerHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+  },
+  composerTitle: {
+    fontFamily: 'Manrope',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#163235',
+  },
+  composerSubtitle: {
+    fontSize: 13,
+    color: '#6b7a7d',
+    marginTop: 3,
+  },
+  composerScroll: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+  composerLabel: {
+    fontFamily: 'JetBrains Mono',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    color: '#6b7a7d',
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  composerInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.25)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#163235',
+    backgroundColor: 'rgba(0, 104, 117, 0.03)',
+  },
+  composerTextarea: {
+    minHeight: 110,
+    paddingTop: 14,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 104, 117, 0.25)',
+    backgroundColor: 'rgba(0, 104, 117, 0.04)',
+    marginRight: 10,
+  },
+  chipActive: {
+    backgroundColor: '#006875',
+    borderColor: '#006875',
+  },
+  chipText: {
+    fontFamily: 'JetBrains Mono',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    color: '#006875',
+  },
+  chipTextActive: {
+    color: '#ffffff',
+  },
+  composerSendBtn: {
+    margin: 20,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#006875',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  composerSendGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    gap: 10,
+  },
+  composerSendText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
 });
+

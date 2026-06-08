@@ -92,6 +92,18 @@ public class LeaseServiceImpl implements LeaseService {
 
     @Override
     @Transactional(readOnly = true)
+    public java.util.List<LeaseTbl> findByUnitIdAndStatus(UUID unitId, LeaseStatus status) {
+        return leaseRepository.findByUnitIdAndStatus(unitId, status).stream().toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<LeaseTbl> findActiveLeasesByProperty(UUID propertyId) {
+        return leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE).stream().toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public java.util.Map<UUID, java.util.List<LeaseTbl>> findActiveLeasesByUnitIds(java.util.Collection<UUID> unitIds) {
         if (unitIds == null || unitIds.isEmpty()) return java.util.Collections.emptyMap();
         return leaseRepository.findByUnit_IdInAndStatus(unitIds, LeaseStatus.ACTIVE)

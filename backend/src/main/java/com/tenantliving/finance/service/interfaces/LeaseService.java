@@ -13,6 +13,8 @@ public interface LeaseService {
 
     boolean existsByUnitId(UUID unitId);
     java.util.List<LeaseTbl> findByUserIdAndStatus(UUID userId, com.tenantliving.common.domain.LeaseStatus status);
+    java.util.List<LeaseTbl> findByUnitIdAndStatus(UUID unitId, com.tenantliving.common.domain.LeaseStatus status);
+    java.util.List<LeaseTbl> findActiveLeasesByProperty(UUID propertyId);
     java.util.Map<UUID, java.util.List<LeaseTbl>> findActiveLeasesByUnitIds(java.util.Collection<UUID> unitIds);
     void deleteLease(UUID id);
 }

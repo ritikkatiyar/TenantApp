@@ -6,14 +6,15 @@ This document describes the unified design and architecture for the **Issue Mana
 
 ## Implementation Status
 
-> Last Updated: 2026-06-06
+> Last Updated: 2026-06-08
 
 | Phase | Description | Backend | Frontend | Status |
 | :---- | :---------- | :------ | :------- | :----- |
 | **Phase 1** | Notification Infrastructure (Skeleton) | ✅ Done | ➖ Not applicable | **COMPLETE** |
-| **Phase 2** | Announcements & Notice Board | ⏳ Pending | ⏳ Pending | **NEXT UP** |
-| **Phase 3** | Issues & Comment Timelines | ⏳ Pending | ⏳ Pending | Queued |
+| **Phase 2** | Announcements & Notice Board | ✅ Done | ✅ Done | **COMPLETE** |
+| **Phase 3** | Issues & Comment Timelines | ⏳ Pending | ⏳ Pending | **NEXT UP** |
 | **Phase 4** | Escalations & SLA Engine | ⏳ Pending | ⏳ Pending | Queued |
+
 
 ---
 
@@ -41,25 +42,35 @@ This document describes the unified design and architecture for the **Issue Mana
 
 ---
 
-### Phase 2 — Announcements & Notice Board ⏳ NEXT UP
+### Phase 2 — Announcements & Notice Board ✅ COMPLETE
+> Completed: 2026-06-08
 
-**Backend to build:**
-- Flyway migration for `announcement_tbl` + `announcement_receipt_tbl`
-- `com.tenantliving.announcement` module (domain, repository, service, controller)
+**Backend built:**
+- `V20__create_announcement_schema.sql` — Flyway migration for `announcement_tbl` + `announcement_receipt_tbl`
+- `com.tenantliving.announcement` module:
+  - Enums: `AnnouncementCategory` (GENERAL, MAINTENANCE, EMERGENCY, BILLING, EVENT), `AnnouncementSeverity` (INFO, WARNING, CRITICAL), `AnnouncementTargetType` (PROPERTY, FLOOR, UNIT)
+  - Entities: `AnnouncementTbl`, `AnnouncementReceiptTbl` (unique constraint on announcement+user pair)
+  - Repositories: `AnnouncementRepository` (custom JPQL `findNoticesForTenant` scoped query), `AnnouncementReceiptRepository`
+  - DTOs: `CreateAnnouncementRequest`, `AnnouncementResponse` (includes `readCount`, `totalRecipientsCount`)
+  - `AnnouncementServiceImpl` — dynamic recipient scoping by PROPERTY / FLOOR / UNIT via `LeaseRepository` + `UnitRepository`
+  - `AnnouncementController` — 4 REST endpoints
 - REST APIs:
-  - `POST /announcements` — Landlord/caretaker creates and broadcasts a notice
-  - `GET /announcements` — Tenant fetches notices for their property
-  - `POST /announcements/{id}/read` — Tenant marks a notice as read
-- Publishes `AnnouncementBroadcastEvent` to trigger notifications
+  - `POST /api/v1/announcements` — Landlord/caretaker creates and broadcasts
+  - `GET /api/v1/announcements/my-notices` — Tenant fetches notices for their property
+  - `GET /api/v1/announcements/property/{id}` — Landlord views all notices for a property
+  - `POST /api/v1/announcements/{id}/read` — Tenant marks notice as read
+- Event chain: `AnnouncementServiceImpl` → publishes `AnnouncementBroadcastEvent` → `NotificationEventListener.onAnnouncementBroadcast()` → `NotificationService.sendBulk()` → EMAIL
 
-**Frontend to build:**
-- Notice Board widget on `TenantHomeScreen` (sticky `CRITICAL` banners + info feed)
-- Broadcast Composer modal on `CommandCenterScreen` (scope + severity selectors)
-- Auto read-receipt trigger on notice detail open
+**Frontend built:**
+- `src/api/announcement.api.ts` — typed client for all 4 endpoints
+- `TenantHomeScreen.tsx` — sticky CRITICAL banners (dismissible), notice feed (colour-coded by severity), detail modal with auto mark-as-read on open
+- `CommandCenterScreen.tsx` — "Broadcast Notice" button on each property card opens a composer modal with category/severity/scope chip selectors and a BROADCAST NOW submit button
+
+**Compile status:** `mvn compile` → BUILD SUCCESS (184 source files, 0 errors)
 
 ---
 
-### Phase 3 — Issues & Comment Timelines ⏳ Queued
+### Phase 3 — Issues & Comment Timelines ⏳ NEXT UP
 
 **Backend to build:**
 - Flyway migration for `issue_tbl` + `issue_timeline_tbl`
