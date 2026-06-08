@@ -13,4 +13,16 @@ public class UserDTOs {
             String phoneNumber,
             UserRole globalRole
     ) {}
+
+    public record CreateTenantRequest(
+            @jakarta.validation.constraints.Email
+            @jakarta.validation.constraints.NotBlank
+            String email,
+
+            @jakarta.validation.constraints.NotBlank
+            String fullName,
+
+            @jakarta.validation.constraints.NotBlank
+            String phoneNumber
+    ) {}
 }

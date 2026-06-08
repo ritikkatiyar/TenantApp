@@ -7,7 +7,11 @@ import {
   Alert,
   Dimensions,
   ActivityIndicator,
-  TextInput
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  ScrollView as RNScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,7 +31,7 @@ import Animated, {
 import { apiRequest } from '../api/client';
 import { getFloorLayout, ActiveLeaseSummary } from '../api/unit.api';
 import { createLease } from '../api/lease.api';
-import { searchUserByPhone, UserSearchResponse } from '../api/user.api';
+import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '../api/user.api';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
@@ -83,6 +87,9 @@ export default function FloorEditorScreen({
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const drawBlockRef = useRef<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
 
+  const [parentScrollEnabled, setParentScrollEnabled] = useState(true);
+  const sheetScrollRef = useRef<RNScrollView | null>(null);
+
   // Scroll Indicator Dynamic Visibility Refs & State
   const [showRightArrow, setShowRightArrow] = useState(false);
   const scrollContentWidth = useRef(0);
@@ -125,6 +132,23 @@ export default function FloorEditorScreen({
   const gridHeight = GRID_SIZE_Y * CELL_SIZE;
 
   const { width, height } = Dimensions.get('window');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => setKeyboardHeight(e.endCoordinates.height)
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardHeight(0)
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     translateX.value = (width - gridWidth) / 2;
@@ -343,11 +367,52 @@ export default function FloorEditorScreen({
   };
 
   const [tenantSearchError, setTenantSearchError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<UserSearchResponse[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [isCreatingNewTenant, setIsCreatingNewTenant] = useState(false);
+  const [newTenantName, setNewTenantName] = useState('');
+  const [newTenantEmail, setNewTenantEmail] = useState('');
+  const [tenantCreating, setTenantCreating] = useState(false);
+
+  useEffect(() => {
+    const query = tenantPhoneSearch.trim();
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setSuggestionsLoading(true);
+      try {
+        const results = await searchUserByPhone(query, userToken);
+        setSuggestions(results || []);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [tenantPhoneSearch, userToken]);
+
+  useEffect(() => {
+    if (suggestions.length > 0 && sheetScrollRef.current) {
+      setTimeout(() => {
+        sheetScrollRef.current?.scrollTo({ y: 155, animated: true });
+      }, 50);
+    }
+  }, [suggestions]);
 
   const resetTenantAssignmentForm = () => {
     setTenantPhoneSearch('');
     setTenantSearchResult(null);
     setTenantSearchError(null);
+    setSuggestions([]);
+    setIsCreatingNewTenant(false);
+    setNewTenantName('');
+    setNewTenantEmail('');
+    setParentScrollEnabled(true);
   };
 
   const handleSearchTenant = async () => {
@@ -372,17 +437,57 @@ export default function FloorEditorScreen({
     setTenantSearchError(null);
     setTenantSearchResult(null);
     try {
-      const user = await searchUserByPhone(phone, userToken);
-      if (!user) {
+      const users = await searchUserByPhone(phone, userToken);
+      if (!users || users.length === 0) {
         setTenantSearchError('Tenant not found with this number.');
         return;
       }
-      setTenantSearchResult(user);
+      const exactMatch = users.find(u => u.phoneNumber === phone) || users[0];
+      setTenantSearchResult(exactMatch);
+      setTenantPhoneSearch(exactMatch.phoneNumber || '');
+      setSuggestions([]);
     } catch (error: any) {
       console.error('[Search Tenant Error]', error);
       setTenantSearchError(error.message || 'Search failed.');
     } finally {
       setTenantSearchLoading(false);
+    }
+  };
+
+  const handleCreateAndSelectTenant = async () => {
+    const name = newTenantName.trim();
+    const email = newTenantEmail.trim();
+    const phone = tenantPhoneSearch.trim();
+
+    if (!name) {
+      setTenantSearchError('Enter the tenant\'s full name.');
+      return;
+    }
+    if (!email) {
+      setTenantSearchError('Enter the tenant\'s email address.');
+      return;
+    }
+    if (!phone || phone.length < 10) {
+      setTenantSearchError('Valid 10-digit phone number is required.');
+      return;
+    }
+
+    setTenantCreating(true);
+    setTenantSearchError(null);
+    try {
+      const createdUser = await quickCreateTenant({ email, fullName: name, phoneNumber: phone }, userToken);
+      setTenantSearchResult(createdUser);
+      setTenantPhoneSearch(createdUser.phoneNumber || '');
+      setIsCreatingNewTenant(false);
+      setNewTenantName('');
+      setNewTenantEmail('');
+      setSuggestions([]);
+      Alert.alert('Success', `Tenant "${createdUser.fullName}" created and selected.`);
+    } catch (error: any) {
+      console.error('[Create Tenant Error]', error);
+      setTenantSearchError(error.message || 'Failed to create tenant.');
+    } finally {
+      setTenantCreating(false);
     }
   };
 
@@ -913,32 +1018,42 @@ export default function FloorEditorScreen({
         )}
 
         {/* Unit Management Sheet */}
-        {selectedBlock && (
-          <Animated.View 
-            entering={FadeInUp}
-            exiting={FadeOutDown}
-            style={styles.detailSheetWrapper}
-          >
-            <BlurView intensity={95} tint="light" style={styles.detailSheet}>
-              <View style={styles.sheetHeader}>
-                <View>
-                  <Text style={styles.sheetUnitTitle}>Unit {selectedBlock.unitNumber}</Text>
-                  <Text style={styles.sheetSubtitle}>Floor {floorNumber}</Text>
+        {selectedBlock && (() => {
+          const bottomPosition = keyboardHeight > 0 ? keyboardHeight + 16 : 80;
+          const maxContentHeight = height - bottomPosition - (keyboardHeight > 0 ? 160 : 220);
+          return (
+            <Animated.View 
+              entering={FadeInUp}
+              exiting={FadeOutDown}
+              style={[styles.detailSheetWrapper, { bottom: bottomPosition }]}
+            >
+              <BlurView intensity={95} tint="light" style={styles.detailSheet}>
+                <View style={styles.sheetHeader}>
+                  <View>
+                    <Text style={styles.sheetUnitTitle}>Unit {selectedBlock.unitNumber}</Text>
+                    <Text style={styles.sheetSubtitle}>Floor {floorNumber}</Text>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setSelectedUnitId(null);
+                      setLeaseRentAmount('');
+                      setSecurityDeposit('');
+                      resetTenantAssignmentForm();
+                    }}
+                    style={styles.closeButton}
+                  >
+                    <MaterialIcons name="close" size={20} color="#6b7a7d" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity 
-                  onPress={() => {
-                    setSelectedUnitId(null);
-                    setLeaseRentAmount('');
-                    setSecurityDeposit('');
-                    resetTenantAssignmentForm();
-                  }}
-                  style={styles.closeButton}
-                >
-                  <MaterialIcons name="close" size={20} color="#6b7a7d" />
-                </TouchableOpacity>
-              </View>
 
-              <View style={styles.sheetContent}>
+                <RNScrollView 
+                  ref={sheetScrollRef}
+                  scrollEnabled={parentScrollEnabled}
+                  style={{ maxHeight: maxContentHeight }}
+                  contentContainerStyle={styles.sheetContent}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
                 <View style={{ gap: 12, marginBottom: 12 }}>
                   <View style={{ flexDirection: 'row', gap: 12 }}>
                     <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -1041,35 +1156,158 @@ export default function FloorEditorScreen({
                     </View>
                   ) : (
                     <>
-                      <View style={{ marginBottom: 12 }}>
-                        {/* Search & Add Tenant Field */}
-                        <View style={styles.inputWrapper}>
-                          <MaterialIcons name="phone" size={18} color="#006875" />
-                          <TextInput
-                            style={styles.textInput}
-                            placeholder="Search by 10-digit phone"
-                            placeholderTextColor="#9ba9ab"
-                            value={tenantPhoneSearch}
-                            onChangeText={(val) => {
-                              setTenantPhoneSearch(val);
-                              setTenantSearchError(null);
-                            }}
-                            keyboardType="phone-pad"
-                            onSubmitEditing={handleSearchTenant}
-                          />
-                          <TouchableOpacity onPress={handleSearchTenant} disabled={tenantSearchLoading}>
-                            {tenantSearchLoading ? (
-                              <ActivityIndicator size="small" color="#006875" />
-                            ) : (
-                              <MaterialIcons name="person-add" size={20} color="#006875" />
-                            )}
-                          </TouchableOpacity>
+                      {!isCreatingNewTenant && (
+                        <View style={{ marginBottom: 12 }}>
+                          {/* Search & Add Tenant Field */}
+                          <View style={styles.inputWrapper}>
+                            <MaterialIcons name="phone" size={18} color="#006875" />
+                            <TextInput
+                              style={styles.textInput}
+                              placeholder="Search by 10-digit phone"
+                              placeholderTextColor="#9ba9ab"
+                              value={tenantPhoneSearch}
+                              onChangeText={(val) => {
+                                const cleaned = val.replace(/[^0-9]/g, '').slice(0, 10);
+                                setTenantPhoneSearch(cleaned);
+                                setTenantSearchError(null);
+                              }}
+                              keyboardType="phone-pad"
+                              maxLength={10}
+                              onSubmitEditing={handleSearchTenant}
+                            />
+                            <TouchableOpacity onPress={handleSearchTenant} disabled={tenantSearchLoading}>
+                              {tenantSearchLoading ? (
+                                <ActivityIndicator size="small" color="#006875" />
+                              ) : (
+                                <MaterialIcons name="person-add" size={20} color="#006875" />
+                              )}
+                            </TouchableOpacity>
+                          </View>
+
+                          {/* Suggestions List */}
+                          {suggestions.length > 0 && (
+                            <RNScrollView 
+                              style={styles.suggestionsContainer} 
+                              nestedScrollEnabled={true}
+                              keyboardShouldPersistTaps="handled"
+                              onTouchStart={() => setParentScrollEnabled(false)}
+                              onTouchEnd={() => setParentScrollEnabled(true)}
+                              onTouchCancel={() => setParentScrollEnabled(true)}
+                            >
+                              {suggestions.map((user) => (
+                                <TouchableOpacity
+                                  key={user.id}
+                                  style={styles.suggestionItem}
+                                  onPress={() => {
+                                    setTenantSearchResult(user);
+                                    setTenantPhoneSearch(user.phoneNumber || '');
+                                    setSuggestions([]);
+                                  }}
+                                >
+                                  <MaterialIcons name="phone" size={16} color="#006875" />
+                                  <View style={styles.suggestionTextContainer}>
+                                    <Text style={styles.suggestionName}>{user.fullName}</Text>
+                                    <Text style={styles.suggestionPhone}>{user.phoneNumber || 'No phone'}</Text>
+                                  </View>
+                                </TouchableOpacity>
+                              ))}
+                            </RNScrollView>
+                          )}
                         </View>
-                      </View>
+                      )}
+
                       {tenantSearchError && (
                         <Text style={{ color: '#e53935', fontSize: 13, marginTop: -8, marginBottom: 12, paddingLeft: 4 }}>
                           {tenantSearchError}
                         </Text>
+                      )}
+
+                      {/* Quick Create Prompt */}
+                      {(!tenantSearchResult && !isCreatingNewTenant && tenantPhoneSearch.trim().length >= 10 && !tenantSearchLoading && suggestions.length === 0) && (
+                        <TouchableOpacity
+                          style={styles.quickCreatePrompt}
+                          onPress={() => {
+                            setIsCreatingNewTenant(true);
+                            setNewTenantName('');
+                            setNewTenantEmail('');
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <MaterialIcons name="person-add" size={20} color="#006875" />
+                            <Text style={styles.quickCreatePromptText}>
+                              No tenant found. Create new tenant for "{tenantPhoneSearch}"?
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      )}
+
+                      {/* Quick Create Form */}
+                      {isCreatingNewTenant && (
+                        <View style={styles.quickCreateForm}>
+                          <Text style={styles.quickCreateTitle}>NEW TENANT DETAILS</Text>
+                          
+                          <View style={styles.quickCreateField}>
+                            <Text style={styles.quickCreateLabel}>PHONE NUMBER</Text>
+                            <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                              <MaterialIcons name="phone" size={18} color="#7b8a8d" />
+                              <TextInput
+                                style={[styles.textInput, { color: '#7b8a8d' }]}
+                                value={tenantPhoneSearch}
+                                editable={false}
+                              />
+                            </View>
+                          </View>
+
+                          <View style={styles.quickCreateField}>
+                            <Text style={styles.quickCreateLabel}>FULL NAME</Text>
+                            <View style={styles.inputWrapper}>
+                              <MaterialIcons name="person" size={18} color="#006875" />
+                              <TextInput
+                                style={styles.textInput}
+                                placeholder="e.g. John Doe"
+                                placeholderTextColor="#9ba9ab"
+                                value={newTenantName}
+                                onChangeText={setNewTenantName}
+                              />
+                            </View>
+                          </View>
+
+                          <View style={styles.quickCreateField}>
+                            <Text style={styles.quickCreateLabel}>EMAIL ADDRESS</Text>
+                            <View style={styles.inputWrapper}>
+                              <MaterialIcons name="email" size={18} color="#006875" />
+                              <TextInput
+                                style={styles.textInput}
+                                placeholder="e.g. john@example.com"
+                                placeholderTextColor="#9ba9ab"
+                                value={newTenantEmail}
+                                onChangeText={setNewTenantEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                              />
+                            </View>
+                          </View>
+
+                          <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                            <TouchableOpacity
+                              style={[styles.statusToggle, { flex: 1 }]}
+                              onPress={() => setIsCreatingNewTenant(false)}
+                            >
+                              <Text style={styles.statusToggleText}>CANCEL</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.statusToggle, styles.statusActiveOccupied, { flex: 1 }]}
+                              onPress={handleCreateAndSelectTenant}
+                              disabled={tenantCreating}
+                            >
+                              {tenantCreating ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                              ) : (
+                                <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE</Text>
+                              )}
+                            </TouchableOpacity>
+                          </View>
+                        </View>
                       )}
 
                       {tenantSearchResult && (
@@ -1117,10 +1355,11 @@ export default function FloorEditorScreen({
                     <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextActive]}>OCCUPIED</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </BlurView>
-          </Animated.View>
-        )}
+                </RNScrollView>
+              </BlurView>
+            </Animated.View>
+          );
+        })()}
         </SafeAreaView>
       </LinearGradient>
     </GestureHandlerRootView>
@@ -1503,5 +1742,82 @@ const styles = StyleSheet.create({
     color: '#c62828',
     fontWeight: '600',
     lineHeight: 16,
+  },
+  suggestionsContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.15)',
+    marginTop: 8,
+    maxHeight: 200,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+    zIndex: 9999,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    gap: 12,
+  },
+  suggestionTextContainer: {
+    flex: 1,
+  },
+  suggestionName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#151d1e',
+  },
+  suggestionPhone: {
+    fontSize: 12,
+    color: '#6b7a7d',
+    marginTop: 2,
+  },
+  quickCreatePrompt: {
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.15)',
+    padding: 14,
+    marginBottom: 12,
+  },
+  quickCreatePromptText: {
+    fontSize: 13,
+    color: '#006875',
+    fontWeight: '700',
+    flex: 1,
+  },
+  quickCreateForm: {
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+    padding: 16,
+    gap: 12,
+    marginBottom: 12,
+  },
+  quickCreateTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#006875',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  quickCreateField: {
+    gap: 6,
+  },
+  quickCreateLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#6b7a7d',
+    letterSpacing: 1,
+    paddingLeft: 4,
   }
 });

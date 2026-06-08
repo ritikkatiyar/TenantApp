@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 const DEFAULT_PORT = '8080';
-const DEFAULT_AI_PORT = '8081';
+const DEFAULT_AI_PORT = '8082';
 
 function getDefaultBaseUrl(port: string): string {
   if (Platform.OS === 'android') {

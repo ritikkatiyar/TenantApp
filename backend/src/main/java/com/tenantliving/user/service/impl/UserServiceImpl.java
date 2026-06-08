@@ -71,4 +71,12 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAllById(ids).stream()
                 .collect(java.util.stream.Collectors.toMap(UserTbl::getId, u -> u));
     }
+
+    @Override
+    public java.util.List<UserTbl> searchByPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return userRepository.findTop10ByPhoneNumberContaining(phoneNumber.trim());
+    }
 }

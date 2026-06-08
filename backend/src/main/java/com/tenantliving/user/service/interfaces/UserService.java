@@ -10,6 +10,7 @@ public interface UserService {
     UserTbl getUserByEmail(String email);
     Optional<UserTbl> findByEmail(String email);
     Optional<UserTbl> findByPhoneNumber(String phoneNumber);
+    java.util.List<UserTbl> searchByPhoneNumber(String phoneNumber);
     UserTbl createUser(UserTbl user);
     UserTbl saveUser(UserTbl user);
     boolean existsByEmail(String email);

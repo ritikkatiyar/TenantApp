@@ -18,9 +18,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,14 +41,44 @@ public class UserController {
 
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
-    public ResponseEntity<ApiResponse<UserDTOs.UserSearchResponse>> searchByPhone(
+    public ResponseEntity<ApiResponse<List<UserDTOs.UserSearchResponse>>> searchByPhone(
             @RequestParam String phone
     ) {
-        return userService.findByPhoneNumber(phone)
+        List<UserDTOs.UserSearchResponse> results = userService.searchByPhoneNumber(phone).stream()
                 .map(UserController::toSearchResponse)
-                .map(ApiResponse::success)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.ok(ApiResponse.success(null)));
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(results));
+    }
+
+    @PostMapping("/create-tenant")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
+    public ResponseEntity<ApiResponse<UserDTOs.UserSearchResponse>> createTenant(
+            @Valid @RequestBody UserDTOs.CreateTenantRequest request
+    ) {
+        String email = request.email().trim().toLowerCase();
+        if (userService.existsByEmail(email)) {
+            throw new com.tenantliving.common.exception.BusinessException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Email already registered"
+            );
+        }
+
+        String phone = request.phoneNumber().trim();
+        if (userService.findByPhoneNumber(phone).isPresent()) {
+            throw new com.tenantliving.common.exception.BusinessException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Phone number already registered"
+            );
+        }
+
+        UserTbl user = UserTbl.builder()
+                .authUid(email)
+                .fullName(request.fullName().trim())
+                .phoneNumber(phone)
+                .globalRole(com.tenantliving.common.domain.UserRole.USER)
+                .build();
+
+        UserTbl savedUser = userService.createUser(user);
+
+        return ResponseEntity.ok(ApiResponse.success(toSearchResponse(savedUser)));
     }
 
     private static UserDTOs.UserSearchResponse toSearchResponse(UserTbl user) {

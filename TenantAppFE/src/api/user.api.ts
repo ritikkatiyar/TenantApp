@@ -8,9 +8,20 @@ export interface UserSearchResponse {
   globalRole: string;
 }
 
-export function searchUserByPhone(phone: string, token: string): Promise<UserSearchResponse | null> {
-  return apiRequest<UserSearchResponse | null>(`/api/v1/user/search?phone=${encodeURIComponent(phone)}`, {
+export function searchUserByPhone(phone: string, token: string): Promise<UserSearchResponse[]> {
+  return apiRequest<UserSearchResponse[]>(`/api/v1/user/search?phone=${encodeURIComponent(phone)}`, {
     method: 'GET',
     token,
+  });
+}
+
+export function quickCreateTenant(
+  payload: { email: string; fullName: string; phoneNumber: string },
+  token: string
+): Promise<UserSearchResponse> {
+  return apiRequest<UserSearchResponse>('/api/v1/user/create-tenant', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
   });
 }
