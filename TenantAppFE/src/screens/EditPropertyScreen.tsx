@@ -10,7 +10,8 @@ import {
   Platform,
   ScrollView,
   Alert,
-  Animated
+  Animated,
+  useWindowDimensions
 } from 'react-native';
 import { useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +20,9 @@ import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '../theme/Theme';
 import { getProperty, updateProperty } from '../api/property.api';
+import { useAuth } from '../auth/AuthProvider';
+import { useRouter, Href } from 'expo-router';
+import Building3DView from '../components/Building3DView';
 
 interface EditPropertyScreenProps {
   propertyId: string;
@@ -35,6 +39,11 @@ export default function EditPropertyScreen({
   onSave,
   onConfigureFloors
 }: EditPropertyScreenProps) {
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 900;
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -109,12 +118,264 @@ export default function EditPropertyScreen({
     }
   };
 
+  const renderFormFieldsContent = (showSave = true) => (
+    <>
+      <Text style={styles.sectionTitle}>BASIC INFORMATION</Text>
+      
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>PROPERTY NAME</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Lumina Heights"
+          value={name}
+          onChangeText={setName}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>ADDRESS</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Street address"
+          value={address}
+          onChangeText={setAddress}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>CITY</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. New York"
+          value={city}
+          onChangeText={setCity}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>LANDMARK (OPTIONAL)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g. Near Central Park"
+          value={landmark}
+          onChangeText={setLandmark}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>TOTAL FLOORS</Text>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.inputWithIcon}
+            placeholder="0"
+            value={totalFloors}
+            onChangeText={setTotalFloors}
+            keyboardType="numeric"
+          />
+          <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
+        </View>
+      </View>
+
+      {showSave && (
+        <TouchableOpacity 
+          style={styles.saveButtonWrapper} 
+          onPress={handleUpdate}
+          disabled={saving}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={['#00d4ff', '#0072ff']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.saveButton}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Text style={styles.saveButtonText}>SAVE CHANGES</Text>
+                <MaterialIcons name="check" size={20} color="#fff" />
+              </>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+    </>
+  );
+
+  const renderConfigCardContent = () => (
+    <>
+      <Text style={styles.sectionTitle}>STRUCTURE & UNITS</Text>
+      <TouchableOpacity 
+        style={styles.configButton}
+        activeOpacity={0.7}
+        onPress={onConfigureFloors}
+      >
+        <View style={styles.configIconWrapper}>
+          <MaterialIcons name="layers" size={24} color="#006875" />
+        </View>
+        <View style={styles.configTextWrapper}>
+          <Text style={styles.configTitle}>CONFIGURE FLOORS</Text>
+          <Text style={styles.configSubtitle}>Manage floors, units, and layout</Text>
+        </View>
+        <MaterialIcons name="chevron-right" size={24} color="#6b7a7d" />
+      </TouchableOpacity>
+    </>
+  );
+
+  const renderEditCard = () => (
+    <BlurView intensity={60} tint="light" style={styles.card}>
+      {renderFormFieldsContent(true)}
+      <View style={styles.divider} />
+      {renderConfigCardContent()}
+    </BlurView>
+  );
+
+  const renderSidebarLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, active = false, route?: Href) => (
+    <TouchableOpacity
+      style={[styles.sidebarLink, active && styles.sidebarLinkActive]}
+      onPress={route ? () => (route === '/command-center' ? onBack() : router.push(route)) : undefined}
+      activeOpacity={route ? 0.75 : 1}
+    >
+      <MaterialIcons name={icon} size={22} color={active ? Theme.Colors.primary : Theme.Colors.onSurfaceVariant} />
+      <Text style={[styles.sidebarLinkText, active && styles.sidebarLinkTextActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
+
+  const DesktopShell = () => (
+    <LinearGradient
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <View style={styles.desktopShell}>
+        {/* Sidebar */}
+        <BlurView intensity={70} tint="light" style={styles.sidebar}>
+          <View style={styles.sidebarBrand}>
+            <Text style={styles.sidebarBrandTitle}>TenantApp</Text>
+            <Text style={styles.sidebarBrandSub}>Management Suite</Text>
+          </View>
+
+          <View style={styles.sidebarNav}>
+            {renderSidebarLink('dashboard', 'Overview', false, '/analytics')}
+            {renderSidebarLink('business', 'Portfolio', true, '/command-center')}
+            {renderSidebarLink('groups', 'AI Desk', false, '/ai')}
+            {renderSidebarLink('build', 'Escalations', false, '/escalations')}
+            {renderSidebarLink('settings', 'Settings', false, '/expenses')}
+          </View>
+
+          <View style={styles.sidebarFooter}>
+            <TouchableOpacity style={styles.upgradeButton} onPress={() => router.push('/billing')} activeOpacity={0.85}>
+              <LinearGradient colors={[Theme.Colors.primary, Theme.Colors.secondaryContainer]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.upgradeGradient}>
+                <Text style={styles.upgradeText}>UPGRADE PLAN</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            {renderSidebarLink('help-outline', 'Billing Help', false, '/billing')}
+            <TouchableOpacity style={styles.sidebarLink} onPress={async () => {
+              await signOut();
+              router.replace('/login');
+            }}>
+              <MaterialIcons name="logout" size={22} color={Theme.Colors.onSurfaceVariant} />
+              <Text style={styles.sidebarLinkText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </BlurView>
+
+        {/* Main Workspace */}
+        <View style={styles.desktopMain}>
+          <BlurView intensity={70} tint="light" style={styles.topbar}>
+            <View style={styles.topbarTabs}>
+              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
+              <TouchableOpacity onPress={onBack}><Text style={[styles.topbarTab, styles.topbarTabActive]}>Properties</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
+            </View>
+            <View style={styles.topbarRight}>
+              <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop}>
+                <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
+                <Text style={styles.backButtonTextDesktop}>Back to Properties</Text>
+              </TouchableOpacity>
+              <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
+            </View>
+          </BlurView>
+
+          <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.desktopInner}>
+              {/* Full Width Header Row */}
+              <View style={styles.desktopHeaderRow}>
+                <View style={styles.largeTitleContainer}>
+                  <Text style={styles.titleLineDesktop}>Edit Property</Text>
+                </View>
+
+                {/* Save Changes top-right action button */}
+                <TouchableOpacity 
+                  style={styles.desktopSaveButtonWrapper} 
+                  onPress={handleUpdate}
+                  disabled={saving}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={['#00d4ff', '#0072ff']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.desktopSaveButton}
+                  >
+                    {saving ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <>
+                        <Text style={styles.desktopSaveButtonText}>Save Changes</Text>
+                        <MaterialIcons name="check" size={18} color="#fff" />
+                      </>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+
+              {/* Two Column Grid */}
+              <View style={styles.desktopGrid}>
+                {/* Left Column: Basic Information Form */}
+                <View style={styles.desktopLeftColumn}>
+                  <BlurView intensity={60} tint="light" style={[styles.card, { flex: 1 }]}>
+                    {renderFormFieldsContent(false)}
+                  </BlurView>
+                </View>
+
+                {/* Right Column: 3D Model Preview & Structure/Units */}
+                <View style={styles.desktopRightColumn}>
+                  <BlurView intensity={60} tint="light" style={styles.card}>
+                    <Text style={styles.sectionTitle}>3D MODEL PREVIEW</Text>
+                    <View style={styles.desktopBuildingContainer}>
+                      {userToken && <Building3DView propertyId={propertyId} token={userToken} />}
+                    </View>
+                    <View style={styles.previewInfoRow}>
+                      <Text style={styles.previewName}>{name || 'Property Preview'}</Text>
+                      <Text style={styles.previewAddress}>{address ? `${address}, ${city}` : 'No address set'}</Text>
+                    </View>
+                  </BlurView>
+
+                  <BlurView intensity={60} tint="light" style={styles.card}>
+                    {renderConfigCardContent()}
+                  </BlurView>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </LinearGradient>
+  );
+
   if (loading) {
     return (
       <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.container}>
         <ActivityIndicator size="large" color={Theme.Colors.primary} style={styles.loader} />
       </LinearGradient>
     );
+  }
+
+  if (isDesktop) {
+    return <DesktopShell />;
   }
 
   return (
@@ -300,7 +561,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   largeTitleContainer: {
-    marginBottom: 20,
+    marginTop: 16,
+    marginBottom: 24,
   },
   titleContainer: {},
   titleLine: {
@@ -309,6 +571,12 @@ const styles = StyleSheet.create({
     color: '#151d1e',
     lineHeight: 52,
     letterSpacing: -1,
+  },
+  titleLineDesktop: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#151d1e',
+    lineHeight: 38,
   },
   scrollContent: {
     paddingHorizontal: 32,
@@ -428,5 +696,258 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7a7d',
     marginTop: 2,
-  }
+  },
+  
+  // Desktop Layout Styles
+  desktopShell: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  sidebar: {
+    width: 260,
+    height: '100%',
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 24,
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    overflow: 'hidden',
+  },
+  sidebarBrand: {
+    marginBottom: 54,
+  },
+  sidebarBrandTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    lineHeight: 40,
+    color: Theme.Colors.primary,
+  },
+  sidebarBrandSub: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    color: Theme.Colors.onSurfaceVariant,
+    marginTop: 4,
+  },
+  sidebarNav: {
+    gap: 14,
+  },
+  sidebarLink: {
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 18,
+    borderRadius: Theme.Rounded.lg,
+  },
+  sidebarLinkActive: {
+    backgroundColor: 'rgba(0, 224, 255, 0.10)',
+    borderRightWidth: 4,
+    borderRightColor: Theme.Colors.primaryContainer,
+  },
+  sidebarLinkText: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1.6,
+    color: Theme.Colors.onSurface,
+  },
+  sidebarLinkTextActive: {
+    color: Theme.Colors.primary,
+  },
+  sidebarFooter: {
+    marginTop: 'auto',
+    borderTopWidth: 1,
+    borderTopColor: Theme.Colors.outlineVariant,
+    paddingTop: 28,
+    gap: 10,
+  },
+  upgradeButton: {
+    borderRadius: Theme.Rounded.lg,
+    overflow: 'hidden',
+    marginBottom: 14,
+    shadowColor: Theme.Colors.secondary,
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  upgradeGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  upgradeText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  desktopMain: {
+    flex: 1,
+  },
+  topbar: {
+    minHeight: 82,
+    paddingHorizontal: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.75)',
+    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+    overflow: 'hidden',
+  },
+  topbarTabs: {
+    flexDirection: 'row',
+    gap: 34,
+    alignItems: 'center',
+  },
+  topbarTab: {
+    fontSize: 18,
+    color: Theme.Colors.onSurface,
+  },
+  topbarTabActive: {
+    color: Theme.Colors.primary,
+    borderBottomWidth: 2,
+    borderBottomColor: Theme.Colors.primaryContainer,
+    paddingBottom: 8,
+  },
+  topbarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  backButtonDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginRight: 10,
+  },
+  backButtonTextDesktop: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#151d1e',
+  },
+  desktopContent: {
+    paddingHorizontal: 30,
+    paddingTop: 30,
+    paddingBottom: 24,
+  },
+  desktopInner: {
+    width: '100%',
+    maxWidth: 1200,
+    alignSelf: 'center',
+    gap: 24,
+  },
+  desktopHeaderRow: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  desktopSaveButtonWrapper: {
+    borderRadius: 100,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  desktopSaveButton: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    height: 46,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  desktopSaveButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  desktopGrid: {
+    flexDirection: 'row',
+    gap: 30,
+    alignItems: 'stretch',
+    width: '100%',
+  },
+  desktopLeftColumn: {
+    flex: 1.2,
+    maxWidth: 580,
+  },
+  desktopActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 30,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  desktopCancelButton: {
+    paddingHorizontal: 24,
+    height: 46,
+    borderRadius: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+  },
+  desktopCancelButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6b7a7d',
+  },
+  desktopRightColumn: {
+    flex: 1,
+    maxWidth: 480,
+    gap: 24,
+    marginTop: 0,
+  },
+  desktopBuildingContainer: {
+    height: 260,
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
+  },
+  previewInfoRow: {
+    marginTop: 8,
+  },
+  previewName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#151d1e',
+    marginBottom: 4,
+  },
+  previewAddress: {
+    fontSize: 14,
+    color: '#6b7a7d',
+  },
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 3,
+    borderColor: Theme.Colors.primaryContainer,
+    backgroundColor: Theme.Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 18,
+  },
 });

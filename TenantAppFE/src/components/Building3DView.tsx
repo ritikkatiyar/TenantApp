@@ -148,8 +148,8 @@ export default function Building3DView({ propertyId, token }: Building3DViewProp
             position: 'absolute',
             zIndex: floorNum, // Higher floors should render on top
             transform: [
-              // Elevate each floor, but shift everything down by half the stack height to perfectly center it
-              { translateY: -(floorNum - minFloor) * dynamicFloorHeight + (stackHeightOffset / 2) },
+              // Elevate each floor, and shift down visually to fit perfectly within the container bounds accounting for rotation anchors
+              { translateY: -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset - buildingHeight / 2 + visualIsoHeight / 2 - 25 },
             ],
           }}
         >
@@ -248,7 +248,6 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#6b7a7d',
     fontSize: 10,
-    fontFamily: 'Inter-Medium',
   },
   isometricWrapper: {
     // Width and height are set dynamically inline

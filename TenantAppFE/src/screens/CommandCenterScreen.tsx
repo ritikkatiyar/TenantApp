@@ -27,7 +27,7 @@ import type { PropertyResponse } from '../types/property';
 import Building3DView from '../components/Building3DView';
 import { createAnnouncement } from '../api/announcement.api';
 
-const LUMINOUS_BACKGROUND = ['#f4faff', '#ecf5fb', '#d8e2ff'] as const;
+const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
 
 interface CommandCenterScreenProps {
   onNavigateToCreateProperty: () => void;
@@ -144,79 +144,171 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     );
   };
 
-  const renderPropertyCard = (item: PropertyResponse) => (
-    <BlurView intensity={60} tint="light" style={[styles.propertyCard, isDesktop && styles.propertyCardDesktop]}>
-      <View style={[styles.buildingPreviewContainer, !isDesktop && styles.buildingPreviewContainerMobile, isDesktop && styles.buildingPreviewContainerDesktop]}>
-        {accessToken && <Building3DView propertyId={item.id} token={accessToken} />}
-        
-        <TouchableOpacity 
-          style={styles.deleteButtonOverlay}
-          onPress={() => handleDeleteProperty(item.id, item.name)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
-        </TouchableOpacity>
-      </View>
+  const renderPropertyCard = (item: PropertyResponse) => {
+    if (isDesktop) {
+      return (
+        <BlurView intensity={60} tint="light" style={[styles.propertyCard, styles.propertyCardDesktop]}>
+          <View style={styles.desktopCardRow}>
+            {/* Left Side: 3D Building Preview */}
+            <View style={styles.desktopCardLeft}>
+              <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerDesktop]}>
+                <View style={{ transform: [{ translateY: -45 }], width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                  {accessToken && <Building3DView propertyId={item.id} token={accessToken} />}
+                </View>
+                
+                <View style={styles.statusPillOverlay}>
+                  <Text style={styles.statusPillText}>ACTIVE</Text>
+                </View>
 
-      <View style={[styles.propertyHeaderRow, !isDesktop && styles.propertyHeaderRowMobile, isDesktop && styles.propertyHeaderRowDesktop]}>
-        <View style={styles.propertyInfo}>
-          <View style={styles.statusPill}>
+                <TouchableOpacity 
+                  style={styles.deleteButtonOverlay}
+                  onPress={() => handleDeleteProperty(item.id, item.name)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Right Side: Info, Metrics, Actions */}
+            <View style={styles.desktopCardRight}>
+              {/* Header: Name and Address */}
+              <View style={styles.propertyInfo}>
+                <Text style={styles.propertyName}>{item.name}</Text>
+                <View style={styles.addressContainer}>
+                  <MaterialIcons name="location-on" size={14} color="#6b7a7d" />
+                  <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
+                </View>
+              </View>
+
+              {/* Metrics stacked vertically: Status then Floors */}
+              <View style={styles.desktopMetricsContainer}>
+                <BlurView intensity={65} tint="light" style={styles.desktopMetricRow}>
+                  <Text style={styles.propertyMetricLabel}>STATUS</Text>
+                  <Text style={[styles.desktopMetricValue, styles.propertyMetricAccent]}>READY</Text>
+                </BlurView>
+                <BlurView intensity={65} tint="light" style={styles.desktopMetricRow}>
+                  <Text style={styles.propertyMetricLabel}>FLOORS</Text>
+                  <Text style={styles.desktopMetricValue}>{item.totalFloors ?? '-'}</Text>
+                </BlurView>
+              </View>
+
+              {/* Actions: Manage & Broadcast stacked vertically */}
+              <View style={styles.desktopCardActions}>
+                <TouchableOpacity 
+                  activeOpacity={0.8} 
+                  style={[styles.manageButtonWrapper, styles.manageButtonWrapperDesktop]}
+                  onPress={() => router.push(`/properties/${item.id}`)}
+                >
+                  <LinearGradient
+                    colors={['#00d4ff', '#0072ff']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.manageButton}
+                  >
+                    <Text style={styles.manageButtonText}>MANAGE</Text>
+                    <MaterialIcons name="arrow-forward" size={16} color="#fff" />
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperDesktop]}
+                  onPress={() => setSelectedPropertyForBroadcast(item)}
+                >
+                  <View style={styles.broadcastButton}>
+                    <MaterialIcons name="campaign" size={16} color="#006875" />
+                    <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </BlurView>
+      );
+    }
+
+    return (
+      <BlurView intensity={60} tint="light" style={styles.propertyCard}>
+        <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile]}>
+          {accessToken && <Building3DView propertyId={item.id} token={accessToken} />}
+          
+          <View style={styles.statusPillOverlay}>
             <Text style={styles.statusPillText}>ACTIVE</Text>
           </View>
-          <Text style={styles.propertyName}>{item.name}</Text>
-          <View style={styles.addressContainer}>
-            <MaterialIcons name="location-on" size={14} color="#6b7a7d" />
-            <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
+
+          <TouchableOpacity 
+            style={styles.deleteButtonOverlay}
+            onPress={() => handleDeleteProperty(item.id, item.name)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.propertyHeaderRow, styles.propertyHeaderRowMobile]}>
+          <View style={styles.propertyInfo}>
+            <Text style={styles.propertyName}>{item.name}</Text>
+            <View style={styles.addressContainer}>
+              <MaterialIcons name="location-on" size={14} color="#6b7a7d" />
+              <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={[styles.propertyMetrics, !isDesktop && styles.propertyMetricsMobile, isDesktop && styles.propertyMetricsDesktop]}>
-        <View style={styles.propertyMetric}>
-          <Text style={styles.propertyMetricLabel}>FLOORS</Text>
-          <Text style={styles.propertyMetricValue}>{item.totalFloors ?? '-'}</Text>
+        <View style={[styles.propertyMetrics, styles.propertyMetricsMobile]}>
+          <BlurView intensity={65} tint="light" style={styles.propertyMetric}>
+            <Text style={styles.propertyMetricLabel}>FLOORS</Text>
+            <Text style={styles.propertyMetricValue}>{item.totalFloors ?? '-'}</Text>
+          </BlurView>
+          <BlurView intensity={65} tint="light" style={styles.propertyMetric}>
+            <Text style={styles.propertyMetricLabel}>STATUS</Text>
+            <Text style={[styles.propertyMetricValue, styles.propertyMetricAccent]}>READY</Text>
+          </BlurView>
         </View>
-        <View style={styles.propertyMetric}>
-          <Text style={styles.propertyMetricLabel}>STATUS</Text>
-          <Text style={[styles.propertyMetricValue, styles.propertyMetricAccent]}>READY</Text>
-        </View>
-      </View>
-      
-      <TouchableOpacity 
-        activeOpacity={0.8} 
-        style={[styles.manageButtonWrapper, !isDesktop && styles.manageButtonWrapperMobile, isDesktop && styles.manageButtonWrapperDesktop]}
-        onPress={() => router.push(`/properties/${item.id}`)}
-      >
-        <LinearGradient
-          colors={['#00d4ff', '#0072ff']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.manageButton}
+        
+        <TouchableOpacity 
+          activeOpacity={0.8} 
+          style={[styles.manageButtonWrapper, styles.manageButtonWrapperMobile]}
+          onPress={() => router.push(`/properties/${item.id}`)}
         >
-          <Text style={styles.manageButtonText}>{isDesktop ? 'MANAGE' : 'Manage Property'}</Text>
-          <MaterialIcons name="arrow-forward" size={16} color="#fff" />
-        </LinearGradient>
-      </TouchableOpacity>
+          <LinearGradient
+            colors={['#00d4ff', '#0072ff']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.manageButton}
+          >
+            <Text style={styles.manageButtonText}>Manage Property</Text>
+            <MaterialIcons name="arrow-forward" size={16} color="#fff" />
+          </LinearGradient>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        activeOpacity={0.8}
-        style={[styles.broadcastButtonWrapper, !isDesktop && styles.broadcastButtonWrapperMobile, isDesktop && styles.broadcastButtonWrapperDesktop]}
-        onPress={() => setSelectedPropertyForBroadcast(item)}
-      >
-        <View style={styles.broadcastButton}>
-          <MaterialIcons name="campaign" size={16} color="#006875" />
-          <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
-        </View>
-      </TouchableOpacity>
-    </BlurView>
-  );
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperMobile]}
+          onPress={() => setSelectedPropertyForBroadcast(item)}
+        >
+          <View style={styles.broadcastButton}>
+            <MaterialIcons name="campaign" size={16} color="#006875" />
+            <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
+          </View>
+        </TouchableOpacity>
+      </BlurView>
+    );
+  };
 
   const renderPropertyItem = ({ item }: { item: PropertyResponse }) => renderPropertyCard(item);
 
   const ListHeader = () => (
     <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-      <Text style={styles.mainTitle}>My Properties</Text>
-      <Text style={styles.subtitle}>Overview of your real estate portfolio. Track occupancy, manage maintenance requests, and monitor financial performance across all assets.</Text>
+      {isDesktop ? (
+        <Text style={styles.mainTitle}>My Properties</Text>
+      ) : (
+        <View style={styles.largeTitleContainer}>
+          <Text style={styles.titleLine}>My</Text>
+          <Text style={styles.titleLine}>Properties</Text>
+        </View>
+      )}
       {isDesktop ? (
         <View style={styles.statsGrid}>
           {renderStatCard('TOTAL ASSETS', String(properties.length), 'real-estate-agent')}
@@ -226,13 +318,15 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
         </View>
       ) : (
         <View style={styles.mobileSearchRow}>
-          <View style={styles.mobileSearchBox}>
-            <MaterialIcons name="search" size={17} color={Theme.Colors.outline} />
-            <Text style={styles.mobileSearchText}>Search assets...</Text>
-          </View>
-          <TouchableOpacity style={styles.mobileFilterButton}>
-            <MaterialIcons name="filter-list" size={22} color={Theme.Colors.primaryContainer} />
-          </TouchableOpacity>
+          <BlurView intensity={50} tint="light" style={styles.mobileSearchBox}>
+            <MaterialIcons name="search" size={18} color="#6b7a7d" />
+            <Text style={styles.mobileSearchText}>Search portfolio...</Text>
+          </BlurView>
+          <BlurView intensity={50} tint="light" style={styles.mobileFilterButtonWrapper}>
+            <TouchableOpacity style={styles.mobileFilterButton}>
+              <MaterialIcons name="filter-list" size={22} color="#006875" />
+            </TouchableOpacity>
+          </BlurView>
         </View>
       )}
     </Animated.View>
@@ -324,10 +418,10 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
             </View>
             <View style={styles.topbarRight}>
-              <View style={styles.searchBox}>
-                <MaterialIcons name="search" size={22} color={Theme.Colors.outline} />
+              <BlurView intensity={50} tint="light" style={styles.searchBox}>
+                <MaterialIcons name="search" size={22} color="#6b7a7d" />
                 <Text style={styles.searchPlaceholder}>Search portfolio...</Text>
-              </View>
+              </BlurView>
               <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
               <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/expenses')}><MaterialIcons name="settings" size={24} color={Theme.Colors.onSurface} /></TouchableOpacity>
               <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
@@ -378,12 +472,14 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
       <LinearGradient
         colors={LUMINOUS_BACKGROUND}
         start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <View style={styles.mobileHeader}>
-            <Text style={styles.mobileBrand}>PropPay SaaS</Text>
+            <Animated.View style={{ opacity: headerOpacity, flex: 1, paddingRight: 10 }}>
+              <Text style={styles.compactHeaderTitle} numberOfLines={1}>My Properties</Text>
+            </Animated.View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.notificationButton}>
                 <Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} />
@@ -584,14 +680,12 @@ const styles = StyleSheet.create({
     marginBottom: 54,
   },
   sidebarBrandTitle: {
-    fontFamily: 'Manrope',
     fontSize: 34,
     fontWeight: '800',
     lineHeight: 40,
     color: Theme.Colors.primary,
   },
   sidebarBrandSub: {
-    fontFamily: 'JetBrains Mono',
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 2,
@@ -615,7 +709,6 @@ const styles = StyleSheet.create({
     borderRightColor: Theme.Colors.primaryContainer,
   },
   sidebarLinkText: {
-    fontFamily: 'JetBrains Mono',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1.6,
@@ -685,19 +778,20 @@ const styles = StyleSheet.create({
   },
   searchBox: {
     width: 320,
-    height: 52,
-    borderRadius: 26,
+    height: 50,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: Theme.Colors.outlineVariant,
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 18,
+    overflow: 'hidden',
   },
   searchPlaceholder: {
-    fontSize: 18,
-    color: '#667085',
+    fontSize: 15,
+    color: '#6b7a7d',
   },
   topIcon: {
     width: 42,
@@ -722,7 +816,7 @@ const styles = StyleSheet.create({
   },
   desktopContent: {
     paddingHorizontal: 30,
-    paddingTop: 52,
+    paddingTop: 30,
     paddingBottom: 32,
   },
   desktopInner: {
@@ -737,7 +831,7 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   propertyGridItem: {
-    width: 380,
+    width: '100%',
   },
   desktopFooter: {
     marginTop: 70,
@@ -749,14 +843,12 @@ const styles = StyleSheet.create({
     gap: 42,
   },
   footerBrand: {
-    fontFamily: 'Manrope',
     fontSize: 26,
     fontWeight: '800',
     color: Theme.Colors.primary,
     marginRight: 22,
   },
   footerLink: {
-    fontFamily: 'JetBrains Mono',
     fontSize: 12,
     letterSpacing: 1.3,
     color: Theme.Colors.onSurface,
@@ -774,17 +866,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   mobileHeader: {
-    height: 78,
+    height: 60,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.78)',
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.Colors.outlineVariant,
+    backgroundColor: 'transparent',
   },
   mobileBrand: {
-    fontFamily: 'Manrope',
     fontSize: 20,
     fontWeight: '800',
     color: Theme.Colors.primary,
@@ -841,26 +930,33 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 120,
+    paddingBottom: 160,
   },
   titleContainer: {
-    marginTop: 34,
-    marginBottom: 30,
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  largeTitleContainer: {
+    marginBottom: 20,
+  },
+  titleLine: {
+    fontSize: 48,
+    fontWeight: '800',
+    color: '#151d1e',
+    lineHeight: 52,
+    letterSpacing: -1,
   },
   mainTitle: {
-    fontFamily: 'Manrope',
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '800',
-    lineHeight: 36,
-    textTransform: 'uppercase',
-    color: Theme.Colors.onSurface,
+    lineHeight: 38,
+    color: '#151d1e',
   },
   subtitle: {
-    fontFamily: 'Inter',
     fontSize: 16,
     fontWeight: '400',
     lineHeight: 24,
-    color: Theme.Colors.onSurfaceVariant,
+    color: '#6b7a7d',
     marginTop: 6,
     maxWidth: 620,
   },
@@ -874,24 +970,29 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Theme.Colors.outlineVariant,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 14,
+    overflow: 'hidden',
   },
   mobileSearchText: {
-    fontSize: 16,
-    color: '#667085',
+    fontSize: 15,
+    color: '#6b7a7d',
   },
-  mobileFilterButton: {
+  mobileFilterButtonWrapper: {
     width: 50,
     height: 50,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Theme.Colors.outlineVariant,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    overflow: 'hidden',
+  },
+  mobileFilterButton: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -930,28 +1031,26 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   statLabel: {
-    fontFamily: 'JetBrains Mono',
     fontSize: 9,
     fontWeight: '700',
     lineHeight: 12,
     letterSpacing: 1,
-    color: Theme.Colors.onSurfaceVariant,
+    color: '#6b7a7d',
   },
   statValue: {
-    fontFamily: 'Manrope',
     fontSize: 24,
     fontWeight: '700',
     lineHeight: 31,
-    color: Theme.Colors.onSurface,
+    color: '#151d1e',
     marginTop: 2,
   },
   propertyCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
     borderRadius: Theme.Rounded.xl,
     padding: 0,
     marginBottom: 28,
     borderWidth: 1,
-    borderColor: Theme.Colors.outlineVariant,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     shadowColor: Theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
@@ -959,10 +1058,50 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   propertyCardDesktop: {
-    width: 380,
-    minHeight: 610,
-    padding: 0,
+    width: '100%',
+    minHeight: 440,
+    padding: 24,
     borderRadius: Theme.Rounded.xl,
+  },
+  desktopCardRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 30,
+  },
+  desktopCardLeft: {
+    flex: 1.2,
+    maxWidth: 450,
+  },
+  desktopCardRight: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  desktopCardActions: {
+    flexDirection: 'column',
+    gap: 12,
+    marginTop: 16,
+  },
+  desktopMetricsContainer: {
+    gap: 10,
+    marginTop: 12,
+    width: '100%',
+  },
+  desktopMetricRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: Theme.Rounded.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    overflow: 'hidden',
+  },
+  desktopMetricValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: Theme.Colors.onSurface,
   },
   propertyHeaderRow: {
     flexDirection: 'row',
@@ -974,8 +1113,8 @@ const styles = StyleSheet.create({
     paddingTop: 26,
   },
   propertyHeaderRowDesktop: {
-    paddingHorizontal: 30,
-    paddingTop: 28,
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
   buildingPreviewContainer: {
     width: '100%',
@@ -987,22 +1126,27 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   buildingPreviewContainerMobile: {
-    height: 190,
+    height: 280,
     marginTop: 0,
     marginBottom: 0,
     paddingVertical: 0,
-    backgroundColor: Theme.Colors.surfaceContainerLow,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderBottomWidth: 1,
-    borderBottomColor: Theme.Colors.outlineVariant,
+    borderBottomColor: 'rgba(255, 255, 255, 0.5)',
   },
   buildingPreviewContainerDesktop: {
-    height: 240,
+    height: 380,
+    width: '100%',
     marginTop: 0,
     marginBottom: 0,
     paddingVertical: 0,
-    backgroundColor: Theme.Colors.surfaceContainerLow,
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.Colors.outlineVariant,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
   },
   deleteButtonOverlay: {
     position: 'absolute',
@@ -1018,16 +1162,17 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 10,
   },
-  statusPill: {
-    alignSelf: 'flex-start',
+  statusPillOverlay: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
     backgroundColor: 'rgba(0, 224, 255, 0.18)',
     borderRadius: Theme.Rounded.full,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    marginBottom: 10,
+    zIndex: 10,
   },
   statusPillText: {
-    fontFamily: 'JetBrains Mono',
     fontSize: 9,
     fontWeight: '700',
     lineHeight: 12,
@@ -1035,11 +1180,10 @@ const styles = StyleSheet.create({
     color: Theme.Colors.onPrimaryContainer,
   },
   propertyName: {
-    fontFamily: 'Manrope',
     fontSize: 25,
     fontWeight: '700',
     lineHeight: 31,
-    color: Theme.Colors.onSurface,
+    color: '#151d1e',
     marginBottom: 8,
   },
   addressContainer: {
@@ -1062,22 +1206,25 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   propertyMetricsDesktop: {
-    marginHorizontal: 30,
-    marginBottom: 26,
+    marginHorizontal: 0,
+    marginBottom: 0,
+    marginTop: 12,
   },
   propertyMetric: {
     flex: 1,
-    backgroundColor: Theme.Colors.surfaceContainerLow,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: Theme.Rounded.lg,
     padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    overflow: 'hidden',
   },
   propertyMetricLabel: {
-    fontFamily: 'JetBrains Mono',
     fontSize: 9,
     fontWeight: '700',
     lineHeight: 12,
     letterSpacing: 1,
-    color: Theme.Colors.onSurfaceVariant,
+    color: '#6b7a7d',
   },
   propertyMetricValue: {
     fontSize: 16,
@@ -1089,7 +1236,7 @@ const styles = StyleSheet.create({
     color: Theme.Colors.primary,
   },
   manageButtonWrapper: {
-    borderRadius: 10,
+    borderRadius: 100,
     overflow: 'hidden',
   },
   manageButtonWrapperMobile: {
@@ -1102,10 +1249,11 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   manageButtonWrapperDesktop: {
-    marginHorizontal: 30,
-    marginTop: 'auto',
-    marginBottom: 30,
-    borderRadius: Theme.Rounded.lg,
+    flex: 1,
+    marginHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    borderRadius: 100,
   },
   manageButton: {
     flexDirection: 'row',
@@ -1117,7 +1265,6 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
   },
   manageButtonText: {
     color: '#fff',
@@ -1128,7 +1275,7 @@ const styles = StyleSheet.create({
   addNewCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderWidth: 2,
-    borderColor: Theme.Colors.outlineVariant,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     borderStyle: 'dashed',
     borderRadius: Theme.Rounded.xl,
     padding: 30,
@@ -1137,10 +1284,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   addNewCardDesktop: {
-    width: 380,
-    minHeight: 610,
+    width: '100%',
+    minHeight: 180,
     marginTop: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+    padding: 24,
   },
   plusIconWrapper: {
     width: 60,
@@ -1241,7 +1394,7 @@ const styles = StyleSheet.create({
 
   // ─── Broadcast Notice button on property card ───────────────────────────────
   broadcastButtonWrapper: {
-    borderRadius: 10,
+    borderRadius: 100,
     overflow: 'hidden',
   },
   broadcastButtonWrapperMobile: {
@@ -1249,9 +1402,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   broadcastButtonWrapperDesktop: {
-    marginHorizontal: 30,
-    marginBottom: 26,
-    borderRadius: Theme.Rounded.lg,
+    flex: 1,
+    marginHorizontal: 0,
+    marginBottom: 0,
+    borderRadius: 100,
   },
   broadcastButton: {
     flexDirection: 'row',
@@ -1261,7 +1415,7 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1.5,
     borderColor: '#006875',
-    borderRadius: 10,
+    borderRadius: 100,
     backgroundColor: 'rgba(0, 104, 117, 0.06)',
   },
   broadcastButtonText: {
@@ -1300,7 +1454,6 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.06)',
   },
   composerTitle: {
-    fontFamily: 'Manrope',
     fontSize: 20,
     fontWeight: '800',
     color: '#163235',
@@ -1315,7 +1468,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   composerLabel: {
-    fontFamily: 'JetBrains Mono',
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1.4,
@@ -1355,7 +1507,6 @@ const styles = StyleSheet.create({
     borderColor: '#006875',
   },
   chipText: {
-    fontFamily: 'JetBrains Mono',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,

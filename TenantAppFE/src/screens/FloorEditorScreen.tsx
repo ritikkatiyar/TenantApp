@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-  ScrollView as RNScrollView
+  ScrollView as RNScrollView,
+  useWindowDimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -32,6 +33,9 @@ import { apiRequest } from '../api/client';
 import { getFloorLayout, ActiveLeaseSummary } from '../api/unit.api';
 import { createLease } from '../api/lease.api';
 import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '../api/user.api';
+import { useRouter, Href } from 'expo-router';
+import { useAuth } from '../auth/AuthProvider';
+import { Theme } from '../theme/Theme';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
@@ -72,6 +76,11 @@ export default function FloorEditorScreen({
   onBack,
   onSave
 }: FloorEditorScreenProps) {
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isDesktop = windowWidth >= 900;
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+
   const [activeTool, setActiveTool] = useState<ToolType>('PAN');
   const [blocks, setBlocks] = useState<UnitBlock[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,6 +98,8 @@ export default function FloorEditorScreen({
 
   const [parentScrollEnabled, setParentScrollEnabled] = useState(true);
   const sheetScrollRef = useRef<RNScrollView | null>(null);
+  const desktopGridWrapperRef = useRef<any>(null);
+  const mobileGridWrapperRef = useRef<any>(null);
 
   // Scroll Indicator Dynamic Visibility Refs & State
   const [showRightArrow, setShowRightArrow] = useState(false);
@@ -151,11 +162,6 @@ export default function FloorEditorScreen({
   }, []);
 
   useEffect(() => {
-    translateX.value = (width - gridWidth) / 2;
-    translateY.value = (height - gridHeight) / 2;
-    savedTranslateX.value = translateX.value;
-    savedTranslateY.value = translateY.value;
-
     fetchLayout();
   }, []);
 
@@ -332,6 +338,42 @@ export default function FloorEditorScreen({
       { scale: scale.value }
     ],
   }));
+
+  // Zoom & Pan Wheel handler for Desktop Web browsers
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    const handleWheelEvent = (e: WheelEvent) => {
+      e.preventDefault();
+      
+      const zoomIntensity = 0.05;
+      const delta = -e.deltaY;
+      const factor = delta > 0 ? (1 + zoomIntensity) : (1 - zoomIntensity);
+      
+      const newScale = scale.value * factor;
+      scale.value = Math.min(Math.max(newScale, 0.2), 3.0);
+      savedScale.value = scale.value;
+    };
+
+    const desktopElement = desktopGridWrapperRef.current;
+    const mobileElement = mobileGridWrapperRef.current;
+
+    if (desktopElement) {
+      desktopElement.addEventListener('wheel', handleWheelEvent, { passive: false });
+    }
+    if (mobileElement) {
+      mobileElement.addEventListener('wheel', handleWheelEvent, { passive: false });
+    }
+
+    return () => {
+      if (desktopElement) {
+        desktopElement.removeEventListener('wheel', handleWheelEvent);
+      }
+      if (mobileElement) {
+        mobileElement.removeEventListener('wheel', handleWheelEvent);
+      }
+    };
+  }, [isDesktop, loading, saving]);
 
   // Fetch existing layout if any (mocked for now, or you can implement actual fetch)
   useEffect(() => {
@@ -855,6 +897,604 @@ export default function FloorEditorScreen({
     );
   };
 
+  const renderSidebarLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, active = false, route?: Href) => (
+    <TouchableOpacity
+      style={[styles.sidebarLink, active && styles.sidebarLinkActive]}
+      onPress={route ? () => (route === '/command-center' ? onBack() : router.push(route)) : undefined}
+      activeOpacity={route ? 0.75 : 1}
+    >
+      <MaterialIcons name={icon} size={22} color={active ? Theme.Colors.primary : Theme.Colors.onSurfaceVariant} />
+      <Text style={[styles.sidebarLinkText, active && styles.sidebarLinkTextActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
+
+  if (isDesktop) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <LinearGradient
+          colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.desktopShell}
+        >
+          {/* Sidebar Navigation */}
+          <BlurView intensity={70} tint="light" style={styles.sidebar}>
+            <View style={styles.sidebarBrand}>
+              <Text style={styles.sidebarBrandTitle}>TenantApp</Text>
+              <Text style={styles.sidebarBrandSub}>Management Suite</Text>
+            </View>
+            
+            <View style={styles.sidebarNav}>
+              {renderSidebarLink('dashboard', 'Overview', false, '/analytics')}
+              {renderSidebarLink('business', 'Portfolio', true, '/command-center')}
+              {renderSidebarLink('groups', 'AI Desk', false, '/ai')}
+              {renderSidebarLink('build', 'Escalations', false, '/escalations')}
+              {renderSidebarLink('settings', 'Settings', false, '/expenses')}
+            </View>
+
+            <View style={styles.sidebarFooter}>
+              <TouchableOpacity style={styles.upgradeButton} onPress={() => router.push('/billing')} activeOpacity={0.85}>
+                <LinearGradient
+                  colors={[Theme.Colors.primary, Theme.Colors.secondaryContainer]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.upgradeGradient}
+                >
+                  <Text style={styles.upgradeText}>UPGRADE PLAN</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+              {renderSidebarLink('help-outline', 'Billing Help', false, '/billing')}
+              <TouchableOpacity 
+                style={styles.sidebarLink}
+                onPress={async () => {
+                  await signOut();
+                  router.replace('/login');
+                }}
+              >
+                <MaterialIcons name="logout" size={22} color={Theme.Colors.onSurfaceVariant} />
+                <Text style={styles.sidebarLinkText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+
+          {/* Main Workspace Area */}
+          <View style={styles.desktopMain}>
+            {/* Topbar Row */}
+            <View style={styles.topbar}>
+              <View style={styles.topbarTabs}>
+                <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
+                <TouchableOpacity onPress={onBack}><Text style={[styles.topbarTab, styles.topbarTabActive]}>Properties</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
+              </View>
+
+              <View style={styles.topbarRight}>
+                <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop}>
+                  <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
+                  <Text style={styles.backButtonTextDesktop}>Back to Floor Overview</Text>
+                </TouchableOpacity>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Content Container */}
+            <View style={[styles.flex, styles.desktopContent]}>
+              <View style={[styles.flex, styles.desktopInner]}>
+                
+                {/* Desktop Header Row */}
+                <View style={styles.desktopHeaderRow}>
+                  <View style={styles.largeTitleContainer}>
+                    <Text style={styles.titleLineDesktop}>Edit Floor {floorNumber} Layout</Text>
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.desktopSaveButtonWrapper} 
+                    onPress={handleSave}
+                    disabled={saving}
+                    activeOpacity={0.85}
+                  >
+                    <LinearGradient
+                      colors={['#00d4ff', '#0072ff']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.desktopSaveButton}
+                    >
+                      {saving ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Text style={styles.desktopSaveButtonText}>Save Layout</Text>
+                          <MaterialIcons name="check" size={18} color="#fff" />
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Main Split Layout */}
+                <View style={styles.desktopMainContent}>
+                  
+                  {/* Left Column: Drawing/Grid Canvas */}
+                  <View style={styles.desktopCanvasColumn}>
+                    <GestureDetector gesture={composedGesture}>
+                      <View ref={desktopGridWrapperRef} style={styles.desktopGridWrapper}>
+                        {saving ? (
+                          <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#006875" />
+                            <Text style={styles.loadingText}>Saving Layout...</Text>
+                          </View>
+                        ) : loading ? (
+                          <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#006875" />
+                            <Text style={styles.loadingText}>Loading Layout...</Text>
+                          </View>
+                        ) : (
+                          <>
+                            <View style={styles.canvasContainer}>
+                              <Animated.View style={[styles.isometricContainer, animatedGridStyle]}>
+                                <GestureDetector gesture={drawGesture}>
+                                  <View 
+                                    style={[styles.gridContainer, { width: gridWidth, height: gridHeight }]}
+                                    pointerEvents={activeTool === 'PAN' ? 'box-none' : 'auto'}
+                                  >
+                                    {renderGrid()}
+                                  </View>
+                                </GestureDetector>
+                              </Animated.View>
+                            </View>
+
+                            {/* Floating Editor Tools Bar */}
+                            <BlurView intensity={80} tint="light" style={styles.floatingToolbar}>
+                              <TouchableOpacity 
+                                style={[styles.floatingToolButton, activeTool === 'PAN' && styles.floatingToolButtonActive]}
+                                onPress={() => setActiveTool('PAN')}
+                              >
+                                <MaterialIcons name="pan-tool" size={18} color={activeTool === 'PAN' ? '#fff' : '#006875'} />
+                                <Text style={[styles.floatingToolText, activeTool === 'PAN' && styles.floatingToolTextActive]}>Move</Text>
+                              </TouchableOpacity>
+
+                              <TouchableOpacity 
+                                style={[styles.floatingToolButton, activeTool === 'ADD' && styles.floatingToolButtonActive]}
+                                onPress={() => setActiveTool('ADD')}
+                              >
+                                <MaterialIcons name="edit" size={18} color={activeTool === 'ADD' ? '#fff' : '#006875'} />
+                                <Text style={[styles.floatingToolText, activeTool === 'ADD' && styles.floatingToolTextActive]}>Draw</Text>
+                              </TouchableOpacity>
+                              
+                              <TouchableOpacity 
+                                style={[styles.floatingToolButton, activeTool === 'ERASE' && styles.floatingToolButtonActive]}
+                                onPress={() => setActiveTool('ERASE')}
+                              >
+                                <MaterialIcons name="layers-clear" size={18} color={activeTool === 'ERASE' ? '#fff' : '#006875'} />
+                                <Text style={[styles.floatingToolText, activeTool === 'ERASE' && styles.floatingToolTextActive]}>Erase</Text>
+                              </TouchableOpacity>
+
+                              <View style={styles.floatingDivider} />
+
+                              <TouchableOpacity 
+                                style={styles.floatingToolButton}
+                                onPress={handleClearAll}
+                              >
+                                <MaterialIcons name="delete-sweep" size={18} color="#e53935" />
+                                <Text style={[styles.floatingToolText, { color: '#e53935' }]}>Clear</Text>
+                              </TouchableOpacity>
+                            </BlurView>
+                          </>
+                        )}
+                      </View>
+                    </GestureDetector>
+                  </View>
+
+                  {/* Right Column: Selection Details (Takes entire panel height) */}
+                  <View style={styles.desktopSidebarColumn}>
+                    <View style={{ flex: 1 }}>
+                      {selectedBlock ? (
+                        <BlurView intensity={70} tint="light" style={[styles.desktopCard, { flex: 1 }]}>
+                          <View style={styles.sheetHeader}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.sheetUnitTitle}>Unit {selectedBlock.unitNumber}</Text>
+                              <Text style={styles.sheetSubtitle}>Floor {floorNumber}</Text>
+                            </View>
+                            <TouchableOpacity 
+                              onPress={() => {
+                                setSelectedUnitId(null);
+                                setLeaseRentAmount('');
+                                setSecurityDeposit('');
+                                resetTenantAssignmentForm();
+                              }}
+                              style={styles.closeButton}
+                            >
+                              <MaterialIcons name="close" size={20} color="#6b7a7d" />
+                            </TouchableOpacity>
+                          </View>
+
+                          <RNScrollView 
+                            ref={sheetScrollRef}
+                            scrollEnabled={parentScrollEnabled}
+                            contentContainerStyle={styles.sheetContent}
+                            showsVerticalScrollIndicator={false}
+                            keyboardShouldPersistTaps="handled"
+                          >
+                            {isCreatingNewTenant ? (
+                              /* ── Full-panel Create New Tenant (replaces all content) ── */
+                              <View style={styles.createTenantPanel}>
+                                <View style={styles.createTenantHeader}>
+                                  <TouchableOpacity onPress={() => setIsCreatingNewTenant(false)} style={styles.createTenantBack}>
+                                    <MaterialIcons name="arrow-back" size={18} color="#006875" />
+                                  </TouchableOpacity>
+                                  <Text style={styles.createTenantTitle}>CREATE NEW TENANT</Text>
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                  <Text style={styles.inputLabel}>PHONE NUMBER</Text>
+                                  <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                                    <MaterialIcons name="phone" size={18} color="#7b8a8d" />
+                                    <TextInput style={[styles.textInput, { color: '#7b8a8d' }]} value={tenantPhoneSearch} editable={false} />
+                                  </View>
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                  <Text style={styles.inputLabel}>FULL NAME</Text>
+                                  <View style={styles.inputWrapper}>
+                                    <MaterialIcons name="person" size={18} color="#006875" />
+                                    <TextInput style={styles.textInput} placeholder="e.g. John Doe" placeholderTextColor="#9ba9ab" value={newTenantName} onChangeText={setNewTenantName} />
+                                  </View>
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                  <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
+                                  <View style={styles.inputWrapper}>
+                                    <MaterialIcons name="email" size={18} color="#006875" />
+                                    <TextInput style={styles.textInput} placeholder="e.g. john@example.com" placeholderTextColor="#9ba9ab" value={newTenantEmail} onChangeText={setNewTenantEmail} keyboardType="email-address" autoCapitalize="none" />
+                                  </View>
+                                </View>
+
+                                {tenantSearchError && (
+                                  <Text style={{ color: '#e53935', fontSize: 13, paddingLeft: 4, marginTop: 4 }}>{tenantSearchError}</Text>
+                                )}
+
+                                <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                                  <TouchableOpacity style={[styles.statusToggle, { flex: 1 }]} onPress={() => setIsCreatingNewTenant(false)}>
+                                    <Text style={styles.statusToggleText}>CANCEL</Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity style={[styles.statusToggle, styles.statusActiveOccupied, { flex: 1 }]} onPress={handleCreateAndSelectTenant} disabled={tenantCreating}>
+                                    {tenantCreating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE</Text>}
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            ) : (
+                              /* ── Normal unit fields ── */
+                              <>
+                            {/* Form Input Fields */}
+                            <View style={{ gap: 12, marginBottom: 12 }}>
+                              <View style={{ flexDirection: 'row', gap: 12 }}>
+                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                                  <Text style={styles.inputLabel}>MONTHLY RENT</Text>
+                                  <View style={styles.inputWrapper}>
+                                    <MaterialIcons name="payments" size={18} color="#006875" />
+                                    <TextInput 
+                                      style={styles.textInput}
+                                      value={leaseRentAmount}
+                                      onChangeText={setLeaseRentAmount}
+                                      placeholder="e.g. 15000"
+                                      keyboardType="numeric"
+                                      placeholderTextColor="#9ba9ab"
+                                    />
+                                  </View>
+                                </View>
+
+                                <View style={[styles.inputGroup, { flex: 1 }]}>
+                                  <Text style={styles.inputLabel}>UNIT CAPACITY</Text>
+                                  <View style={styles.inputWrapper}>
+                                    <MaterialIcons name="people" size={18} color="#006875" />
+                                    <TextInput 
+                                      style={styles.textInput}
+                                      value={selectedBlock.capacity ? selectedBlock.capacity.toString() : ''}
+                                      onChangeText={(val) => {
+                                        const cap = parseInt(val, 10);
+                                        updateUnitDetails(selectedBlock.id, { capacity: isNaN(cap) ? undefined : cap });
+                                      }}
+                                      placeholder="e.g. 2"
+                                      keyboardType="numeric"
+                                      placeholderTextColor="#9ba9ab"
+                                      editable={!selectedBlock.activeLeases || selectedBlock.activeLeases.length === 0}
+                                    />
+                                  </View>
+                                </View>
+                              </View>
+
+                              <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>SECURITY DEPOSIT</Text>
+                                <View style={styles.inputWrapper}>
+                                  <MaterialIcons name="account-balance-wallet" size={18} color="#006875" />
+                                  <TextInput 
+                                    style={styles.textInput}
+                                    placeholder="e.g. 30000"
+                                    placeholderTextColor="#9ba9ab"
+                                    value={securityDeposit}
+                                    onChangeText={setSecurityDeposit}
+                                    keyboardType="numeric"
+                                  />
+                                </View>
+                              </View>
+                            </View>
+
+                            {/* Assigned Tenants */}
+                            <View style={styles.inputGroup}>
+                              <Text style={styles.inputLabel}>ASSIGNED TENANTS</Text>
+                              {selectedBlock.activeLeases && selectedBlock.activeLeases.length > 0 ? (
+                                <View style={{ gap: 10, marginBottom: 12 }}>
+                                  {selectedBlock.activeLeases.map((l, index) => (
+                                    <View key={l.leaseId || index} style={[styles.tenantList, { paddingVertical: 10, paddingHorizontal: 14, backgroundColor: 'rgba(255, 255, 255, 0.45)', borderRadius: 16, borderColor: 'rgba(255, 255, 255, 0.55)', borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+                                      <View style={{ flex: 1, gap: 4 }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                          <View style={styles.tenantTag}>
+                                            <Text style={styles.tenantTagText}>{l.tenantName || 'Assigned tenant'}</Text>
+                                          </View>
+                                          {l.tenantPhone ? (
+                                            <Text style={[styles.sheetSubtitle, { marginVertical: 0 }]}>{l.tenantPhone}</Text>
+                                          ) : null}
+                                        </View>
+                                        {l.rentAmount ? (
+                                          <Text style={{ fontSize: 11, color: '#6b7a7d', paddingLeft: 4 }}>Rent Share: ₹{l.rentAmount}/mo</Text>
+                                        ) : null}
+                                      </View>
+
+                                      <TouchableOpacity 
+                                        onPress={() => handleRemoveTenant(l.leaseId, l.tenantName)}
+                                        style={{ padding: 6, borderRadius: 10, backgroundColor: 'rgba(229, 57, 53, 0.1)' }}
+                                      >
+                                        <MaterialIcons name="close" size={16} color="#e53935" />
+                                      </TouchableOpacity>
+                                    </View>
+                                  ))}
+                                </View>
+                              ) : (
+                                <Text style={[styles.sheetSubtitle, { marginBottom: 8, fontStyle: 'italic' }]}>No tenants assigned yet.</Text>
+                              )}
+
+                              {(!selectedBlock.capacity || selectedBlock.capacity <= 0) ? (
+                                <View style={styles.warningContainer}>
+                                  <MaterialIcons name="warning" size={18} color="#e53935" />
+                                  <Text style={styles.warningText}>
+                                    Please define a unit capacity of at least 1 before you can search for and assign tenants.
+                                  </Text>
+                                </View>
+                              ) : selectedBlock.activeLeases && selectedBlock.activeLeases.length >= selectedBlock.capacity ? (
+                                <View style={[styles.warningContainer, { backgroundColor: 'rgba(46, 125, 50, 0.08)', borderColor: 'rgba(46, 125, 50, 0.15)', marginTop: 8 }]}>
+                                  <MaterialIcons name="check-circle" size={18} color="#2e7d32" />
+                                  <Text style={[styles.warningText, { color: '#2e7d32' }]}>
+                                    Unit is fully occupied (Capacity: {selectedBlock.capacity}/{selectedBlock.capacity} reached).
+                                  </Text>
+                                </View>
+                              ) : (
+                                <>
+                                  {!isCreatingNewTenant && (
+                                    <View style={{ marginBottom: 12 }}>
+                                      <View style={styles.inputWrapper}>
+                                        <MaterialIcons name="phone" size={18} color="#006875" />
+                                        <TextInput
+                                          style={styles.textInput}
+                                          placeholder="Search by 10-digit phone"
+                                          placeholderTextColor="#9ba9ab"
+                                          value={tenantPhoneSearch}
+                                          onChangeText={(val) => {
+                                            const cleaned = val.replace(/[^0-9]/g, '').slice(0, 10);
+                                            setTenantPhoneSearch(cleaned);
+                                            setTenantSearchError(null);
+                                          }}
+                                          keyboardType="phone-pad"
+                                          maxLength={10}
+                                          onSubmitEditing={handleSearchTenant}
+                                        />
+                                        <TouchableOpacity onPress={handleSearchTenant} disabled={tenantSearchLoading}>
+                                          {tenantSearchLoading ? (
+                                            <ActivityIndicator size="small" color="#006875" />
+                                          ) : (
+                                            <MaterialIcons name="person-add" size={20} color="#006875" />
+                                          )}
+                                        </TouchableOpacity>
+                                      </View>
+
+                                      {/* Suggestions List */}
+                                      {suggestions.length > 0 && (
+                                        <RNScrollView 
+                                          style={styles.suggestionsContainer} 
+                                          nestedScrollEnabled={true}
+                                          keyboardShouldPersistTaps="handled"
+                                          onTouchStart={() => setParentScrollEnabled(false)}
+                                          onTouchEnd={() => setParentScrollEnabled(true)}
+                                          onTouchCancel={() => setParentScrollEnabled(true)}
+                                        >
+                                          {suggestions.map((userItem) => (
+                                            <TouchableOpacity
+                                              key={userItem.id}
+                                              style={styles.suggestionItem}
+                                              onPress={() => {
+                                                setTenantSearchResult(userItem);
+                                                setTenantPhoneSearch(userItem.phoneNumber || '');
+                                                setSuggestions([]);
+                                              }}
+                                            >
+                                              <MaterialIcons name="phone" size={16} color="#006875" />
+                                              <View style={styles.suggestionTextContainer}>
+                                                <Text style={styles.suggestionName}>{userItem.fullName}</Text>
+                                                <Text style={styles.suggestionPhone}>{userItem.phoneNumber || 'No phone'}</Text>
+                                              </View>
+                                            </TouchableOpacity>
+                                          ))}
+                                        </RNScrollView>
+                                      )}
+                                    </View>
+                                  )}
+
+                                  {tenantSearchError && (
+                                    <Text style={{ color: '#e53935', fontSize: 13, marginTop: -8, marginBottom: 12, paddingLeft: 4 }}>
+                                      {tenantSearchError}
+                                    </Text>
+                                  )}
+
+                                  {/* Quick Create Prompt */}
+                                  {(!tenantSearchResult && !isCreatingNewTenant && tenantPhoneSearch.trim().length >= 10 && !tenantSearchLoading && suggestions.length === 0) && (
+                                    <TouchableOpacity
+                                      style={styles.quickCreatePrompt}
+                                      onPress={() => {
+                                        setIsCreatingNewTenant(true);
+                                        setNewTenantName('');
+                                        setNewTenantEmail('');
+                                      }}
+                                    >
+                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                        <MaterialIcons name="person-add" size={20} color="#006875" />
+                                        <Text style={styles.quickCreatePromptText}>
+                                          No tenant found. Create new tenant for "{tenantPhoneSearch}"?
+                                        </Text>
+                                      </View>
+                                    </TouchableOpacity>
+                                  )}
+
+                                  {/* Quick Create Form */}
+                                  {isCreatingNewTenant && (
+                                    <View style={styles.quickCreateForm}>
+                                      <Text style={styles.quickCreateTitle}>NEW TENANT DETAILS</Text>
+                                      
+                                      <View style={styles.quickCreateField}>
+                                        <Text style={styles.quickCreateLabel}>PHONE NUMBER</Text>
+                                        <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                                          <MaterialIcons name="phone" size={18} color="#7b8a8d" />
+                                          <TextInput
+                                            style={[styles.textInput, { color: '#7b8a8d' }]}
+                                            value={tenantPhoneSearch}
+                                            editable={false}
+                                          />
+                                        </View>
+                                      </View>
+
+                                      <View style={styles.quickCreateField}>
+                                        <Text style={styles.quickCreateLabel}>FULL NAME</Text>
+                                        <View style={styles.inputWrapper}>
+                                          <MaterialIcons name="person" size={18} color="#006875" />
+                                          <TextInput
+                                            style={styles.textInput}
+                                            placeholder="e.g. John Doe"
+                                            placeholderTextColor="#9ba9ab"
+                                            value={newTenantName}
+                                            onChangeText={setNewTenantName}
+                                          />
+                                        </View>
+                                      </View>
+
+                                      <View style={styles.quickCreateField}>
+                                        <Text style={styles.quickCreateLabel}>EMAIL ADDRESS</Text>
+                                        <View style={styles.inputWrapper}>
+                                          <MaterialIcons name="email" size={18} color="#006875" />
+                                          <TextInput
+                                            style={styles.textInput}
+                                            placeholder="e.g. john@example.com"
+                                            placeholderTextColor="#9ba9ab"
+                                            value={newTenantEmail}
+                                            onChangeText={setNewTenantEmail}
+                                            keyboardType="email-address"
+                                            autoCapitalize="none"
+                                          />
+                                        </View>
+                                      </View>
+
+                                      <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                                        <TouchableOpacity
+                                          style={[styles.statusToggle, { flex: 1 }]}
+                                          onPress={() => setIsCreatingNewTenant(false)}
+                                        >
+                                          <Text style={styles.statusToggleText}>CANCEL</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                          style={[styles.statusToggle, styles.statusActiveOccupied, { flex: 1 }]}
+                                          onPress={handleCreateAndSelectTenant}
+                                          disabled={tenantCreating}
+                                        >
+                                          {tenantCreating ? (
+                                            <ActivityIndicator size="small" color="#fff" />
+                                          ) : (
+                                            <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE</Text>
+                                          )}
+                                        </TouchableOpacity>
+                                      </View>
+                                    </View>
+                                  )}
+
+                                  {tenantSearchResult && (
+                                    <View style={{ gap: 10, marginTop: 4, marginBottom: 12 }}>
+                                      <View style={{ paddingVertical: 10, paddingHorizontal: 14, backgroundColor: 'rgba(46, 125, 50, 0.05)', borderRadius: 16, borderColor: 'rgba(46, 125, 50, 0.15)', borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <View>
+                                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#1b5e20' }}>{tenantSearchResult.fullName}</Text>
+                                          <Text style={{ fontSize: 11, color: '#4e7051' }}>{tenantSearchResult.email}</Text>
+                                        </View>
+                                        <MaterialIcons name="check-circle" size={20} color="#2e7d32" />
+                                      </View>
+
+                                      <TouchableOpacity
+                                        style={[styles.statusToggle, styles.statusActiveOccupied, { marginHorizontal: 0, paddingVertical: 14, borderRadius: 16 }]}
+                                        onPress={handleAssignTenant}
+                                        disabled={tenantAssigning}
+                                      >
+                                        {tenantAssigning ? (
+                                          <ActivityIndicator size="small" color="#fff" />
+                                        ) : (
+                                          <Text style={[styles.statusToggleText, styles.statusTextActive]}>
+                                            ASSIGN {tenantSearchResult.fullName.toUpperCase()}
+                                          </Text>
+                                        )}
+                                      </TouchableOpacity>
+                                    </View>
+                                  )}
+                                </>
+                              )}
+                            </View>
+                              </>
+                            )}
+
+                            {!isCreatingNewTenant && (
+                              <View style={styles.statusContainer}>
+                                <TouchableOpacity 
+                                  style={[styles.statusToggle, selectedBlock.status === 'VACANT' && styles.statusActiveVacant]}
+                                  onPress={() => updateUnitDetails(selectedBlock.id, { status: 'VACANT' })}
+                                  disabled={Boolean(selectedBlock.activeLeaseId)}
+                                >
+                                  <Text style={[styles.statusToggleText, selectedBlock.status === 'VACANT' && styles.statusTextActive]}>VACANT</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity 
+                                  style={[styles.statusToggle, selectedBlock.status === 'OCCUPIED' && styles.statusActiveOccupied]}
+                                  onPress={() => updateUnitDetails(selectedBlock.id, { status: 'OCCUPIED' })}
+                                  disabled={Boolean(selectedBlock.activeLeaseId)}
+                                >
+                                  <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextActive]}>OCCUPIED</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                          </RNScrollView>
+                        </BlurView>
+                      ) : (
+                        <BlurView intensity={60} tint="light" style={[styles.desktopCard, { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+                          <MaterialIcons name="info-outline" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
+                          <Text style={{ fontSize: 18, fontWeight: '700', color: '#151d1e', textAlign: 'center', marginBottom: 8 }}>No Unit Selected</Text>
+                          <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', lineHeight: 20 }}>
+                            Select any unit block in the grid layout to manage rent configurations and assign tenants.
+                          </Text>
+                        </BlurView>
+                      )}
+                    </View>
+                  </View>
+                </View>
+
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+      </GestureHandlerRootView>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LinearGradient
@@ -937,7 +1577,7 @@ export default function FloorEditorScreen({
 
           {/* Grid Area */}
           <GestureDetector gesture={composedGesture}>
-            <View style={styles.gridWrapper}>
+            <View ref={mobileGridWrapperRef} style={styles.gridWrapper}>
               {saving ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color="#006875" />
@@ -1054,6 +1694,56 @@ export default function FloorEditorScreen({
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                 >
+                {isCreatingNewTenant ? (
+                  /* ── Full-panel Create New Tenant (mobile) ── */
+                  <View style={styles.createTenantPanel}>
+                    <View style={styles.createTenantHeader}>
+                      <TouchableOpacity onPress={() => setIsCreatingNewTenant(false)} style={styles.createTenantBack}>
+                        <MaterialIcons name="arrow-back" size={18} color="#006875" />
+                      </TouchableOpacity>
+                      <Text style={styles.createTenantTitle}>CREATE NEW TENANT</Text>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>PHONE NUMBER</Text>
+                      <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                        <MaterialIcons name="phone" size={18} color="#7b8a8d" />
+                        <TextInput style={[styles.textInput, { color: '#7b8a8d' }]} value={tenantPhoneSearch} editable={false} />
+                      </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>FULL NAME</Text>
+                      <View style={styles.inputWrapper}>
+                        <MaterialIcons name="person" size={18} color="#006875" />
+                        <TextInput style={styles.textInput} placeholder="e.g. John Doe" placeholderTextColor="#9ba9ab" value={newTenantName} onChangeText={setNewTenantName} />
+                      </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
+                      <View style={styles.inputWrapper}>
+                        <MaterialIcons name="email" size={18} color="#006875" />
+                        <TextInput style={styles.textInput} placeholder="e.g. john@example.com" placeholderTextColor="#9ba9ab" value={newTenantEmail} onChangeText={setNewTenantEmail} keyboardType="email-address" autoCapitalize="none" />
+                      </View>
+                    </View>
+
+                    {tenantSearchError && (
+                      <Text style={{ color: '#e53935', fontSize: 13, paddingLeft: 4, marginTop: 4 }}>{tenantSearchError}</Text>
+                    )}
+
+                    <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                      <TouchableOpacity style={[styles.statusToggle, { flex: 1 }]} onPress={() => setIsCreatingNewTenant(false)}>
+                        <Text style={styles.statusToggleText}>CANCEL</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.statusToggle, styles.statusActiveOccupied, { flex: 1 }]} onPress={handleCreateAndSelectTenant} disabled={tenantCreating}>
+                        {tenantCreating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE</Text>}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  /* ── Normal unit fields (mobile) ── */
+                  <>
                 <View style={{ gap: 12, marginBottom: 12 }}>
                   <View style={{ flexDirection: 'row', gap: 12 }}>
                     <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -1355,6 +2045,8 @@ export default function FloorEditorScreen({
                     <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextActive]}>OCCUPIED</Text>
                   </TouchableOpacity>
                 </View>
+                  </>
+                )}
                 </RNScrollView>
               </BlurView>
             </Animated.View>
@@ -1819,5 +2511,302 @@ const styles = StyleSheet.create({
     color: '#6b7a7d',
     letterSpacing: 1,
     paddingLeft: 4,
-  }
+  },
+  // Desktop Layout Styles
+  desktopShell: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  sidebar: {
+    width: 260,
+    height: '100%',
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 24,
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    overflow: 'hidden',
+  },
+  sidebarBrand: {
+    marginBottom: 54,
+  },
+  sidebarBrandTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    lineHeight: 40,
+    color: Theme.Colors.primary,
+  },
+  sidebarBrandSub: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    color: Theme.Colors.onSurfaceVariant,
+    marginTop: 4,
+  },
+  sidebarNav: {
+    gap: 14,
+  },
+  sidebarLink: {
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 18,
+    borderRadius: Theme.Rounded.lg,
+  },
+  sidebarLinkActive: {
+    backgroundColor: 'rgba(0, 224, 255, 0.10)',
+    borderRightWidth: 4,
+    borderRightColor: Theme.Colors.primaryContainer,
+  },
+  sidebarLinkText: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1.6,
+    color: Theme.Colors.onSurface,
+  },
+  sidebarLinkTextActive: {
+    color: Theme.Colors.primary,
+  },
+  sidebarFooter: {
+    marginTop: 'auto',
+    borderTopWidth: 1,
+    borderTopColor: Theme.Colors.outlineVariant,
+    paddingTop: 28,
+    gap: 10,
+  },
+  upgradeButton: {
+    borderRadius: Theme.Rounded.lg,
+    overflow: 'hidden',
+    marginBottom: 14,
+    shadowColor: Theme.Colors.secondary,
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  upgradeGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  upgradeText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  desktopMain: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  topbar: {
+    minHeight: 82,
+    paddingHorizontal: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.75)',
+    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+    overflow: 'hidden',
+  },
+  topbarTabs: {
+    flexDirection: 'row',
+    gap: 34,
+    alignItems: 'center',
+  },
+  topbarTab: {
+    fontSize: 18,
+    color: Theme.Colors.onSurface,
+  },
+  topbarTabActive: {
+    color: Theme.Colors.primary,
+    borderBottomWidth: 2,
+    borderBottomColor: Theme.Colors.primaryContainer,
+    paddingBottom: 8,
+  },
+  topbarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  backButtonDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginRight: 10,
+  },
+  backButtonTextDesktop: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#151d1e',
+  },
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 3,
+    borderColor: Theme.Colors.primaryContainer,
+    backgroundColor: Theme.Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 18,
+  },
+  flex: {
+    flex: 1,
+  },
+  desktopContent: {
+    padding: 40,
+    flex: 1,
+  },
+  desktopInner: {
+    gap: 32,
+    flex: 1,
+  },
+  desktopHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  largeTitleContainer: {
+    flex: 1,
+  },
+  titleLineDesktop: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#151d1e',
+    letterSpacing: -0.5,
+  },
+  desktopSaveButtonWrapper: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  desktopSaveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  desktopSaveButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  desktopMainContent: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 32,
+  },
+  desktopCanvasColumn: {
+    flex: 1.5,
+    height: '100%',
+  },
+  desktopGridWrapper: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  desktopSidebarColumn: {
+    width: 420,
+    gap: 24,
+  },
+  desktopCard: {
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    overflow: 'hidden',
+  },
+  floatingToolbar: {
+    position: 'absolute',
+    top: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 6,
+    zIndex: 100,
+  },
+  floatingToolButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    backgroundColor: 'transparent',
+  },
+  floatingToolButtonActive: {
+    backgroundColor: '#006875',
+  },
+  floatingToolText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#006875',
+  },
+  floatingToolTextActive: {
+    color: '#fff',
+  },
+  floatingDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'rgba(0, 104, 117, 0.15)',
+    marginHorizontal: 8,
+  },
+  createTenantPanel: {
+    gap: 16,
+  },
+  createTenantHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 104, 117, 0.1)',
+  },
+  createTenantBack: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createTenantTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#006875',
+    letterSpacing: 1,
+  },
 });
