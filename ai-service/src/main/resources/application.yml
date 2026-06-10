@@ -30,10 +30,10 @@ spring:
 
   ai:
     model:
-      chat: ${SPRING_AI_MODEL_CHAT:google-genai}
+      chat: ${SPRING_AI_MODEL_CHAT:none}
     google:
       genai:
-        api-key: ${GEMINI_API_KEY:AIzaSyAzjN-bhhGC98DrSWwyftvdWlVBspjscic}
+        api-key: ${GEMINI_API_KEY:}
         chat:
           options:
             model: ${GEMINI_MODEL:gemini-2.5-flash}

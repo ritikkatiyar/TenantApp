@@ -3,7 +3,7 @@ param(
     [string]$Command = "start",
     [int]$FrontendPort = 3000,
     [int]$BackendPort = 8080,
-    [int]$AiServicePort = 8082,
+    [int]$AiServicePort = 8081,
     [switch]$SkipDocker
 )
 
