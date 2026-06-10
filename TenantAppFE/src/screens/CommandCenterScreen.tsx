@@ -415,6 +415,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
             {renderSidebarLink('business', 'Portfolio', true, '/command-center')}
             {renderSidebarLink('groups', 'AI Desk', false, '/ai')}
             {renderSidebarLink('build', 'Escalations', false, '/escalations')}
+            {renderSidebarLink('campaign', 'Announcements', false, '/announcements')}
             {renderSidebarLink('settings', 'Settings', false, '/expenses')}
           </View>
           <View style={styles.sidebarFooter}>

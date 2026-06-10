@@ -23,6 +23,8 @@ export default function RootLayout() {
             <Stack.Screen name="ai" />
             <Stack.Screen name="tenant-home" />
             <Stack.Screen name="properties/create" />
+            <Stack.Screen name="escalations" />
+            <Stack.Screen name="announcements" />
           </Stack>
           <BottomNavigation />
         </View>
