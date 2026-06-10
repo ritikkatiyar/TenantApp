@@ -53,15 +53,24 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
   const handleSendBroadcast = async () => {
-    if (!selectedPropertyForBroadcast || !accessToken) return;
+    console.log('[Broadcast] handleSendBroadcast called');
+    console.log('[Broadcast] selectedProperty:', selectedPropertyForBroadcast?.id, 'hasToken:', !!accessToken);
+    
+    if (!selectedPropertyForBroadcast || !accessToken) {
+      console.warn('[Broadcast] Early return: no property or token');
+      return;
+    }
+    
     if (!broadcastTitle.trim() || !broadcastContent.trim()) {
+      console.warn('[Broadcast] Early return: title or content missing');
       Alert.alert('Validation', 'Title and Content are required.');
       return;
     }
 
+    console.log('[Broadcast] Validation passed, starting send...');
     setSendingBroadcast(true);
     try {
-      await createAnnouncement(accessToken, {
+      const payload = {
         propertyId: selectedPropertyForBroadcast.id,
         title: broadcastTitle,
         content: broadcastContent,
@@ -69,8 +78,13 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
         severity: broadcastSeverity,
         targetType: broadcastTargetType,
         targetValue: broadcastTargetType !== 'PROPERTY' ? broadcastTargetValue : undefined,
-      });
+      };
+      console.log('[Broadcast] Payload:', payload);
+      console.log('[Broadcast] Calling createAnnouncement...');
+      
+      await createAnnouncement(accessToken, payload);
 
+      console.log('[Broadcast] Success!');
       Alert.alert('Success', 'Announcement broadcasted successfully!');
       
       setBroadcastTitle('');
@@ -81,6 +95,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
       setBroadcastTargetValue('');
       setSelectedPropertyForBroadcast(null);
     } catch (err: any) {
+      console.error('[Broadcast] Error:', err);
       Alert.alert('Error', err.message || 'Failed to send broadcast');
     } finally {
       setSendingBroadcast(false);
@@ -214,7 +229,10 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                 <TouchableOpacity
                   activeOpacity={0.8}
                   style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperDesktop]}
-                  onPress={() => setSelectedPropertyForBroadcast(item)}
+                  onPress={() => {
+                    console.log('[Broadcast] Desktop broadcast button pressed for property:', item.id, item.name);
+                    setSelectedPropertyForBroadcast(item);
+                  }}
                 >
                   <View style={styles.broadcastButton}>
                     <MaterialIcons name="campaign" size={16} color="#006875" />
@@ -286,7 +304,10 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
         <TouchableOpacity
           activeOpacity={0.8}
           style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperMobile]}
-          onPress={() => setSelectedPropertyForBroadcast(item)}
+          onPress={() => {
+            console.log('[Broadcast] Mobile broadcast button pressed for property:', item.id, item.name);
+            setSelectedPropertyForBroadcast(item);
+          }}
         >
           <View style={styles.broadcastButton}>
             <MaterialIcons name="campaign" size={16} color="#006875" />
@@ -524,7 +545,10 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
         transparent
         visible={!!selectedPropertyForBroadcast}
         animationType="slide"
-        onRequestClose={() => setSelectedPropertyForBroadcast(null)}
+        onRequestClose={() => {
+          console.log('[Broadcast] Modal close requested');
+          setSelectedPropertyForBroadcast(null);
+        }}
       >
         <View style={styles.composerOverlay}>
           <View style={styles.composerSheet}>

@@ -50,6 +50,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   const timeoutId = setTimeout(() => controller.abort(), timeout);
   
   const targetUrl = useAiApi ? aiApiUrl(path) : apiUrl(path);
+  console.log(`[API Request] ${requestOptions.method || 'GET'} ${path}`);
 
   try {
     const fetchOptions = {
