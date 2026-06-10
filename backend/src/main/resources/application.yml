@@ -4,6 +4,7 @@ spring:
   main:
     lazy-initialization: true
 
+
   profiles:
     default: dev
 
@@ -56,7 +57,7 @@ app:
   logging:
     correlation-header-name: ${APP_CORRELATION_HEADER_NAME:X-Correlation-Id}
   cors:
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8081}
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8081,http://localhost:8082}
     allowed-methods: ${APP_CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
     allowed-headers: ${APP_CORS_ALLOWED_HEADERS:Authorization,Content-Type,Accept,Origin,X-Correlation-Id}
     allow-credentials: ${APP_CORS_ALLOW_CREDENTIALS:true}

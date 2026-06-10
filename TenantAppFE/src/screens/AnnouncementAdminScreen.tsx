@@ -21,10 +21,10 @@ import { useProperties } from '../hooks/useProperties';
 import { useAuth } from '../auth/AuthProvider';
 import { createAnnouncement, getAnnouncements, Announcement } from '../api/announcement.api';
 
-const LUMINOUS_BACKGROUND = ['#f4f8f8', '#eef5f5', '#f8faf9'] as const;
+const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
 const CATEGORY_OPTIONS = ['GENERAL', 'MAINTENANCE', 'EMERGENCY', 'BILLING', 'EVENT'] as const;
 const SEVERITY_OPTIONS = [
-  { val: 'INFO' as const, color: '#006875' },
+  { val: 'INFO' as const, color: '#0072ff' },
   { val: 'WARNING' as const, color: '#e28743' },
   { val: 'CRITICAL' as const, color: '#ba1a1a' },
 ];
@@ -44,6 +44,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
 
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [historyPropertyId, setHistoryPropertyId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
   const [broadcastTitle, setBroadcastTitle] = useState('');
@@ -167,7 +168,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
   );
 
   const renderComposer = () => (
-    <View style={styles.sectionCard}>
+    <BlurView intensity={40} tint="light" style={[styles.sectionCard, isDesktop && { flex: 1 }]}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionHeaderCopy}>
           <Text style={styles.eyebrow}>NEW ANNOUNCEMENT</Text>
@@ -183,22 +184,38 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
 
       <View style={styles.formGroup}>
         <Text style={styles.inputLabel}>RECIPIENT PROPERTY</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-          {properties.map((property) => (
-            <TouchableOpacity
-              key={property.id}
-              style={[styles.chip, selectedPropertyId === property.id && styles.chipActive]}
-              onPress={() => setSelectedPropertyId(property.id)}
-            >
-              <Text style={[styles.chipText, selectedPropertyId === property.id && styles.chipTextActive]} numberOfLines={1}>
-                {property.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-          {properties.length === 0 && (
-            <Text style={styles.emptyStateText}>No properties available yet.</Text>
-          )}
-        </ScrollView>
+        {properties.length === 0 ? (
+          <Text style={styles.emptyStateText}>No properties available yet.</Text>
+        ) : (
+          <View style={styles.segmentContainer}>
+            {properties.map((property) => {
+              const isActive = selectedPropertyId === property.id;
+              return (
+                <TouchableOpacity
+                  key={property.id}
+                  style={styles.segmentButtonWrapper}
+                  onPress={() => setSelectedPropertyId(property.id)}
+                  activeOpacity={0.8}
+                >
+                  {isActive ? (
+                    <LinearGradient
+                      colors={['#00d4ff', '#0072ff']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.segmentButtonGradient}
+                    >
+                      <Text style={styles.segmentTextActive} numberOfLines={1}>{property.name}</Text>
+                    </LinearGradient>
+                  ) : (
+                    <View style={styles.segmentButtonInactive}>
+                      <Text style={styles.segmentText} numberOfLines={1}>{property.name}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       <View style={styles.formGroup}>
@@ -226,56 +243,132 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
           numberOfLines={5}
         />
       </View>
+    </BlurView>
+  );
+
+  const renderOptions = () => (
+    <BlurView intensity={40} tint="light" style={[styles.sectionCard, isDesktop && { flex: 1 }]}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionHeaderCopy}>
+          <Text style={styles.eyebrow}>BROADCAST SETTINGS</Text>
+          <Text style={styles.sectionTitle}>Target & Category</Text>
+          <Text style={styles.sectionSubtitle}>Define who sees this notice and how it is flagged.</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.headerIconButton}
+          onPress={() => setShowHistory(true)}
+          activeOpacity={0.7}
+        >
+          <MaterialIcons name="history" size={22} color="#0072ff" />
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.inputLabel}>CATEGORY</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-        {CATEGORY_OPTIONS.map((category) => (
-          <TouchableOpacity
-            key={category}
-            style={[styles.chip, broadcastCategory === category && styles.chipActive]}
-            onPress={() => setBroadcastCategory(category)}
-          >
-            <Text style={[styles.chipText, broadcastCategory === category && styles.chipTextActive]}>{category}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={styles.segmentContainer}>
+        {CATEGORY_OPTIONS.map((category) => {
+          const isActive = broadcastCategory === category;
+          return (
+            <TouchableOpacity
+              key={category}
+              style={styles.segmentButtonWrapper}
+              onPress={() => setBroadcastCategory(category)}
+              activeOpacity={0.8}
+            >
+              {isActive ? (
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.segmentButtonGradient}
+                >
+                  <Text style={styles.segmentTextActive}>{category}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.segmentButtonInactive}>
+                  <Text style={styles.segmentText}>{category}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       <Text style={[styles.inputLabel, { marginTop: 18 }]}>SEVERITY LEVEL</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-        {SEVERITY_OPTIONS.map(({ val, color }) => (
-          <TouchableOpacity
-            key={val}
-            style={[
-              styles.chip,
-              broadcastSeverity === val && { ...styles.chipActive, backgroundColor: color, borderColor: color },
-            ]}
-            onPress={() => setBroadcastSeverity(val)}
-          >
-            <MaterialIcons
-              name={val === 'INFO' ? 'info-outline' : val === 'WARNING' ? 'warning-amber' : 'priority-high'}
-              size={17}
-              color={broadcastSeverity === val ? '#fff' : color}
-            />
-            <Text style={[styles.chipText, broadcastSeverity === val && styles.chipTextActive]}>{val}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={styles.segmentContainer}>
+        {SEVERITY_OPTIONS.map(({ val, color }) => {
+          const isActive = broadcastSeverity === val;
+          return (
+            <TouchableOpacity
+              key={val}
+              style={styles.segmentButtonWrapper}
+              onPress={() => setBroadcastSeverity(val)}
+              activeOpacity={0.8}
+            >
+              {isActive ? (
+                <LinearGradient
+                  colors={val === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : ['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.segmentButtonGradient}
+                >
+                  <View style={styles.segmentRow}>
+                    <MaterialIcons
+                      name={val === 'INFO' ? 'info-outline' : val === 'WARNING' ? 'warning-amber' : 'priority-high'}
+                      size={16}
+                      color="#fff"
+                    />
+                    <Text style={styles.segmentTextActive}>{val}</Text>
+                  </View>
+                </LinearGradient>
+              ) : (
+                <View style={styles.segmentButtonInactive}>
+                  <View style={styles.segmentRow}>
+                    <MaterialIcons
+                      name={val === 'INFO' ? 'info-outline' : val === 'WARNING' ? 'warning-amber' : 'priority-high'}
+                      size={16}
+                      color={color}
+                    />
+                    <Text style={[styles.segmentText, { color }]}>{val}</Text>
+                  </View>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       <Text style={[styles.inputLabel, { marginTop: 18 }]}>RECIPIENT SCOPE</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-        {(['PROPERTY', 'FLOOR', 'UNIT'] as const).map((scope) => (
-          <TouchableOpacity
-            key={scope}
-            style={[styles.chip, broadcastTargetType === scope && styles.chipActive]}
-            onPress={() => setBroadcastTargetType(scope)}
-          >
-            <Text style={[styles.chipText, broadcastTargetType === scope && styles.chipTextActive]}>{scope}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View style={styles.segmentContainer}>
+        {(['PROPERTY', 'FLOOR', 'UNIT'] as const).map((scope) => {
+          const isActive = broadcastTargetType === scope;
+          return (
+            <TouchableOpacity
+              key={scope}
+              style={styles.segmentButtonWrapper}
+              onPress={() => setBroadcastTargetType(scope)}
+              activeOpacity={0.8}
+            >
+              {isActive ? (
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.segmentButtonGradient}
+                >
+                  <Text style={styles.segmentTextActive}>{scope}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.segmentButtonInactive}>
+                  <Text style={styles.segmentText}>{scope}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {broadcastTargetType !== 'PROPERTY' && (
-        <View style={styles.formGroup}>
+        <View style={[styles.formGroup, { marginTop: 18 }]}>
           <Text style={styles.inputLabel}>{broadcastTargetType === 'FLOOR' ? 'Floor number' : 'Unit ID'}</Text>
           <TextInput
             style={styles.textInput}
@@ -288,40 +381,49 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
         </View>
       )}
 
-      <TouchableOpacity
-        style={[styles.sendButton, sendingBroadcast && styles.sendButtonDisabled]}
-        onPress={handleSendBroadcast}
-        disabled={sendingBroadcast || !selectedPropertyId || propertiesLoading}
-        activeOpacity={0.85}
-      >
-        <LinearGradient
-          colors={broadcastSeverity === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : ['#006875', '#00bcd4']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.sendButtonGradient}
+      {!isDesktop && (
+        <TouchableOpacity
+          style={[styles.sendButton, sendingBroadcast && styles.sendButtonDisabled, { marginTop: 20 }]}
+          onPress={handleSendBroadcast}
+          disabled={sendingBroadcast || !selectedPropertyId || propertiesLoading}
+          activeOpacity={0.85}
         >
-          {sendingBroadcast ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <MaterialIcons name="campaign" size={21} color="#fff" />
-              <Text style={styles.sendButtonText}>Broadcast Now</Text>
-            </>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    </View>
+          <LinearGradient
+            colors={broadcastSeverity === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : ['#00d4ff', '#0072ff']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.sendButtonGradient}
+          >
+            {sendingBroadcast ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <MaterialIcons name="campaign" size={21} color="#fff" />
+                <Text style={styles.sendButtonText}>Broadcast Now</Text>
+              </>
+            )}
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+    </BlurView>
   );
 
   const renderHistory = () => (
-    <View style={styles.sectionCard}>
+    <BlurView intensity={40} tint="light" style={[styles.sectionCard, isDesktop && { flex: 1 }]}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionHeaderCopy}>
           <Text style={styles.eyebrow}>ARCHIVE</Text>
           <Text style={styles.sectionTitle}>Past Announcements</Text>
           <Text style={styles.sectionSubtitle}>Review notices previously shared with residents.</Text>
         </View>
-        <View style={styles.badgeRow}>
+        <View style={styles.headerRightActions}>
+          <TouchableOpacity
+            style={styles.headerIconButton}
+            onPress={() => setShowHistory(false)}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="tune" size={22} color="#0072ff" />
+          </TouchableOpacity>
           <View style={styles.statsBadge}>
             <Text style={styles.statsBadgeText}>{activeHistoryPropertyName}</Text>
           </View>
@@ -329,19 +431,38 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
       </View>
 
       <View style={styles.formGroup}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-          {properties.map((property) => (
-            <TouchableOpacity
-              key={property.id}
-              style={[styles.chip, historyPropertyId === property.id && styles.chipActive]}
-              onPress={() => setHistoryPropertyId(property.id)}
-            >
-              <Text style={[styles.chipText, historyPropertyId === property.id && styles.chipTextActive]} numberOfLines={1}>
-                {property.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {properties.length === 0 ? (
+          <Text style={styles.emptyStateText}>No properties available yet.</Text>
+        ) : (
+          <View style={styles.segmentContainer}>
+            {properties.map((property) => {
+              const isActive = historyPropertyId === property.id;
+              return (
+                <TouchableOpacity
+                  key={property.id}
+                  style={styles.segmentButtonWrapper}
+                  onPress={() => setHistoryPropertyId(property.id)}
+                  activeOpacity={0.8}
+                >
+                  {isActive ? (
+                    <LinearGradient
+                      colors={['#00d4ff', '#0072ff']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.segmentButtonGradient}
+                    >
+                      <Text style={styles.segmentTextActive} numberOfLines={1}>{property.name}</Text>
+                    </LinearGradient>
+                  ) : (
+                    <View style={styles.segmentButtonInactive}>
+                      <Text style={styles.segmentText} numberOfLines={1}>{property.name}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       {loadingAnnouncements ? (
@@ -353,6 +474,27 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
           <MaterialIcons name="notifications-none" size={28} color="#6b7a7d" />
           <Text style={styles.emptyStateText}>No announcements have been published yet.</Text>
         </View>
+      ) : isDesktop ? (
+        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, marginTop: 12 }}>
+          <View style={styles.historyList}>
+            {announcements.map((announcement) => (
+              <View key={announcement.id} style={styles.historyCard}>
+                <View style={styles.historyHeader}>
+                  <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(announcement.category) }]}>
+                    <Text style={styles.categoryText}>{announcement.category}</Text>
+                  </View>
+                  <Text style={styles.historyMeta}>{propertyMap.get(announcement.propertyId) || announcement.propertyId}</Text>
+                </View>
+                <Text style={styles.historyTitle}>{announcement.title}</Text>
+                <Text style={styles.historyContent} numberOfLines={2}>{announcement.content}</Text>
+                <View style={styles.historyFooter}>
+                  <Text style={styles.historyTimestamp}>{formatTimestamp(announcement.createdAt)}</Text>
+                  <Text style={styles.historyBadge}>{announcement.severity}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
       ) : (
         <View style={styles.historyList}>
           {announcements.map((announcement) => (
@@ -373,85 +515,108 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
           ))}
         </View>
       )}
-    </View>
-  );
-
-  const DesktopShell = () => (
-    <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
-      <View style={styles.desktopShell}>
-        <BlurView intensity={90} tint="light" style={styles.sidebar}>
-          <View style={styles.sidebarBrand}>
-            <Text style={styles.sidebarBrandTitle}>TenantPortal</Text>
-            <Text style={styles.sidebarBrandSub}>PROPERTY MANAGEMENT</Text>
-          </View>
-
-          <View style={styles.sidebarNav}>
-            {renderSidebarLink('dashboard', 'Dashboard', false, '/analytics')}
-            {renderSidebarLink('business', 'Properties', false, '/command-center')}
-            {renderSidebarLink('build', 'Maintenance', false, '/command-center')}
-            {renderSidebarLink('build', 'Escalations', false, '/escalations')}
-            {renderSidebarLink('campaign', 'Announcements', true, '/announcements')}
-            {renderSidebarLink('payments', 'Payments', false, '/expenses')}
-          </View>
-
-          <View style={styles.sidebarFooter}>
-            <TouchableOpacity style={styles.upgradeButton} onPress={() => router.push('/billing')} activeOpacity={0.85}>
-              <LinearGradient colors={[Theme.Colors.primary, Theme.Colors.secondaryContainer]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.upgradeGradient}>
-              <Text style={styles.upgradeText}>MANAGE BILLING</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.sidebarLink} onPress={onLogout}>
-              <MaterialIcons name="logout" size={22} color={Theme.Colors.onSurfaceVariant} />
-              <Text style={styles.sidebarLinkText}>Logout</Text>
-            </TouchableOpacity>
-          </View>
-        </BlurView>
-
-        <View style={styles.desktopMain}>
-          <BlurView intensity={70} tint="light" style={styles.topbar}>
-            {isWideDesktop ? (
-              <View style={styles.topbarTabs}>
-                <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/command-center')}><Text style={styles.topbarTab}>Properties</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
-              </View>
-            ) : (
-              <Text style={styles.compactTopbarTitle}>Announcements</Text>
-            )}
-            <View style={styles.topbarRight}>
-              {isWideDesktop && (
-                <BlurView intensity={50} tint="light" style={styles.searchBox}>
-                  <MaterialIcons name="search" size={22} color="#6b7a7d" />
-                  <Text style={styles.searchPlaceholder}>Search announcements...</Text>
-                </BlurView>
-              )}
-              <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
-              <TouchableOpacity style={styles.topIcon} onPress={onLogout}><MaterialIcons name="settings" size={24} color={Theme.Colors.onSurface} /></TouchableOpacity>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
-            </View>
-          </BlurView>
-
-          <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.desktopInner}>
-              <View style={styles.pageHeader}>
-                <View>
-                  <Text style={styles.pageTitle}>Announcement Management</Text>
-                  <Text style={styles.pageSubtitle}>Broadcast updates and maintain resident transparency.</Text>
-                </View>
-              </View>
-              <View style={[styles.desktopGrid, !useTwoColumnLayout && styles.desktopGridStacked]}>
-                <View style={styles.composerColumn}>{renderComposer()}</View>
-                <View style={styles.historyColumn}>{renderHistory()}</View>
-              </View>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    </LinearGradient>
+    </BlurView>
   );
 
   if (isDesktop) {
-    return <DesktopShell />;
+    return (
+      <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
+        <View style={styles.desktopShell}>
+          <BlurView intensity={70} tint="light" style={styles.sidebar}>
+            <View style={styles.sidebarBrand}>
+              <Text style={styles.sidebarBrandTitle}>TenantApp</Text>
+              <Text style={styles.sidebarBrandSub}>Management Suite</Text>
+            </View>
+
+            <View style={styles.sidebarNav}>
+              {renderSidebarLink('dashboard', 'Overview', false, '/analytics')}
+              {renderSidebarLink('business', 'Portfolio', false, '/command-center')}
+              {renderSidebarLink('groups', 'AI Desk', false, '/ai')}
+              {renderSidebarLink('build', 'Escalations', false, '/escalations')}
+              {renderSidebarLink('campaign', 'Announcements', true, '/announcements')}
+              {renderSidebarLink('settings', 'Settings', false, '/expenses')}
+            </View>
+
+            <View style={styles.sidebarFooter}>
+              <TouchableOpacity style={styles.upgradeButton} onPress={() => router.push('/billing')} activeOpacity={0.85}>
+                <LinearGradient colors={[Theme.Colors.primary, Theme.Colors.secondaryContainer]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.upgradeGradient}>
+                  <Text style={styles.upgradeText}>UPGRADE PLAN</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+              {renderSidebarLink('help-outline', 'Billing Help', false, '/billing')}
+              <TouchableOpacity style={styles.sidebarLink} onPress={onLogout}>
+                <MaterialIcons name="logout" size={22} color={Theme.Colors.onSurfaceVariant} />
+                <Text style={styles.sidebarLinkText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+
+          <View style={styles.desktopMain}>
+            <BlurView intensity={70} tint="light" style={styles.topbar}>
+              {isWideDesktop ? (
+                <View style={styles.topbarTabs}>
+                  <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => router.push('/command-center')}><Text style={styles.topbarTab}>Properties</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
+                </View>
+              ) : (
+                <Text style={styles.compactTopbarTitle}>Announcements</Text>
+              )}
+              <View style={styles.topbarRight}>
+                {isWideDesktop && (
+                  <BlurView intensity={50} tint="light" style={styles.searchBox}>
+                    <MaterialIcons name="search" size={22} color="#6b7a7d" />
+                    <Text style={styles.searchPlaceholder}>Search announcements...</Text>
+                  </BlurView>
+                )}
+                <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
+                <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/expenses')}><MaterialIcons name="settings" size={24} color={Theme.Colors.onSurface} /></TouchableOpacity>
+                <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
+              </View>
+            </BlurView>
+
+            <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
+              <View style={styles.desktopInner}>
+                <View style={styles.pageHeaderRow}>
+                  <View>
+                    <Text style={styles.pageTitle}>Announcement Management</Text>
+                  </View>
+                  
+                  <TouchableOpacity
+                    style={styles.desktopSaveButtonWrapper}
+                    onPress={handleSendBroadcast}
+                    disabled={sendingBroadcast || !selectedPropertyId || propertiesLoading}
+                    activeOpacity={0.85}
+                  >
+                    <LinearGradient
+                      colors={broadcastSeverity === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : ['#00d4ff', '#0072ff']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.desktopSaveButton}
+                    >
+                      {sendingBroadcast ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Text style={styles.desktopSaveButtonText}>Broadcast Now</Text>
+                          <MaterialIcons name="campaign" size={18} color="#fff" />
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+                <View style={[styles.desktopGrid, !useTwoColumnLayout && styles.desktopGridStacked]}>
+                  <View style={styles.composerColumn}>{renderComposer()}</View>
+                  <View style={styles.historyColumn}>
+                    {showHistory ? renderHistory() : renderOptions()}
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </LinearGradient>
+    );
   }
 
   return (
@@ -460,7 +625,6 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
         <View style={styles.mobileHeader}>
           <View style={{ flex: 1, paddingRight: 10 }}>
             <Text style={styles.mobileTitle}>Announcements</Text>
-            <Text style={styles.mobileSubtitle}>Create and review resident notices</Text>
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/escalations')}>
@@ -473,8 +637,14 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.mobileContent}>
-          {renderComposer()}
-          {renderHistory()}
+          {showHistory ? (
+            renderHistory()
+          ) : (
+            <>
+              {renderComposer()}
+              {renderOptions()}
+            </>
+          )}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -497,7 +667,7 @@ function getCategoryColor(cat: string) {
     case 'MAINTENANCE':
       return '#e28743';
     case 'BILLING':
-      return '#006875';
+      return '#0072ff';
     case 'EVENT':
       return '#7b2cbf';
     default:
@@ -514,57 +684,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   sidebar: {
-    width: 280,
+    width: 260,
     height: '100%',
-    paddingHorizontal: 24,
-    paddingTop: 36,
+    paddingHorizontal: 20,
+    paddingTop: 32,
     paddingBottom: 24,
     borderRightWidth: 1,
     borderRightColor: 'rgba(255, 255, 255, 0.8)',
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
     overflow: 'hidden',
   },
   sidebarBrand: {
     marginBottom: 54,
   },
   sidebarBrandTitle: {
-    fontSize: 27,
-    fontWeight: '700',
-    lineHeight: 34,
-    color: '#004b57',
+    fontSize: 34,
+    fontWeight: '800',
+    lineHeight: 40,
+    color: Theme.Colors.primary,
   },
   sidebarBrandSub: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 2,
     color: Theme.Colors.onSurfaceVariant,
     marginTop: 4,
   },
   sidebarNav: {
-    gap: 8,
+    gap: 14,
   },
   sidebarLink: {
-    minHeight: 54,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
     paddingHorizontal: 18,
-    borderRadius: 4,
+    borderRadius: Theme.Rounded.lg,
   },
   sidebarLinkActive: {
-    backgroundColor: '#edf2f2',
-    borderLeftWidth: 4,
-    borderLeftColor: '#00606b',
+    backgroundColor: 'rgba(0, 224, 255, 0.10)',
+    borderRightWidth: 4,
+    borderRightColor: Theme.Colors.primaryContainer,
   },
   sidebarLinkText: {
-    fontSize: 15,
-    fontWeight: '500',
-    letterSpacing: 0.2,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1.6,
     color: Theme.Colors.onSurface,
   },
   sidebarLinkTextActive: {
-    color: '#004b57',
-    fontWeight: '700',
+    color: Theme.Colors.primary,
   },
   sidebarFooter: {
     marginTop: 'auto',
@@ -596,24 +765,24 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   topbar: {
-    minHeight: 74,
+    minHeight: 82,
     paddingHorizontal: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.75)',
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+    overflow: 'hidden',
   },
   topbarTabs: {
     flexDirection: 'row',
-    gap: 20,
+    gap: 34,
+    alignItems: 'center',
   },
   topbarTab: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    color: Theme.Colors.onSurfaceVariant,
+    fontSize: 18,
+    color: Theme.Colors.onSurface,
   },
   compactTopbarTitle: {
     color: '#004b57',
@@ -674,31 +843,63 @@ const styles = StyleSheet.create({
   pageHeader: {
     marginBottom: 20,
   },
-  pageTitle: {
-    fontSize: 38,
+  pageHeaderRow: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  desktopSaveButtonWrapper: {
+    borderRadius: 100,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  desktopSaveButton: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    height: 46,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  desktopSaveButtonText: {
+    color: '#fff',
+    fontSize: 14,
     fontWeight: '700',
-    color: '#004b57',
+  },
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#151d1e',
+    lineHeight: 38,
   },
   pageSubtitle: {
     marginTop: 4,
-    fontSize: 16,
-    color: Theme.Colors.onSurfaceVariant,
+    fontSize: 14,
+    color: '#6b7a7d',
     maxWidth: 620,
   },
   sectionCard: {
-    padding: 26,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    padding: 32,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.04)',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    overflow: 'hidden',
+    shadowColor: Theme.Colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 3,
   },
   desktopGrid: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     gap: 24,
   },
   desktopGridStacked: {
@@ -715,8 +916,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   sectionHeader: {
-    alignItems: 'stretch',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 18,
+    gap: 16,
   },
   sectionHeaderCopy: {
     flexShrink: 1,
@@ -744,11 +948,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: Theme.Rounded.lg,
-    backgroundColor: '#e6f0f1',
+    backgroundColor: 'rgba(0, 114, 255, 0.1)',
     maxWidth: '100%',
   },
   statsBadgeText: {
-    color: Theme.Colors.primary,
+    color: '#0072ff',
     fontWeight: '700',
     fontSize: 12,
     flexShrink: 1,
@@ -773,11 +977,11 @@ const styles = StyleSheet.create({
   textInput: {
     minHeight: 58,
     borderWidth: 1,
-    borderColor: '#b9c8cb',
-    borderRadius: 14,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#fbfdfd',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     color: Theme.Colors.onSurface,
     fontSize: 15,
   },
@@ -787,27 +991,27 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     gap: 10,
+    paddingVertical: 6,
   },
   chip: {
-    minHeight: 46,
-    paddingVertical: 11,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 24,
-    backgroundColor: '#f7faf9',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderWidth: 1,
-    borderColor: '#b8d3d7',
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 8,
   },
   chipActive: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
+    backgroundColor: '#0072ff',
+    borderColor: '#0072ff',
   },
   chipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#075664',
+    color: '#6b7a7d',
   },
   chipTextActive: {
     color: '#fff',
@@ -963,5 +1167,59 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 40,
     gap: 18,
+  },
+  segmentContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
+    padding: 4,
+    marginTop: 4,
+  },
+  segmentButtonWrapper: {
+    flex: 1,
+    minWidth: 0,
+  },
+  segmentButtonGradient: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  segmentButtonInactive: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  segmentText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7a7d',
+  },
+  segmentTextActive: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  segmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });
