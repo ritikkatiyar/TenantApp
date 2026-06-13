@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 
-import CreatePropertyScreen from '@/src/screens/CreatePropertyScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import CreatePropertyScreen from '@/src/features/properties/screens/CreatePropertyScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function CreatePropertyRoute() {
   const router = useRouter();

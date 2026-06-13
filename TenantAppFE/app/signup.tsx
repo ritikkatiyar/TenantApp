@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 
-import SuperAdminSignupScreen from '@/src/screens/SuperAdminSignupScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import SuperAdminSignupScreen from '@/src/features/auth/screens/SuperAdminSignupScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { TokenBundle } from '@/src/types/auth';
 
 export default function SignupRoute() {

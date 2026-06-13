@@ -8,11 +8,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.tenantliving.common.response.ApiResponse;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/finance/charge-configs")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
+@SecurityRequirement(name = "bearerAuth")
 public class ChargeConfigController {
 
     private final ChargeConfigService chargeConfigService;

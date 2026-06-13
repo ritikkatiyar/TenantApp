@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 
-import TenantHomeScreen from '@/src/screens/TenantHomeScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import TenantHomeScreen from '@/src/features/tenant/screens/TenantHomeScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function TenantHomeRoute() {
   const router = useRouter();

@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 
-import AnnouncementAdminScreen from '@/src/screens/AnnouncementAdminScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import AnnouncementAdminScreen from '@/src/features/announcements/screens/AnnouncementAdminScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function AnnouncementsRoute() {
   const router = useRouter();

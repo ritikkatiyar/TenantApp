@@ -28,6 +28,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getAuthUid())
+                .claim("role", user.getGlobalRole() != null ? user.getGlobalRole().name() : "USER")
                 .issuedAt(now)
                 .expiration(exp)
                 .signWith(signingKey())

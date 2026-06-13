@@ -58,6 +58,18 @@ public class UserDetailsImpl implements UserDetails {
         );
     }
 
+    public static UserDetailsImpl fromClaims(String id, String email, String role) {
+        return new UserDetailsImpl(
+                id,
+                email,
+                "", // Password not needed for token auth
+                "", // Full name not strictly needed for auth filter
+                true,
+                true,
+                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+        );
+    }
+
     private static List<GrantedAuthority> authoritiesFor(UserTbl user) {
         UserRole role = user.getGlobalRole() != null ? user.getGlobalRole() : UserRole.USER;
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));

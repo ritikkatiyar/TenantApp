@@ -86,8 +86,8 @@ public class LeaseServiceImpl implements LeaseService {
 
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status) {
-        return leaseRepository.findByUserIdAndStatus(userId, status).stream().toList();
+    public java.util.Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status) {
+        return leaseRepository.findByUserIdAndStatus(userId, status);
     }
 
     @Override

@@ -113,9 +113,8 @@ public class UserController {
                 .toList();
 
         List<MeDTOs.ActiveLeaseSummary> activeLeases = leaseService.findByUserIdAndStatus(userId, LeaseStatus.ACTIVE)
-                .stream()
-                .map(UserController::toActiveLeaseSummary)
-                .toList();
+                .map(lease -> List.of(UserController.toActiveLeaseSummary(lease)))
+                .orElse(List.of());
 
         return ResponseEntity.ok(ApiResponse.success(new MeDTOs.MyContextResponse(
                 user.getGlobalRole(),

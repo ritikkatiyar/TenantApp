@@ -2,8 +2,8 @@ import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import React from 'react';
 
-import { useAuth } from '@/src/auth/AuthProvider';
-import { getMyContext } from '@/src/api/me.api';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { getMyContext } from '@/src/features/auth/api/me.api';
 
 export default function IndexScreen() {
   const { accessToken, isAuthenticated, isReady } = useAuth();

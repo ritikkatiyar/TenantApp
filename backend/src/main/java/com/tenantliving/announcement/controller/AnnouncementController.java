@@ -34,22 +34,17 @@ public class AnnouncementController {
     public ResponseEntity<ApiResponse<AnnouncementResponse>> createAnnouncement(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody CreateAnnouncementRequest request) {
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         UUID creatorId = UUID.fromString(currentUser.getId());
         AnnouncementResponse response = announcementService.createAnnouncement(request, creatorId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF', 'USER')")
     @Operation(summary = "Get announcements", description = "For tenants, returns scoped notices for their active lease. For landlords/staff, returns all notices for the specified property.")
     public ResponseEntity<ApiResponse<List<AnnouncementResponse>>> getAnnouncements(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId) {
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
         UUID userId = UUID.fromString(currentUser.getId());
         boolean isTenant = currentUser.getAuthorities().stream()
@@ -74,9 +69,6 @@ public class AnnouncementController {
     public ResponseEntity<ApiResponse<Void>> markAsRead(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @PathVariable UUID id) {
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         UUID tenantUserId = UUID.fromString(currentUser.getId());
         announcementService.markAsRead(id, tenantUserId);
         return ResponseEntity.ok(ApiResponse.success(null));

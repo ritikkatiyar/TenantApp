@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter, Redirect } from 'expo-router';
-import EditPropertyScreen from '@/src/screens/EditPropertyScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import EditPropertyScreen from '@/src/features/properties/screens/EditPropertyScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function EditPropertyRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();

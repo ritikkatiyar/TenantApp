@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 
-import AIAssistantScreen from '@/src/screens/AIAssistantScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import AIAssistantScreen from '@/src/features/ai/screens/AIAssistantScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function AIRoute() {
   const { accessToken, isAuthenticated, isReady } = useAuth();

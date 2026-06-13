@@ -1,5 +1,5 @@
 import { apiUrl, aiApiUrl } from '../config/api';
-import type { ApiResponse } from '../types/api';
+import type { ApiResponse } from '@/src/types/api';
 import { ApiError } from '../utils/errors';
 
 const DEFAULT_TIMEOUT_MS = 15000;

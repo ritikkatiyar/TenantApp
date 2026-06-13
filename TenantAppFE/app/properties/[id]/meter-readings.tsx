@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 
-import MeterReadingScreen from '@/src/screens/MeterReadingScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import MeterReadingScreen from '@/src/features/finance/screens/MeterReadingScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function MeterReadingsRoute() {
   const { accessToken, isAuthenticated, isReady } = useAuth();

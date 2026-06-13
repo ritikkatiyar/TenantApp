@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 
-import CommandCenterScreen from '@/src/screens/CommandCenterScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import CommandCenterScreen from '@/src/features/properties/screens/CommandCenterScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function CommandCenterRoute() {
   const router = useRouter();

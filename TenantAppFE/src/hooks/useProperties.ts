@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../auth/AuthProvider';
-import { getPropertiesByUser } from '../api/userPropertyRole.api';
-import { deletePropertyApi } from '../api/property.api';
-import type { PropertyResponse } from '../types/property';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { getPropertiesByUser } from '@/src/features/properties/api/userPropertyRole.api';
+import { deletePropertyApi } from '@/src/features/properties/api/property.api';
+import type { PropertyResponse } from '@/src/types/property';
 
 export function useProperties() {
   const { user, accessToken } = useAuth();

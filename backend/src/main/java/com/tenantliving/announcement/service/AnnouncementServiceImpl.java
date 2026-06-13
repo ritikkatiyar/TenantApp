@@ -79,8 +79,6 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     @Transactional(readOnly = true)
     public List<AnnouncementResponse> getNoticesForTenant(UUID tenantUserId) {
         LeaseTbl activeLease = leaseService.findByUserIdAndStatus(tenantUserId, LeaseStatus.ACTIVE)
-                .stream()
-                .findFirst()
                 .orElse(null);
 
         if (activeLease == null || activeLease.getUnit() == null || activeLease.getUnit().getProperty() == null) {

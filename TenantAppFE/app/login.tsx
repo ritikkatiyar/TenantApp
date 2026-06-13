@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 
-import SuperAdminLoginScreen from '@/src/screens/SuperAdminLoginScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
-import { getMyContext } from '@/src/api/me.api';
+import SuperAdminLoginScreen from '@/src/features/auth/screens/SuperAdminLoginScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { getMyContext } from '@/src/features/auth/api/me.api';
 import type { TokenBundle } from '@/src/types/auth';
 
 export default function LoginRoute() {

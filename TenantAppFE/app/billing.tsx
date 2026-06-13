@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
 import React from 'react';
 
-import BillingScreen from '@/src/screens/BillingScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import BillingScreen from '@/src/features/finance/screens/BillingScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function BillingRoute() {
   const { accessToken, isAuthenticated, isReady } = useAuth();

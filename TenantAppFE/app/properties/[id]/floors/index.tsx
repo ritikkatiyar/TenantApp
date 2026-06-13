@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter, Redirect } from 'expo-router';
-import FloorListOverviewScreen from '@/src/screens/FloorListOverviewScreen';
-import { useAuth } from '@/src/auth/AuthProvider';
+import FloorListOverviewScreen from '@/src/features/properties/screens/FloorListOverviewScreen';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function FloorListOverviewRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();

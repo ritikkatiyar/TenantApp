@@ -2,7 +2,6 @@ package com.tenantliving.auth.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tenantliving.auth.principal.UserDetailsImpl;
-import com.tenantliving.auth.service.CustomUserDetailsService;
 import com.tenantliving.auth.service.JwtService;
 import com.tenantliving.common.exception.ApiError;
 import io.jsonwebtoken.Claims;
@@ -34,7 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtService jwtService;
-    private final CustomUserDetailsService userDetailsService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -59,7 +57,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Claims claims = jwtService.parseAndValidate(token);
             String userId = claims.getSubject();
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetailsImpl principal = (UserDetailsImpl) userDetailsService.loadUserById(userId);
+                String email = claims.get("email", String.class);
+                String role = claims.get("role", String.class);
+                if (role == null || email == null) {
+                    throw new JwtException("Token missing required role/email claims");
+                }
+                UserDetailsImpl principal = UserDetailsImpl.fromClaims(userId, email, role);
                 var auth = new UsernamePasswordAuthenticationToken(
                         principal,
                         null,
