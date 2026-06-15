@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { getProperty } from '@/src/features/properties/api/property.api';
 import { getFloorSummaries, FloorSummaryResponse } from '@/src/features/properties/api/unit.api';
 import { useFocusEffect, useRouter, Href } from 'expo-router';
@@ -172,20 +173,11 @@ export default function FloorListOverviewScreen({
     >
         {/* Main Workspace */}
         <View style={styles.desktopMain}>
-          <BlurView intensity={70} tint="light" style={styles.topbar}>
-            <View style={styles.topbarTabs}>
-              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
-              <TouchableOpacity onPress={onBack}><Text style={[styles.topbarTab, styles.topbarTabActive]}>Properties</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
-            </View>
-            <View style={styles.topbarRight}>
-              <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop}>
-                <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
-                <Text style={styles.backButtonTextDesktop}>Back to Portfolio</Text>
-              </TouchableOpacity>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
-            </View>
-          </BlurView>
+          <DesktopNavBar 
+            activeTab="Properties" 
+            onBack={onBack} 
+            backText="Back to Portfolio" 
+          />
 
           <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
             <View style={styles.desktopInner}>
@@ -223,7 +215,7 @@ export default function FloorListOverviewScreen({
     <LinearGradient
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>

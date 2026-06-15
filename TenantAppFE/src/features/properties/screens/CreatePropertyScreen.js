@@ -405,7 +405,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     <LinearGradient
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>

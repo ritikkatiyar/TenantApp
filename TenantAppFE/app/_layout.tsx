@@ -34,6 +34,7 @@ export default function RootLayout() {
                 <Stack.Screen name="tenant-home" />
                 <Stack.Screen name="admin" />
                 <Stack.Screen name="analytics" />
+                <Stack.Screen name="reports" />
                 <Stack.Screen name="billing" />
                 <Stack.Screen name="expenses" />
                 <Stack.Screen name="create-expense" />

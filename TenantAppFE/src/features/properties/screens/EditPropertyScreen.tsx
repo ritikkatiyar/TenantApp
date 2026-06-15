@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { getProperty, updateProperty } from '@/src/features/properties/api/property.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useRouter, Href } from 'expo-router';
@@ -251,20 +252,11 @@ export default function EditPropertyScreen({
     >
       <View style={styles.desktopShell}>
         <View style={styles.desktopMain}>
-          <BlurView intensity={70} tint="light" style={styles.topbar}>
-            <View style={styles.topbarTabs}>
-              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
-              <TouchableOpacity onPress={onBack}><Text style={[styles.topbarTab, styles.topbarTabActive]}>Properties</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
-            </View>
-            <View style={styles.topbarRight}>
-              <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop}>
-                <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
-                <Text style={styles.backButtonTextDesktop}>Back to Portfolio</Text>
-              </TouchableOpacity>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
-            </View>
-          </BlurView>
+          <DesktopNavBar 
+            activeTab="Properties" 
+            onBack={onBack} 
+            backText="Back to Portfolio" 
+          />
 
           <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
             <View style={styles.desktopInner}>
@@ -335,7 +327,12 @@ export default function EditPropertyScreen({
 
   if (loading) {
     return (
-      <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.container}>
+      <LinearGradient
+        colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
         <ActivityIndicator size="large" color={Theme.Colors.primary} style={styles.loader} />
       </LinearGradient>
     );
@@ -349,7 +346,7 @@ export default function EditPropertyScreen({
     <LinearGradient 
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} 
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 1 }}
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -502,16 +499,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    paddingHorizontal: 32,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
   },
   compactTitleContainer: {
     flex: 1,
-    paddingBottom: 16,
   },
   compactTitleText: {
     fontSize: 22,
@@ -525,7 +520,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
   largeTitleContainer: {
     marginTop: 16,
@@ -546,7 +540,7 @@ const styles = StyleSheet.create({
     lineHeight: 38,
   },
   scrollContent: {
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
     paddingBottom: 100,
   },
   card: {
@@ -606,18 +600,18 @@ const styles = StyleSheet.create({
   },
   saveButtonWrapper: {
     width: '100%',
-    borderRadius: 100,
+    borderRadius: 28,
     overflow: 'hidden',
     marginTop: 16,
     shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
   },
   saveButton: {
     flexDirection: 'row',
-    height: 60,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
@@ -625,8 +619,8 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 1,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   divider: {
     height: 1,
@@ -815,13 +809,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   desktopSaveButtonWrapper: {
-    borderRadius: 100,
+    borderRadius: 23,
     overflow: 'hidden',
     shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 2,
   },
   desktopSaveButton: {
     flexDirection: 'row',
@@ -833,8 +827,9 @@ const styles = StyleSheet.create({
   },
   desktopSaveButtonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   desktopGrid: {
     flexDirection: 'row',
@@ -859,7 +854,7 @@ const styles = StyleSheet.create({
   desktopCancelButton: {
     paddingHorizontal: 24,
     height: 46,
-    borderRadius: 100,
+    borderRadius: 23,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
@@ -867,7 +862,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 0, 0, 0.08)',
   },
   desktopCancelButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: '#6b7a7d',
   },

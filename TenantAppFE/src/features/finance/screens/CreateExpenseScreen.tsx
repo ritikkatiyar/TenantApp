@@ -19,6 +19,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { createChargeConfig, updateChargeConfig, getChargeConfigById } from '@/src/features/finance/api/charge.api';
 import { useResponsive } from '@/hooks/useResponsive';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
 export default function CreateExpenseScreen({ token }: { token: string | null }) {
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -35,6 +36,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const [applySalesTax, setApplySalesTax] = useState(true);
   const [lateFee, setLateFee] = useState('5');
   const [isLoading, setIsLoading] = useState(false);
+  const [isUnitDropdownOpen, setIsUnitDropdownOpen] = useState(false);
   const unitScrollRef = useRef<ScrollView>(null);
   const scrollTimeout = useRef<any>(null);
 
@@ -135,26 +137,415 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
     extrapolate: 'clamp',
   });
 
+  const renderCard1 = () => (
+    <BlurView intensity={40} tint="light" style={styles.card}>
+      <View style={styles.cardHeader}>
+        <MaterialCommunityIcons name="file-document-outline" size={20} color="#006875" />
+        <Text style={styles.cardTitle}>Charge Identity</Text>
+      </View>
+
+      <Text style={styles.label}>CHARGE NAME</Text>
+      <View style={styles.inputContainer}>
+        <TextInput 
+          style={styles.input} 
+          placeholder="e.g. Electricity, Sanitation Service" 
+          placeholderTextColor="#849495"
+          value={expenseName}
+          onChangeText={setExpenseName}
+        />
+      </View>
+
+      <Text style={styles.label}>CATEGORY</Text>
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputText}>Consumables</Text>
+      </View>
+
+      <Text style={styles.label}>BILLING FREQUENCY</Text>
+      <View style={styles.segmentContainer}>
+        {['Monthly', 'Annual', 'Weekly'].map((freq) => {
+          const isActive = billingFrequency === freq;
+          return (
+            <TouchableOpacity 
+              key={freq}
+              style={styles.segmentButtonWrapper}
+              onPress={() => setBillingFrequency(freq)}
+              activeOpacity={0.8}
+            >
+              {isActive ? (
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.segmentButtonGradient}
+                >
+                  <Text style={styles.segmentTextActive}>{freq}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.segmentButtonInactive}>
+                  <Text style={styles.segmentText}>{freq}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </BlurView>
+  );
+
+  const renderCard2 = () => (
+    <BlurView intensity={40} tint="light" style={[styles.card, isDesktop && { flex: 1 }, { overflow: Platform.OS === 'web' ? 'visible' : 'hidden', zIndex: 10 }]}>
+      <View style={styles.cardHeader}>
+        <MaterialCommunityIcons name="calculator-variant-outline" size={20} color="#006875" />
+        <Text style={styles.cardTitle}>Rate & Calculation</Text>
+      </View>
+
+      <Text style={styles.label}>CALCULATION METHOD</Text>
+      
+      <View style={styles.radioGroup}>
+        {[
+          { title: 'Fixed Rate', sub: 'Standard monthly fee' },
+          { title: 'Metered/Consumption', sub: 'Based on usage units' }
+        ].map((method, index) => (
+          <TouchableOpacity 
+            key={index} 
+            style={styles.radioRow}
+            onPress={() => setCalcMethod(method.title)}
+          >
+            <View style={styles.radioCircle}>
+              {calcMethod === method.title && <View style={styles.radioDot} />}
+            </View>
+            <View>
+              <Text style={styles.radioTitle}>{method.title}</Text>
+              <Text style={styles.radioSub}>{method.sub}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {calcMethod === 'Fixed Rate' ? (
+        <>
+          <Text style={styles.label}>BASE RATE</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.currencySymbol}>₹</Text>
+            <TextInput 
+              style={styles.inputWithIcon} 
+              placeholder="0.00" 
+              placeholderTextColor="#849495"
+              keyboardType="numeric"
+              value={baseRate}
+              onChangeText={setBaseRate}
+            />
+          </View>
+        </>
+      ) : (
+        <View>
+          <Text style={styles.label}>RATE PER UNIT / TYPE</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={[styles.inputContainer, { flex: 1, marginBottom: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRightWidth: 0 }]}>
+              <Text style={styles.currencySymbol}>₹</Text>
+              <TextInput 
+                style={styles.inputWithIcon} 
+                placeholder="0.00" 
+                placeholderTextColor="#849495"
+                keyboardType="numeric"
+                value={baseRate}
+                onChangeText={setBaseRate}
+              />
+            </View>
+            
+            {isDesktop ? (
+              <View style={{ flex: 1.5, flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginLeft: 16 }}>
+                {['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'].map((unit) => (
+                  <TouchableOpacity
+                    key={unit}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 14,
+                      backgroundColor: unitType === unit ? '#006875' : 'rgba(255, 255, 255, 0.5)',
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: unitType === unit ? '#006875' : 'rgba(255, 255, 255, 0.9)',
+                      shadowColor: unitType === unit ? '#006875' : '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: unitType === unit ? 0.2 : 0.05,
+                      shadowRadius: 3,
+                      elevation: unitType === unit ? 3 : 1,
+                    }}
+                    onPress={() => setUnitType(unit)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={{
+                      fontSize: 13,
+                      fontWeight: unitType === unit ? '800' : '600',
+                      color: unitType === unit ? '#ffffff' : '#5b6b6d',
+                    }}>{unit}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={{ width: 100, height: 90, position: 'relative' }}>
+                <LinearGradient 
+                  colors={['transparent', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.6)', 'transparent']} 
+                  locations={[0, 0.22, 0.78, 1]}
+                  style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, borderRadius: 12 }} 
+                />
+                
+                <LinearGradient 
+                  colors={['transparent', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)', 'transparent']} 
+                  locations={[0, 0.22, 0.78, 1]}
+                  style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 1 }} 
+                />
+
+                <LinearGradient 
+                  colors={['transparent', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)', 'transparent']} 
+                  locations={[0, 0.22, 0.78, 1]}
+                  style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 1 }} 
+                />
+
+                <ScrollView 
+                  ref={unitScrollRef}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}
+                  snapToInterval={40}
+                  decelerationRate="fast"
+                  contentContainerStyle={{ paddingVertical: 25 }}
+                  scrollEventThrottle={16}
+                  onScroll={(e) => {
+                    if (Platform.OS === 'web') {
+                      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+                      const y = e.nativeEvent.contentOffset.y;
+                      scrollTimeout.current = setTimeout(() => {
+                        const index = Math.max(0, Math.round(y / 40));
+                        const units = ['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'];
+                        if(units[index]) {
+                          setUnitType(units[index]);
+                          unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
+                        }
+                      }, 150);
+                    }
+                  }}
+                  onMomentumScrollEnd={(e) => {
+                    const index = Math.round(e.nativeEvent.contentOffset.y / 40);
+                    const units = ['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'];
+                    if(units[index]) setUnitType(units[index]);
+                  }}
+                >
+                  {['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'].map((unit, index) => {
+                    const isActive = unitType === unit;
+                    return (
+                      <TouchableOpacity 
+                        key={unit} 
+                        style={{ height: 40, justifyContent: 'center', alignItems: 'center', width: '100%' }}
+                        onPress={() => {
+                          setUnitType(unit);
+                          unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
+                        }}
+                      >
+                        <Text style={{ fontSize: isActive ? 16 : 13, fontWeight: isActive ? '700' : '500', color: isActive ? '#006875' : 'rgba(132, 148, 149, 0.4)' }}>{unit}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+    </BlurView>
+  );
+
+  const renderCard3 = () => (
+    <BlurView intensity={40} tint="light" style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Ionicons name="settings-outline" size={20} color="#006875" />
+        <Text style={[styles.cardTitle, { textTransform: 'uppercase', fontSize: 13 }]}>Advanced Logic</Text>
+      </View>
+
+      <View style={styles.rowBetween}>
+        <Text style={styles.settingText}>Apply Sales Tax</Text>
+        <Switch 
+          value={applySalesTax} 
+          onValueChange={setApplySalesTax}
+          trackColor={{ false: '#d1d5db', true: '#00F0FF' }}
+          thumbColor="#ffffff"
+        />
+      </View>
+
+      <View style={[styles.rowBetween, { marginTop: 24, marginBottom: 24 }]}>
+        <Text style={styles.settingText}>Late Fee Rules</Text>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{lateFee || '0'}% / Monthly</Text>
+        </View>
+      </View>
+
+      <Text style={styles.label}>LATE FEE %</Text>
+      <View style={styles.inputContainer}>
+        <TextInput 
+          style={styles.inputWithIcon} 
+          placeholder="5" 
+          placeholderTextColor="#849495"
+          keyboardType="numeric"
+          value={lateFee}
+          onChangeText={setLateFee}
+        />
+        <Text style={[styles.currencySymbol, { marginRight: 0, marginLeft: 8 }]}>%</Text>
+      </View>
+    </BlurView>
+  );
+
+  const renderLivePreview = () => (
+    <BlurView intensity={40} tint="light" style={[styles.card, isDesktop && { flex: 1 }]}>
+      <View style={styles.cardHeader}>
+        <MaterialCommunityIcons name="card-bulleted-settings-outline" size={20} color="#006875" />
+        <Text style={styles.cardTitle}>Dynamic Preview</Text>
+      </View>
+      <LinearGradient
+        colors={['#006875', '#004d56']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.previewCardGradient, isDesktop && { flex: 1 }]}
+      >
+        <View style={styles.previewHeaderRow}>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text style={styles.previewCategory}>CUSTOM CHARGE</Text>
+            <Text style={styles.previewName} numberOfLines={1}>{expenseName || 'Unnamed Charge'}</Text>
+          </View>
+          <MaterialCommunityIcons name="receipt-long" size={28} color="#00f0ff" />
+        </View>
+        
+        <View style={styles.previewDivider} />
+        
+        <View style={[styles.previewBody, isDesktop && { flex: 1, justifyContent: 'space-evenly', marginTop: 8 }]}>
+          <View style={styles.previewRow}>
+            <Text style={styles.previewLabel}>Billing Cycle</Text>
+            <Text style={styles.previewValue}>{billingFrequency}</Text>
+          </View>
+          
+          <View style={styles.previewRow}>
+            <Text style={styles.previewLabel}>Calculation</Text>
+            <Text style={styles.previewValue}>{calcMethod}</Text>
+          </View>
+          
+          <View style={styles.previewRow}>
+            <Text style={styles.previewLabel}>Rate</Text>
+            <Text style={styles.previewValue}>
+              ₹{baseRate || '0.00'}{calcMethod === 'Fixed Rate' ? '' : ` / ${unitType}`}
+            </Text>
+          </View>
+          
+          <View style={styles.previewRow}>
+            <Text style={styles.previewLabel}>Sales Tax</Text>
+            <Text style={styles.previewValue}>{applySalesTax ? 'Apply (18% GST)' : 'Exempt'}</Text>
+          </View>
+
+          <View style={styles.previewRow}>
+            <Text style={styles.previewLabel}>Late Penalty</Text>
+            <Text style={styles.previewValue}>{lateFee || '0'}%</Text>
+          </View>
+        </View>
+      </LinearGradient>
+    </BlurView>
+  );
+
+  const renderActionButtons = (isDesktopLayout = false) => (
+    <View style={isDesktopLayout ? styles.desktopActionsRow : styles.mobileActionsContainer}>
+      <TouchableOpacity 
+        style={[isDesktopLayout ? styles.desktopSubmitButtonWrapper : styles.submitButtonWrapper, isLoading && { opacity: 0.7 }]}
+        onPress={handleSubmit}
+        disabled={isLoading}
+        activeOpacity={0.85}
+      >
+        <LinearGradient
+          colors={['#00d4ff', '#0072ff']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={isDesktopLayout ? styles.desktopSubmitButton : styles.submitButton}
+        >
+          {isLoading ? (
+              <ActivityIndicator color="#fff" />
+          ) : (
+              <>
+                <Text style={isDesktopLayout ? styles.desktopSubmitButtonText : styles.submitButtonText}>
+                  {isEditMode ? 'SAVE CHANGES' : 'CREATE CHARGE'}
+                </Text>
+                <MaterialIcons name="check" size={20} color="#fff" />
+              </>
+          )}
+        </LinearGradient>
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={isDesktopLayout ? styles.desktopDraftButton : styles.draftButton}
+        activeOpacity={0.7}
+        onPress={() => router.back()}
+      >
+        <Text style={isDesktopLayout ? styles.desktopDraftButtonText : styles.draftButtonText}>Cancel</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderDesktopShell = () => (
+    <View style={styles.desktopShell}>
+      <View style={styles.desktopMain}>
+          <DesktopNavBar 
+            activeTab="Properties" 
+            onBack={() => router.back()} 
+            backText="Back to Config" 
+          />
+
+        <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.desktopInner}>
+            <View style={styles.desktopHeaderRow}>
+              <View style={styles.largeTitleContainer}>
+                <Text style={styles.titleLineDesktop}>{isEditMode ? 'Update Charge' : 'New Charge'}</Text>
+              </View>
+              {renderActionButtons(true)}
+            </View>
+
+            <View style={styles.desktopGrid}>
+              <View style={styles.desktopLeftColumn}>
+                {renderCard1()}
+                {renderCard2()}
+              </View>
+              <View style={styles.desktopRightColumn}>
+                {renderCard3()}
+                {renderLivePreview()}
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
+    </View>
+  );
+
+  if (isDesktop) {
+    return (
+      <LinearGradient
+        colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          {renderDesktopShell()}
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
+
   return (
     <LinearGradient
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Pinned header */}
         <View style={styles.header}>
-          {isDesktop ? (
-            <TouchableOpacity onPress={() => router.back()} style={styles.desktopBackButton}>
-              <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
-              <Text style={styles.desktopBackButtonText}>Back</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+          </TouchableOpacity>
           <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
             <Text style={styles.compactTitleText}>{isEditMode ? 'Update Charge' : 'New Charge'}</Text>
           </Animated.View>
@@ -171,254 +562,16 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         >
           {/* Hero Titles */}
           <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.mainTitle}>{isEditMode ? 'Update' : 'New'}{'\n'}Charge</Text>
+            <Text style={styles.titleLine}>{isEditMode ? 'Update' : 'New'}</Text>
+            <Text style={styles.titleLine}>Charge</Text>
           </Animated.View>
 
-          {/* Card 1: Charge Identity */}
-          <BlurView intensity={40} tint="light" style={styles.card}>
-            <View style={styles.cardHeader}>
-              <MaterialCommunityIcons name="file-document-outline" size={20} color="#006875" />
-              <Text style={styles.cardTitle}>Charge Identity</Text>
-            </View>
+          {renderCard1()}
+          {renderCard2()}
+          {renderCard3()}
+          {renderLivePreview()}
+          {renderActionButtons(false)}
 
-            <Text style={styles.label}>CHARGE NAME</Text>
-            <View style={styles.inputContainer}>
-              <TextInput 
-                style={styles.input} 
-                placeholder="e.g. Electricity, Sanitation Servic" 
-                placeholderTextColor="#849495"
-                value={expenseName}
-                onChangeText={setExpenseName}
-              />
-            </View>
-
-            <Text style={styles.label}>CATEGORY</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputText}>Consumables</Text>
-            </View>
-
-            <Text style={styles.label}>BILLING FREQUENCY</Text>
-            <View style={styles.segmentContainer}>
-              {['Monthly', 'Annual', 'Weekly'].map((freq) => {
-                const isActive = billingFrequency === freq;
-                return (
-                  <TouchableOpacity 
-                    key={freq}
-                    style={styles.segmentButtonWrapper}
-                    onPress={() => setBillingFrequency(freq)}
-                    activeOpacity={0.8}
-                  >
-                    {isActive ? (
-                      <LinearGradient
-                        colors={['#00d4ff', '#0072ff']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.segmentButtonGradient}
-                      >
-                        <Text style={styles.segmentTextActive}>{freq}</Text>
-                      </LinearGradient>
-                    ) : (
-                      <View style={styles.segmentButtonInactive}>
-                        <Text style={styles.segmentText}>{freq}</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </BlurView>
-
-          {/* Card 2: Rate & Calculation */}
-          <BlurView intensity={40} tint="light" style={styles.card}>
-            <View style={styles.cardHeader}>
-              <MaterialCommunityIcons name="calculator-variant-outline" size={20} color="#006875" />
-              <Text style={styles.cardTitle}>Rate & Calculation</Text>
-            </View>
-
-            <Text style={styles.label}>CALCULATION METHOD</Text>
-            
-            <View style={styles.radioGroup}>
-              {[
-                { title: 'Fixed Rate', sub: 'Standard monthly fee' },
-                { title: 'Metered/Consumption', sub: 'Based on usage units' }
-              ].map((method, index) => (
-                <TouchableOpacity 
-                  key={index} 
-                  style={styles.radioRow}
-                  onPress={() => setCalcMethod(method.title)}
-                >
-                  <View style={styles.radioCircle}>
-                    {calcMethod === method.title && <View style={styles.radioDot} />}
-                  </View>
-                  <View>
-                    <Text style={styles.radioTitle}>{method.title}</Text>
-                    <Text style={styles.radioSub}>{method.sub}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {calcMethod === 'Fixed Rate' ? (
-              <>
-                <Text style={styles.label}>BASE RATE</Text>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.currencySymbol}>₹</Text>
-                  <TextInput 
-                    style={styles.inputWithIcon} 
-                    placeholder="0.00" 
-                    placeholderTextColor="#849495"
-                    keyboardType="numeric"
-                    value={baseRate}
-                    onChangeText={setBaseRate}
-                  />
-                </View>
-              </>
-            ) : (
-              <View>
-                <Text style={styles.label}>RATE PER UNIT / TYPE</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={[styles.inputContainer, { flex: 1, marginBottom: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRightWidth: 0 }]}>
-                    <Text style={styles.currencySymbol}>₹</Text>
-                    <TextInput 
-                      style={styles.inputWithIcon} 
-                      placeholder="0.00" 
-                      placeholderTextColor="#849495"
-                      keyboardType="numeric"
-                      value={baseRate}
-                      onChangeText={setBaseRate}
-                    />
-                  </View>
-                  
-                  <View style={{ width: 100, height: 90, position: 'relative' }}>
-                    {/* Fading Glass Background */}
-                    <LinearGradient 
-                      colors={['transparent', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.6)', 'transparent']} 
-                      locations={[0, 0.22, 0.78, 1]}
-                      style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, borderRadius: 12 }} 
-                    />
-                    
-                    {/* Left Fading Border Divider */}
-                    <LinearGradient 
-                      colors={['transparent', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)', 'transparent']} 
-                      locations={[0, 0.22, 0.78, 1]}
-                      style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 1 }} 
-                    />
-
-                    {/* Right Fading Border */}
-                    <LinearGradient 
-                      colors={['transparent', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0.9)', 'transparent']} 
-                      locations={[0, 0.22, 0.78, 1]}
-                      style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 1 }} 
-                    />
-
-                    <ScrollView 
-                      ref={unitScrollRef}
-                      showsVerticalScrollIndicator={false}
-                      nestedScrollEnabled={true}
-                      snapToInterval={40}
-                      decelerationRate="fast"
-                      contentContainerStyle={{ paddingVertical: 25 }}
-                      scrollEventThrottle={16}
-                      onScroll={(e) => {
-                        if (Platform.OS === 'web') {
-                          if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-                          const y = e.nativeEvent.contentOffset.y;
-                          scrollTimeout.current = setTimeout(() => {
-                            const index = Math.max(0, Math.round(y / 40));
-                            const units = ['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'];
-                            if(units[index]) {
-                              setUnitType(units[index]);
-                              unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
-                            }
-                          }, 150);
-                        }
-                      }}
-                      onMomentumScrollEnd={(e) => {
-                        const index = Math.round(e.nativeEvent.contentOffset.y / 40);
-                        const units = ['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'];
-                        if(units[index]) setUnitType(units[index]);
-                      }}
-                    >
-                      {['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'].map((unit, index) => {
-                        const isActive = unitType === unit;
-                        return (
-                          <TouchableOpacity 
-                            key={unit} 
-                            style={{ height: 40, justifyContent: 'center', alignItems: 'center', width: '100%' }}
-                            onPress={() => {
-                              setUnitType(unit);
-                              unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
-                            }}
-                          >
-                            <Text style={{ fontSize: isActive ? 16 : 13, fontWeight: isActive ? '700' : '500', color: isActive ? '#006875' : 'rgba(132, 148, 149, 0.4)' }}>{unit}</Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-                </View>
-              </View>
-            )}
-          </BlurView>
-
-          {/* Card 3: Advanced Logic */}
-          <BlurView intensity={40} tint="light" style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="settings-outline" size={20} color="#006875" />
-              <Text style={[styles.cardTitle, { textTransform: 'uppercase', fontSize: 13 }]}>Advanced Logic</Text>
-            </View>
-
-            <View style={styles.rowBetween}>
-              <Text style={styles.settingText}>Apply Sales Tax</Text>
-              <Switch 
-                value={applySalesTax} 
-                onValueChange={setApplySalesTax}
-                trackColor={{ false: '#d1d5db', true: '#00F0FF' }}
-                thumbColor="#ffffff"
-              />
-            </View>
-
-            <View style={[styles.rowBetween, { marginTop: 24, marginBottom: 24 }]}>
-              <Text style={styles.settingText}>Late Fee Rules</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{lateFee || '0'}% / Monthly</Text>
-              </View>
-            </View>
-
-            <Text style={styles.label}>LATE FEE %</Text>
-            <View style={styles.inputContainer}>
-              <TextInput 
-                style={styles.inputWithIcon} 
-                placeholder="5" 
-                placeholderTextColor="#849495"
-                keyboardType="numeric"
-                value={lateFee}
-                onChangeText={setLateFee}
-              />
-              <Text style={[styles.currencySymbol, { marginRight: 0, marginLeft: 8 }]}>%</Text>
-            </View>
-          </BlurView>
-
-          {/* Action Buttons */}
-          <View style={{ marginTop: 8, paddingHorizontal: 16 }}>
-            <TouchableOpacity 
-              style={[styles.submitButton, isLoading && { opacity: 0.7 }]}
-              onPress={handleSubmit}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-              ) : (
-                  <Text style={styles.submitButtonText}>{isEditMode ? 'Update Charge Entity' : 'Create Charge Entity'}</Text>
-              )}
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={[styles.draftButton, { alignItems: 'center', marginTop: 8 }]}>
-              <Text style={styles.draftButtonText}>Save as Draft</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Spacer to prevent bottom from being cut off */}
           <View style={{ height: 40 }} />
         </Animated.ScrollView>
       </SafeAreaView>
@@ -435,8 +588,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 10,
-    paddingBottom: 0,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
@@ -444,7 +596,6 @@ const styles = StyleSheet.create({
   },
   compactTitleContainer: {
     flex: 1,
-    paddingBottom: 16,
   },
   compactTitleText: {
     fontSize: 22,
@@ -458,21 +609,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  desktopBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  },
-  desktopBackButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#151d1e',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -481,12 +617,12 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     marginBottom: 24,
-    paddingHorizontal: 8,
   },
-  mainTitle: {
-    fontSize: 42,
+  titleLine: {
+    fontSize: 48,
     fontWeight: '800',
     color: '#151d1e',
+    lineHeight: 52,
     letterSpacing: -1,
   },
   card: {
@@ -566,6 +702,8 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
   },
   radioGroup: {
     marginBottom: 24,
@@ -612,13 +750,6 @@ const styles = StyleSheet.create({
     color: '#151d1e',
     flex: 1,
   },
-  unitText: {
-    fontSize: 15,
-    color: '#151d1e',
-  },
-  unitTextBold: {
-    fontWeight: '700',
-  },
   rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -640,78 +771,229 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#006875',
   },
-  sliderMock: {
-    marginTop: 10,
+  // Dynamic Preview Styles
+  previewCardGradient: {
+    borderRadius: 16,
+    padding: 24,
   },
-  sliderTrack: {
-    height: 4,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sliderFill: {
-    height: '100%',
-    backgroundColor: '#006875',
-    borderRadius: 2,
-  },
-  sliderThumb: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#006875',
-    marginLeft: -8,
-  },
-  sliderLabels: {
+  previewHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    alignItems: 'flex-start',
   },
-  sliderLabelText: {
+  previewCategory: {
+    color: '#00f0ff',
     fontSize: 10,
-    fontWeight: '700',
-    color: '#151d1e',
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 4,
   },
-  // Removed preview styles
-  submitButton: {
-    backgroundColor: '#4338ca',
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 12,
+  previewName: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  previewDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    marginVertical: 20,
+  },
+  previewBody: {
+    gap: 12,
+  },
+  previewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  previewLabel: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  previewValue: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  // Mobile actions
+  mobileActionsContainer: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  submitButtonWrapper: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+    width: '100%',
     marginBottom: 16,
+  },
+  submitButton: {
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
   submitButtonText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   draftButton: {
-    paddingVertical: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
   draftButtonText: {
     color: '#151d1e',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  unitPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  // Desktop specific shell & grids
+  desktopShell: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  desktopMain: {
+    flex: 1,
+    height: '100%',
+  },
+  topbar: {
+    height: 70,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  topbarTabs: {
+    flexDirection: 'row',
+    gap: 32,
+  },
+  topbarTab: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6b7a7d',
+  },
+  topbarTabActive: {
+    color: '#006875',
+    fontWeight: '800',
+  },
+  topbarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  backButtonDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: 'rgba(255, 255, 255, 0.9)',
   },
-  unitPillActive: {
-    backgroundColor: '#00bcd4',
-    borderColor: '#00bcd4',
+  backButtonTextDesktop: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#151d1e',
   },
-  unitPillText: {
-    fontSize: 12,
-    color: '#5b6b6d',
-    fontWeight: '600',
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#006875',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  unitPillTextActive: {
+  avatarText: {
     color: '#fff',
-  }
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  desktopContent: {
+    paddingBottom: 80,
+  },
+  desktopInner: {
+    width: '100%',
+    maxWidth: 1200,
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 32,
+  },
+  desktopHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  titleLineDesktop: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  desktopActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  desktopSubmitButtonWrapper: {
+    borderRadius: 23,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  desktopSubmitButton: {
+    height: 46,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  desktopSubmitButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  desktopDraftButton: {
+    height: 46,
+    paddingHorizontal: 24,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#006875',
+    backgroundColor: 'transparent',
+  },
+  desktopDraftButtonText: {
+    color: '#006875',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  desktopGrid: {
+    flexDirection: 'row',
+    gap: 24,
+  },
+  desktopLeftColumn: {
+    flex: 1.2,
+    gap: 24,
+  },
+  desktopRightColumn: {
+    flex: 1,
+    gap: 24,
+  },
 });

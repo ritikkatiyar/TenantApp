@@ -13,8 +13,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 import { getAIJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
+import { useRouter } from 'expo-router';
+import { useResponsive } from '@/hooks/useResponsive';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
 type AIAssistantScreenProps = {
   token: string;
@@ -33,6 +37,8 @@ const EXAMPLES = [
 ];
 
 export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
+  const router = useRouter();
+  const { isDesktop } = useResponsive();
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<Message[]>([
     {
@@ -126,94 +132,152 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
     }
   }, [isSending, token]);
 
+  const renderHeader = () => {
+    if (isDesktop) return null;
+    return (
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+          </TouchableOpacity>
+          <View style={styles.titleBlock}>
+            <Text style={styles.title}>AI Command</Text>
+          </View>
+        </View>
+        <View style={styles.statusPill}>
+          <MaterialIcons name="auto-awesome" size={16} color="#006875" />
+          <Text style={styles.statusText}>Gemini</Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <LinearGradient
-      colors={['#edf7f8', '#f7fbfc', '#f4efe7']}
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
+        {isDesktop && (
+          <DesktopNavBar 
+            hideTabs={true}
+            title="AI Command"
+            onBack={() => router.back()}
+            backText="Back"
+          />
+        )}
         <KeyboardAvoidingView
           style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={styles.header}>
-            <View style={styles.titleBlock}>
-              <Text style={styles.title}>AI Command</Text>
-              <Text style={styles.subtitle}>Test natural-language operations</Text>
-            </View>
-            <View style={styles.statusPill}>
-              <MaterialIcons name="auto-awesome" size={16} color="#006875" />
-              <Text style={styles.statusText}>Gemini</Text>
-            </View>
-          </View>
+          <View style={[styles.mainContainer, isDesktop && styles.mainContainerDesktop]}>
+            {renderHeader()}
 
-          <ScrollView
-            style={styles.messageList}
-            contentContainerStyle={styles.messageContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.examples}>
-              {EXAMPLES.map((example) => (
-                <TouchableOpacity
-                  key={example}
-                  style={styles.exampleButton}
-                  activeOpacity={0.75}
-                  onPress={() => sendMessage(example)}
-                  disabled={isSending}
-                >
-                  <Text style={styles.exampleText}>{example}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <ScrollView
+              style={styles.messageList}
+              contentContainerStyle={styles.messageContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {isDesktop && (
+                <View style={styles.desktopHero}>
+                  <Text style={styles.desktopHeroTitle}>AI Command</Text>
+                </View>
+              )}
 
-            {messages.map((message) => (
-              <View
-                key={message.id}
-                style={[
-                  styles.messageBubble,
-                  message.role === 'user' ? styles.userBubble : styles.assistantBubble,
-                ]}
-              >
-                <Text
+              <View style={[styles.examples, isDesktop && styles.examplesDesktop]}>
+                {EXAMPLES.map((example) => (
+                  <TouchableOpacity
+                    key={example}
+                    onPress={() => sendMessage(example)}
+                    disabled={isSending}
+                    activeOpacity={0.75}
+                    style={[{ borderRadius: 20, overflow: 'hidden' }, isDesktop && styles.exampleButtonDesktop]}
+                  >
+                    <BlurView
+                      intensity={60}
+                      tint="light"
+                      style={[styles.exampleButton, isDesktop && { flex: 1, justifyContent: 'center' }]}
+                    >
+                      <MaterialIcons name="auto-awesome" size={14} color="#006875" />
+                      <Text style={[styles.exampleText, { flexShrink: 1 }]}>{example}</Text>
+                    </BlurView>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {messages.map((message) => (
+                <BlurView
+                  key={message.id}
+                  intensity={95}
+                  tint="light"
                   style={[
-                    styles.messageText,
-                    message.role === 'user' ? styles.userText : styles.assistantText,
+                    styles.messageBubble,
+                    message.role === 'user' ? styles.userBubble : styles.assistantBubble,
+                    isDesktop && styles.messageBubbleDesktop,
                   ]}
                 >
-                  {message.text}
-                </Text>
-              </View>
-            ))}
+                  <Text
+                    style={[
+                      styles.messageText,
+                      message.role === 'user' ? styles.userText : styles.assistantText,
+                    ]}
+                  >
+                    {message.text}
+                  </Text>
+                </BlurView>
+              ))}
 
-            {isSending ? (
-              <View style={[styles.messageBubble, styles.assistantBubble, styles.loadingBubble]}>
-                <ActivityIndicator size="small" color="#006875" />
-                <Text style={styles.loadingText}>Thinking...</Text>
-              </View>
-            ) : null}
-          </ScrollView>
+              {isSending ? (
+                <BlurView
+                  intensity={95}
+                  tint="light"
+                  style={[styles.messageBubble, styles.assistantBubble, styles.loadingBubble]}
+                >
+                  <ActivityIndicator size="small" color="#006875" />
+                  <Text style={styles.loadingText}>Thinking...</Text>
+                </BlurView>
+              ) : null}
+            </ScrollView>
 
-          <View style={styles.inputBar}>
-            <TextInput
-              style={styles.input}
-              value={input}
-              onChangeText={setInput}
-              placeholder="Ask AI to help with a property task..."
-              placeholderTextColor="#7d8b8e"
-              multiline
-              maxLength={1000}
-              editable={!isSending}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, (!input.trim() || isSending) && styles.sendButtonDisabled]}
-              activeOpacity={0.8}
-              onPress={() => sendMessage(input)}
-              disabled={!input.trim() || isSending}
-            >
-              <MaterialIcons name="send" size={22} color="#fff" />
-            </TouchableOpacity>
+            <BlurView intensity={60} tint="light" style={[styles.inputBar, isDesktop && styles.inputBarDesktop]}>
+              <TextInput
+                style={styles.input}
+                value={input}
+                onChangeText={setInput}
+                placeholder="Ask AI to help with a property task..."
+                placeholderTextColor="#7d8b8e"
+                multiline
+                maxLength={1000}
+                editable={!isSending}
+              />
+              <TouchableOpacity
+                onPress={() => sendMessage(input)}
+                disabled={!input.trim() || isSending}
+                activeOpacity={0.8}
+                style={{ borderRadius: 20, overflow: 'hidden' }}
+              >
+                {(!input.trim() || isSending) ? (
+                  <View style={[styles.sendButton, styles.sendButtonDisabled]}>
+                    <MaterialIcons name="arrow-upward" size={20} color="rgba(0, 104, 117, 0.3)" />
+                  </View>
+                ) : (
+                  <LinearGradient
+                    colors={['#008394', '#005b66']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.sendButton}
+                  >
+                    <MaterialIcons name="arrow-upward" size={20} color="#fff" />
+                  </LinearGradient>
+                )}
+              </TouchableOpacity>
+            </BlurView>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -238,6 +302,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 12,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
   },
   titleBlock: {
     flex: 1,
@@ -274,46 +354,49 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   examples: {
+    flexDirection: 'column',
     gap: 10,
     marginBottom: 18,
     marginTop: 8,
   },
   exampleButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.72)',
-    borderColor: 'rgba(0, 104, 117, 0.16)',
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 20,
     borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   exampleText: {
-    color: '#263638',
-    fontSize: 14,
-    lineHeight: 20,
+    color: '#004b57',
+    fontSize: 13,
+    fontWeight: '600',
   },
   messageBubble: {
-    borderRadius: 8,
+    borderRadius: 16,
     marginBottom: 12,
     maxWidth: '88%',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    overflow: 'hidden',
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: '#006875',
+    backgroundColor: 'rgba(0, 104, 117, 0.32)',
   },
   assistantBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.86)',
-    borderColor: 'rgba(0, 104, 117, 0.12)',
-    borderWidth: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
   },
   messageText: {
     fontSize: 15,
     lineHeight: 21,
   },
   userText: {
-    color: '#fff',
+    color: '#004b57',
   },
   assistantText: {
     color: '#172426',
@@ -329,46 +412,86 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   inputBar: {
-    alignItems: 'flex-end',
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
-    borderColor: 'rgba(0, 104, 117, 0.16)',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 30,
     flexDirection: 'row',
     gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: Platform.OS === 'ios' ? 120 : 105,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    marginBottom: Platform.OS === 'ios' ? 24 : 20,
     marginHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    boxShadow: '0px 8px 32px rgba(0, 104, 117, 0.08)',
+    overflow: 'hidden',
   },
   input: {
-    backgroundColor: '#eef6f7',
-    borderColor: '#d5e4e7',
-    borderRadius: 8,
-    borderWidth: 1,
+    backgroundColor: 'transparent',
     color: '#172426',
     flex: 1,
     fontSize: 15,
     lineHeight: 20,
     maxHeight: 120,
-    minHeight: 46,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    minHeight: 40,
+    paddingHorizontal: 4,
+    paddingVertical: 10,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      } as any,
+    }),
   },
   sendButton: {
     alignItems: 'center',
-    backgroundColor: '#006875',
-    borderRadius: 8,
-    height: 46,
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
-    width: 46,
+    width: 40,
+    boxShadow: '0px 4px 12px rgba(0, 104, 117, 0.25)',
   },
   sendButtonDisabled: {
-    backgroundColor: '#9db0b4',
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    boxShadow: 'none',
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  mainContainerDesktop: {
+    width: '100%',
+    maxWidth: 900,
+    alignSelf: 'center',
+    paddingTop: 16,
+  },
+  examplesDesktop: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  exampleButtonDesktop: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 60,
+  },
+  inputBarDesktop: {
+    marginBottom: 24,
+    marginHorizontal: 0,
+  },
+  messageBubbleDesktop: {
+    maxWidth: '75%',
+  },
+  desktopHero: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 24,
+  },
+  desktopHeroTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  desktopHeroSubtitle: {
+    fontSize: 15,
+    color: '#607174',
+    marginTop: 6,
   },
 });

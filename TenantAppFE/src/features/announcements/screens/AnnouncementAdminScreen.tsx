@@ -17,6 +17,7 @@ import { BlurView } from 'expo-blur';
 import { Href, useRouter } from 'expo-router';
 
 import { Theme } from '@/src/theme/Theme';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { createAnnouncement, getAnnouncements, Announcement } from '@/src/features/announcements/api/announcement.api';
@@ -523,17 +524,12 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
       <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
         <View style={styles.desktopShell}>
           <View style={styles.desktopMain}>
-            <BlurView intensity={70} tint="light" style={styles.topbar}>
-              {isWideDesktop ? (
-                <View style={styles.topbarTabs}>
-                  <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
-                  <TouchableOpacity onPress={() => router.push('/command-center')}><Text style={styles.topbarTab}>Properties</Text></TouchableOpacity>
-                  <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
-                </View>
-              ) : (
-                <Text style={styles.compactTopbarTitle}>Announcements</Text>
-              )}
-              <View style={styles.topbarRight}>
+          <DesktopNavBar 
+            activeTab="Communication"
+            hideTabs={!isWideDesktop}
+            title="Announcements"
+            rightContent={
+              <>
                 {isWideDesktop && (
                   <BlurView intensity={50} tint="light" style={styles.searchBox}>
                     <MaterialIcons name="search" size={22} color="#6b7a7d" />
@@ -541,10 +537,9 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
                   </BlurView>
                 )}
                 <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
-                <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/expenses')}><MaterialIcons name="settings" size={24} color={Theme.Colors.onSurface} /></TouchableOpacity>
-                <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
-              </View>
-            </BlurView>
+              </>
+            }
+          />
 
             <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
               <View style={styles.desktopInner}>

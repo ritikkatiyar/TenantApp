@@ -7,7 +7,7 @@ import { Theme } from '@/src/theme/Theme';
 export default function FloorEditorScreen() {
   return (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#f9ede0']}
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}

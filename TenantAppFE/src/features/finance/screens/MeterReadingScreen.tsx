@@ -10,6 +10,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { getActiveChargesForProperty, ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
 import { getWorksheet, batchSaveReadings, MeterReadingResponse } from '@/src/features/finance/api/meterReading.api';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useResponsive } from '@/hooks/useResponsive';
 
 export default function MeterReadingScreen({ token }: { token: string | null }) {
@@ -36,6 +37,8 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   const inputRefs = useRef<Record<string, TextInput | null>>({});
 
   const [expandedFloors, setExpandedFloors] = useState<Record<number, boolean>>({});
+  const [floorPages, setFloorPages] = useState<Record<number, number>>({});
+  const [floorPage, setFloorPage] = useState(1);
 
   const toggleFloor = (floor: number) => {
     setExpandedFloors(prev => ({ ...prev, [floor]: !prev[floor] }));
@@ -50,8 +53,19 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   useEffect(() => {
     if (selectedConfigId && token && propertyId) {
       loadWorksheet();
+      setFloorPages({});
+      setFloorPage(1);
     }
   }, [selectedConfigId, month, year, token, propertyId]);
+
+  useEffect(() => {
+    if (worksheet.length > 0) {
+      // Keep all closed by default!
+      setExpandedFloors({});
+      setFloorPages({});
+      setFloorPage(1);
+    }
+  }, [worksheet]);
 
   const loadConfigs = async () => {
     try {
@@ -157,39 +171,388 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   }, {} as Record<number, typeof worksheet>);
 
   const sortedFloors = Object.keys(groupedWorksheet).map(Number).sort((a, b) => a - b);
+  const floorsPerPage = 4;
+  const totalFloorPages = Math.ceil(sortedFloors.length / floorsPerPage);
+  const startFloorIndex = (floorPage - 1) * floorsPerPage;
+  const paginatedFloors = sortedFloors.slice(startFloorIndex, startFloorIndex + floorsPerPage);
 
-  return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
+  const totalUnits = worksheet.length;
+  const readingsEntered = worksheet.filter(row => inputs[row.unitId] && inputs[row.unitId].trim() !== '').length;
+
+  let totalConsumption = 0;
+  let totalEstimatedCost = 0;
+
+  worksheet.forEach(row => {
+    const valStr = inputs[row.unitId];
+    if (valStr && valStr.trim() !== '') {
+      const val = parseFloat(valStr);
+      if (!isNaN(val) && val >= row.previousReading) {
+        const consumed = val - row.previousReading;
+        totalConsumption += consumed;
+        totalEstimatedCost += consumed * baseRate;
+      }
+    }
+  });
+
+  const DesktopShell = () => (
+    <LinearGradient
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.desktopShell}
     >
-    <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.gradient}>
+      <View style={styles.desktopMain}>
+        <DesktopNavBar 
+          activeTab="Properties" 
+          onBack={() => router.back()} 
+          backText="Back to Property" 
+        />
+
+        <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.desktopInner}>
+            {/* Header Row */}
+            <View style={styles.desktopHeaderRow}>
+              <View style={styles.largeTitleContainer}>
+                <Text style={styles.titleLineDesktop}>Meter Readings</Text>
+              </View>
+
+              {/* Action Save Button */}
+              <TouchableOpacity 
+                style={[styles.desktopSaveButtonWrapper, (isSaving || worksheet.length === 0) && { opacity: 0.5 }]} 
+                onPress={handleSave}
+                disabled={isSaving || worksheet.length === 0}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.desktopSaveButton}
+                >
+                  {isSaving ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Text style={styles.desktopSaveButtonText}>SAVE READINGS</Text>
+                      <MaterialIcons name="check" size={18} color="#fff" />
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            {/* Filter Section Row */}
+            <View style={styles.desktopFilterRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.filterLabelCaps}>UTILITY CONFIGURATION</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
+                  {configs.map(config => (
+                    <TouchableOpacity 
+                      key={config.id}
+                      style={[styles.pill, selectedConfigId === config.id && styles.pillActive]}
+                      onPress={() => setSelectedConfigId(config.id)}
+                    >
+                      <Text style={[styles.pillText, selectedConfigId === config.id && styles.pillTextActive]}>
+                        {config.chargeName}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              
+              <View style={{ width: 300 }}>
+                <Text style={styles.filterLabelCaps}>BILLING PERIOD</Text>
+                <View style={styles.monthSelector}>
+                  <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.monthBtn}>
+                    <MaterialIcons name="chevron-left" size={24} color="#006875" />
+                  </TouchableOpacity>
+                  <Text style={styles.monthText}>{getMonthName(month)} {year}</Text>
+                  <TouchableOpacity onPress={() => changeMonth(1)} style={styles.monthBtn}>
+                    <MaterialIcons name="chevron-right" size={24} color="#006875" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Main Content Grid */}
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />
+            ) : worksheet.length === 0 ? (
+              <BlurView intensity={60} tint="light" style={styles.emptyStateCard}>
+                <MaterialIcons name="receipt-long" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
+                <Text style={styles.emptyText}>No metered units found for this configuration.</Text>
+              </BlurView>
+            ) : (
+              <View style={styles.desktopGrid}>
+                {/* Left Column: Floor Cards */}
+                <View style={styles.desktopLeftColumn}>
+                  {worksheet.length > 0 && (
+                    <View style={styles.listControlsRow}>
+                      <TouchableOpacity 
+                        style={styles.controlLink}
+                        onPress={() => {
+                          const allExpanded: Record<number, boolean> = {};
+                          sortedFloors.forEach(f => allExpanded[f] = true);
+                          setExpandedFloors(allExpanded);
+                        }}
+                      >
+                        <MaterialIcons name="unfold-more" size={16} color="#006875" />
+                        <Text style={styles.controlLinkText}>EXPAND ALL</Text>
+                      </TouchableOpacity>
+                      <View style={styles.controlSeparator} />
+                      <TouchableOpacity 
+                        style={styles.controlLink}
+                        onPress={() => {
+                          setExpandedFloors({});
+                        }}
+                      >
+                        <MaterialIcons name="unfold-less" size={16} color="#006875" />
+                        <Text style={styles.controlLinkText}>COLLAPSE ALL</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {paginatedFloors.map(floor => {
+                    const isExpanded = expandedFloors[floor];
+                    return (
+                      <BlurView intensity={60} tint="light" key={`floor-${floor}`} style={styles.floorCard}>
+                        <TouchableOpacity 
+                          style={styles.floorHeader}
+                          onPress={() => toggleFloor(floor)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.floorHeaderText}>
+                            {floor === 0 ? 'Ground Floor' : `Floor ${floor}`}
+                          </Text>
+                          <MaterialIcons 
+                            name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                            size={24} 
+                            color="#006875" 
+                          />
+                        </TouchableOpacity>
+                        
+                        {(() => {
+                          if (!isExpanded) return null;
+                          const unitsPerFloorPage = 4;
+                          const floorUnits = groupedWorksheet[floor] || [];
+                          const totalFloorPagesUnits = Math.ceil(floorUnits.length / unitsPerFloorPage);
+                          const currentPage = floorPages[floor] || 1;
+                          const startIndex = (currentPage - 1) * unitsPerFloorPage;
+                          const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
+
+                          return (
+                            <>
+                              {paginatedUnits.map((row, index) => {
+                                const currentVal = inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null;
+                                const consumed = currentVal !== null ? currentVal - row.previousReading : 0;
+                                const isError = currentVal !== null && currentVal < row.previousReading;
+                                const estCost = consumed > 0 ? consumed * baseRate : 0;
+                                const isLast = index === paginatedUnits.length - 1;
+                                
+                                return (
+                                  <View key={row.id} style={[styles.rowCard, isError && styles.rowError, isLast && { borderBottomWidth: 0 }]}>
+                                    <View style={styles.rowLeft}>
+                                      <Text style={styles.unitName}>{row.unitName}</Text>
+                                      <Text style={styles.tenantName}>{row.tenantName}</Text>
+                                      <Text style={styles.prevReading}>Prev: {row.previousReading}</Text>
+                                    </View>
+                                    
+                                    <View style={styles.rowMiddle}>
+                                      {currentVal !== null && (
+                                        <>
+                                          <Text style={[styles.consumedText, isError && { color: '#ef4444' }]}>
+                                            {consumed > 0 ? '+' : ''}{consumed} {selectedConfig?.unitType || 'Units'}
+                                          </Text>
+                                          {!isError && <Text style={styles.costText}>Est: ₹{estCost.toFixed(2)}</Text>}
+                                        </>
+                                      )}
+                                    </View>
+                                    
+                                    <View style={styles.rowRight}>
+                                      <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+                                        <TextInput
+                                          ref={(ref) => { inputRefs.current[row.unitId] = ref; }}
+                                          style={[styles.input, isError && styles.inputError, { flex: 1 }]}
+                                          keyboardType="decimal-pad"
+                                          placeholder="0.00"
+                                          placeholderTextColor="#a0aab2"
+                                          value={inputs[row.unitId]}
+                                          onChangeText={(val) => setInputs(prev => ({ ...prev, [row.unitId]: val }))}
+                                          returnKeyType="next"
+                                          editable={!row.isBilled}
+                                        />
+                                        <Text style={{ marginLeft: 6, fontSize: 13, color: '#5b6b6d', fontWeight: '600' }}>
+                                          {selectedConfig?.unitType || 'Units'}
+                                        </Text>
+                                      </View>
+                                      {isError && <Text style={styles.errorText}>Invalid</Text>}
+                                    </View>
+                                  </View>
+                                );
+                              })}
+
+                              {totalFloorPagesUnits > 1 && (
+                                <View style={styles.paginationRow}>
+                                  <TouchableOpacity 
+                                    style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+                                    disabled={currentPage === 1}
+                                    onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
+                                  >
+                                    <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : '#006875'} />
+                                    <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
+                                  </TouchableOpacity>
+                                  
+                                  <Text style={styles.pageInfoText}>
+                                    Page {currentPage} of {totalFloorPagesUnits}
+                                  </Text>
+                                  
+                                  <TouchableOpacity 
+                                    style={[styles.pageButton, currentPage === totalFloorPagesUnits && styles.pageButtonDisabled]}
+                                    disabled={currentPage === totalFloorPagesUnits}
+                                    onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
+                                  >
+                                    <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
+                                    <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : '#006875'} />
+                                  </TouchableOpacity>
+                                </View>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </BlurView>
+                    );
+                  })}
+
+                  {totalFloorPages > 1 && (
+                    <View style={styles.paginationRow}>
+                      <TouchableOpacity 
+                        style={[styles.pageButton, floorPage === 1 && styles.pageButtonDisabled]}
+                        disabled={floorPage === 1}
+                        onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
+                      >
+                        <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : '#006875'} />
+                        <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
+                      </TouchableOpacity>
+                      
+                      <Text style={styles.pageInfoText}>
+                        Page {floorPage} of {totalFloorPages}
+                      </Text>
+                      
+                      <TouchableOpacity 
+                        style={[styles.pageButton, floorPage === totalFloorPages && styles.pageButtonDisabled]}
+                        disabled={floorPage === totalFloorPages}
+                        onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
+                      >
+                        <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
+                        <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : '#006875'} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+
+                {/* Right Column: Dashboard Summary Panel */}
+                <View style={styles.desktopRightColumn}>
+                  <BlurView intensity={80} tint="light" style={styles.summaryCard}>
+                    <Text style={styles.summaryCardTitle}>WORKSHEET SUMMARY</Text>
+                    
+                    <View style={styles.summaryMetricsGrid}>
+                      <View style={styles.summaryMetricItem}>
+                        <Text style={styles.summaryMetricLabel}>TOTAL UNITS</Text>
+                        <Text style={styles.summaryMetricValue}>{totalUnits}</Text>
+                      </View>
+                      <View style={styles.summaryMetricItem}>
+                        <Text style={styles.summaryMetricLabel}>READINGS ENTERED</Text>
+                        <Text style={styles.summaryMetricValue}>{readingsEntered} / {totalUnits}</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.previewDivider} />
+
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Utility Charge</Text>
+                      <Text style={styles.summaryValue}>{selectedConfig?.chargeName || 'N/A'}</Text>
+                    </View>
+                    
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Rate</Text>
+                      <Text style={styles.summaryValue}>₹{baseRate} / {selectedConfig?.unitType || 'unit'}</Text>
+                    </View>
+                    
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Billing Period</Text>
+                      <Text style={styles.summaryValue}>{getMonthName(month)} {year}</Text>
+                    </View>
+
+                    <View style={styles.previewDivider} />
+
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Total Consumption</Text>
+                      <Text style={[styles.summaryValue, { color: '#006875', fontSize: 16 }]}>
+                        {totalConsumption.toFixed(2)} {selectedConfig?.unitType || 'Units'}
+                      </Text>
+                    </View>
+
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Estimated Billing</Text>
+                      <Text style={[styles.summaryValue, { color: '#2e7d32', fontSize: 20, fontWeight: '800' }]}>
+                        ₹{totalEstimatedCost.toFixed(2)}
+                      </Text>
+                    </View>
+
+                    {readingsEntered < totalUnits && (
+                      <View style={styles.warningAlertBox}>
+                        <MaterialIcons name="info-outline" size={18} color="#765a00" />
+                        <Text style={styles.warningAlertText}>
+                          {totalUnits - readingsEntered} unit(s) are missing current month readings.
+                        </Text>
+                      </View>
+                    )}
+                  </BlurView>
+                </View>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    </LinearGradient>
+  );
+
+  const MobileShell = () => (
+    <LinearGradient
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Header */}
         <View style={styles.header}>
-          {isDesktop ? (
-            <TouchableOpacity onPress={() => router.back()} style={styles.desktopBackButton}>
-              <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
-              <Text style={styles.desktopBackButtonText}>Back to Property</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+          </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
             <Text style={styles.headerTitle}>Meter Readings</Text>
-            <Text style={styles.headerSubtitle}>Batch Worksheet Data Entry</Text>
           </View>
           
           <TouchableOpacity 
-            style={[styles.headerSaveBtn, (isSaving || worksheet.length === 0) && { opacity: 0.5 }]} 
+            style={[styles.headerSaveBtnWrapper, (isSaving || worksheet.length === 0) && { opacity: 0.5 }]} 
             onPress={handleSave}
             disabled={isSaving || worksheet.length === 0}
+            activeOpacity={0.85}
           >
-            {isSaving ? <ActivityIndicator color="#006875" size="small" /> : (
-              <Text style={styles.headerSaveText}>Save</Text>
-            )}
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.headerSaveBtn}
+            >
+              {isSaving ? <ActivityIndicator color="#fff" size="small" /> : (
+                <>
+                  <Text style={styles.headerSaveText}>SAVE</Text>
+                  <MaterialIcons name="check" size={14} color="#fff" />
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -228,84 +591,181 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               <Text style={styles.emptyText}>No metered units found for this configuration.</Text>
             </View>
           ) : (
-            sortedFloors.map(floor => {
-              const isExpanded = expandedFloors[floor];
-              return (
-                <BlurView intensity={60} tint="light" key={`floor-${floor}`} style={styles.floorCard}>
+            <>
+              <View style={styles.listControlsRowMobile}>
+                <TouchableOpacity 
+                  style={styles.controlLink}
+                  onPress={() => {
+                    const allExpanded: Record<number, boolean> = {};
+                    sortedFloors.forEach(f => allExpanded[f] = true);
+                    setExpandedFloors(allExpanded);
+                  }}
+                >
+                  <MaterialIcons name="unfold-more" size={16} color="#006875" />
+                  <Text style={styles.controlLinkText}>EXPAND ALL</Text>
+                </TouchableOpacity>
+                <View style={styles.controlSeparator} />
+                <TouchableOpacity 
+                  style={styles.controlLink}
+                  onPress={() => {
+                    setExpandedFloors({});
+                  }}
+                >
+                  <MaterialIcons name="unfold-less" size={16} color="#006875" />
+                  <Text style={styles.controlLinkText}>COLLAPSE ALL</Text>
+                </TouchableOpacity>
+              </View>
+
+              {paginatedFloors.map(floor => {
+                const isExpanded = expandedFloors[floor];
+                return (
+                  <BlurView intensity={60} tint="light" key={`floor-${floor}`} style={styles.floorCard}>
+                    <TouchableOpacity 
+                      style={styles.floorHeader}
+                      onPress={() => toggleFloor(floor)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.floorHeaderText}>
+                        {floor === 0 ? 'Ground Floor' : `Floor ${floor}`}
+                      </Text>
+                      <MaterialIcons 
+                        name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                        size={24} 
+                        color="#006875" 
+                      />
+                    </TouchableOpacity>
+                    
+                    {(() => {
+                      if (!isExpanded) return null;
+                      const unitsPerFloorPage = 4;
+                      const floorUnits = groupedWorksheet[floor] || [];
+                      const totalFloorPagesUnits = Math.ceil(floorUnits.length / unitsPerFloorPage);
+                      const currentPage = floorPages[floor] || 1;
+                      const startIndex = (currentPage - 1) * unitsPerFloorPage;
+                      const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
+
+                      return (
+                        <>
+                          {paginatedUnits.map((row, index) => {
+                            const currentVal = inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null;
+                            const consumed = currentVal !== null ? currentVal - row.previousReading : 0;
+                            const isError = currentVal !== null && currentVal < row.previousReading;
+                            const estCost = consumed > 0 ? consumed * baseRate : 0;
+                            const isLast = index === paginatedUnits.length - 1;
+                            
+                            return (
+                              <View key={row.id} style={[styles.rowCard, isError && styles.rowError, isLast && { borderBottomWidth: 0 }]}>
+                                <View style={styles.rowLeft}>
+                                  <Text style={styles.unitName}>{row.unitName}</Text>
+                                  <Text style={styles.tenantName}>{row.tenantName}</Text>
+                                  <Text style={styles.prevReading}>Prev: {row.previousReading}</Text>
+                                </View>
+                                
+                                <View style={styles.rowMiddle}>
+                                  {currentVal !== null && (
+                                    <>
+                                      <Text style={[styles.consumedText, isError && { color: '#ef4444' }]}>
+                                        {consumed > 0 ? '+' : ''}{consumed} {selectedConfig?.unitType || 'Units'}
+                                      </Text>
+                                      {!isError && <Text style={styles.costText}>Est: ₹{estCost.toFixed(2)}</Text>}
+                                    </>
+                                  )}
+                                </View>
+                                
+                                <View style={styles.rowRight}>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+                                    <TextInput
+                                      ref={(ref) => { inputRefs.current[row.unitId] = ref; }}
+                                      style={[styles.input, isError && styles.inputError, { flex: 1 }]}
+                                      keyboardType="decimal-pad"
+                                      placeholder="0.00"
+                                      placeholderTextColor="#a0aab2"
+                                      value={inputs[row.unitId]}
+                                      onChangeText={(val) => setInputs(prev => ({ ...prev, [row.unitId]: val }))}
+                                      returnKeyType="next"
+                                      editable={!row.isBilled}
+                                    />
+                                    <Text style={{ marginLeft: 6, fontSize: 13, color: '#5b6b6d', fontWeight: '600' }}>
+                                      {selectedConfig?.unitType || 'Units'}
+                                    </Text>
+                                  </View>
+                                  {isError && <Text style={styles.errorText}>Invalid</Text>}
+                                </View>
+                              </View>
+                            );
+                          })}
+
+                          {totalFloorPagesUnits > 1 && (
+                            <View style={styles.paginationRow}>
+                              <TouchableOpacity 
+                                style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
+                                disabled={currentPage === 1}
+                                onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
+                              >
+                                <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : '#006875'} />
+                                <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
+                              </TouchableOpacity>
+                              
+                              <Text style={styles.pageInfoText}>
+                                Page {currentPage} of {totalFloorPagesUnits}
+                              </Text>
+                              
+                              <TouchableOpacity 
+                                style={[styles.pageButton, currentPage === totalFloorPagesUnits && styles.pageButtonDisabled]}
+                                disabled={currentPage === totalFloorPagesUnits}
+                                onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
+                              >
+                                <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
+                                <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : '#006875'} />
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </BlurView>
+                );
+              })}
+
+              {totalFloorPages > 1 && (
+                <View style={styles.paginationRow}>
                   <TouchableOpacity 
-                    style={styles.floorHeader}
-                    onPress={() => toggleFloor(floor)}
-                    activeOpacity={0.7}
+                    style={[styles.pageButton, floorPage === 1 && styles.pageButtonDisabled]}
+                    disabled={floorPage === 1}
+                    onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
                   >
-                    <Text style={styles.floorHeaderText}>
-                      {floor === 0 ? 'Ground Floor' : `Floor ${floor}`}
-                    </Text>
-                    <MaterialIcons 
-                      name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                      size={24} 
-                      color="#006875" 
-                    />
+                    <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : '#006875'} />
+                    <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
                   </TouchableOpacity>
                   
-                  {isExpanded && groupedWorksheet[floor].map((row, index) => {
-                    const currentVal = inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null;
-                    const consumed = currentVal !== null ? currentVal - row.previousReading : 0;
-                    const isError = currentVal !== null && currentVal < row.previousReading;
-                    const estCost = consumed > 0 ? consumed * baseRate : 0;
-                    
-                    // We don't want a bottom border on the very last item in the card
-                    const isLast = index === groupedWorksheet[floor].length - 1;
-                    
-                    return (
-                      <View key={row.id} style={[styles.rowCard, isError && styles.rowError, isLast && { borderBottomWidth: 0 }]}>
-                        <View style={styles.rowLeft}>
-                          <Text style={styles.unitName}>{row.unitName}</Text>
-                          <Text style={styles.tenantName}>{row.tenantName}</Text>
-                          <Text style={styles.prevReading}>Prev: {row.previousReading}</Text>
-                        </View>
-                        
-                        <View style={styles.rowMiddle}>
-                          {currentVal !== null && (
-                            <>
-                              <Text style={[styles.consumedText, isError && { color: '#ef4444' }]}>
-                                {consumed > 0 ? '+' : ''}{consumed} {selectedConfig?.unitType || 'Units'}
-                              </Text>
-                              {!isError && <Text style={styles.costText}>Est: ₹{estCost.toFixed(2)}</Text>}
-                            </>
-                          )}
-                        </View>
-                        
-                        <View style={styles.rowRight}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-                            <TextInput
-                              ref={(ref) => { inputRefs.current[row.unitId] = ref; }}
-                              style={[styles.input, isError && styles.inputError, { flex: 1 }]}
-                              keyboardType="decimal-pad"
-                              placeholder="0.00"
-                              placeholderTextColor="#a0aab2"
-                              value={inputs[row.unitId]}
-                              onChangeText={(val) => setInputs(prev => ({ ...prev, [row.unitId]: val }))}
-                              returnKeyType="next"
-                              editable={!row.isBilled}
-                            />
-                            <Text style={{ marginLeft: 6, fontSize: 13, color: '#5b6b6d', fontWeight: '600' }}>
-                              {selectedConfig?.unitType || 'Units'}
-                            </Text>
-                          </View>
-                          {isError && <Text style={styles.errorText}>Invalid</Text>}
-                        </View>
-                      </View>
-                    );
-                  })}
-                </BlurView>
-            );
-          })
-        )}
+                  <Text style={styles.pageInfoText}>
+                    Page {floorPage} of {totalFloorPages}
+                  </Text>
+                  
+                  <TouchableOpacity 
+                    style={[styles.pageButton, floorPage === totalFloorPages && styles.pageButtonDisabled]}
+                    disabled={floorPage === totalFloorPages}
+                    onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
+                  >
+                    <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
+                    <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : '#006875'} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          )}
           <View style={{ height: 100 }} />
         </Animated.ScrollView>
-
       </SafeAreaView>
     </LinearGradient>
+  );
+
+  return (
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      {isDesktop ? <DesktopShell /> : <MobileShell />}
     </KeyboardAvoidingView>
   );
 }
@@ -316,76 +776,101 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    marginBottom: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    zIndex: 10,
   },
   backButton: {
-    width: 40, height: 40,
+    width: 40, 
+    height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    justifyContent: 'center', alignItems: 'center',
-    marginRight: 16,
+    justifyContent: 'center', 
+    alignItems: 'center',
   },
-  desktopBackButton: {
+  headerTitleContainer: { 
+    flex: 1,
+    marginLeft: 16,
+  },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: '#151d1e' },
+  headerSubtitle: { fontSize: 12, color: '#6b7a7d', fontWeight: '500', marginTop: 2 },
+  
+  headerSaveBtnWrapper: {
+    borderRadius: 19,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 2,
+    marginLeft: 12,
+  },
+  headerSaveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+    gap: 4,
+    height: 38,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    marginRight: 16,
   },
-  desktopBackButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#151d1e',
+  headerSaveText: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 0.5,
   },
-  headerTitleContainer: { flex: 1 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#151d1e' },
-  headerSubtitle: { fontSize: 14, color: '#6b7a7d', fontWeight: '500' },
-  
-  filterSection: { paddingHorizontal: 20, marginBottom: 20 },
+
+  filterSection: { paddingHorizontal: 24, marginBottom: 20 },
   pillsContainer: { paddingBottom: 16, gap: 10 },
   pill: {
     paddingHorizontal: 16, paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)',
     marginRight: 10,
   },
-  pillActive: { backgroundColor: '#00bcd4', borderColor: '#00bcd4' },
-  pillText: { color: '#5b6b6d', fontWeight: '600', fontSize: 14 },
+  pillActive: { 
+    backgroundColor: '#0072ff', 
+    borderColor: '#0072ff' 
+  },
+  pillText: { color: '#6b7a7d', fontWeight: '600', fontSize: 14 },
   pillTextActive: { color: '#fff' },
   
   monthSelector: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 16, paddingVertical: 8,
+    borderRadius: 12, 
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
   },
   monthBtn: { padding: 8 },
-  monthText: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '700', color: '#006875' },
+  monthText: { flex: 1, textAlign: 'center', fontSize: 15, fontWeight: '700', color: '#006875' },
   
-  listContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  listContent: { paddingHorizontal: 24, paddingBottom: 40 },
   emptyState: { padding: 40, alignItems: 'center' },
   emptyText: { color: '#6b7a7d', fontSize: 16 },
   
   floorCard: {
     marginBottom: 24,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderWidth: 1, 
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    paddingHorizontal: 20,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    paddingHorizontal: 24,
     overflow: 'hidden',
+    shadowColor: '#006875',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 3,
   },
-  floorHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16 },
-  floorHeaderText: { fontSize: 16, fontWeight: '800', color: '#006875' },
+  floorHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 20 },
+  floorHeaderText: { fontSize: 18, fontWeight: '800', color: '#006875' },
   
   rowCard: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 20,
     borderBottomWidth: 1, borderBottomColor: 'rgba(0, 104, 117, 0.1)',
   },
   rowError: { backgroundColor: 'rgba(254, 226, 226, 0.4)', borderRadius: 12, paddingHorizontal: 8 },
@@ -399,28 +884,334 @@ const styles = StyleSheet.create({
   consumedText: { fontSize: 14, fontWeight: '700', color: '#006875' },
   costText: { fontSize: 11, color: '#2e7d32', fontWeight: '600', marginTop: 2 },
   
-  rowRight: { flex: 1.5, alignItems: 'flex-end' },
+  rowRight: { flex: 2, alignItems: 'flex-end' },
   input: {
-    backgroundColor: '#fff', borderRadius: 8,
-    borderWidth: 1, borderColor: '#e2e8f0',
-    width: '100%', paddingVertical: 10, paddingHorizontal: 12,
-    fontSize: 16, fontWeight: '600', color: '#151d1e', textAlign: 'right',
+    backgroundColor: '#fff', 
+    borderRadius: 10,
+    borderWidth: 1, 
+    borderColor: 'rgba(0, 104, 117, 0.15)',
+    width: '100%', 
+    paddingVertical: 10, 
+    paddingHorizontal: 12,
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#151d1e', 
+    textAlign: 'right',
   },
   inputError: { borderColor: '#ef4444', color: '#ef4444' },
   errorText: { fontSize: 10, color: '#ef4444', fontWeight: '600', marginTop: 4 },
-  
-  headerSaveBtn: {
+
+  // Desktop specific styles
+  desktopShell: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  desktopMain: {
+    flex: 1,
+    height: '100%',
+  },
+  topbar: {
+    height: 70,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  topbarTabs: {
+    flexDirection: 'row',
+    gap: 32,
+  },
+  topbarTab: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6b7a7d',
+  },
+  topbarTabActive: {
+    color: '#006875',
+    fontWeight: '800',
+  },
+  topbarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  backButtonDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    paddingVertical: 10,
     borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.9)',
-    marginLeft: 12,
   },
-  headerSaveText: {
-    color: '#006875',
+  backButtonTextDesktop: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#151d1e',
+  },
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#006875',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#fff',
     fontWeight: '700',
     fontSize: 14,
+  },
+  desktopContent: {
+    paddingBottom: 80,
+  },
+  desktopInner: {
+    width: '100%',
+    maxWidth: 1200,
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 32,
+  },
+  desktopHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  largeTitleContainer: {
+    flex: 1,
+  },
+  titleLineDesktop: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  desktopSubtitle: {
+    fontSize: 14,
+    color: '#6b7a7d',
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  desktopSaveButtonWrapper: {
+    borderRadius: 23,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  desktopSaveButton: {
+    height: 46,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  desktopSaveButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  desktopFilterRow: {
+    flexDirection: 'row',
+    gap: 24,
+    alignItems: 'flex-end',
+    marginBottom: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  filterLabelCaps: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#5b6b6d',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  emptyStateCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 24,
+    padding: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  desktopGrid: {
+    flexDirection: 'row',
+    gap: 24,
+  },
+  desktopLeftColumn: {
+    flex: 1.6,
+    gap: 24,
+  },
+  desktopRightColumn: {
+    flex: 1,
+  },
+  summaryCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: '#006875',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 3,
+    position: 'sticky',
+    top: 24,
+  },
+  summaryCardTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#006875',
+    letterSpacing: 1.5,
+    marginBottom: 20,
+  },
+  summaryMetricsGrid: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  summaryMetricItem: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  summaryMetricLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#5b6b6d',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  summaryMetricValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  previewDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0, 104, 117, 0.1)',
+    marginVertical: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 6,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#5b6b6d',
+    fontWeight: '500',
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: '#151d1e',
+    fontWeight: '700',
+  },
+  warningAlertBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fffbeb',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#fef3c7',
+    marginTop: 20,
+  },
+  warningAlertText: {
+    fontSize: 12,
+    color: '#765a00',
+    fontWeight: '600',
+    flex: 1,
+  },
+  // Pagination & List Controls styles
+  paginationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  pageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  pageButtonDisabled: {
+    opacity: 0.4,
+  },
+  pageButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#006875',
+  },
+  pageButtonTextDisabled: {
+    color: '#a0aab2',
+  },
+  pageInfoText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#151d1e',
+  },
+  listControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  listControlsRowMobile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+  controlLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 104, 117, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.1)',
+  },
+  controlLinkText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#006875',
+    letterSpacing: 0.5,
+  },
+  controlSeparator: {
+    width: 1,
+    height: 12,
+    backgroundColor: 'rgba(0, 104, 117, 0.15)',
   },
 });

@@ -1,13 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   Animated, 
   TouchableOpacity,
-  ScrollView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,12 +16,17 @@ import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { getActiveChargesForProperty, deactivateChargeConfig, ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
 import { useResponsive } from '@/hooks/useResponsive';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useProperties } from '@/src/hooks/useProperties';
+
 
 export default function ExpenseConfigurationScreen({ token }: { token: string | null }) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
-  const { propertyId } = useLocalSearchParams<{ propertyId: string }>();
+  const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
+  const { properties } = useProperties();
+  const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   
   const [charges, setCharges] = useState<ChargeConfigResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,10 +35,15 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     if (!token || !propertyId) return;
     try {
       setIsLoading(true);
-      const data = await getActiveChargesForProperty(propertyId as string, token);
+      const data = await getActiveChargesForProperty(propertyId, token);
       setCharges(data);
     } catch (e: any) {
-      Alert.alert("Error", "Failed to load charges");
+      console.error(e);
+      if (Platform.OS === 'web') {
+        alert("Failed to load charges");
+      } else {
+        Alert.alert("Error", "Failed to load charges");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -44,6 +54,10 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
       loadCharges();
     }, [loadCharges])
   );
+
+  useEffect(() => {
+    loadCharges();
+  }, [loadCharges]);
 
   const getIconData = (name: string, category: string) => {
     const n = name.toLowerCase();
@@ -61,22 +75,35 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   };
 
   const handleDelete = async (id: string) => {
-    Alert.alert("Delete Charge", "Are you sure you want to delete this charge configuration? It will not affect past billing cycles, but will no longer be applied to future cycles.", [
-      { text: "Cancel", style: "cancel" },
-      { 
-        text: "Delete", 
-        style: "destructive",
-        onPress: async () => {
-          if (!token) return;
-          try {
-            await deactivateChargeConfig(id, token);
-            loadCharges();
-          } catch (e: any) {
-             Alert.alert("Error", e.message || "Failed to delete");
-          }
+    const performDelete = async () => {
+      if (!token) return;
+      try {
+        await deactivateChargeConfig(id, token);
+        loadCharges();
+      } catch (e: any) {
+        if (Platform.OS === 'web') {
+          alert(e.message || "Failed to delete");
+        } else {
+          Alert.alert("Error", e.message || "Failed to delete");
         }
       }
-    ]);
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmDelete = window.confirm("Are you sure you want to delete this charge configuration? It will not affect past billing cycles, but will no longer be applied to future cycles.");
+      if (confirmDelete) {
+        await performDelete();
+      }
+    } else {
+      Alert.alert("Delete Charge", "Are you sure you want to delete this charge configuration? It will not affect past billing cycles, but will no longer be applied to future cycles.", [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: performDelete
+        }
+      ]);
+    }
   };
 
   const headerOpacity = scrollY.interpolate({
@@ -95,26 +122,29 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     <LinearGradient
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
+      end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* Pinned header */}
-        <View style={styles.header}>
-          {isDesktop ? (
-            <TouchableOpacity onPress={() => router.back()} style={styles.desktopBackButton}>
-              <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
-              <Text style={styles.desktopBackButtonText}>Back</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-            </TouchableOpacity>
-          )}
-          <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
-            <Text style={styles.compactTitleText}>Charge Configuration</Text>
-          </Animated.View>
-        </View>
+        {isDesktop ? (
+          <DesktopNavBar 
+            activeTab="Properties" 
+            onBack={() => router.back()} 
+            backText="Back to Property" 
+          />
+        ) : (
+          <View style={styles.header}>
+            <View style={styles.mobileHeaderInner}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+              </TouchableOpacity>
+              <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
+                <Text style={styles.compactTitleText}>Charge Configuration</Text>
+              </Animated.View>
+            </View>
+          </View>
+        )}
 
         <Animated.ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -125,127 +155,160 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
           )}
           scrollEventThrottle={16}
         >
-          {/* Hero Titles */}
-          <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.mainTitle}>Charge{'\n'}Configuration</Text>
-            <Text style={styles.subTitle}>Manage global property overheads and billing logic.</Text>
-          </Animated.View>
+          <View style={isDesktop ? styles.desktopInner : null}>
+            {/* Hero Titles */}
+            <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
+              {isDesktop ? (
+                <Text style={styles.titleLineDesktop}>Charge Configuration</Text>
+              ) : (
+                <>
+                  <Text style={styles.titleLine}>Charge</Text>
+                  <Text style={styles.titleLine}>Configuration</Text>
+                </>
+              )}
+            </Animated.View>
 
-          <Text style={styles.sectionHeader}>Active Definitions ({(charges || []).length})</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeader}>Active Definitions ({(charges || []).length})</Text>
+              {(charges || []).length > 0 && !isLoading && (
+                <TouchableOpacity 
+                  style={styles.headerAddButtonWrapper}
+                  activeOpacity={0.85}
+                  onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+                >
+                  <LinearGradient
+                    colors={['#00d4ff', '#0072ff']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.headerAddButton}
+                  >
+                    <Text style={styles.headerAddButtonText}>ADD NEW</Text>
+                    <MaterialIcons name="add" size={16} color="#fff" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+            </View>
 
-          {isLoading ? (
-            <ActivityIndicator size="large" color="#006875" style={{ marginTop: 40 }} />
-          ) : (charges || []).length === 0 ? (
-            <BlurView intensity={60} tint="light" style={styles.emptyCard}>
-              <View style={styles.emptyIconCircle}>
-                <MaterialIcons name="receipt-long" size={36} color="#6b7a7d" />
+            {isLoading ? (
+              <ActivityIndicator size="large" color="#006875" style={{ marginTop: 40 }} />
+            ) : (charges || []).length === 0 ? (
+              <BlurView intensity={60} tint="light" style={styles.emptyCard}>
+                <View style={styles.emptyIconCircle}>
+                  <MaterialIcons name="receipt-long" size={36} color="#6b7a7d" />
+                </View>
+                <Text style={styles.emptyTitle}>No charges found.</Text>
+                <Text style={styles.emptySubtitle}>
+                  Start tracking your overheads by adding your first charge category.
+                </Text>
+                
+                <TouchableOpacity 
+                  style={styles.createPropertyButton} 
+                  activeOpacity={0.8}
+                  onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+                >
+                  <LinearGradient
+                    colors={['#00d4ff', '#0072ff']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.createPropertyGradient}
+                  >
+                    <MaterialIcons name="add" size={24} color="#fff" />
+                    <Text style={styles.createPropertyText}>CREATE CHARGE</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.learnMoreContainer}>
+                  <MaterialIcons name="help-outline" size={16} color="#006875" />
+                  <Text style={styles.learnMoreText}>LEARN ABOUT CHARGE TRACKING</Text>
+                </TouchableOpacity>
+              </BlurView>
+            ) : (
+              <View style={isDesktop ? styles.gridContainer : styles.listContainer}>
+                {(charges || []).map(charge => {
+                  const iconObj = getIconData(charge.chargeName, charge.chargeCategory);
+                  return (
+                    <View 
+                      key={charge.id}
+                      style={isDesktop ? styles.gridCardWrapper : styles.listCardWrapper}
+                    >
+                      <BlurView intensity={60} tint="light" style={styles.expenseCard}>
+                        {/* Upper card area is pressable to edit the config */}
+                        <TouchableOpacity 
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            router.push(`/create-expense?propertyId=${propertyId}&chargeId=${charge.id}`);
+                          }}
+                        >
+                          <View style={styles.cardHeader}>
+                            <View style={[styles.iconWrapper, { backgroundColor: iconObj.bg }]}>
+                              <MaterialIcons name={iconObj.name as any} size={24} color={iconObj.color} />
+                            </View>
+                            <View style={styles.cardTextContainer}>
+                              <Text style={styles.cardTitle}>{charge.chargeName}</Text>
+                              <Text style={styles.cardSub}>
+                                {formatEnum(charge.chargeCategory)} • {formatEnum(charge.billingFrequency)}
+                              </Text>
+                            </View>
+                            <View style={styles.cardRight}>
+                              <View style={[styles.badge, { backgroundColor: charge.isActive ? '#ccfbf1' : '#fef3c7' }]}>
+                                 <Text style={[styles.badgeText, { color: charge.isActive ? '#0d9488' : '#d97706' }]}>
+                                   {charge.isActive ? 'ACTIVE' : 'PENDING'}
+                                 </Text>
+                              </View>
+                              <View style={styles.amountContainer}>
+                                <Text style={styles.amountBold}>₹{charge.baseRate}</Text>
+                                {charge.calculationStrategy === 'METERED' ? <Text style={styles.amountSuffix}>/ {charge.unitType || 'unit'}</Text> : <Text style={styles.amountSuffix}>/ mo</Text>}
+                              </View>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                        
+                        {/* Actions Row - sibling to the edit pressable (no nesting) */}
+                        <View style={{ flexDirection: 'row', justifyContent: charge.calculationStrategy === 'METERED' ? 'space-between' : 'flex-end', marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', paddingTop: 16 }}>
+                          
+                          {charge.calculationStrategy === 'METERED' && (
+                            <TouchableOpacity 
+                              onPress={() => {
+                                router.push(`/properties/${propertyId}/meter-readings`);
+                              }} 
+                              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                            >
+                              <MaterialCommunityIcons name="speedometer" size={16} color="#00bcd4" />
+                              <Text style={{ color: '#00bcd4', fontSize: 13, fontWeight: '700' }}>Record Readings</Text>
+                            </TouchableOpacity>
+                          )}
+
+                          {!charge.isSystemRequired ? (
+                            <TouchableOpacity onPress={() => handleDelete(charge.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                              <Feather name="trash-2" size={14} color="#ef4444" />
+                              <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>Delete</Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <Text style={{ color: '#849495', fontSize: 11, fontStyle: 'italic' }}>System Required</Text>
+                          )}
+                        </View>
+                      </BlurView>
+                    </View>
+                  );
+                })}
+
               </View>
-              <Text style={styles.emptyTitle}>No charges found.</Text>
-              <Text style={styles.emptySubtitle}>
-                Start tracking your overheads by adding your first charge category.
-              </Text>
-              
+            )}
+
+            {/* Dashed Create Button at Bottom (Mobile) */}
+            {!isDesktop && (charges || []).length > 0 && !isLoading && (
               <TouchableOpacity 
-                style={styles.createPropertyButton} 
-                activeOpacity={0.8}
+                style={styles.dashedButton} 
+                activeOpacity={0.7}
                 onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
               >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.createPropertyGradient}
-                >
-                  <MaterialIcons name="add" size={24} color="#fff" />
-                  <Text style={styles.createPropertyText}>CREATE CHARGE</Text>
-                </LinearGradient>
+                <View style={styles.dashedIconCircle}>
+                   <MaterialIcons name="add" size={24} color="#00bcd4" />
+                </View>
+                <Text style={styles.dashedButtonText}>Create New Expense</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.learnMoreContainer}>
-                <MaterialIcons name="help-outline" size={16} color="#006875" />
-                <Text style={styles.learnMoreText}>LEARN ABOUT CHARGE TRACKING</Text>
-              </TouchableOpacity>
-            </BlurView>
-          ) : (
-            (charges || []).map(charge => {
-              const iconObj = getIconData(charge.chargeName, charge.chargeCategory);
-              return (
-                <TouchableOpacity 
-                  key={charge.id}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    router.push(`/create-expense?propertyId=${propertyId}&chargeId=${charge.id}`);
-                  }}
-                >
-                  <BlurView intensity={60} tint="light" style={styles.expenseCard}>
-                    <View style={styles.cardHeader}>
-                    <View style={[styles.iconWrapper, { backgroundColor: iconObj.bg }]}>
-                      <MaterialIcons name={iconObj.name as any} size={24} color={iconObj.color} />
-                    </View>
-                    <View style={styles.cardTextContainer}>
-                      <Text style={styles.cardTitle}>{charge.chargeName}</Text>
-                      <Text style={styles.cardSub}>
-                        {formatEnum(charge.chargeCategory)} • {formatEnum(charge.billingFrequency)}
-                      </Text>
-                    </View>
-                    <View style={styles.cardRight}>
-                      <View style={[styles.badge, { backgroundColor: charge.isActive ? '#ccfbf1' : '#fef3c7' }]}>
-                         <Text style={[styles.badgeText, { color: charge.isActive ? '#0d9488' : '#d97706' }]}>
-                           {charge.isActive ? 'ACTIVE' : 'PENDING'}
-                         </Text>
-                      </View>
-                      <View style={styles.amountContainer}>
-                        <Text style={styles.amountBold}>₹{charge.baseRate}</Text>
-                        {charge.calculationStrategy === 'METERED' ? <Text style={styles.amountSuffix}>/ {charge.unitType || 'unit'}</Text> : <Text style={styles.amountSuffix}>/ mo</Text>}
-                      </View>
-                    </View>
-                  </View>
-                  
-                  {/* Subtle Glass Actions Row */}
-                  <View style={{ flexDirection: 'row', justifyContent: charge.calculationStrategy === 'METERED' ? 'space-between' : 'flex-end', marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', paddingTop: 16 }}>
-                    
-                    {charge.calculationStrategy === 'METERED' && (
-                      <TouchableOpacity 
-                        onPress={(e) => {
-                          e.stopPropagation(); // Prevent opening the edit screen
-                          router.push(`/properties/${propertyId}/meter-readings`);
-                        }} 
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                      >
-                        <MaterialCommunityIcons name="speedometer" size={16} color="#00bcd4" />
-                        <Text style={{ color: '#00bcd4', fontSize: 13, fontWeight: '700' }}>Record Readings</Text>
-                      </TouchableOpacity>
-                    )}
-
-                    {!charge.isSystemRequired ? (
-                      <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDelete(charge.id); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Feather name="trash-2" size={14} color="#ef4444" />
-                        <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>Delete</Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <Text style={{ color: '#849495', fontSize: 11, fontStyle: 'italic' }}>System Required</Text>
-                    )}
-                  </View>
-                  </BlurView>
-                </TouchableOpacity>
-              );
-            })
-          )}
-
-          {/* Dashed Create Button */}
-          {(charges || []).length > 0 && !isLoading && (
-            <TouchableOpacity 
-              style={styles.dashedButton} 
-              activeOpacity={0.7}
-              onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
-            >
-              <View style={styles.dashedIconCircle}>
-                 <MaterialIcons name="add" size={24} color="#00bcd4" />
-              </View>
-              <Text style={styles.dashedButtonText}>Create New Expense</Text>
-            </TouchableOpacity>
-          )}
-
+            )}
+          </View>
         </Animated.ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -261,8 +324,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 10,
-    paddingBottom: 0,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
@@ -270,7 +332,6 @@ const styles = StyleSheet.create({
   },
   compactTitleContainer: {
     flex: 1,
-    paddingBottom: 16,
   },
   compactTitleText: {
     fontSize: 22,
@@ -284,7 +345,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
   desktopBackButton: {
     flexDirection: 'row',
@@ -307,32 +367,58 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     marginBottom: 40,
-    paddingHorizontal: 8,
   },
-  mainTitle: {
-    fontSize: 42,
+  titleLine: {
+    fontSize: 48,
     fontWeight: '800',
     color: '#151d1e',
-    lineHeight: 46,
+    lineHeight: 52,
     letterSpacing: -1,
-    marginBottom: 8,
   },
-  subTitle: {
-    fontSize: 15,
-    color: '#5b6b6d',
-    fontWeight: '400',
+  titleLineDesktop: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#151d1e',
+    lineHeight: 38,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   sectionHeader: {
     fontSize: 16,
     fontWeight: '400',
     color: '#849495',
-    marginBottom: 20,
+  },
+  headerAddButtonWrapper: {
+    borderRadius: 19,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  headerAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 38,
+    paddingHorizontal: 18,
+  },
+  headerAddButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
   expenseCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 24,
     padding: 20,
-    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',
     overflow: 'hidden',
@@ -486,5 +572,59 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#006875',
     letterSpacing: 0.5,
-  }
+  },
+  desktopHeader: {
+    paddingHorizontal: 30,
+    paddingTop: 20,
+  },
+  desktopHeaderInner: {
+    width: '100%',
+    maxWidth: 1200,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  mobileHeaderInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  desktopInner: {
+    width: '100%',
+    maxWidth: 1200,
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 24,
+  },
+  listContainer: {
+    flexDirection: 'column',
+  },
+  gridCardWrapper: {
+    width: '48.5%',
+    minWidth: 320,
+  },
+  listCardWrapper: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  dashedButtonDesktop: {
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: '#67e8f9',
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(236, 254, 255, 0.5)',
+    paddingVertical: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    width: '48.5%',
+    minWidth: 320,
+    minHeight: 160,
+  },
 });

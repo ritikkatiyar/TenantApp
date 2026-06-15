@@ -21,6 +21,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Href, useRouter } from 'expo-router';
 import { Theme } from '@/src/theme/Theme';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { PropertyResponse } from '@/src/types/property';
@@ -323,11 +324,32 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const ListHeader = () => (
     <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
       {isDesktop ? (
-        <Text style={styles.mainTitle}>My Properties</Text>
+        <View style={styles.desktopTitleRow}>
+          <Text style={styles.mainTitle}>My Properties</Text>
+          {properties.length > 0 && (
+            <TouchableOpacity 
+              style={styles.headerAddButtonWrapper}
+              activeOpacity={0.85}
+              onPress={onNavigateToCreateProperty}
+            >
+              <LinearGradient
+                colors={['#00d4ff', '#0072ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.headerAddButton}
+              >
+                <Text style={styles.headerAddButtonText}>ADD PROPERTY</Text>
+                <MaterialIcons name="add" size={16} color="#fff" />
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        </View>
       ) : (
-        <View style={styles.largeTitleContainer}>
-          <Text style={styles.titleLine}>My</Text>
-          <Text style={styles.titleLine}>Properties</Text>
+        <View style={styles.mobileTitleRow}>
+          <View style={styles.largeTitleContainer}>
+            <Text style={styles.titleLine}>My</Text>
+            <Text style={styles.titleLine}>Properties</Text>
+          </View>
         </View>
       )}
       {isDesktop ? (
@@ -387,9 +409,9 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   );
 
   const ListFooter = () => (
-    properties.length > 0 ? (
+    properties.length > 0 && !isDesktop ? (
       <TouchableOpacity
-        style={[styles.addNewCard, isDesktop && styles.addNewCardDesktop]}
+        style={styles.addNewCard}
         onPress={onNavigateToCreateProperty}
         activeOpacity={0.7}
       >
@@ -406,22 +428,18 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
       <View style={styles.desktopShell}>
         <View style={styles.desktopMain}>
-          <BlurView intensity={70} tint="light" style={styles.topbar}>
-            <View style={styles.topbarTabs}>
-              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/command-center')}><Text style={[styles.topbarTab, styles.topbarTabActive]}>Properties</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
-            </View>
-            <View style={styles.topbarRight}>
-              <BlurView intensity={50} tint="light" style={styles.searchBox}>
-                <MaterialIcons name="search" size={22} color="#6b7a7d" />
-                <Text style={styles.searchPlaceholder}>Search portfolio...</Text>
-              </BlurView>
-              <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
-              <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/expenses')}><MaterialIcons name="settings" size={24} color={Theme.Colors.onSurface} /></TouchableOpacity>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
-            </View>
-          </BlurView>
+          <DesktopNavBar 
+            activeTab="Properties" 
+            rightContent={
+              <>
+                <BlurView intensity={50} tint="light" style={styles.searchBox}>
+                  <MaterialIcons name="search" size={22} color="#6b7a7d" />
+                  <Text style={styles.searchPlaceholder}>Search portfolio...</Text>
+                </BlurView>
+                <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
+              </>
+            }
+          />
 
           <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
             <View style={styles.desktopInner}>
@@ -439,18 +457,9 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                       {renderPropertyCard(property)}
                     </View>
                   ))}
-                  <View style={styles.propertyGridItem}>
-                    <ListFooter />
-                  </View>
                 </View>
               )}
-              <View style={styles.desktopFooter}>
-                <Text style={styles.footerBrand}>TenantApp</Text>
-                <TouchableOpacity onPress={() => router.push('/billing')}><Text style={styles.footerLink}>Billing</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.footerLink}>Reports</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/escalations')}><Text style={styles.footerLink}>Contact Support</Text></TouchableOpacity>
-                <Text style={styles.footerCopy}>© 2024 TenantApp Management Suite.</Text>
-              </View>
+
             </View>
           </ScrollView>
         </View>
@@ -864,8 +873,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   mobileHeader: {
-    height: 60,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -933,6 +942,41 @@ const styles = StyleSheet.create({
   titleContainer: {
     marginTop: 16,
     marginBottom: 24,
+  },
+  desktopTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  mobileTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  headerAddButtonWrapper: {
+    borderRadius: 19,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  headerAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 38,
+    paddingHorizontal: 18,
+  },
+  headerAddButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 0.5,
   },
   largeTitleContainer: {
     marginBottom: 20,
@@ -1234,41 +1278,40 @@ const styles = StyleSheet.create({
     color: Theme.Colors.primary,
   },
   manageButtonWrapper: {
-    borderRadius: 100,
+    borderRadius: 28,
     overflow: 'hidden',
   },
   manageButtonWrapperMobile: {
     marginHorizontal: 24,
     marginBottom: 24,
     shadowColor: Theme.Colors.primaryContainer,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 5,
+    shadowRadius: 10,
+    elevation: 4,
   },
   manageButtonWrapperDesktop: {
     flex: 1,
     marginHorizontal: 0,
     marginTop: 0,
     marginBottom: 0,
-    borderRadius: 100,
   },
   manageButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 15,
+    height: 56,
     gap: 8,
   },
   emptyButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
   },
   manageButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 0,
+    letterSpacing: 0.5,
   },
   addNewCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.4)',

@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur'; // Ensure BlurView is available for web and mobile
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { Gesture, GestureDetector, GestureHandlerRootView, ScrollView, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -920,23 +921,11 @@ export default function FloorEditorScreen({
           {/* Main Workspace */}
           <View style={styles.desktopMain}>
             {/* Topbar Row */}
-            <View style={styles.topbar}>
-              <View style={styles.topbarTabs}>
-                <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
-                <TouchableOpacity onPress={onBack}><Text style={[styles.topbarTab, styles.topbarTabActive]}>Properties</Text></TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
-              </View>
-
-              <View style={styles.topbarRight}>
-                <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop}>
-                  <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
-                  <Text style={styles.backButtonTextDesktop}>Back to Floor Overview</Text>
-                </TouchableOpacity>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text>
-                </View>
-              </View>
-            </View>
+            <DesktopNavBar 
+              activeTab="Properties" 
+              onBack={onBack} 
+              backText="Back to Floor Overview" 
+            />
 
             {/* Content Container */}
             <View style={[styles.flex, styles.desktopContent]}>
@@ -2026,9 +2015,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 32,
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
   backButton: {
     width: 40,
@@ -2037,9 +2025,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
-  titleContainer: {},
+  titleContainer: {
+    marginTop: 16,
+  },
   titleLine: {
     fontSize: 42,
     fontWeight: '800',
@@ -2366,16 +2355,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
     elevation: 4,
   },
   saveButtonText: {
     fontSize: 16,
     fontWeight: '800',
     color: '#fff',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   warningContainer: {
     flexDirection: 'row',
@@ -2645,24 +2634,24 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   desktopSaveButtonWrapper: {
-    borderRadius: 24,
+    borderRadius: 23,
     overflow: 'hidden',
     shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 2,
   },
   desktopSaveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 12,
+    height: 46,
     paddingHorizontal: 24,
   },
   desktopSaveButtonText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.5,
   },

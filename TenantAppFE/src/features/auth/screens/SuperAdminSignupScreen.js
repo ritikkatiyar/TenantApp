@@ -197,7 +197,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#eff6f8',
+    backgroundColor: 'transparent',
   },
   container: {
     flex: 1,
