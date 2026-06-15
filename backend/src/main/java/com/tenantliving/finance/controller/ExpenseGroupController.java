@@ -4,14 +4,6 @@ import com.tenantliving.common.response.ApiResponse;
 import com.tenantliving.finance.dto.ExpenseGroupDTOs;
 import com.tenantliving.finance.mapper.ExpenseGroupMapper;
 import com.tenantliving.finance.service.interfaces.ExpenseGroupService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,26 +16,23 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/finance/groups")
 @RequiredArgsConstructor
-@Tag(name = "Expense Groups", description = "Roommate financial group APIs")
-@SecurityRequirement(name = "bearerAuth")
+    /**
+     * Expense Groups
+     * Roommate financial group APIs
+     */
+
 public class ExpenseGroupController {
 
     private final ExpenseGroupService expenseGroupService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF', 'USER')")
-    @Operation(
-            summary = "Create expense group",
-            description = "Creates an internal roommate financial group for a unit. "
-                    + "This group is independent from owner rent-cycle billing."
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Expense group created",
-                    content = @Content(schema = @Schema(implementation = ExpenseGroupDTOs.ExpenseGroupResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation failed"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Unit or creator user not found"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role")
-    })
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+        /**
+     * Create expense group
+     * Creates an internal roommate financial group for a unit. 
+     */
+
+    
     public ResponseEntity<ApiResponse<ExpenseGroupDTOs.ExpenseGroupResponse>> create(
             @Valid @RequestBody ExpenseGroupDTOs.CreateExpenseGroupRequest request
     ) {
@@ -52,19 +41,15 @@ public class ExpenseGroupController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF', 'USER')")
-    @Operation(
-            summary = "Get expense group",
-            description = "Returns a roommate financial group by UUID, including unit reference and creator."
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Expense group returned",
-                    content = @Content(schema = @Schema(implementation = ExpenseGroupDTOs.ExpenseGroupResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense group not found"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role")
-    })
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+        /**
+     * Get expense group
+     * Returns a roommate financial group by UUID, including unit reference and creator.
+     */
+
+    
     public ResponseEntity<ApiResponse<ExpenseGroupDTOs.ExpenseGroupResponse>> get(
-            @Parameter(description = "Expense group UUID", required = true, in = ParameterIn.PATH)
+            
             @PathVariable UUID id
     ) {
         return ResponseEntity.ok(ApiResponse.success(ExpenseGroupMapper.toResponse(expenseGroupService.getById(id))));

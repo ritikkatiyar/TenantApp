@@ -339,7 +339,7 @@ export default function EditPropertyScreen({
   }
 
   if (isDesktop) {
-    return <DesktopShell />;
+    return DesktopShell();
   }
 
   return (

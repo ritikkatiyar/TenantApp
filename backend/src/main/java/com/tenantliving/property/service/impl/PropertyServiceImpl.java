@@ -1,14 +1,15 @@
 package com.tenantliving.property.service.impl;
 
-import com.tenantliving.common.domain.PropertyRole;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
 import com.tenantliving.property.repository.PropertyRepository;
 import com.tenantliving.property.service.interfaces.PropertyService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserService;
-import com.tenantliving.property.domain.UserPropertyRoleTbl;
-import com.tenantliving.property.repository.UserPropertyRoleRepository;
+import com.tenantliving.auth.domain.MembershipTbl;
+import com.tenantliving.auth.domain.MembershipRoleTbl;
+import com.tenantliving.auth.repository.MembershipRepository;
+import com.tenantliving.auth.repository.MembershipRoleRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +27,13 @@ import java.util.UUID;
 public class PropertyServiceImpl implements PropertyService {
     private final PropertyRepository propertyRepository;
     private final UserService userService;
-    private final UserPropertyRoleRepository userPropertyRoleRepository;
+    private final MembershipRepository membershipRepository;
+    private final MembershipRoleRepository membershipRoleRepository;
     private final LeaseRepository leaseRepository;
 
     @Override
     @Transactional
-    public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID ownerId, UUID creatorId) {
-        UserTbl owner = userService.getUserById(ownerId);
+    public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID creatorId) {
         UserTbl creator = userService.getUserById(creatorId);
 
         PropertyTbl property = PropertyTbl.builder()
@@ -41,20 +42,23 @@ public class PropertyServiceImpl implements PropertyService {
                 .city(request.city())
                 .landmark(request.landmark())
                 .totalFloors(request.totalFloors())
-                .owner(owner)
+                .owner(creator)
                 .build();
         PropertyTbl savedProperty = propertyRepository.save(property);
 
-        PropertyRole creatorRole = creator.getId().equals(owner.getId()) ? PropertyRole.OWNER : PropertyRole.MANAGER;
-        UserPropertyRoleTbl creatorMapping = UserPropertyRoleTbl.builder()
+        String roleCode = "PROPERTY_OWNER";
+        MembershipRoleTbl membershipRole = membershipRoleRepository.findByCode(roleCode)
+                .orElseThrow(() -> new RuntimeException("Role not found: " + roleCode));
+
+        MembershipTbl creatorMapping = MembershipTbl.builder()
                 .user(creator)
                 .property(savedProperty)
-                .role(creatorRole)
+                .role(membershipRole)
                 .assignedBy(creator)
                 .build();
-        userPropertyRoleRepository.save(creatorMapping);
+        membershipRepository.save(creatorMapping);
         
-        log.info("[PROPERTY] User {} created property: {} on plan", ownerId, savedProperty.getId());
+        log.info("[PROPERTY] User {} created property: {}", creatorId, savedProperty.getId());
         return savedProperty;
     }
 
@@ -69,6 +73,17 @@ public class PropertyServiceImpl implements PropertyService {
         property.setLandmark(request.landmark());
         property.setTotalFloors(request.totalFloors());
         return propertyRepository.save(property);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PropertyTbl> getPropertiesByUserId(UUID userId) {
+        List<MembershipTbl> memberships = membershipRepository.findByUserId(userId);
+        return memberships.stream()
+                .map(MembershipTbl::getProperty)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
     }
 
     @Override
@@ -102,7 +117,8 @@ public class PropertyServiceImpl implements PropertyService {
             throw new RuntimeException("Cannot delete property because it has assigned tenants or leases.");
         }
         
-        userPropertyRoleRepository.deleteByProperty_Id(propertyId);
+        List<MembershipTbl> memberships = membershipRepository.findByPropertyId(propertyId);
+        membershipRepository.deleteAll(memberships);
         propertyRepository.delete(property);
     }
 }

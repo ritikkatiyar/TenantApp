@@ -21,7 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.ai.chat.client.ChatClient;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+
 import java.util.UUID;
 
 @Service

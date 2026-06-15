@@ -1,22 +1,10 @@
 package com.tenantliving.property.controller;
 
-import com.tenantliving.common.exception.ApiError;
 import com.tenantliving.common.response.ApiResponse;
 import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
-import com.tenantliving.billing.annotation.EnforceSubscription;
-import com.tenantliving.billing.annotation.OwnerId;
-import com.tenantliving.billing.annotation.SubscriptionFeature;
 import com.tenantliving.property.service.interfaces.PropertyService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,47 +18,43 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/property/properties")
 @RequiredArgsConstructor
-@Tag(name = "Properties (admin)", description = "Property administration; requires SUPER_ADMIN or ADMIN")
-@SecurityRequirement(name = "bearerAuth")
+    /**
+     * Properties
+     * Property administration
+     */
+
 public class PropertyController {
     private final PropertyService propertyService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @EnforceSubscription(feature = SubscriptionFeature.PROPERTIES)
-    @Operation(summary = "Create property", description = "Creates a new property for the provided owner.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Property created"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation failed",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role SUPER_ADMIN or ADMIN", content = @Content)
-    })
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+        /**
+     * Create property
+     * Creates a new property for the authenticated user.
+     */
+
+    
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> createProperty(
-            @Parameter(description = "Owner UUID", required = true, in = ParameterIn.QUERY, example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
-            @OwnerId @RequestParam UUID ownerId,
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody PropertyDTOs.CreatePropertyRequest request) {
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         UUID creatorId = UUID.fromString(currentUser.getId());
-        PropertyTbl createdProperty = propertyService.createProperty(request, ownerId, creatorId);
+        PropertyTbl createdProperty = propertyService.createProperty(request, creatorId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(toResponse(createdProperty)));
     }
 
     @PutMapping("/{propertyId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Update property", description = "Updates an existing property's basic details.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property updated"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation failed",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role SUPER_ADMIN or ADMIN", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Property not found or server error (see logs)",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
+        /**
+     * Update property
+     * Updates an existing property's basic details.
+     */
+
+    
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> updateProperty(
-            @Parameter(description = "Property UUID", required = true, in = ParameterIn.PATH, example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+            
             @PathVariable UUID propertyId,
             @Valid @RequestBody PropertyDTOs.UpdatePropertyRequest request) {
         PropertyTbl updatedProperty = propertyService.updateProperty(propertyId, request);
@@ -78,19 +62,34 @@ public class PropertyController {
     }
 
     @GetMapping("/{propertyId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Get property", description = "Retrieves an existing property's basic details.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property returned"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role SUPER_ADMIN or ADMIN", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+        /**
+     * Get property
+     * Retrieves an existing property's basic details.
+     */
+
+    
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> getProperty(
-            @Parameter(description = "Property UUID", required = true, in = ParameterIn.PATH, example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+            
             @PathVariable UUID propertyId) {
         PropertyTbl property = propertyService.getPropertyById(propertyId);
         return ResponseEntity.ok(ApiResponse.success(toResponse(property)));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+        /**
+     * Get my properties
+     * Retrieves properties that the authenticated user has access to.
+     */
+    public ResponseEntity<ApiResponse<java.util.List<PropertyDTOs.PropertyResponse>>> getMyProperties(
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = UUID.fromString(currentUser.getId());
+        java.util.List<PropertyTbl> properties = propertyService.getPropertiesByUserId(userId);
+        return ResponseEntity.ok(ApiResponse.success(properties.stream().map(this::toResponse).toList()));
     }
 
     private PropertyDTOs.PropertyResponse toResponse(PropertyTbl property) {
@@ -107,18 +106,15 @@ public class PropertyController {
     }
 
     @DeleteMapping("/{propertyId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    @Operation(summary = "Delete property", description = "Deletes an existing property if it has no assigned tenants.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Property deleted"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation failed (e.g. has tenants)",
-                    content = @Content(schema = @Schema(implementation = ApiError.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Missing role SUPER_ADMIN or ADMIN", content = @Content),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Property not found",
-                    content = @Content(schema = @Schema(implementation = ApiError.class)))
-    })
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_DELETE')")
+        /**
+     * Delete property
+     * Deletes an existing property if it has no assigned tenants.
+     */
+
+    
     public ResponseEntity<ApiResponse<Void>> deleteProperty(
-            @Parameter(description = "Property UUID", required = true, in = ParameterIn.PATH, example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+            
             @PathVariable UUID propertyId) {
         try {
             propertyService.deleteProperty(propertyId);

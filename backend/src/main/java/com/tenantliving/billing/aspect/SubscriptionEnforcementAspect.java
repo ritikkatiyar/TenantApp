@@ -1,7 +1,6 @@
 package com.tenantliving.billing.aspect;
 
 import com.tenantliving.billing.annotation.EnforceSubscription;
-import com.tenantliving.billing.annotation.OwnerId;
 import com.tenantliving.billing.annotation.SubscriptionFeature;
 import com.tenantliving.billing.domain.SaasSubscriptionTbl;
 import com.tenantliving.billing.service.interfaces.BillingWalletService;
@@ -14,13 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.reflect.MethodSignature;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 @Aspect
@@ -35,7 +32,7 @@ public class SubscriptionEnforcementAspect {
     @Before("@annotation(enforceSubscription)")
     public void enforce(JoinPoint joinPoint, EnforceSubscription enforceSubscription) {
         SubscriptionFeature feature = enforceSubscription.feature();
-        UUID ownerId = resolveOwnerId(joinPoint);
+        UUID ownerId = resolveOwnerId();
 
         if (ownerId == null) {
             log.warn("[SUBSCRIPTION ENFORCEMENT] Could not resolve owner ID for feature check: {}", feature);
@@ -60,23 +57,7 @@ public class SubscriptionEnforcementAspect {
         }
     }
 
-    private UUID resolveOwnerId(JoinPoint joinPoint) {
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        Method method = signature.getMethod();
-        Object[] args = joinPoint.getArgs();
-        Annotation[][] parameterAnnotations = method.getParameterAnnotations();
-
-        for (int i = 0; i < parameterAnnotations.length; i++) {
-            for (Annotation annotation : parameterAnnotations[i]) {
-                if (annotation instanceof OwnerId) {
-                    if (args[i] instanceof UUID) {
-                        return (UUID) args[i];
-                    }
-                }
-            }
-        }
-
-        // Fallback: Get currently authenticated user from Security Context
+    private UUID resolveOwnerId() {
         try {
             Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             if (principal instanceof UserDetailsImpl) {
@@ -85,7 +66,6 @@ public class SubscriptionEnforcementAspect {
         } catch (Exception e) {
             log.debug("Authentication not available in SecurityContextHolder");
         }
-
         return null;
     }
 }

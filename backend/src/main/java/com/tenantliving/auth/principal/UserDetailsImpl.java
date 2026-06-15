@@ -80,6 +80,11 @@ public class UserDetailsImpl implements UserDetails {
         return authorities;
     }
 
+    public boolean hasGlobalRole(String roleName) {
+        return authorities.stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + roleName));
+    }
+
     @Override
     public String getPassword() {
         return password;

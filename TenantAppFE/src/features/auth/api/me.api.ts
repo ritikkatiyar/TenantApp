@@ -1,9 +1,9 @@
 import { apiRequest } from '@/src/api/client';
 
-export interface PropertyRoleSummary {
+export interface MembershipSummary {
   propertyId: string;
   propertyName: string;
-  role: string;
+  membershipRoleCode: string;
 }
 
 export interface ActiveLeaseSummary {
@@ -18,7 +18,7 @@ export interface ActiveLeaseSummary {
 
 export interface MyContextResponse {
   globalRole: string;
-  propertyRoles: PropertyRoleSummary[];
+  memberships: MembershipSummary[];
   activeLeases: ActiveLeaseSummary[];
 }
 

@@ -1,17 +1,18 @@
 package com.tenantliving.finance.service.impl;
 
 import com.tenantliving.common.domain.LeaseStatus;
-import com.tenantliving.common.domain.PropertyRole;
+
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.finance.domain.LeaseTbl;
 import com.tenantliving.finance.dto.LeaseDTOs;
 import com.tenantliving.finance.repository.LeaseRepository;
 import com.tenantliving.finance.service.interfaces.LeaseService;
-import com.tenantliving.property.domain.PropertyTbl;
+
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.service.interfaces.UnitService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.auth.service.interfaces.MembershipService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class LeaseServiceImpl implements LeaseService {
     private final LeaseRepository leaseRepository;
     private final UnitService unitService;
     private final UserService userService;
-    private final com.tenantliving.property.service.interfaces.UserPropertyRoleService userPropertyRoleService;
+    private final MembershipService membershipService;
 
     @Override
     @Transactional
@@ -53,7 +54,7 @@ public class LeaseServiceImpl implements LeaseService {
             throw new BusinessException(HttpStatus.CONFLICT, "Unit capacity of " + unit.getCapacity() + " has been reached.");
         }
 
-        userPropertyRoleService.ensureTenantRole(tenant.getId(), unit.getProperty().getId(), assignedByUserId);
+        membershipService.ensureTenantRole(tenant.getId(), unit.getProperty().getId(), assignedByUserId);
 
         LeaseTbl lease = LeaseTbl.builder()
                 .userId(request.userId())
@@ -126,7 +127,7 @@ public class LeaseServiceImpl implements LeaseService {
         );
 
         if (!hasOtherLeases) {
-            userPropertyRoleService.removeTenantRole(tenantId, propertyId);
+            membershipService.removeTenantRole(tenantId, propertyId);
         }
     }
 }

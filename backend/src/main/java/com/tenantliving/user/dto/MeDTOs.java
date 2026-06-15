@@ -1,6 +1,5 @@
 package com.tenantliving.user.dto;
 
-import com.tenantliving.common.domain.PropertyRole;
 import com.tenantliving.common.domain.UserRole;
 
 import java.math.BigDecimal;
@@ -11,14 +10,14 @@ public class MeDTOs {
 
     public record MyContextResponse(
             UserRole globalRole,
-            List<PropertyRoleSummary> propertyRoles,
+            List<MembershipSummary> memberships,
             List<ActiveLeaseSummary> activeLeases
     ) {}
 
-    public record PropertyRoleSummary(
+    public record MembershipSummary(
             UUID propertyId,
             String propertyName,
-            PropertyRole role
+            String membershipRoleCode
     ) {}
 
     public record ActiveLeaseSummary(

@@ -1,10 +1,9 @@
 package com.tenantliving.property.service.impl;
 
 import com.tenantliving.common.domain.FacingDirection;
-import com.tenantliving.common.domain.LeaseStatus;
+
 import com.tenantliving.common.exception.BusinessException;
-import com.tenantliving.finance.domain.LeaseTbl;
-import com.tenantliving.finance.service.interfaces.LeaseService;
+
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
 import com.tenantliving.property.service.interfaces.PropertyService;
@@ -12,8 +11,7 @@ import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.dto.UnitDTOs;
 import com.tenantliving.property.repository.UnitRepository;
 import com.tenantliving.property.service.interfaces.UnitService;
-import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.service.interfaces.UserService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

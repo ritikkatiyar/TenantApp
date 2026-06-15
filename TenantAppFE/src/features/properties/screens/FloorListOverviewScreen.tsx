@@ -208,7 +208,7 @@ export default function FloorListOverviewScreen({
   );
 
   if (isDesktop) {
-    return <DesktopShell />;
+    return DesktopShell();
   }
 
   return (

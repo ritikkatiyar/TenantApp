@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import { getPropertiesByUser } from '@/src/features/properties/api/userPropertyRole.api';
+import { getMyProperties } from '@/src/features/properties/api/propertyList.api';
 import { deletePropertyApi } from '@/src/features/properties/api/property.api';
 import type { PropertyResponse } from '@/src/types/property';
 
@@ -16,7 +16,7 @@ export function useProperties() {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await getPropertiesByUser(user.id, accessToken);
+      const data = await getMyProperties(accessToken);
       setProperties(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');

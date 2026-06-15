@@ -5,9 +5,6 @@ import com.tenantliving.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
 import com.tenantliving.announcement.service.interfaces.AnnouncementService;
 import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.common.response.ApiResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,15 +19,22 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/announcements")
 @RequiredArgsConstructor
-@Tag(name = "Announcements & Notices", description = "Endpoints for creating and viewing property broadcasts and tracking read-status.")
-@SecurityRequirement(name = "bearerAuth")
+    /**
+     * Announcements & Notices
+     * Endpoints for creating and viewing property broadcasts and tracking read-status.
+     */
+
 public class AnnouncementController {
 
     private final AnnouncementService announcementService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
-    @Operation(summary = "Create and broadcast announcement", description = "Creates a notice and triggers event broadcasts to target recipients.")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId(), 'ANNOUNCEMENT_CREATE')")
+        /**
+     * Create and broadcast announcement
+     * Creates a notice and triggers event broadcasts to target recipients.
+     */
+
     public ResponseEntity<ApiResponse<AnnouncementResponse>> createAnnouncement(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody CreateAnnouncementRequest request) {
@@ -40,15 +44,18 @@ public class AnnouncementController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF', 'USER')")
-    @Operation(summary = "Get announcements", description = "For tenants, returns scoped notices for their active lease. For landlords/staff, returns all notices for the specified property.")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+        /**
+     * Get announcements
+     * For tenants, returns scoped notices for their active lease. For landlords/staff, returns all notices for the specified property.
+     */
+
     public ResponseEntity<ApiResponse<List<AnnouncementResponse>>> getAnnouncements(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId) {
 
         UUID userId = UUID.fromString(currentUser.getId());
-        boolean isTenant = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
+        boolean isTenant = currentUser.hasGlobalRole("USER");
 
         List<AnnouncementResponse> responses;
         if (isTenant) {
@@ -64,8 +71,12 @@ public class AnnouncementController {
     }
 
     @PostMapping("/{id}/read")
-    @PreAuthorize("hasRole('USER')")
-    @Operation(summary = "Mark announcement as read", description = "Logs a read receipt for the current tenant user.")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+        /**
+     * Mark announcement as read
+     * Logs a read receipt for the current tenant user.
+     */
+
     public ResponseEntity<ApiResponse<Void>> markAsRead(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @PathVariable UUID id) {

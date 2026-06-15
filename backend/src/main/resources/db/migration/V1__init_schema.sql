@@ -25,18 +25,6 @@ CREATE TABLE property_tbl (
     CONSTRAINT fk_property_owner FOREIGN KEY (owner_id) REFERENCES user_tbl(id) ON DELETE SET NULL
 );
 
-CREATE TABLE user_property_role_tbl (
-    id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
-    property_id VARCHAR(36) NOT NULL,
-    role ENUM('OWNER', 'MANAGER', 'TENANT') NOT NULL,
-    assigned_by VARCHAR(36),
-    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-    CONSTRAINT fk_user_property_role_user FOREIGN KEY (user_id) REFERENCES user_tbl(id) ON DELETE CASCADE,
-    CONSTRAINT fk_user_property_role_property FOREIGN KEY (property_id) REFERENCES property_tbl(id) ON DELETE CASCADE,
-    CONSTRAINT fk_user_property_role_assigned_by FOREIGN KEY (assigned_by) REFERENCES user_tbl(id) ON DELETE SET NULL
-);
 
 CREATE TABLE unit_tbl (
     id VARCHAR(36) PRIMARY KEY,
@@ -90,9 +78,7 @@ CREATE TABLE refreshtoken_tbl (
 );
 
 CREATE INDEX idx_property_owner_id ON property_tbl(owner_id);
-CREATE INDEX idx_user_property_role_user_id ON user_property_role_tbl(user_id);
-CREATE INDEX idx_user_property_role_property_id ON user_property_role_tbl(property_id);
-CREATE INDEX idx_user_property_role_assigned_by ON user_property_role_tbl(assigned_by);
+
 CREATE INDEX idx_unit_property_id ON unit_tbl(property_id);
 CREATE INDEX idx_lease_user_id ON lease_tbl(user_id);
 CREATE INDEX idx_lease_unit_id ON lease_tbl(unit_id);

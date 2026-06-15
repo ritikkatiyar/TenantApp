@@ -7,16 +7,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * User roles for the Tenant Living application.
  * 
  * Hierarchy:
- * - SUPER_ADMIN: Primary Landlord (owns properties)
- * - ADMIN: Secondary Owner/Co-owner (can manage properties)
- * - PROPERTY_STAFF: Assigned staff for day-to-day operations
- * - USER: Tenant (rents units)
+ * - SUPER_ADMIN: System Super Administrator
+ * - ADMIN: System Administrator
+ * - USER: Standard platform user
  */
 public enum UserRole {
     USER("User"),
-    SUPER_ADMIN("SuperAdmin"),   // Primary Landlord
-    ADMIN("Admin"),              // Secondary Owner / Co-owner
-    PROPERTY_STAFF("PropertyStaff");
+    SUPER_ADMIN("SuperAdmin"),   // System Super Administrator
+    ADMIN("Admin");              // System Administrator
 
     private final String displayName;
 

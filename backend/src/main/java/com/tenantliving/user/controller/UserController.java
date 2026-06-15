@@ -9,13 +9,12 @@ import com.tenantliving.common.domain.LeaseStatus;
 import com.tenantliving.finance.domain.LeaseTbl;
 import com.tenantliving.finance.service.interfaces.LeaseService;
 import com.tenantliving.user.dto.MeDTOs;
-import com.tenantliving.property.domain.UserPropertyRoleTbl;
-import com.tenantliving.property.service.interfaces.UserPropertyRoleService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.tenantliving.auth.domain.MembershipTbl;
+import com.tenantliving.auth.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,16 +30,19 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/user")
 @RequiredArgsConstructor
-@Tag(name = "Users", description = "User lookup APIs")
-@SecurityRequirement(name = "bearerAuth")
+    /**
+     * Users
+     * User lookup APIs
+     */
+
 public class UserController {
 
     private final UserService userService;
-    private final UserPropertyRoleService userPropertyRoleService;
+    private final MembershipRepository membershipRepository;
     private final LeaseService leaseService;
 
     @GetMapping("/search")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<UserDTOs.UserSearchResponse>>> searchByPhone(
             @RequestParam String phone
     ) {
@@ -51,7 +53,7 @@ public class UserController {
     }
 
     @PostMapping("/create-tenant")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'PROPERTY_STAFF')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<ApiResponse<UserDTOs.UserSearchResponse>> createTenant(
             @Valid @RequestBody UserDTOs.CreateTenantRequest request
     ) {
@@ -92,7 +94,12 @@ public class UserController {
     }
 
     @GetMapping("/me/context")
-    @Tag(name = "Me", description = "Current user context APIs")
+    @Transactional(readOnly = true)
+    /**
+     * Me
+     * Current user context APIs
+     */
+
     public ResponseEntity<ApiResponse<MeDTOs.MyContextResponse>> getContext(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
@@ -103,12 +110,13 @@ public class UserController {
         UUID userId = UUID.fromString(currentUser.getId());
         UserTbl user = userService.getUserById(userId);
         
-        List<UserPropertyRoleTbl> propertyRoles = userPropertyRoleService.getRolesByUserId(userId);
-        List<MeDTOs.PropertyRoleSummary> roleSummaries = propertyRoles.stream()
-                .map(role -> new MeDTOs.PropertyRoleSummary(
-                        role.getProperty().getId(),
-                        role.getProperty().getName(),
-                        role.getRole()
+        List<MembershipTbl> memberships = membershipRepository.findByUserId(userId);
+        List<MeDTOs.MembershipSummary> roleSummaries = memberships.stream()
+                .filter(m -> m.getProperty() != null)
+                .map(membership -> new MeDTOs.MembershipSummary(
+                        membership.getProperty().getId(),
+                        membership.getProperty().getName(),
+                        membership.getRole().getCode()
                 ))
                 .toList();
 

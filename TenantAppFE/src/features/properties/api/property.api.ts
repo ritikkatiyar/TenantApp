@@ -2,7 +2,6 @@ import { apiRequest } from '@/src/api/client';
 import type { CreatePropertyRequest, UpdatePropertyRequest, PropertyResponse } from '@/src/types/property';
 
 type CreatePropertyParams = {
-  ownerId: string;
   token: string;
   property: CreatePropertyRequest;
 };
@@ -14,9 +13,9 @@ type UpdatePropertyParams = {
 };
 
 export function createProperty(params: CreatePropertyParams): Promise<PropertyResponse> {
-  const { ownerId, token, property } = params;
+  const { token, property } = params;
 
-  return apiRequest<PropertyResponse>(`/api/v1/property/properties?ownerId=${ownerId}`, {
+  return apiRequest<PropertyResponse>(`/api/v1/property/properties`, {
     method: 'POST',
     token,
     body: JSON.stringify(property),

@@ -11,7 +11,7 @@ import com.tenantliving.finance.repository.ExpenseSplitRepository;
 import com.tenantliving.finance.service.interfaces.ExpenseSplitService;
 import com.tenantliving.finance.service.strategy.ExpenseSplitCalculationStrategy;
 import com.tenantliving.user.service.interfaces.UserService;
-import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

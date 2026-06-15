@@ -1,7 +1,7 @@
 package com.tenantliving.billing.validator;
 
 import com.tenantliving.billing.annotation.SubscriptionFeature;
-import com.tenantliving.billing.domain.SaasSubscriptionTbl;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

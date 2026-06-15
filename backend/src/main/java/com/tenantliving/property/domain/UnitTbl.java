@@ -6,7 +6,6 @@ import com.tenantliving.common.domain.UnitType;
 import com.tenantliving.property.domain.PropertyTbl;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.UUID;
 
 @Entity
 @Table(name = "unit_tbl", uniqueConstraints = {

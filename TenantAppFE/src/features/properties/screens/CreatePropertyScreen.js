@@ -98,13 +98,13 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
 
     try {
       const property = await createProperty({
-        ownerId,
         token: userToken,
         property: {
           name,
           address,
           city,
-          landmark
+          landmark,
+          totalFloors: parseInt(totalFloors, 10)
         },
       });
 
@@ -398,7 +398,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   );
 
   if (isDesktop) {
-    return <DesktopShell />;
+    return DesktopShell();
   }
 
   return (

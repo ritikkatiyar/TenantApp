@@ -27,8 +27,8 @@ export function runAICommand(payload: AICommandRequest, token: string): Promise<
   });
 }
 
-export function getAIJobStatus(jobId: string, token: string): Promise<AIJobStatusResponse> {
-  return apiRequest<AIJobStatusResponse>(`/api/v1/ai/commands/jobs/${jobId}`, {
+export function getJobStatus(jobId: string, token: string): Promise<AIJobStatusResponse> {
+  return apiRequest<AIJobStatusResponse>(`/api/v1/ai/jobs/${jobId}`, {
     method: 'GET',
     token,
     useAiApi: true,

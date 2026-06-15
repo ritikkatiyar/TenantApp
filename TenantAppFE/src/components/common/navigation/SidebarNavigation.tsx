@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -78,7 +78,7 @@ export default function SidebarNavigation() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.sidebarNav}>
+      <ScrollView style={styles.sidebarNavScroll} contentContainerStyle={styles.sidebarNav} showsVerticalScrollIndicator={false}>
         {renderSidebarLink('dashboard', 'Overview', '/analytics')}
         {renderSidebarLink('business', 'Portfolio', '/command-center')}
         {renderSidebarLink('assessment', 'Reports', '/reports')}
@@ -86,7 +86,7 @@ export default function SidebarNavigation() {
         {renderSidebarLink('build', 'Escalations', '/escalations')}
         {renderSidebarLink('campaign', 'Announcements', '/announcements')}
         {renderSidebarLink('settings', 'Settings', '/expenses')}
-      </View>
+      </ScrollView>
 
       <View style={[styles.sidebarFooter, isCollapsed && styles.sidebarFooterCollapsed]}>
         {!isCollapsed ? (
@@ -145,7 +145,8 @@ const styles = StyleSheet.create({
   },
   sidebarBrandTitle: { fontSize: 28, fontWeight: '800', lineHeight: 34, color: Theme.Colors.primary },
   sidebarBrandSub: { fontSize: 12, fontWeight: '700', letterSpacing: 2, color: Theme.Colors.onSurfaceVariant, marginTop: 4 },
-  sidebarNav: { gap: 14 },
+  sidebarNavScroll: { flex: 1, marginBottom: 16 },
+  sidebarNav: { gap: 14, paddingBottom: 16 },
   sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 18, borderRadius: Theme.Rounded.lg },
   sidebarLinkCollapsed: { justifyContent: 'center', paddingHorizontal: 0 },
   sidebarLinkActive: { backgroundColor: 'rgba(0, 224, 255, 0.10)', borderRightWidth: 4, borderRightColor: Theme.Colors.primaryContainer },

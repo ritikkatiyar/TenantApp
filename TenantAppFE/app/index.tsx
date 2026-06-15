@@ -18,7 +18,18 @@ export default function IndexScreen() {
     getMyContext(accessToken)
       .then((context) => {
         if (isMounted) {
-          setTarget(context.activeLeases.length > 0 ? '/tenant-home' : '/command-center');
+          const isGlobalAdmin = context.globalRole === 'SUPER_ADMIN' || context.globalRole === 'ADMIN';
+          const hasOwnerOrManagerMembership = context.memberships?.some(
+            m => m.membershipRoleCode === 'PROPERTY_OWNER' || m.membershipRoleCode === 'PROPERTY_MANAGER'
+          );
+          
+          if (isGlobalAdmin || hasOwnerOrManagerMembership) {
+            setTarget('/command-center');
+          } else if (context.memberships?.some(m => m.membershipRoleCode === 'PROPERTY_TENANT') || context.activeLeases?.length > 0) {
+            setTarget('/tenant-home');
+          } else {
+            setTarget('/command-center');
+          }
         }
       })
       .catch(() => {

@@ -468,7 +468,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   );
 
   if (isDesktop) {
-    return <DesktopShell />;
+    return DesktopShell();
   }
 
   return (
