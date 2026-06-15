@@ -87,3 +87,13 @@ FROM membership_role_tbl r
 JOIN permission_tbl p ON 1=1
 WHERE r.code = 'PROPERTY_TENANT'
   AND p.code IN ('PROPERTY_VIEW', 'LEASE_VIEW_OWN', 'PAYMENT_CREATE_OWN');
+
+
+-- Migrate existing data from user_property_role_tbl to membership_tbl
+INSERT INTO membership_tbl (id, user_id, property_id, role_id, assigned_by, created_at, updated_at)
+SELECT UUID(), u.user_id, u.property_id, r.id, u.assigned_by, u.created_at, u.updated_at
+FROM user_property_role_tbl u
+JOIN membership_role_tbl r ON r.code = CONCAT('PROPERTY_', u.role);
+
+-- Drop the old table
+DROP TABLE user_property_role_tbl;
