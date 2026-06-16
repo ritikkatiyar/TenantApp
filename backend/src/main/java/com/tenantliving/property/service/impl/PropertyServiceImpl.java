@@ -80,6 +80,7 @@ public class PropertyServiceImpl implements PropertyService {
     public List<PropertyTbl> getPropertiesByUserId(UUID userId) {
         List<MembershipTbl> memberships = membershipRepository.findByUserId(userId);
         return memberships.stream()
+                .filter(m -> m.getRole() == null || !"PROPERTY_TENANT".equals(m.getRole().getCode()))
                 .map(MembershipTbl::getProperty)
                 .filter(java.util.Objects::nonNull)
                 .distinct()

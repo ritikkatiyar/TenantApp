@@ -15,7 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
-import { getAIJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
+import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -84,7 +84,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               }
 
               try {
-                const jobStatus = await getAIJobStatus(jobId, token);
+                const jobStatus = await getJobStatus(jobId, token);
                 if (jobStatus.status === 'COMPLETED') {
                   clearInterval(interval);
                   resolve(jobStatus.response || 'Command completed successfully.');

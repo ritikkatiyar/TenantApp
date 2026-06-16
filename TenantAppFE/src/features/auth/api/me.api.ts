@@ -3,7 +3,8 @@ import { apiRequest } from '@/src/api/client';
 export interface MembershipSummary {
   propertyId: string;
   propertyName: string;
-  membershipRoleCode: string;
+  membershipRoleCode: 'PROPERTY_OWNER' | 'PROPERTY_MANAGER' | 'PROPERTY_CARETAKER' | 'PROPERTY_TENANT';
+  membershipRoleName: string;
 }
 
 export interface ActiveLeaseSummary {
@@ -18,8 +19,11 @@ export interface ActiveLeaseSummary {
 
 export interface MyContextResponse {
   globalRole: string;
-  memberships: MembershipSummary[];
+  managedProperties: MembershipSummary[];
+  tenantProperties: MembershipSummary[];
   activeLeases: ActiveLeaseSummary[];
+  isLandlord: boolean;
+  isTenant: boolean;
 }
 
 export function getMyContext(token: string): Promise<MyContextResponse> {

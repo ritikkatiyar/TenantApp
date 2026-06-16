@@ -27,7 +27,7 @@ public class ExpenseSplitController {
     private final ExpenseSplitService expenseSplitService;
 
     @PostMapping("/generate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("@authorizationService.hasPermissionByExpenseId(#request.expenseId(), 'EXPENSE_CREATE')")
         /**
      * Generate expense splits
      * Generates individual roommate obligations for one shared expense using EQUAL, PERCENTAGE, FIXED, CUSTOM, or ROTATIONAL strategy. 
@@ -41,7 +41,7 @@ public class ExpenseSplitController {
     }
 
     @GetMapping("/my-dues")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("isAuthenticated()")
         /**
      * Get my pending dues
      * Returns pending roommate split obligations for the authenticated user.
@@ -55,7 +55,7 @@ public class ExpenseSplitController {
     }
 
     @PostMapping("/{id}/settle")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("@authorizationService.hasPermissionByExpenseSplitId(#id, 'EXPENSE_CREATE')")
         /**
      * Settle expense split
      * Marks one roommate split obligation as SETTLED and records paidAt. 

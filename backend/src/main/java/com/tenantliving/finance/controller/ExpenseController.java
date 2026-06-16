@@ -27,7 +27,7 @@ public class ExpenseController {
     private final ExpenseService expenseService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("@authorizationService.hasPermissionByExpenseGroupId(#request.expenseGroupId(), 'EXPENSE_CREATE')")
         /**
      * Create shared expense
      * Creates a roommate shared expense entry, such as electricity, WiFi, groceries, or internal rent tracking. 
@@ -42,7 +42,7 @@ public class ExpenseController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("@authorizationService.hasPermissionByExpenseGroupId(#expenseGroupId, 'PROPERTY_VIEW')")
         /**
      * List shared expenses
      * Lists roommate shared expenses. Optional query params filter by expenseGroupId and billingMonth.
@@ -51,7 +51,7 @@ public class ExpenseController {
     
     public ResponseEntity<ApiResponse<List<ExpenseDTOs.ExpenseResponse>>> list(
             
-            @RequestParam(required = false) UUID expenseGroupId,
+            @RequestParam(required = true) UUID expenseGroupId,
             
             @RequestParam(required = false) String billingMonth
     ) {

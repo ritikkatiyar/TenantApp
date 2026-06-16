@@ -4,6 +4,7 @@ import com.tenantliving.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequ
 import com.tenantliving.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
 import com.tenantliving.announcement.service.interfaces.AnnouncementService;
 import com.tenantliving.auth.principal.UserDetailsImpl;
+import com.tenantliving.auth.service.interfaces.AuthorizationService;
 import com.tenantliving.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.util.UUID;
 public class AnnouncementController {
 
     private final AnnouncementService announcementService;
+    private final AuthorizationService authorizationService;
 
     @PostMapping
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId(), 'ANNOUNCEMENT_CREATE')")
@@ -44,7 +46,7 @@ public class AnnouncementController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("isAuthenticated()")
         /**
      * Get announcements
      * For tenants, returns scoped notices for their active lease. For landlords/staff, returns all notices for the specified property.
@@ -55,23 +57,20 @@ public class AnnouncementController {
             @RequestParam(required = false) UUID propertyId) {
 
         UUID userId = UUID.fromString(currentUser.getId());
-        boolean isTenant = currentUser.hasGlobalRole("USER");
 
-        List<AnnouncementResponse> responses;
-        if (isTenant) {
-            responses = announcementService.getNoticesForTenant(userId);
-        } else {
-            if (propertyId == null) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("Property ID is required for landlord/staff roles"));
-            }
-            responses = announcementService.getAnnouncementsForProperty(propertyId, userId);
+        if (propertyId != null && authorizationService.hasPermission(propertyId, "PROPERTY_VIEW")) {
+            return ResponseEntity.ok(ApiResponse.success(announcementService.getAnnouncementsForProperty(propertyId, userId)));
         }
 
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        if (propertyId == null || authorizationService.hasRole(propertyId, "PROPERTY_TENANT")) {
+            return ResponseEntity.ok(ApiResponse.success(announcementService.getNoticesForTenant(userId)));
+        }
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
     }
 
     @PostMapping("/{id}/read")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("isAuthenticated()")
         /**
      * Mark announcement as read
      * Logs a read receipt for the current tenant user.

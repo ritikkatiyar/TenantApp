@@ -19,12 +19,19 @@ interface NavItem {
   route: Href;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'insights', icon: 'insights', label: 'INSIGHTS', route: '/analytics' },
-  { id: 'properties', icon: 'domain', label: 'PROPERTIES', route: '/command-center' },
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+
+const LANDLORD_NAV_ITEMS: NavItem[] = [
+  { id: 'portfolio', icon: 'domain', label: 'PORTFOLIO', route: '/command-center' },
+  { id: 'finance', icon: 'account-balance', label: 'FINANCE', route: '/expenses' },
+  { id: 'announcements', icon: 'campaign', label: 'NOTICES', route: '/announcements' },
   { id: 'ai', icon: 'auto-awesome', label: 'AI', route: '/ai' },
-  { id: 'escalations', icon: 'error-outline', label: 'ESCALATIONS', route: '/escalations' },
-  { id: 'expenses', icon: 'settings', label: 'SETTINGS', route: '/expenses' },
+];
+
+const TENANT_NAV_ITEMS: NavItem[] = [
+  { id: 'home', icon: 'home', label: 'HOME', route: '/tenant-home' },
+  { id: 'announcements', icon: 'campaign', label: 'NOTICES', route: '/announcements' },
+  { id: 'dues', icon: 'receipt-long', label: 'MY DUES', route: '/expenses' },
 ];
 
 export default function BottomNavigation() {
@@ -45,6 +52,14 @@ export default function BottomNavigation() {
   ) {
     return null;
   }
+
+  const { context } = useAuth();
+  
+  // Determine if we're in tenant view. If they are pure tenant, yes.
+  // If they are both, we check if current route relates to landlord.
+  // The toggle button changes the route between /tenant-home and /command-center.
+  const isTenantView = context?.isTenant && (!context?.isLandlord || pathname === '/tenant-home');
+  const NAV_ITEMS = isTenantView ? TENANT_NAV_ITEMS : LANDLORD_NAV_ITEMS;
 
   return (
     <View style={styles.wrapper}>

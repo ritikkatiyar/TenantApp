@@ -42,7 +42,7 @@ public class UserController {
     private final LeaseService leaseService;
 
     @GetMapping("/search")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<UserDTOs.UserSearchResponse>>> searchByPhone(
             @RequestParam String phone
     ) {
@@ -53,7 +53,7 @@ public class UserController {
     }
 
     @PostMapping("/create-tenant")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UserDTOs.UserSearchResponse>> createTenant(
             @Valid @RequestBody UserDTOs.CreateTenantRequest request
     ) {
@@ -111,23 +111,41 @@ public class UserController {
         UserTbl user = userService.getUserById(userId);
         
         List<MembershipTbl> memberships = membershipRepository.findByUserId(userId);
-        List<MeDTOs.MembershipSummary> roleSummaries = memberships.stream()
-                .filter(m -> m.getProperty() != null)
+        
+        List<MeDTOs.MembershipSummary> managedProperties = memberships.stream()
+                .filter(m -> m.getProperty() != null && !m.getRole().getCode().equals("PROPERTY_TENANT"))
                 .map(membership -> new MeDTOs.MembershipSummary(
                         membership.getProperty().getId(),
                         membership.getProperty().getName(),
-                        membership.getRole().getCode()
+                        membership.getRole().getCode(),
+                        membership.getRole().getName()
+                ))
+                .toList();
+                
+        List<MeDTOs.MembershipSummary> tenantProperties = memberships.stream()
+                .filter(m -> m.getProperty() != null && m.getRole().getCode().equals("PROPERTY_TENANT"))
+                .map(membership -> new MeDTOs.MembershipSummary(
+                        membership.getProperty().getId(),
+                        membership.getProperty().getName(),
+                        membership.getRole().getCode(),
+                        membership.getRole().getName()
                 ))
                 .toList();
 
         List<MeDTOs.ActiveLeaseSummary> activeLeases = leaseService.findByUserIdAndStatus(userId, LeaseStatus.ACTIVE)
                 .map(lease -> List.of(UserController.toActiveLeaseSummary(lease)))
                 .orElse(List.of());
+                
+        boolean isLandlord = !managedProperties.isEmpty();
+        boolean isTenant = !activeLeases.isEmpty();
 
         return ResponseEntity.ok(ApiResponse.success(new MeDTOs.MyContextResponse(
                 user.getGlobalRole(),
-                roleSummaries,
-                activeLeases
+                managedProperties,
+                tenantProperties,
+                activeLeases,
+                isLandlord,
+                isTenant
         )));
     }
 

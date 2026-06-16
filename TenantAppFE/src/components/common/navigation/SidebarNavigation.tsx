@@ -28,8 +28,10 @@ export default function SidebarNavigation() {
   });
   const router = useRouter();
   const pathname = usePathname();
-  const { signOut } = useAuth();
+  const { signOut, context } = useAuth();
   const { view } = useLocalSearchParams();
+  
+  const isTenantView = context?.isTenant && (!context?.isLandlord || pathname === '/tenant-home');
 
   const renderSidebarLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, route: Href) => {
     let isActive = false;
@@ -79,13 +81,24 @@ export default function SidebarNavigation() {
       </View>
 
       <ScrollView style={styles.sidebarNavScroll} contentContainerStyle={styles.sidebarNav} showsVerticalScrollIndicator={false}>
-        {renderSidebarLink('dashboard', 'Overview', '/analytics')}
-        {renderSidebarLink('business', 'Portfolio', '/command-center')}
-        {renderSidebarLink('assessment', 'Reports', '/reports')}
-        {renderSidebarLink('groups', 'AI Desk', '/ai')}
-        {renderSidebarLink('build', 'Escalations', '/escalations')}
-        {renderSidebarLink('campaign', 'Announcements', '/announcements')}
-        {renderSidebarLink('settings', 'Settings', '/expenses')}
+        {!isTenantView ? (
+          <>
+            {renderSidebarLink('dashboard', 'Overview', '/analytics')}
+            {renderSidebarLink('business', 'Portfolio', '/command-center')}
+            {renderSidebarLink('assessment', 'Reports', '/reports')}
+            {renderSidebarLink('groups', 'AI Desk', '/ai')}
+            {renderSidebarLink('build', 'Escalations', '/escalations')}
+            {renderSidebarLink('campaign', 'Announcements', '/announcements')}
+            {renderSidebarLink('settings', 'Settings', '/expenses')}
+          </>
+        ) : (
+          <>
+            {renderSidebarLink('home', 'Dashboard', '/tenant-home')}
+            {renderSidebarLink('house', 'My Property', '/tenant-property')}
+            {renderSidebarLink('build', 'Service Center', '/tenant-maintenance')}
+            {renderSidebarLink('payment', 'Payments', '/tenant-payments')}
+          </>
+        )}
       </ScrollView>
 
       <View style={[styles.sidebarFooter, isCollapsed && styles.sidebarFooterCollapsed]}>

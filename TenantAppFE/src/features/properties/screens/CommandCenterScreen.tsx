@@ -27,6 +27,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { PropertyResponse } from '@/src/types/property';
 import Building3DView from '@/src/features/properties/components/Building3DView';
 import { createAnnouncement } from '@/src/features/announcements/api/announcement.api';
+import { RoleToggle } from '@/src/components/RoleToggle';
 
 const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
 
@@ -436,6 +437,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                   <MaterialIcons name="search" size={22} color="#6b7a7d" />
                   <Text style={styles.searchPlaceholder}>Search portfolio...</Text>
                 </BlurView>
+                <RoleToggle />
                 <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
               </>
             }
@@ -485,6 +487,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               <Text style={styles.compactHeaderTitle} numberOfLines={1}>My Properties</Text>
             </Animated.View>
             <View style={styles.headerRight}>
+              <RoleToggle />
               <TouchableOpacity style={styles.notificationButton}>
                 <Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} />
                 <View style={styles.notificationBadge} />

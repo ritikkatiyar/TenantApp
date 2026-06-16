@@ -6,7 +6,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { getMyContext } from '@/src/features/auth/api/me.api';
 
 export default function IndexScreen() {
-  const { accessToken, isAuthenticated, isReady } = useAuth();
+  const { accessToken, isAuthenticated, isReady, setContext } = useAuth();
   const [target, setTarget] = React.useState<'/command-center' | '/tenant-home' | null>(null);
 
   React.useEffect(() => {
@@ -18,14 +18,12 @@ export default function IndexScreen() {
     getMyContext(accessToken)
       .then((context) => {
         if (isMounted) {
-          const isGlobalAdmin = context.globalRole === 'SUPER_ADMIN' || context.globalRole === 'ADMIN';
-          const hasOwnerOrManagerMembership = context.memberships?.some(
-            m => m.membershipRoleCode === 'PROPERTY_OWNER' || m.membershipRoleCode === 'PROPERTY_MANAGER'
-          );
-          
-          if (isGlobalAdmin || hasOwnerOrManagerMembership) {
+          setContext(context);
+          if (context.isTenant && !context.isLandlord) {
+            setTarget('/tenant-home');
+          } else if (!context.isTenant && context.isLandlord) {
             setTarget('/command-center');
-          } else if (context.memberships?.some(m => m.membershipRoleCode === 'PROPERTY_TENANT') || context.activeLeases?.length > 0) {
+          } else if (context.isTenant && context.isLandlord) {
             setTarget('/tenant-home');
           } else {
             setTarget('/command-center');

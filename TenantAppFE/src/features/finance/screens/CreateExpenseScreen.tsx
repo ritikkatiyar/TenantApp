@@ -410,7 +410,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             <Text style={styles.previewCategory}>CUSTOM CHARGE</Text>
             <Text style={styles.previewName} numberOfLines={1}>{expenseName || 'Unnamed Charge'}</Text>
           </View>
-          <MaterialCommunityIcons name="receipt-long" size={28} color="#00f0ff" />
+          <MaterialIcons name="receipt-long" size={28} color="#00f0ff" />
         </View>
         
         <View style={styles.previewDivider} />
@@ -496,7 +496,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
           <View style={styles.desktopInner}>
             <View style={styles.desktopHeaderRow}>
-              <View style={styles.largeTitleContainer}>
+              <View style={styles.titleContainer}>
                 <Text style={styles.titleLineDesktop}>{isEditMode ? 'Update Charge' : 'New Charge'}</Text>
               </View>
               {renderActionButtons(true)}

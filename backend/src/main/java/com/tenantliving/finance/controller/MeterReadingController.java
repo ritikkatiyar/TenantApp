@@ -14,8 +14,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/finance/meter-readings")
-@PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-
 public class MeterReadingController {
 
     private final MeterReadingService meterReadingService;
@@ -26,6 +24,7 @@ public class MeterReadingController {
     }
 
     @GetMapping("/worksheet")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<MeterReadingResponse>>> getOrCreateMeterReadings(
             @RequestParam UUID propertyId,
             @RequestParam UUID chargeConfigId,
@@ -36,6 +35,7 @@ public class MeterReadingController {
     }
 
     @PostMapping("/batch-save")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<Void>> saveMeterReadings(@RequestBody MeterReadingRequest request) {
         meterReadingService.saveMeterReadings(request);
         return ResponseEntity.ok(ApiResponse.success(null));

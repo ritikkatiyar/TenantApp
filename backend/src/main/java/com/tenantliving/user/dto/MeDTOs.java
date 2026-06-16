@@ -10,14 +10,18 @@ public class MeDTOs {
 
     public record MyContextResponse(
             UserRole globalRole,
-            List<MembershipSummary> memberships,
-            List<ActiveLeaseSummary> activeLeases
+            List<MembershipSummary> managedProperties,
+            List<MembershipSummary> tenantProperties,
+            List<ActiveLeaseSummary> activeLeases,
+            boolean isLandlord,
+            boolean isTenant
     ) {}
 
     public record MembershipSummary(
             UUID propertyId,
             String propertyName,
-            String membershipRoleCode
+            String membershipRoleCode,
+            String membershipRoleName
     ) {}
 
     public record ActiveLeaseSummary(

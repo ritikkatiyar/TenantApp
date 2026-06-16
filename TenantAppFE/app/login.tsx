@@ -7,13 +7,14 @@ import type { TokenBundle } from '@/src/types/auth';
 
 export default function LoginRoute() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, setContext } = useAuth();
 
   return (
     <SuperAdminLoginScreen
       onLogin={async (authData: TokenBundle) => {
         await signIn(authData);
         const context = await getMyContext(authData.accessToken);
+        setContext(context);
         router.replace(context.activeLeases.length > 0 ? '/tenant-home' : '/command-center');
       }}
       onNavigateToSignup={() => router.push('/signup')}

@@ -28,8 +28,8 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     @Transactional
     public void ensureTenantRole(UUID tenantId, UUID propertyId, UUID assignedByUserId) {
-        if (membershipRepository.existsByUserIdAndPropertyId(tenantId, propertyId)) {
-            return; // Already has some role here
+        if (membershipRepository.existsByUserIdAndPropertyIdAndRoleCode(tenantId, propertyId, "PROPERTY_TENANT")) {
+            return; // Already has tenant role here
         }
 
         UserTbl tenant = userRepository.findById(tenantId)
@@ -54,9 +54,11 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     @Transactional
     public void removeTenantRole(UUID tenantId, UUID propertyId) {
-        Optional<MembershipTbl> membershipOpt = membershipRepository.findByUserIdAndPropertyId(tenantId, propertyId);
-        if (membershipOpt.isPresent() && membershipOpt.get().getRole().getCode().equals("PROPERTY_TENANT")) {
-            membershipRepository.delete(membershipOpt.get());
+        java.util.List<MembershipTbl> memberships = membershipRepository.findByUserIdAndPropertyId(tenantId, propertyId);
+        for (MembershipTbl m : memberships) {
+            if (m.getRole().getCode().equals("PROPERTY_TENANT")) {
+                membershipRepository.delete(m);
+            }
         }
     }
 }

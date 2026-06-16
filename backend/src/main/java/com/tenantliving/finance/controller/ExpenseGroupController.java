@@ -26,7 +26,7 @@ public class ExpenseGroupController {
     private final ExpenseGroupService expenseGroupService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("@authorizationService.hasPermissionByUnitId(#request.unitId(), 'EXPENSE_CREATE')")
         /**
      * Create expense group
      * Creates an internal roommate financial group for a unit. 
@@ -41,7 +41,7 @@ public class ExpenseGroupController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @PreAuthorize("@authorizationService.hasPermissionByExpenseGroupId(#id, 'PROPERTY_VIEW')")
         /**
      * Get expense group
      * Returns a roommate financial group by UUID, including unit reference and creator.

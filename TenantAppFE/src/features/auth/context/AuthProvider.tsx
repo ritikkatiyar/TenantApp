@@ -4,6 +4,7 @@ import { logout, refresh } from '@/src/features/auth/api/auth.api';
 import { setAuthRefreshHandler } from '@/src/api/client';
 import type { AuthUserSummary, TokenBundle } from '@/src/types/auth';
 import { clearStoredAuth, readStoredAuth, writeStoredAuth } from '@/src/features/auth/utils/tokenStorage';
+import { MyContextResponse } from '@/src/features/auth/api/me.api';
 
 type AuthContextValue = {
   accessToken: string;
@@ -13,6 +14,8 @@ type AuthContextValue = {
   signIn: (nextAuthData: TokenBundle) => Promise<void>;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<TokenBundle | null>;
+  context: MyContextResponse | null;
+  setContext: (context: MyContextResponse | null) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -23,6 +26,7 @@ type AuthProviderProps = {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authData, setAuthData] = useState<TokenBundle | null>(null);
+  const [context, setContext] = useState<MyContextResponse | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -53,6 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = React.useCallback(async () => {
     const refreshToken = authData?.refreshToken;
     setAuthData(null);
+    setContext(null);
     await clearStoredAuth();
 
     if (refreshToken) {
@@ -98,7 +103,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signOut,
     refreshSession,
-  }), [authData, isReady, signIn, signOut, refreshSession]);
+    context,
+    setContext
+  }), [authData, isReady, signIn, signOut, refreshSession, context]);
 
   return (
     <AuthContext.Provider value={value}>

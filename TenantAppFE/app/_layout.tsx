@@ -43,6 +43,9 @@ export default function RootLayout() {
                 <Stack.Screen name="properties/[id]/meter-readings" />
                 <Stack.Screen name="escalations" />
                 <Stack.Screen name="announcements" />
+                <Stack.Screen name="tenant-property" />
+                <Stack.Screen name="tenant-maintenance" />
+                <Stack.Screen name="tenant-payments" />
               </Stack>
             </ScreenWrapper>
             {!isDesktop && !hideNavigation && <BottomNavigation />}

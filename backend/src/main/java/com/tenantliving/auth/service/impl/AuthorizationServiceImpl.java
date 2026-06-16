@@ -1,12 +1,8 @@
 package com.tenantliving.auth.service.impl;
 
-import com.tenantliving.auth.domain.MembershipTbl;
-import com.tenantliving.auth.domain.RolePermissionTbl;
 import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.auth.repository.MembershipRepository;
-import com.tenantliving.auth.repository.RolePermissionRepository;
 import com.tenantliving.auth.service.interfaces.AuthorizationService;
-
 import com.tenantliving.finance.repository.ChargeConfigRepository;
 import com.tenantliving.finance.repository.ExpenseGroupRepository;
 import com.tenantliving.finance.repository.ExpenseRepository;
@@ -15,21 +11,21 @@ import com.tenantliving.finance.repository.LeaseRepository;
 import com.tenantliving.finance.repository.RentCycleRepository;
 import com.tenantliving.property.repository.UnitRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
 @Service("authorizationService")
 @RequiredArgsConstructor
 public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final MembershipRepository membershipRepository;
-    private final RolePermissionRepository rolePermissionRepository;
     private final UnitRepository unitRepository;
     private final LeaseRepository leaseRepository;
     private final ExpenseGroupRepository expenseGroupRepository;
@@ -49,26 +45,31 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasAnyPermission(UUID propertyId, String... permissionCodes) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
-        if (currentUser.hasGlobalRole("SUPER_ADMIN")) return true;
 
         UUID userId = UUID.fromString(currentUser.getId());
-        Optional<MembershipTbl> membershipOpt = membershipRepository.findByUserIdAndPropertyId(userId, propertyId);
-        if (membershipOpt.isEmpty()) return false;
-
-        List<RolePermissionTbl> rolePermissions = rolePermissionRepository.findByRoleId(membershipOpt.get().getRole().getId());
+        Set<String> userPermissions = membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         
         for (String code : permissionCodes) {
-            if (rolePermissions.stream().anyMatch(rp -> rp.getPermission().getCode().equals(code))) {
+            if (userPermissions.contains(code)) {
+                log.debug("User {} has permission {} on property {}", userId, code, propertyId);
                 return true;
             }
         }
+        
+        log.debug("User {} does not have any of {} on property {}", userId, permissionCodes, propertyId);
         return false;
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean hasRole(UUID propertyId, String roleCode) {
-        return checkRole(propertyId, roleCode);
+        UserDetailsImpl currentUser = getCurrentUser();
+        if (currentUser == null) return false;
+
+        UUID userId = UUID.fromString(currentUser.getId());
+        boolean hasRole = membershipRepository.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode);
+        log.debug("User {} role check for {} on property {}: {}", userId, roleCode, propertyId, hasRole);
+        return hasRole;
     }
 
     @Override
@@ -76,18 +77,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasAnyRole(UUID propertyId, String... roleCodes) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
-        if (currentUser.hasGlobalRole("SUPER_ADMIN")) return true;
 
         UUID userId = UUID.fromString(currentUser.getId());
-        Optional<MembershipTbl> membershipOpt = membershipRepository.findByUserIdAndPropertyId(userId, propertyId);
-        if (membershipOpt.isEmpty()) return false;
-
-        String actualRole = membershipOpt.get().getRole().getCode();
-        for (String code : roleCodes) {
-            if (actualRole.equals(code)) {
+        for (String roleCode : roleCodes) {
+            if (membershipRepository.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode)) {
+                log.debug("User {} has role {} on property {}", userId, roleCode, propertyId);
                 return true;
             }
         }
+        
+        log.debug("User {} does not have any of {} on property {}", userId, roleCodes, propertyId);
         return false;
     }
 
@@ -104,9 +103,19 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByLeaseId(UUID leaseId, String permissionCode) {
         if (leaseId == null) return false;
-        return leaseRepository.findById(leaseId)
-                .map(l -> checkPermission(l.getUnit().getProperty().getId(), permissionCode))
-                .orElse(false);
+        
+        UserDetailsImpl currentUser = getCurrentUser();
+        if (currentUser == null) return false;
+        UUID userId = UUID.fromString(currentUser.getId());
+        
+        return leaseRepository.findById(leaseId).map(lease -> {
+            // Special case for LEASE_VIEW_OWN
+            if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.getUserId().toString().equals(currentUser.getId())) {
+                log.debug("User {} has own lease access for lease {}", userId, leaseId);
+                return true;
+            }
+            return checkPermission(lease.getUnit().getProperty().getId(), permissionCode);
+        }).orElse(false);
     }
 
     @Override
@@ -122,9 +131,19 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByExpenseSplitId(UUID splitId, String permissionCode) {
         if (splitId == null) return false;
-        return expenseSplitRepository.findById(splitId)
-                .map(s -> checkPermission(s.getExpense().getExpenseGroup().getUnit().getProperty().getId(), permissionCode))
-                .orElse(false);
+        
+        UserDetailsImpl currentUser = getCurrentUser();
+        if (currentUser == null) return false;
+        UUID userId = UUID.fromString(currentUser.getId());
+        
+        return expenseSplitRepository.findById(splitId).map(split -> {
+            // Special case for own-split settle
+            if (split.getUserId().toString().equals(currentUser.getId())) {
+                log.debug("User {} has own expense split access for split {}", userId, splitId);
+                return true;
+            }
+            return checkPermission(split.getExpense().getExpenseGroup().getUnit().getProperty().getId(), permissionCode);
+        }).orElse(false);
     }
 
     @Override
@@ -159,52 +178,19 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) {
             return false;
         }
-        
-        // Super Admins have all permissions implicitly
-        boolean isSuperAdmin = currentUser.hasGlobalRole("SUPER_ADMIN");
-        if (isSuperAdmin) {
-            return true;
-        }
 
         UUID userId = UUID.fromString(currentUser.getId());
-        Optional<MembershipTbl> membershipOpt = membershipRepository.findByUserIdAndPropertyId(userId, propertyId);
+        Set<String> permissions = membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         
-        if (membershipOpt.isEmpty()) {
-            return false;
-        }
+        boolean hasPerm = permissions.contains(permissionCode);
+        log.debug("User {} permission check for {} on property {}: {}", userId, permissionCode, propertyId, hasPerm);
         
-        MembershipTbl membership = membershipOpt.get();
-        List<RolePermissionTbl> rolePermissions = rolePermissionRepository.findByRoleId(membership.getRole().getId());
-        
-        return rolePermissions.stream()
-                .anyMatch(rp -> rp.getPermission().getCode().equals(permissionCode));
-    }
-    
-    private boolean checkRole(UUID propertyId, String roleCode) {
-        UserDetailsImpl currentUser = getCurrentUser();
-        if (currentUser == null) {
-            return false;
-        }
-        
-        // Super Admins bypass property role checks
-        boolean isSuperAdmin = currentUser.hasGlobalRole("SUPER_ADMIN");
-        if (isSuperAdmin) {
-            return true;
-        }
-
-        UUID userId = UUID.fromString(currentUser.getId());
-        Optional<MembershipTbl> membershipOpt = membershipRepository.findByUserIdAndPropertyId(userId, propertyId);
-        
-        if (membershipOpt.isEmpty()) {
-            return false;
-        }
-        
-        return membershipOpt.get().getRole().getCode().equals(roleCode);
+        return hasPerm;
     }
 
     private UserDetailsImpl getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             return null;
         }
         if (authentication.getPrincipal() instanceof UserDetailsImpl) {
