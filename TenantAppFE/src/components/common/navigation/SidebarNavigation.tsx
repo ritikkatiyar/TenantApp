@@ -31,7 +31,7 @@ export default function SidebarNavigation() {
   const { signOut, context } = useAuth();
   const { view } = useLocalSearchParams();
   
-  const isTenantView = context?.isTenant && (!context?.isLandlord || pathname === '/tenant-home');
+  const isTenantView = context?.isTenant && (!context?.isLandlord || pathname.startsWith('/tenant-'));
 
   const renderSidebarLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, route: Href) => {
     let isActive = false;
@@ -93,10 +93,10 @@ export default function SidebarNavigation() {
           </>
         ) : (
           <>
-            {renderSidebarLink('home', 'Dashboard', '/tenant-home')}
-            {renderSidebarLink('house', 'My Property', '/tenant-property')}
-            {renderSidebarLink('build', 'Service Center', '/tenant-maintenance')}
-            {renderSidebarLink('payment', 'Payments', '/tenant-payments')}
+            {renderSidebarLink('home', 'Home', '/tenant-home')}
+            {renderSidebarLink('domain', 'Property', '/tenant-property')}
+            {renderSidebarLink('payments', 'Payments', '/tenant-payments')}
+            {renderSidebarLink('support-agent', 'Support', '/tenant-maintenance')}
           </>
         )}
       </ScrollView>
