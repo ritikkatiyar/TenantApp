@@ -44,8 +44,8 @@ public class AnalyticsService {
 
         // 1. Revenue Metrics
         Object[] revenueObj = analyticsRepository.getRevenueMetrics(landlordPropertyIds, billingMonth);
-        BigDecimal expected = revenueObj[0] != null ? (BigDecimal) revenueObj[0] : BigDecimal.ZERO;
-        BigDecimal collected = revenueObj[1] != null ? (BigDecimal) revenueObj[1] : BigDecimal.ZERO;
+        BigDecimal expected = revenueObj[0] != null ? new BigDecimal(revenueObj[0].toString()) : BigDecimal.ZERO;
+        BigDecimal collected = revenueObj[1] != null ? new BigDecimal(revenueObj[1].toString()) : BigDecimal.ZERO;
         BigDecimal collectionRate = expected.compareTo(BigDecimal.ZERO) > 0 ? 
                 collected.divide(expected, 4, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)) : BigDecimal.ZERO;
 

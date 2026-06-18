@@ -9,17 +9,22 @@ export default function AnalyticsDashboardScreen() {
   const { accessToken } = useAuth();
   const [data, setData] = useState<LandlordAnalyticsDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
+        setErrorMsg(null);
         if (accessToken) {
           const response = await getLandlordDashboard(accessToken);
           setData(response);
+        } else {
+          setErrorMsg('No access token available');
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error('Failed to load analytics', e);
+        setErrorMsg(e.toString());
       } finally {
         setLoading(false);
       }
@@ -27,10 +32,29 @@ export default function AnalyticsDashboardScreen() {
     loadData();
   }, [accessToken]);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: '#f9f9ff', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#004c5a" />
+      </View>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#f9f9ff', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 16, color: '#ba1a1a', textAlign: 'center' }}>Failed to load analytics: {errorMsg}</Text>
+        <TouchableOpacity style={{ marginTop: 16, backgroundColor: '#004c5a', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4 }} onPress={() => setLoading(true)}>
+          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!data) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#f9f9ff', justifyContent: 'center', alignItems: 'center' }}>
+        <Text>No data available</Text>
       </View>
     );
   }

@@ -23,13 +23,14 @@ public class AnalyticsRepository {
     public Object[] getRevenueMetrics(List<UUID> propertyIds, String billingMonth) {
         if (propertyIds == null || propertyIds.isEmpty()) return new Object[]{BigDecimal.ZERO, BigDecimal.ZERO};
         
-        String jpql = "SELECT SUM(r.baseAmount), SUM(CASE WHEN r.status = 'PAID' THEN r.totalAmount ELSE 0 END) " +
+        String jpql = "SELECT SUM(r.baseAmount), SUM(CASE WHEN r.status = :statusPaid THEN r.totalAmount ELSE 0.0 END) " +
                       "FROM RentCycleTbl r JOIN r.lease l JOIN l.unit u " +
                       "WHERE u.property.id IN :propertyIds AND r.billingMonth = :billingMonth";
                       
         Query query = entityManager.createQuery(jpql);
         query.setParameter("propertyIds", propertyIds);
         query.setParameter("billingMonth", billingMonth);
+        query.setParameter("statusPaid", com.tenantliving.common.domain.RentCycleStatus.PAID);
         
         Object[] result = (Object[]) query.getSingleResult();
         return result != null && result[0] != null ? result : new Object[]{BigDecimal.ZERO, BigDecimal.ZERO};
@@ -50,7 +51,7 @@ public class AnalyticsRepository {
         List<Object[]> results = query.getResultList();
         for (Object[] row : results) {
             String type = row[0].toString();
-            BigDecimal amount = (BigDecimal) row[1];
+            BigDecimal amount = new BigDecimal(row[1].toString());
             overhead.put(type, amount);
         }
         return overhead;
@@ -66,30 +67,23 @@ public class AnalyticsRepository {
         Query query = entityManager.createQuery(jpql);
         query.setParameter("propertyIds", propertyIds);
         
-        BigDecimal result = (BigDecimal) query.getSingleResult();
-        return result != null ? result : BigDecimal.ZERO;
+        Object result = query.getSingleResult();
+        return result != null ? new BigDecimal(result.toString()) : BigDecimal.ZERO;
     }
 
     public List<Object[]> getDefaulters(List<UUID> propertyIds) {
         if (propertyIds == null || propertyIds.isEmpty()) return new ArrayList<>();
 
-        String jpql = "SELECT u.user.firstName, u.user.lastName, unit.unitNumber, p.name, r.dueDate, r.totalAmount, r.id " +
-                      "FROM RentCycleTbl r JOIN r.lease l JOIN l.unit unit JOIN unit.property p JOIN l.userId userId " +
-                      "WHERE p.id IN :propertyIds AND " +
-                      "(r.status = 'OVERDUE' OR (r.status = 'PENDING' AND r.dueDate < :currentDate)) " +
-                      "ORDER BY r.dueDate ASC";
-                      
-        // Note: the above query assumes User is linked to userId, but userId is just a UUID on LeaseTbl.
-        // We'll need to fetch User details separately or join with UserTbl if it exists.
-        // Let's rewrite the query to just return the userId, we'll fetch names in the service.
         String correctJpql = "SELECT l.userId, unit.unitNumber, p.name, r.dueDate, r.totalAmount, r.id " +
                              "FROM RentCycleTbl r JOIN r.lease l JOIN l.unit unit JOIN unit.property p " +
                              "WHERE p.id IN :propertyIds AND " +
-                             "(r.status = 'OVERDUE' OR (r.status = 'PENDING' AND r.dueDate < :currentDate)) " +
+                             "(r.status = :statusOverdue OR (r.status = :statusPending AND r.dueDate < :currentDate)) " +
                              "ORDER BY r.dueDate ASC";
 
         Query query = entityManager.createQuery(correctJpql);
         query.setParameter("propertyIds", propertyIds);
+        query.setParameter("statusOverdue", com.tenantliving.common.domain.RentCycleStatus.OVERDUE);
+        query.setParameter("statusPending", com.tenantliving.common.domain.RentCycleStatus.PENDING);
         query.setParameter("currentDate", LocalDate.now());
         
         return query.getResultList();
@@ -100,11 +94,12 @@ public class AnalyticsRepository {
 
         String jpql = "SELECT p.id, p.name, " +
                       "(SELECT COUNT(u) FROM UnitTbl u WHERE u.property.id = p.id), " +
-                      "(SELECT COUNT(l) FROM LeaseTbl l JOIN l.unit u WHERE u.property.id = p.id AND l.status = 'ACTIVE') " +
+                      "(SELECT COUNT(l) FROM LeaseTbl l JOIN l.unit u WHERE u.property.id = p.id AND l.status = :statusActive) " +
                       "FROM PropertyTbl p WHERE p.id IN :propertyIds";
                       
         Query query = entityManager.createQuery(jpql);
         query.setParameter("propertyIds", propertyIds);
+        query.setParameter("statusActive", com.tenantliving.common.domain.LeaseStatus.ACTIVE);
         
         return query.getResultList();
     }
