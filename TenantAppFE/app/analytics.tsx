@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
-import InsightsScreen from '@/src/features/analytics/screens/InsightsScreen';
+import AnalyticsDashboardScreen from '@/src/features/analytics/screens/AnalyticsDashboardScreen';
 
 export default function AnalyticsRoute() {
-  return <InsightsScreen />;
+  return <AnalyticsDashboardScreen />;
 }
