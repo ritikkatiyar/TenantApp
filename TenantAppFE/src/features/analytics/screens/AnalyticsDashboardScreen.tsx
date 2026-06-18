@@ -3,10 +3,10 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLandlordDashboard, LandlordAnalyticsDTO } from '../api/analytics.api';
-import { useAuth } from '@/src/features/auth/hooks/useAuth';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function AnalyticsDashboardScreen() {
-  const { authState } = useAuth();
+  const { accessToken } = useAuth();
   const [data, setData] = useState<LandlordAnalyticsDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,8 +14,8 @@ export default function AnalyticsDashboardScreen() {
     async function loadData() {
       try {
         setLoading(true);
-        if (authState?.token) {
-          const response = await getLandlordDashboard(authState.token);
+        if (accessToken) {
+          const response = await getLandlordDashboard(accessToken);
           setData(response);
         }
       } catch (e) {
@@ -25,7 +25,7 @@ export default function AnalyticsDashboardScreen() {
       }
     }
     loadData();
-  }, [authState?.token]);
+  }, [accessToken]);
 
   if (loading || !data) {
     return (
