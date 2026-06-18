@@ -18,9 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AnalyticsService {
 
     private final AnalyticsRepository analyticsRepository;
@@ -30,7 +32,8 @@ public class AnalyticsService {
     public LandlordAnalyticsDTO getLandlordAnalytics(UUID landlordId, String billingMonth) {
         List<MembershipTbl> memberships = membershipRepository.findByUserId(landlordId);
         List<UUID> landlordPropertyIds = memberships.stream()
-                .filter(m -> "PROPERTY_OWNER".equals(m.getRole().getCode()) || "PROPERTY_MANAGER".equals(m.getRole().getCode()))
+                .filter(m -> m.getRole() != null && ("PROPERTY_OWNER".equals(m.getRole().getCode()) || "PROPERTY_MANAGER".equals(m.getRole().getCode())))
+                .filter(m -> m.getProperty() != null)
                 .map(m -> m.getProperty().getId())
                 .distinct()
                 .collect(Collectors.toList());
