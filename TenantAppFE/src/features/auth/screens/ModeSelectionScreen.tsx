@@ -6,8 +6,6 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
 
-const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
-
 interface ModeSelectionScreenProps {
   onSelectMode: (mode: string) => Promise<void>;
   isLoading: boolean;
@@ -103,7 +101,7 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
   };
 
   return (
-    <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
+    <LinearGradient colors={Theme.Colors.backgroundGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <Text style={styles.title}>What do you want to manage?</Text>
@@ -129,18 +127,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: Theme.Spacing.containerPadding,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#163235', // Theme.Colors.onSurface roughly
+    fontSize: Theme.Typography.headlineMd.fontSize,
+    fontWeight: Theme.Typography.headlineMd.fontWeight as any,
+    color: Theme.Colors.onSurface,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: Theme.Spacing.stackSm,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6b7a7d',
+    fontSize: Theme.Typography.bodyMd.fontSize,
+    color: Theme.Colors.outline,
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -148,7 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 16,
+    gap: Theme.Spacing.gutter,
     maxWidth: 400,
   },
   gridDesktop: {
@@ -158,7 +156,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: '45%',
     aspectRatio: 1,
-    borderRadius: 16,
+    borderRadius: Theme.Rounded.lg,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: 'transparent',
@@ -167,8 +165,8 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   cardSelected: {
-    borderColor: '#00d4ff', // Theme.Colors.primary
-    shadowColor: '#00d4ff',
+    borderColor: Theme.Colors.primaryContainer,
+    shadowColor: Theme.Colors.primaryContainer,
     shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -177,44 +175,44 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    padding: Theme.Spacing.gutter,
+    backgroundColor: Theme.Colors.glassFill,
   },
   iconWrapper: {
     width: 64,
     height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: Theme.Rounded.xl,
+    backgroundColor: Theme.Colors.glassFill,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   cardLabel: {
-    fontSize: 16,
+    fontSize: Theme.Typography.bodyMd.fontSize,
     fontWeight: '600',
-    color: '#163235',
+    color: Theme.Colors.onSurface,
     textAlign: 'center',
   },
   labelDisabled: {
-    color: '#a0aab2',
+    color: Theme.Colors.outlineVariant,
   },
   badge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 8,
+    top: Theme.Spacing.stackSm,
+    right: Theme.Spacing.stackSm,
+    backgroundColor: Theme.Colors.surfaceContainer,
+    paddingHorizontal: Theme.Spacing.stackSm,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: Theme.Rounded.md,
   },
   badgeText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#6b7a7d',
+    color: Theme.Colors.outline,
   },
   loaderOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: Theme.Colors.glassFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

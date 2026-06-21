@@ -1297,7 +1297,7 @@ export default function FloorEditorScreen({
                                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                                         <MaterialIcons name="person-add" size={20} color="#006875" />
                                         <Text style={styles.quickCreatePromptText}>
-                                          No tenant found. Create new tenant for "{tenantPhoneSearch}"?
+                                          No tenant found. Create new tenant for &quot;{tenantPhoneSearch}&quot;?
                                         </Text>
                                       </View>
                                     </TouchableOpacity>
@@ -1874,7 +1874,7 @@ export default function FloorEditorScreen({
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             <MaterialIcons name="person-add" size={20} color="#006875" />
                             <Text style={styles.quickCreatePromptText}>
-                              No tenant found. Create new tenant for "{tenantPhoneSearch}"?
+                              No tenant found. Create new tenant for &quot;{tenantPhoneSearch}&quot;?
                             </Text>
                           </View>
                         </TouchableOpacity>
