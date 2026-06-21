@@ -1,0 +1,10 @@
+CREATE TABLE onboarding_preference_tbl (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL UNIQUE,
+    active_mode ENUM('RENTAL', 'HOSTEL', 'MESS', 'SOCIETY') NOT NULL DEFAULT 'RENTAL',
+    onboarding_done BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    CONSTRAINT fk_onboarding_preference_user 
+        FOREIGN KEY (user_id) REFERENCES user_tbl(id) ON DELETE CASCADE
+);
