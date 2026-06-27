@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import SuperAdminLoginScreen from '@/src/features/auth/screens/SuperAdminLoginScreen';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { getMyContext } from '@/src/features/auth/api/me.api';
-import { getPreference } from '@/src/features/auth/api/onboarding.api';
+import { getPreference } from '@/src/features/auth/api/user-preference.api';
 import type { TokenBundle } from '@/src/types/auth';
 
 export default function LoginRoute() {

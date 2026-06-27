@@ -1,10 +1,10 @@
-package com.tenantliving.onboarding.service.impl;
+package com.tenantliving.user.service.impl;
 
-import com.tenantliving.onboarding.domain.OnboardingPreferenceTbl;
-import com.tenantliving.onboarding.dto.PreferenceResponse;
-import com.tenantliving.onboarding.dto.SavePreferenceRequest;
-import com.tenantliving.onboarding.repository.OnboardingPreferenceRepository;
-import com.tenantliving.onboarding.service.interfaces.OnboardingPreferenceService;
+import com.tenantliving.user.domain.UserPreferenceTbl;
+import com.tenantliving.user.dto.UserPreferenceResponse;
+import com.tenantliving.user.dto.SaveUserPreferenceRequest;
+import com.tenantliving.user.repository.UserPreferenceRepository;
+import com.tenantliving.user.service.interfaces.UserPreferenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,22 +16,22 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OnboardingPreferenceServiceImpl implements OnboardingPreferenceService {
+public class UserPreferenceServiceImpl implements UserPreferenceService {
 
-    private final OnboardingPreferenceRepository repository;
+    private final UserPreferenceRepository repository;
 
     @Override
     @Transactional
-    public PreferenceResponse savePreference(UUID userId, SavePreferenceRequest request) {
-        Optional<OnboardingPreferenceTbl> existingOpt = repository.findByUserId(userId);
+    public UserPreferenceResponse savePreference(UUID userId, SaveUserPreferenceRequest request) {
+        Optional<UserPreferenceTbl> existingOpt = repository.findByUserId(userId);
 
-        OnboardingPreferenceTbl preference;
+        UserPreferenceTbl preference;
         if (existingOpt.isPresent()) {
             preference = existingOpt.get();
             preference.setActiveMode(request.activeMode());
             preference.setOnboardingDone(true);
         } else {
-            preference = OnboardingPreferenceTbl.builder()
+            preference = UserPreferenceTbl.builder()
                     .userId(userId)
                     .activeMode(request.activeMode())
                     .onboardingDone(true)
@@ -41,7 +41,7 @@ public class OnboardingPreferenceServiceImpl implements OnboardingPreferenceServ
         preference = repository.save(preference);
         log.info("preference_saved userId={} activeMode={}", userId, request.activeMode());
 
-        return new PreferenceResponse(
+        return new UserPreferenceResponse(
                 preference.getId(),
                 preference.getActiveMode(),
                 preference.isOnboardingDone()
@@ -50,13 +50,13 @@ public class OnboardingPreferenceServiceImpl implements OnboardingPreferenceServ
 
     @Override
     @Transactional(readOnly = true)
-    public PreferenceResponse getPreference(UUID userId) {
+    public UserPreferenceResponse getPreference(UUID userId) {
         return repository.findByUserId(userId)
-                .map(pref -> new PreferenceResponse(
+                .map(pref -> new UserPreferenceResponse(
                         pref.getId(),
                         pref.getActiveMode(),
                         pref.isOnboardingDone()
                 ))
-                .orElseGet(() -> new PreferenceResponse(null, null, false));
+                .orElseGet(() -> new UserPreferenceResponse(null, null, false));
     }
 }

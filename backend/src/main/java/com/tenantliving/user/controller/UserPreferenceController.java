@@ -1,45 +1,43 @@
-package com.tenantliving.onboarding.controller;
+package com.tenantliving.user.controller;
 
-import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.common.response.ApiResponse;
-import com.tenantliving.onboarding.dto.PreferenceResponse;
-import com.tenantliving.onboarding.dto.SavePreferenceRequest;
-import com.tenantliving.onboarding.service.interfaces.OnboardingPreferenceService;
+import com.tenantliving.auth.principal.UserDetailsImpl;
+import com.tenantliving.user.dto.UserPreferenceResponse;
+import com.tenantliving.user.dto.SaveUserPreferenceRequest;
+import com.tenantliving.user.service.interfaces.UserPreferenceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Slf4j
 @RestController
-@RequestMapping("/api/v1/onboarding/preference")
+@RequestMapping("/api/v1/users/preference")
 @RequiredArgsConstructor
-public class OnboardingPreferenceController {
+public class UserPreferenceController {
 
-    private final OnboardingPreferenceService service;
+    private final UserPreferenceService service;
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<PreferenceResponse> savePreference(
+    public ApiResponse<UserPreferenceResponse> savePreference(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @Valid @RequestBody SavePreferenceRequest request
+            @Valid @RequestBody SaveUserPreferenceRequest request
     ) {
         UUID userId = UUID.fromString(userDetails.getId());
-        PreferenceResponse response = service.savePreference(userId, request);
+        UserPreferenceResponse response = service.savePreference(userId, request);
         return ApiResponse.success(response);
     }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<PreferenceResponse> getPreference(
+    public ApiResponse<UserPreferenceResponse> getPreference(
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         UUID userId = UUID.fromString(userDetails.getId());
-        PreferenceResponse response = service.getPreference(userId);
+        UserPreferenceResponse response = service.getPreference(userId);
         return ApiResponse.success(response);
     }
 }

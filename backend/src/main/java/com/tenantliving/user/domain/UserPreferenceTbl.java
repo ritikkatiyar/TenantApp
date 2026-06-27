@@ -1,4 +1,4 @@
-package com.tenantliving.onboarding.domain;
+package com.tenantliving.user.domain;
 
 import com.tenantliving.common.domain.BaseEntity;
 import jakarta.persistence.*;
@@ -7,20 +7,20 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "onboarding_preference_tbl")
+@Table(name = "user_preference_tbl")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OnboardingPreferenceTbl extends BaseEntity {
+public class UserPreferenceTbl extends BaseEntity {
 
     @Column(name = "user_id", nullable = false, unique = true)
     private UUID userId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "active_mode", nullable = false)
-    private OnboardingMode activeMode;
+    private UserMode activeMode;
 
     @Column(name = "onboarding_done", nullable = false)
     private boolean onboardingDone;

@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import ModeSelectionScreen from '@/src/features/auth/screens/ModeSelectionScreen';
-import { savePreference } from '@/src/features/auth/api/onboarding.api';
+import { savePreference } from '@/src/features/auth/api/user-preference.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function ModeSelectionRoute() {
