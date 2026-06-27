@@ -1,13 +1,10 @@
 import { apiRequest } from '@/src/api/client';
 import type {
-  AuthUserSummary,
   LoginRequest,
   LogoutRequest,
   RefreshRequest,
   SignupRequest,
   TokenBundle,
-  ValidateRequest,
-  ValidateResponse,
 } from '@/src/types/auth';
 
 export function login(payload: LoginRequest): Promise<TokenBundle> {
@@ -38,16 +35,3 @@ export function logout(payload: LogoutRequest): Promise<void> {
   });
 }
 
-export function validate(payload: ValidateRequest): Promise<ValidateResponse> {
-  return apiRequest<ValidateResponse>('/api/v1/auth/validate', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}
-
-export function getCurrentUser(token: string): Promise<AuthUserSummary> {
-  return apiRequest<AuthUserSummary>('/api/v1/auth/me', {
-    method: 'GET',
-    token,
-  });
-}

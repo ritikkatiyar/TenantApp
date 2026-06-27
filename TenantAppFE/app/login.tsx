@@ -22,14 +22,15 @@ export default function LoginRoute() {
         
         setContext(context);
         
-        if (!preference.onboardingDone) {
+        if (context.isTenant && !context.isLandlord) {
+          // Pure tenants shouldn't see the property management onboarding screen
+          router.replace('/tenant-home');
+        } else if (!preference.onboardingDone) {
           router.replace('/mode-selection');
         } else if (context.isLandlord && context.isTenant) {
           router.replace('/tenant-home');
         } else if (context.isLandlord && !context.isTenant) {
           router.replace('/command-center');
-        } else if (!context.isLandlord && context.isTenant) {
-          router.replace('/tenant-home');
         } else {
           // both false, but onboardingDone=true
           router.replace('/command-center');

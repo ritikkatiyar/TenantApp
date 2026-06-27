@@ -79,35 +79,4 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PostMapping("/validate")
-        /**
-     * Validate access JWT
-     * Checks signature and expiry. Does not require an Authorization header; send token in body.
-     */
-
-    
-    public ResponseEntity<ApiResponse<ValidateResponse>> validate(@Valid @RequestBody ValidateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(authService.validate(request)));
-    }
-
-    @GetMapping("/me")
-        /**
-     * Current user profile
-     */
-
-    
-    
-    public ResponseEntity<ApiResponse<AuthUserSummary>> getCurrentUser(
-            @AuthenticationPrincipal UserDetailsImpl currentUser
-    ) {
-        if (currentUser == null) {
-            return ResponseEntity.status(401).build();
-        }
-        AuthUserSummary summary = new AuthUserSummary(
-                currentUser.getId(),
-                currentUser.getUsername(),
-                currentUser.getFullName()
-        );
-        return ResponseEntity.ok(ApiResponse.success(summary));
-    }
 }
