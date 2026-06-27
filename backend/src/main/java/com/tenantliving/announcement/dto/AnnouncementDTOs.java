@@ -20,8 +20,7 @@ public class AnnouncementDTOs {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CreateAnnouncementRequest {
-        @NotNull(message = "Property ID is required")
-        private UUID propertyId;
+        @NotNull(message = "Property ID is required") private UUID propertyId;
 
         @NotBlank(message = "Title is required")
         private String title;
@@ -29,14 +28,11 @@ public class AnnouncementDTOs {
         @NotBlank(message = "Content is required")
         private String content;
 
-        @NotNull(message = "Category is required")
-        private AnnouncementCategory category;
+        @NotNull(message = "Category is required") private AnnouncementCategory category;
 
-        @NotNull(message = "Severity is required")
-        private AnnouncementSeverity severity;
+        @NotNull(message = "Severity is required") private AnnouncementSeverity severity;
 
-        @NotNull(message = "Target type is required")
-        private AnnouncementTargetType targetType;
+        @NotNull(message = "Target type is required") private AnnouncementTargetType targetType;
 
         private String targetValue;
 

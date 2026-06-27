@@ -3,10 +3,10 @@ export type ApiError = {
   message?: string;
   path?: string;
   timestamp?: string;
-  fieldErrors?: Array<{
+  fieldErrors?: {
     field: string;
     message: string;
-  }>;
+  }[];
 };
 
 export type ApiResponse<T> = {

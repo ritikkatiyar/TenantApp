@@ -2,7 +2,6 @@ package com.tenantliving.finance.domain;
 
 import com.tenantliving.common.domain.BaseEntity;
 import com.tenantliving.common.domain.RentCycleStatus;
-import com.tenantliving.finance.domain.LeaseTbl;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;

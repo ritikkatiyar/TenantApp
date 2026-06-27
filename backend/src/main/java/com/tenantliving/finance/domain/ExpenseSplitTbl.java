@@ -3,7 +3,6 @@ package com.tenantliving.finance.domain;
 import com.tenantliving.common.domain.BaseEntity;
 import com.tenantliving.common.domain.ExpenseSplitStatus;
 import com.tenantliving.common.domain.ExpenseSplitType;
-import com.tenantliving.finance.domain.ExpenseTbl;
 import jakarta.persistence.*;
 import lombok.*;
 

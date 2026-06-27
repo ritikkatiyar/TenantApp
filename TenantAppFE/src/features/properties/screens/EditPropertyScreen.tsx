@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   Animated,
   useWindowDimensions
 } from 'react-native';
-import { useRef } from 'react';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';

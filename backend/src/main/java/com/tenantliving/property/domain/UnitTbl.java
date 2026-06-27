@@ -3,7 +3,6 @@ package com.tenantliving.property.domain;
 import com.tenantliving.common.domain.BaseEntity;
 import com.tenantliving.common.domain.FacingDirection;
 import com.tenantliving.common.domain.UnitType;
-import com.tenantliving.property.domain.PropertyTbl;
 import jakarta.persistence.*;
 import lombok.*;
 

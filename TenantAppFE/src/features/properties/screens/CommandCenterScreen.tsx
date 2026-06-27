@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -14,7 +14,7 @@ import {
   Modal,
   TextInput
 } from 'react-native';
-import { useRef } from 'react';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';

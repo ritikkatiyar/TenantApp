@@ -4,18 +4,13 @@ import com.tenantliving.auth.dto.AuthRequests.LoginRequest;
 import com.tenantliving.auth.dto.AuthRequests.LogoutRequest;
 import com.tenantliving.auth.dto.AuthRequests.RefreshRequest;
 import com.tenantliving.auth.dto.AuthRequests.SignupRequest;
-import com.tenantliving.auth.dto.AuthRequests.ValidateRequest;
-import com.tenantliving.auth.dto.AuthResponses.AuthUserSummary;
 import com.tenantliving.auth.dto.AuthResponses.TokenBundle;
-import com.tenantliving.auth.dto.AuthResponses.ValidateResponse;
-import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.auth.service.interfaces.AuthService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.tenantliving.common.response.ApiResponse;
 

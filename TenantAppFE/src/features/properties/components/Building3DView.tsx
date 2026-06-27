@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState , useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text, Animated, PanResponder } from 'react-native';
-import { useRef } from 'react';
+
 import { getAllFloorsLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
 
 interface Building3DViewProps {

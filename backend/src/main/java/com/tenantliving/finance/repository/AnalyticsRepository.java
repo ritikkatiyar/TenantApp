@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 @Repository
 @RequiredArgsConstructor
+@SuppressWarnings("unchecked")
 public class AnalyticsRepository {
 
     @PersistenceContext

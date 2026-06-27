@@ -21,8 +21,7 @@ public class PropertyDTOs {
 
                         String landmark,
 
-                        @NotNull(message = "Total floors is required")
-            @Min(value = 1, message = "Property must have at least 1 floor")
+                        @NotNull(message = "Total floors is required") @Min(value = 1, message = "Property must have at least 1 floor")
             Integer totalFloors
     ) {}
 
@@ -38,8 +37,7 @@ public class PropertyDTOs {
 
                         String landmark,
 
-                        @NotNull(message = "Total floors is required")
-            @Min(value = 1, message = "Property must have at least 1 floor")
+                        @NotNull(message = "Total floors is required") @Min(value = 1, message = "Property must have at least 1 floor")
             Integer totalFloors
     ) {}
 
@@ -67,7 +65,6 @@ public class PropertyDTOs {
                         @Min(value = 1, message = "Must have at least 1 occupant capacity")
             int capacity,
 
-                        @NotNull(message = "Unit type is required")
-            UnitType unitType
+                        @NotNull(message = "Unit type is required") UnitType unitType
     ) {}
 }

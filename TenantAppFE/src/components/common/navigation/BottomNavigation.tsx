@@ -12,14 +12,14 @@ import { BlurView } from 'expo-blur';
 import { useRouter, usePathname, Href } from 'expo-router';
 import { useProperties } from '@/src/hooks/useProperties';
 
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+
 interface NavItem {
   id: string;
   icon: string;
   label: string;
   route: Href;
 }
-
-import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 const LANDLORD_NAV_ITEMS: NavItem[] = [
   { id: 'portfolio', icon: 'domain', label: 'Portfolio', route: '/command-center' },

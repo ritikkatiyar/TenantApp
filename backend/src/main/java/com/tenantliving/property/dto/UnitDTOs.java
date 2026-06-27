@@ -25,12 +25,10 @@ public class UnitDTOs {
                         @NotBlank(message = "Unit number is required")
             String unitNumber,
 
-                        @NotNull(message = "gridX is required")
-            @Min(value = 0, message = "gridX must be non-negative")
+                        @NotNull(message = "gridX is required") @Min(value = 0, message = "gridX must be non-negative")
             Integer gridX,
 
-                        @NotNull(message = "gridY is required")
-            @Min(value = 0, message = "gridY must be non-negative")
+                        @NotNull(message = "gridY is required") @Min(value = 0, message = "gridY must be non-negative")
             Integer gridY,
 
                         @Min(value = 1, message = "gridWidth must be at least 1")
@@ -39,11 +37,9 @@ public class UnitDTOs {
                         @Min(value = 1, message = "gridHeight must be at least 1")
             Integer gridHeight,
 
-                        @NotNull(message = "Unit type is required")
-            UnitType type,
+                        @NotNull(message = "Unit type is required") UnitType type,
 
-                        @NotNull(message = "Capacity is required")
-            @Min(value = 1, message = "Capacity must be at least 1")
+                        @NotNull(message = "Capacity is required") @Min(value = 1, message = "Capacity must be at least 1")
             Integer capacity,
 
                         FacingDirection facing

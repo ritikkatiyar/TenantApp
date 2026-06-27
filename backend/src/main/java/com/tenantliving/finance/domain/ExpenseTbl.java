@@ -2,7 +2,6 @@ package com.tenantliving.finance.domain;
 
 import com.tenantliving.common.domain.ExpenseType;
 import com.tenantliving.common.domain.BaseEntity;
-import com.tenantliving.finance.domain.ExpenseGroupTbl;
 import jakarta.persistence.*;
 import lombok.*;
 
