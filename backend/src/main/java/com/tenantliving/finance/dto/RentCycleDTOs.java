@@ -17,8 +17,21 @@ public class RentCycleDTOs {
     public record GenerateRentCycleRequest(
             @NotNull UUID leaseId,
             @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth,
-            @NotNull LocalDate dueDate,
-            @Valid List<ChargeRequest> charges
+            @NotNull LocalDate dueDate
+    ) {}
+
+    public record BatchGenerateRentCycleRequest(
+            @NotNull UUID propertyId,
+            @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth,
+            @NotNull LocalDate dueDate
+    ) {}
+
+    public record PreFlightChecklistResponse(
+            int totalUnits,
+            int activeLeases,
+            int meterReadingsExpected,
+            int meterReadingsEntered,
+            boolean isReady
     ) {}
 
     public record ChargeRequest(
@@ -31,7 +44,6 @@ public class RentCycleDTOs {
             UUID id,
             UUID leaseId,
             String billingMonth,
-            BigDecimal baseAmount,
             BigDecimal totalAmount,
             LocalDate dueDate,
             RentCycleStatus status,

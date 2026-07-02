@@ -1,0 +1,196 @@
+import React, { useState, useRef } from 'react';
+import { 
+  View, Text, StyleSheet, TouchableOpacity, Modal, 
+  ScrollView, Platform, Pressable 
+} from 'react-native';
+import { BlurView } from 'expo-blur';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useResponsive } from '@/hooks/useResponsive';
+
+export interface DropdownOption {
+  label: string;
+  value: string;
+}
+
+interface GlassDropdownProps {
+  options: DropdownOption[];
+  value: string | null;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  icon?: keyof typeof MaterialIcons.glyphMap;
+}
+
+export default function GlassDropdown({ options, value, onChange, placeholder = 'Select an option', icon }: GlassDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [dropdownCoords, setDropdownCoords] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef<TouchableOpacity>(null);
+  const { isDesktop } = useResponsive();
+
+  const selectedOption = options.find(o => o.value === value);
+
+  const handleOpen = () => {
+    triggerRef.current?.measure((x, y, width, height, pageX, pageY) => {
+      setDropdownCoords({
+        top: pageY + height + 8, 
+        left: pageX,
+        width: width,
+      });
+      setIsOpen(true);
+    });
+  };
+
+  const handleSelect = (val: string) => {
+    onChange(val);
+    setIsOpen(false);
+  };
+
+  return (
+    <>
+      <TouchableOpacity 
+        ref={triggerRef}
+        activeOpacity={0.7} 
+        style={styles.dropdownTrigger}
+        onPress={handleOpen}
+      >
+        <View style={styles.triggerContent}>
+          {icon && <MaterialIcons name={icon} size={20} color="#006875" style={{ marginRight: 8 }} />}
+          <Text style={[styles.triggerText, !selectedOption && styles.placeholderText]}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </Text>
+        </View>
+        <MaterialIcons name={isOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={24} color="#5b6b6d" />
+      </TouchableOpacity>
+
+      <Modal
+        visible={isOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setIsOpen(false)}
+        >
+          <View 
+            style={[
+              styles.dropdownMenu, 
+              { 
+                top: dropdownCoords.top, 
+                left: dropdownCoords.left, 
+                width: dropdownCoords.width 
+              }
+            ]}
+          >
+            <Pressable>
+              <BlurView intensity={90} tint="light" style={styles.blurContainer}>
+                <ScrollView 
+                  style={styles.scrollView}
+                  contentContainerStyle={styles.scrollContent}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {options.map((option, index) => {
+                    const isSelected = option.value === value;
+                    return (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.optionItem,
+                          index !== options.length - 1 && styles.optionBorder
+                        ]}
+                        activeOpacity={0.7}
+                        onPress={() => handleSelect(option.value)}
+                      >
+                        <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                          {option.label}
+                        </Text>
+                        {isSelected && (
+                          <MaterialIcons name="check" size={20} color="#0072ff" />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </BlurView>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  dropdownTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minWidth: 200,
+    width: '100%',
+  },
+  triggerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  triggerText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#151d1e',
+  },
+  placeholderText: {
+    color: '#849495',
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    maxHeight: 350,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  blurContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  scrollView: {
+    maxHeight: 350,
+  },
+  scrollContent: {
+    paddingVertical: 4,
+  },
+  optionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  optionBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+  },
+  optionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#445152',
+  },
+  optionTextSelected: {
+    color: '#0072ff',
+    fontWeight: '800',
+  },
+});

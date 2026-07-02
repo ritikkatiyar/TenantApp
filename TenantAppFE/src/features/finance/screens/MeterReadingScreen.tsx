@@ -11,6 +11,7 @@ import { BlurView } from 'expo-blur';
 import { getActiveChargesForProperty, ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
 import { getWorksheet, batchSaveReadings, MeterReadingResponse } from '@/src/features/finance/api/meterReading.api';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useResponsive } from '@/hooks/useResponsive';
 
 export default function MeterReadingScreen({ token }: { token: string | null }) {
@@ -194,7 +195,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
     }
   });
 
-  const DesktopShell = () => (
+  const renderDesktopShell = () => (
     <LinearGradient
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
@@ -245,19 +246,13 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
             <View style={styles.desktopFilterRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.filterLabelCaps}>UTILITY CONFIGURATION</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
-                  {configs.map(config => (
-                    <TouchableOpacity 
-                      key={config.id}
-                      style={[styles.pill, selectedConfigId === config.id && styles.pillActive]}
-                      onPress={() => setSelectedConfigId(config.id)}
-                    >
-                      <Text style={[styles.pillText, selectedConfigId === config.id && styles.pillTextActive]}>
-                        {config.chargeName}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                <GlassDropdown 
+                  options={configs.map(c => ({ label: c.chargeName, value: c.id }))}
+                  value={selectedConfigId}
+                  onChange={setSelectedConfigId}
+                  placeholder="Select Utility"
+                  icon="receipt-long"
+                />
               </View>
               
               <View style={{ width: 300 }}>
@@ -517,7 +512,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
     </LinearGradient>
   );
 
-  const MobileShell = () => (
+  const renderMobileShell = () => (
     <LinearGradient
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
@@ -558,19 +553,13 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
         {/* Filters */}
         <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsContainer}>
-            {configs.map(config => (
-              <TouchableOpacity 
-                key={config.id}
-                style={[styles.pill, selectedConfigId === config.id && styles.pillActive]}
-                onPress={() => setSelectedConfigId(config.id)}
-              >
-                <Text style={[styles.pillText, selectedConfigId === config.id && styles.pillTextActive]}>
-                  {config.chargeName}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <GlassDropdown 
+            options={configs.map(c => ({ label: c.chargeName, value: c.id }))}
+            value={selectedConfigId}
+            onChange={setSelectedConfigId}
+            placeholder="Select Utility"
+            icon="receipt-long"
+          />
           
           <View style={styles.monthSelector}>
             <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.monthBtn}>
@@ -765,7 +754,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
-      {isDesktop ? <DesktopShell /> : <MobileShell />}
+      {isDesktop ? renderDesktopShell() : renderMobileShell()}
     </KeyboardAvoidingView>
   );
 }
@@ -821,20 +810,6 @@ const styles = StyleSheet.create({
   },
 
   filterSection: { paddingHorizontal: 24, marginBottom: 20 },
-  pillsContainer: { paddingBottom: 16, gap: 10 },
-  pill: {
-    paddingHorizontal: 16, paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)',
-    marginRight: 10,
-  },
-  pillActive: { 
-    backgroundColor: '#0072ff', 
-    borderColor: '#0072ff' 
-  },
-  pillText: { color: '#6b7a7d', fontWeight: '600', fontSize: 14 },
-  pillTextActive: { color: '#fff' },
   
   monthSelector: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -843,6 +818,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 16,
   },
   monthBtn: { padding: 8 },
   monthText: { flex: 1, textAlign: 'center', fontSize: 15, fontWeight: '700', color: '#006875' },
@@ -1025,11 +1001,6 @@ const styles = StyleSheet.create({
     gap: 24,
     alignItems: 'flex-end',
     marginBottom: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
   },
   filterLabelCaps: {
     fontSize: 11,

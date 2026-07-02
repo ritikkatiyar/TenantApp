@@ -28,9 +28,6 @@ public class RentCycleTbl extends BaseEntity {
     @Column(name = "billing_month", length = 7, nullable = false)
     private String billingMonth;
 
-    @Column(name = "base_amount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal baseAmount;
-
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 

@@ -18,7 +18,6 @@ public final class RentCycleMapper {
                 cycle.getId(),
                 cycle.getLease().getId(),
                 cycle.getBillingMonth(),
-                cycle.getBaseAmount(),
                 cycle.getTotalAmount(),
                 cycle.getDueDate(),
                 cycle.getStatus(),

@@ -39,49 +39,65 @@ public class MeterReadingServiceImpl implements MeterReadingService {
 
     @Override
     @Transactional
-    public List<MeterReadingResponse> getOrCreateMeterReadingsForMonth(UUID propertyId, UUID chargeConfigId, Integer month, Integer year) {
+    public List<MeterReadingResponse> getOrCreateWorksheet(UUID propertyId, UUID chargeConfigId, Integer month, Integer year) {
         PropertyTbl property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new BusinessException("Property not found"));
         ChargeConfigTbl chargeConfig = chargeConfigRepository.findById(chargeConfigId)
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
+
+        if (!"METERED".equals(chargeConfig.getCalculationStrategy().name())) {
+            throw new BusinessException("Charge config is not a metered strategy");
+        }
 
         List<UnitTbl> units = unitRepository.findByPropertyId(propertyId);
         List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
         Map<UUID, LeaseTbl> unitToLeaseMap = activeLeases.stream()
                 .collect(Collectors.toMap(l -> l.getUnit().getId(), l -> l, (existing, replacement) -> existing));
 
-        List<MeterReadingTbl> existingReadings = meterReadingRepository.findAllByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
+        List<MeterReadingTbl> existingEntries = meterReadingRepository.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 propertyId, chargeConfigId, month, year);
-        Map<UUID, MeterReadingTbl> existingReadingsMap = existingReadings.stream()
+        Map<UUID, MeterReadingTbl> existingEntriesMap = existingEntries.stream()
                 .collect(Collectors.toMap(r -> r.getUnit().getId(), r -> r));
 
-        List<MeterReadingTbl> finalReadings = new ArrayList<>();
+        List<MeterReadingTbl> finalEntries = new ArrayList<>();
 
         for (UnitTbl unit : units) {
-            MeterReadingTbl reading = existingReadingsMap.get(unit.getId());
-            if (reading == null) {
-                // Find previous month's reading to intelligently carry over
-                BigDecimal prevReadingVal = BigDecimal.ZERO;
-                Optional<MeterReadingTbl> lastReading = meterReadingRepository.findTopByUnitIdAndChargeConfigIdOrderByBillingYearDescBillingMonthDesc(unit.getId(), chargeConfigId);
-                if (lastReading.isPresent() && lastReading.get().getCurrentReading() != null) {
-                    prevReadingVal = lastReading.get().getCurrentReading();
+            MeterReadingTbl entry = existingEntriesMap.get(unit.getId());
+            if (entry == null) {
+                // Fetch previous reading
+                BigDecimal previousReading = BigDecimal.ZERO;
+                int previousMonth = month == 1 ? 12 : month - 1;
+                int previousYear = month == 1 ? year - 1 : year;
+                
+                Optional<MeterReadingTbl> lastEntry = meterReadingRepository.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(
+                        unit.getId(), chargeConfigId, previousMonth, previousYear);
+                        
+                if (lastEntry.isPresent() && lastEntry.get().getCurrentReading() != null) {
+                    previousReading = lastEntry.get().getCurrentReading();
+                } else {
+                    // Fallback to absolute latest
+                    Optional<MeterReadingTbl> absoluteLast = meterReadingRepository.findTopByUnitIdAndChargeConfigIdOrderByBillingYearDescBillingMonthDesc(unit.getId(), chargeConfigId);
+                    if (absoluteLast.isPresent() && absoluteLast.get().getCurrentReading() != null) {
+                        previousReading = absoluteLast.get().getCurrentReading();
+                    }
                 }
 
-                reading = MeterReadingTbl.builder()
+                entry = MeterReadingTbl.builder()
                         .property(property)
                         .unit(unit)
                         .chargeConfig(chargeConfig)
                         .billingMonth(month)
                         .billingYear(year)
-                        .previousReading(prevReadingVal)
+                        .previousReading(previousReading)
+                        .currentReading(null)
                         .isBilled(false)
                         .build();
-                reading = meterReadingRepository.save(reading);
+                entry = meterReadingRepository.save(entry);
             }
-            finalReadings.add(reading);
+            finalEntries.add(entry);
         }
 
-        return finalReadings.stream().map(r -> {
+        return finalEntries.stream().map(r -> {
             LeaseTbl lease = unitToLeaseMap.get(r.getUnit().getId());
             String tenantName = "Vacant";
             if (lease != null) {
@@ -107,19 +123,25 @@ public class MeterReadingServiceImpl implements MeterReadingService {
 
     @Override
     @Transactional
-    public void saveMeterReadings(MeterReadingRequest request) {
+    public void batchSaveReadings(MeterReadingRequest request) {
         for (UnitReading unitReading : request.getReadings()) {
             if (unitReading.getCurrentReading() == null) continue;
             
-            MeterReadingTbl reading = meterReadingRepository.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(
+            MeterReadingTbl entry = meterReadingRepository.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                     unitReading.getUnitId(), request.getChargeConfigId(), request.getBillingMonth(), request.getBillingYear())
-                    .orElseThrow(() -> new BusinessException("Reading not initialized for unit " + unitReading.getUnitId()));
+                    .orElseThrow(() -> new BusinessException("Meter reading not initialized for unit " + unitReading.getUnitId()));
             
-            if (reading.getIsBilled()) {
-                continue; // Skip if this meter reading has already been processed into a locked invoice
+            if (entry.getIsBilled()) {
+                continue;
             }
-            reading.setCurrentReading(unitReading.getCurrentReading());
-            meterReadingRepository.save(reading);
+            
+            // Validate that current reading is >= previous reading
+            if (unitReading.getCurrentReading().compareTo(entry.getPreviousReading()) < 0) {
+                throw new BusinessException("Current reading cannot be less than previous reading for unit " + entry.getUnit().getUnitNumber());
+            }
+            
+            entry.setCurrentReading(unitReading.getCurrentReading());
+            meterReadingRepository.save(entry);
         }
     }
 }

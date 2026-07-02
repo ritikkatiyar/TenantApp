@@ -13,7 +13,7 @@ The project utilizes a centralized theme structure defined in `TenantAppFE/src/t
 - **Secondary Color (`#4648d4`)**: Reserved for primary action buttons, save endpoints, and focal interactive elements.
 - **Tertiary Color (`#765a00`)**: Used selectively for warning states, pending actions, and highlights.
 - **Error Colors (`#ba1a1a` / `#ffdad6`)**: Used exclusively for destructive actions, validation errors, and critical alerts.
-- **Background Gradient**: All full-screen screens must render inside a standard page wrapper utilizing the `backgroundGradient`: `["#f4faff", "#ecf5fb", "#d8e2ff"]`.
+- **Background Gradient**: All full-screen screens must render inside a standard page wrapper utilizing the `backgroundGradient`: `["#d4f5f9", "#e8f8fb", "#e2e0fb"]` (luminous cyan, ice blue, and pastel lavender). All gradient instances must be configured as diagonal (start=`{ x: 0, y: 0 }`, end=`{ x: 1, y: 1 }`) rather than vertical or default.
 - **Accent Gradients**: Key visual triggers (active segment selections, call-to-action buttons) must use `accentGradientStart` (`#00e0ff`) to `accentGradientEnd` (`#0070ea`).
 
 ### B. Typography Hierarchy
@@ -97,6 +97,28 @@ When dynamic lists of options (e.g. many properties) cannot fit inside a standar
    - **Active state**: Solid primary accent blue background (`#0072ff`) with white text (`#ffffff`).
    - **Inactive state**: Semi-translucent white background (`rgba(255, 255, 255, 0.4)`) with standard border (`rgba(255, 255, 255, 0.8)`) and muted text color (`#6b7a7d`).
 
+### E. Primary Action & Gradient Buttons
+Primary actions and action triggers must use a unified gradient styling and sizing standard:
+1. **Linear Gradient**: Must utilize colors from `#00d4ff` (cyan) to `#0072ff` (blue), starting at `(0,0)` and ending at `(1,0)`.
+2. **Typography**: Text must be bold/extra-bold (`fontWeight: '700'` or `'800'`), colored white (`#ffffff`).
+3. **Primary / Large Action Buttons** (e.g. Save Layout, Save Changes, Create Property):
+   - **Mobile Viewports (Form-bottom/floating actions)**:
+     - **Height**: Standardized to exactly **56px** (for thumb touch ergonomics).
+     - **Corner Radius**: Fully pill-rounded using `borderRadius: 28` (or `borderRadius: 100`).
+     - **Text Size**: `14px` - `16px`.
+     - **Shadow**: `shadowColor: '#0072ff'`, `shadowOpacity: 0.25`, `shadowRadius: 10`, `shadowOffset: { width: 0, height: 6 }`, `elevation: 4`.
+   - **Desktop Viewports (Page-header row actions)**:
+     - **Height**: Standardized to exactly **46px** (for visual balance in web page headers).
+     - **Corner Radius**: Fully pill-rounded using `borderRadius: 23` (or `borderRadius: 100`).
+     - **Text Size**: `13px` - `14px`.
+     - **Shadow**: `shadowColor: '#0072ff'`, `shadowOpacity: 0.18`, `shadowRadius: 6`, `shadowOffset: { width: 0, height: 3 }`, `elevation: 2`.
+4. **Compact / Header Action Buttons** (e.g. "Add New", "Add Property" in list section header rows):
+   - **Height / Padding**: Standardized to exactly **38px** (using `paddingVertical: 10`, `paddingHorizontal: 18` or `height: 38` with centered flex content).
+   - **Corner Radius**: Fully pill-rounded using `borderRadius: 19` (or `borderRadius: 100`).
+   - **Text Size**: `12px`.
+   - **Shadow**: `shadowColor: '#0072ff'`, `shadowOpacity: 0.18`, `shadowRadius: 6`, `shadowOffset: { width: 0, height: 3 }`, `elevation: 2`.
+5. **Layout**: Flex direction row with items centered and a gap of `6` - `8` for aligning icons (e.g. plus signs, checkmarks) alongside the text label.
+
 ---
 
 ## 3. Responsive Screen & Layout Architecture
@@ -131,6 +153,22 @@ The app is deployed across both mobile screens and desktop web viewers. Viewport
   ```
 - **Safe Areas**: Direct layouts must respect notch overlays using `SafeAreaView` from `react-native-safe-area-context` with configured edges (e.g. `edges={['top']}`).
 
+### C. Standard Header & Navigation Bars
+To maintain consistent vertical rhythm and screen transitions, all mobile and compact header blocks must align to these metrics:
+1. **Paddings**:
+   - **Horizontal Padding**: Must be exactly **24px** (matching container grid edges).
+   - **Vertical Padding**: Standardized to `paddingTop: 16px` and `paddingBottom: 16px` (or `paddingVertical: 16px`), aligning elements precisely inside the Safe Area boundary.
+2. **Back Button**:
+   - Must use a fully rounded background circle: `width: 40`, `height: 40`, `borderRadius: 20`, `backgroundColor: 'rgba(255,255,255,0.5)'`, and `justifyContent: 'center'`, `alignItems: 'center'`.
+   - **No vertical margins (e.g., `marginBottom: 16`)**: Center the back button vertically in the header row alongside titles to avoid baseline alignment shifts.
+   - Font size: `22px` (`fontWeight: '800'`), layout element centered or placed beside the back button in a row container.
+
+### D. Desktop Top Navigation
+All desktop-level screens must utilize the globally shared `<DesktopNavBar>` component for their top header instead of building custom inline `BlurView` topbars.
+1. **Import Path**: `@/src/components/common/navigation/DesktopNavBar`
+2. **Usage**: Pass in `activeTab` to highlight the current section (e.g., `activeTab="Properties"`), `onBack` (optional) to trigger the back action with `backText` (e.g., `backText="Back to Portfolio"`), and `rightContent` to inject custom elements like search boxes or settings icons.
+3. **Consistency**: Do not wrap `DesktopNavBar` inside a scrolling container; it must be pinned to the top of the `desktopMain` layout to act as a constant component without re-rendering the page during interactions.
+
 ---
 
 ## 4. Native Interactions & Polish
@@ -157,3 +195,7 @@ The app is deployed across both mobile screens and desktop web viewers. Viewport
 2. **StyleSheet Encapsulation**: All component styling must be defined in a dedicated `const styles = StyleSheet.create({...})` block at the bottom of the file. No inline styles are permitted for complex properties like layout grid settings, flex containers, or border metrics.
 3. **No Unused Imports**: Strip unused React Native components, icons, or router references prior to committing.
 4. **SVG and Icon Consistency**: Leverage icons exclusively from `@expo/vector-icons` (`MaterialIcons`, `Feather`, `MaterialCommunityIcons`, `Ionicons`) configured with unified sizes (typically `20` / `24` pixels) matching category headers.
+
+ # # #   F .   F i l t e r   R o w s   &   H e a d e r   L a y o u t s 
+ -   * * F i l t e r   R o w s   ( d e s k t o p F i l t e r R o w ) * * :   W h e n   r e n d e r i n g   a   f i l t e r   r o w   a b o v e   a   g r i d   o f   s m a l l e r   c a r d s   ( e . g . ,   u n i t   c a r d s ) ,   d o   N O T   w r a p   t h e   f i l t e r   r o w   i n   a   b o r d e r e d   g l a s s m o r p h i c   c a r d   c o n t a i n e r .   R e n d e r   i t   t r a n s p a r e n t l y   (  l e x D i r e c t i o n :   ' r o w ' ,    l i g n I t e m s :   ' f l e x - e n d ' ,   g a p :   2 4 ,   m a r g i n B o t t o m :   3 2 )   w i t h o u t   b a c k g r o u n d   c o l o r s   o r   b o r d e r s .   T h i s   p r e v e n t s   t h e   f i l t e r   r o w   f r o m   a p p e a r i n g   v i s u a l l y   u n b a l a n c e d   ( ' l o n g e r '   o r   w i d e r )   c o m p a r e d   t o   t h e   i n d i v i d u a l   s m a l l   c a r d s   b e l o w   i t .  
+ 

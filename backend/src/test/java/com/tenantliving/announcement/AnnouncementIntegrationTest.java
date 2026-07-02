@@ -108,7 +108,6 @@ public class AnnouncementIntegrationTest {
                 .unit(unit)
                 .status(LeaseStatus.ACTIVE)
                 .moveInDate(LocalDate.now().minusDays(10))
-                .rentAmount(BigDecimal.valueOf(15000))
                 .securityDeposit(BigDecimal.valueOf(30000))
                 .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
                 .build();

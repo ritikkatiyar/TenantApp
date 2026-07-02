@@ -28,6 +28,12 @@ public class PropertyTbl extends BaseEntity {
 
     private Integer totalFloors;
 
+    @Column(name = "auto_bill_day_of_month")
+    private Integer autoBillDayOfMonth;
+
+    @Column(name = "auto_bill_time")
+    private java.time.LocalTime autoBillTime;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = true)
     @ToString.Exclude

@@ -35,6 +35,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const [unitType, setUnitType] = useState('kWh');
   const [applySalesTax, setApplySalesTax] = useState(true);
   const [lateFee, setLateFee] = useState('5');
+  const [autoCarryForward, setAutoCarryForward] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isUnitDropdownOpen, setIsUnitDropdownOpen] = useState(false);
   const unitScrollRef = useRef<ScrollView>(null);
@@ -64,6 +65,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       setBaseRate(data.baseRate.toString());
       setApplySalesTax(data.applySalesTax);
       setLateFee(data.lateFeePercentage ? data.lateFeePercentage.toString() : '');
+      setAutoCarryForward(data.autoCarryForward || false);
     } catch(e: any) {
       Alert.alert("Error", "Failed to load charge details");
     } finally {
@@ -105,6 +107,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             baseRate: parseFloat(baseRate),
             applySalesTax: applySalesTax,
             lateFeePercentage: lateFee ? parseFloat(lateFee) : null,
+            autoCarryForward: autoCarryForward,
         };
 
         if (isEditMode && chargeId) {
@@ -371,6 +374,16 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         />
       </View>
 
+      <View style={[styles.rowBetween, { marginTop: 20 }]}>
+        <Text style={styles.settingText}>Auto-Carry Forward</Text>
+        <Switch 
+          value={autoCarryForward} 
+          onValueChange={setAutoCarryForward}
+          trackColor={{ false: '#d1d5db', true: '#00F0FF' }}
+          thumbColor="#ffffff"
+        />
+      </View>
+
       <View style={[styles.rowBetween, { marginTop: 24, marginBottom: 24 }]}>
         <Text style={styles.settingText}>Late Fee Rules</Text>
         <View style={styles.badge}>
@@ -436,6 +449,11 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
           <View style={styles.previewRow}>
             <Text style={styles.previewLabel}>Sales Tax</Text>
             <Text style={styles.previewValue}>{applySalesTax ? 'Apply (18% GST)' : 'Exempt'}</Text>
+          </View>
+
+          <View style={styles.previewRow}>
+            <Text style={styles.previewLabel}>Auto-Carry</Text>
+            <Text style={styles.previewValue}>{autoCarryForward ? 'Yes' : 'No'}</Text>
           </View>
 
           <View style={styles.previewRow}>

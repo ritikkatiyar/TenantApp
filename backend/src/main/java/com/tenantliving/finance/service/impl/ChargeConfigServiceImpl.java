@@ -43,6 +43,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
                 .baseRate(request.getBaseRate())
                 .applySalesTax(request.getApplySalesTax())
                 .lateFeePercentage(request.getLateFeePercentage())
+                .autoCarryForward(request.getAutoCarryForward() != null ? request.getAutoCarryForward() : false)
                 .isActive(true)
                 .isSystemRequired(false) // Custom charges created by user are not system required
                 .build();
@@ -65,6 +66,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
         config.setBaseRate(request.getBaseRate());
         config.setApplySalesTax(request.getApplySalesTax());
         config.setLateFeePercentage(request.getLateFeePercentage());
+        config.setAutoCarryForward(request.getAutoCarryForward() != null ? request.getAutoCarryForward() : false);
 
         chargeConfigRepository.save(config);
         return mapToResponse(config);
@@ -113,6 +115,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
                 .lateFeePercentage(config.getLateFeePercentage())
                 .isSystemRequired(config.getIsSystemRequired())
                 .isActive(config.getIsActive())
+                .autoCarryForward(config.getAutoCarryForward())
                 .build();
     }
 }

@@ -25,7 +25,7 @@ public class ChargeConfigController {
     }
 
     @PostMapping
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId(), 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<ChargeConfigResponse>> createChargeConfig(@RequestBody ChargeConfigRequest request) {
         ChargeConfigResponse response = chargeConfigService.createChargeConfig(request);
         return ResponseEntity.ok(ApiResponse.success(response));

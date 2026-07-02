@@ -30,7 +30,6 @@ public class MeDTOs {
             String propertyName,
             UUID unitId,
             String unitNumber,
-            BigDecimal rentAmount,
             String status
     ) {}
 }

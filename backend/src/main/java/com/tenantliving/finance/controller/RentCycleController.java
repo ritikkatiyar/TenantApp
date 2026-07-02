@@ -41,6 +41,45 @@ public class RentCycleController {
                 .body(ApiResponse.success(rentCycleService.generate(request)));
     }
 
+    @PostMapping("/batch-generate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#request.propertyId, 'PROPERTY_UPDATE')")
+    /**
+     * Batch generate rent cycles
+     * Generates rent invoices for all active leases in a property for a given month.
+     */
+    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchGenerate(
+            @Valid @RequestBody RentCycleDTOs.BatchGenerateRentCycleRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(rentCycleService.batchGenerate(request)));
+    }
+
+    @PostMapping("/batch-publish")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_UPDATE')")
+    /**
+     * Batch publish rent cycles
+     * Publishes all PENDING rent cycles for a property and billing month.
+     */
+    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchPublish(
+            @RequestParam UUID propertyId,
+            @RequestParam String billingMonth
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchPublish(propertyId, billingMonth)));
+    }
+
+    @GetMapping("/pre-flight")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    /**
+     * Get pre-flight checklist
+     * Returns statistics for the generation readiness of a property for a given month.
+     */
+    public ResponseEntity<ApiResponse<RentCycleDTOs.PreFlightChecklistResponse>> getPreFlightChecklist(
+            @RequestParam UUID propertyId,
+            @RequestParam String billingMonth
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.getPreFlightChecklist(propertyId, billingMonth)));
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
         /**

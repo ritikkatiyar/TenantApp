@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface PropertyRepository extends JpaRepository<PropertyTbl, UUID> {
     List<PropertyTbl> findByOwnerId(UUID ownerId);
 
+    List<PropertyTbl> findByAutoBillDayOfMonth(Integer autoBillDayOfMonth);
+
     @EntityGraph(attributePaths = "owner")
     List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds);
 }

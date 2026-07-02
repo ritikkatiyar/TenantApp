@@ -12,7 +12,6 @@ public final class LeaseMapper {
                 lease.getId(),
                 lease.getUserId(),
                 lease.getUnit().getId(),
-                lease.getRentAmount(),
                 lease.getSecurityDeposit(),
                 lease.getSplitStrategy(),
                 lease.getMoveInDate(),

@@ -156,7 +156,6 @@ public class UserController {
                 lease.getUnit().getProperty().getName(),
                 lease.getUnit().getId(),
                 lease.getUnit().getUnitNumber(),
-                lease.getRentAmount(),
                 lease.getStatus().name()
         );
     }

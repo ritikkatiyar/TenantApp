@@ -107,7 +107,6 @@ public class UnitLayoutFacade {
                     lease.getUserId(),
                     tenant != null ? tenant.getFullName() : null,
                     tenant != null ? tenant.getPhoneNumber() : null,
-                    lease.getRentAmount(),
                     lease.getStatus().name()
             );
         }).collect(Collectors.toList());

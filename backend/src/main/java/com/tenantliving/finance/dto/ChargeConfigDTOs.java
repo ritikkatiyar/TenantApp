@@ -22,6 +22,7 @@ public class ChargeConfigDTOs {
         private BigDecimal baseRate;
         private Boolean applySalesTax;
         private BigDecimal lateFeePercentage;
+        private Boolean autoCarryForward;
     }
 
     @Data
@@ -39,5 +40,6 @@ public class ChargeConfigDTOs {
         private BigDecimal lateFeePercentage;
         private Boolean isSystemRequired;
         private Boolean isActive;
+        private Boolean autoCarryForward;
     }
 }

@@ -59,7 +59,6 @@ public class LeaseServiceImpl implements LeaseService {
         LeaseTbl lease = LeaseTbl.builder()
                 .userId(request.userId())
                 .unit(unit)
-                .rentAmount(request.rentAmount())
                 .securityDeposit(request.securityDeposit())
                 .splitStrategy(request.splitStrategy())
                 .moveInDate(request.moveInDate())
@@ -67,8 +66,8 @@ public class LeaseServiceImpl implements LeaseService {
                 .status(request.status() != null ? request.status() : LeaseStatus.ACTIVE)
                 .build();
         LeaseTbl saved = leaseRepository.save(lease);
-        log.info("lease_created leaseId={} userId={} unitId={} rentAmount={} status={}",
-                saved.getId(), saved.getUserId(), saved.getUnit().getId(), saved.getRentAmount(), saved.getStatus());
+        log.info("lease_created leaseId={} userId={} unitId={} status={}",
+                saved.getId(), saved.getUserId(), saved.getUnit().getId(), saved.getStatus());
         return saved;
     }
 

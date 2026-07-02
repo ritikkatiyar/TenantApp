@@ -11,13 +11,15 @@ import java.util.UUID;
 @Repository
 public interface MeterReadingRepository extends JpaRepository<MeterReadingTbl, UUID> {
     
-    List<MeterReadingTbl> findAllByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
+    List<MeterReadingTbl> findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
             UUID propertyId, UUID chargeConfigId, Integer billingMonth, Integer billingYear);
             
     Optional<MeterReadingTbl> findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(
             UUID unitId, UUID chargeConfigId, Integer billingMonth, Integer billingYear);
             
-    // Used to find the reading from the previous month to set as `previousReading`
     Optional<MeterReadingTbl> findTopByUnitIdAndChargeConfigIdOrderByBillingYearDescBillingMonthDesc(
             UUID unitId, UUID chargeConfigId);
+
+    List<MeterReadingTbl> findAllByUnitIdAndBillingMonthAndBillingYear(
+            UUID unitId, Integer billingMonth, Integer billingYear);
 }

@@ -15,7 +15,6 @@ public class LeaseDTOs {
     public record CreateLeaseRequest(
             @NotNull UUID userId,
             @NotNull UUID unitId,
-            @NotNull @PositiveOrZero BigDecimal rentAmount,
             @NotNull @PositiveOrZero BigDecimal securityDeposit,
             @NotNull LeaseSplitStrategy splitStrategy,
             @NotNull LocalDate moveInDate,
@@ -27,7 +26,6 @@ public class LeaseDTOs {
             UUID id,
             UUID userId,
             UUID unitId,
-            BigDecimal rentAmount,
             BigDecimal securityDeposit,
             LeaseSplitStrategy splitStrategy,
             LocalDate moveInDate,

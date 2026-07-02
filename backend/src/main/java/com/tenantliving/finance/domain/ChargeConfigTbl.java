@@ -58,4 +58,8 @@ public class ChargeConfigTbl extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(name = "auto_carry_forward", nullable = false)
+    @Builder.Default
+    private Boolean autoCarryForward = false;
 }
