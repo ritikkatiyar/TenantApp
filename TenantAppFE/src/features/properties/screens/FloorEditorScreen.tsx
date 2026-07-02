@@ -91,7 +91,6 @@ export default function FloorEditorScreen({
   const [tenantSearchResult, setTenantSearchResult] = useState<UserSearchResponse | null>(null);
   const [tenantSearchLoading, setTenantSearchLoading] = useState(false);
   const [tenantAssigning, setTenantAssigning] = useState(false);
-  const [leaseRentAmount, setLeaseRentAmount] = useState('');
   const [securityDeposit, setSecurityDeposit] = useState('');
   const [currentDrawBlock, setCurrentDrawBlock] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
@@ -291,11 +290,15 @@ export default function FloorEditorScreen({
 
   const composedGesture = Gesture.Simultaneous(pinchGesture, panGesture);
 
+  const isWeb = Platform.OS === 'web';
+
   const tapGesture = Gesture.Tap()
     .enabled(activeTool === 'ADD')
     .onEnd((e) => {
-      const x = Math.floor(e.x / CELL_SIZE);
-      const y = Math.floor(e.y / CELL_SIZE);
+      const realX = isWeb ? e.x / scale.value : e.x;
+      const realY = isWeb ? e.y / scale.value : e.y;
+      const x = Math.floor(realX / CELL_SIZE);
+      const y = Math.floor(realY / CELL_SIZE);
       if (x >= 0 && x < GRID_SIZE_X && y >= 0 && y < GRID_SIZE_Y) {
         runOnJS(handleDrawStart)(x, y);
         runOnJS(handleDrawEnd)();
@@ -306,15 +309,19 @@ export default function FloorEditorScreen({
     .enabled(activeTool === 'ADD')
     .minDistance(5)
     .onBegin((e) => {
-      const x = Math.floor(e.x / CELL_SIZE);
-      const y = Math.floor(e.y / CELL_SIZE);
+      const realX = isWeb ? e.x / scale.value : e.x;
+      const realY = isWeb ? e.y / scale.value : e.y;
+      const x = Math.floor(realX / CELL_SIZE);
+      const y = Math.floor(realY / CELL_SIZE);
       if (x >= 0 && x < GRID_SIZE_X && y >= 0 && y < GRID_SIZE_Y) {
         runOnJS(handleDrawStart)(x, y);
       }
     })
     .onUpdate((e) => {
-      const x = Math.floor(e.x / CELL_SIZE);
-      const y = Math.floor(e.y / CELL_SIZE);
+      const realX = isWeb ? e.x / scale.value : e.x;
+      const realY = isWeb ? e.y / scale.value : e.y;
+      const x = Math.floor(realX / CELL_SIZE);
+      const y = Math.floor(realY / CELL_SIZE);
       if (x >= 0 && x < GRID_SIZE_X && y >= 0 && y < GRID_SIZE_Y) {
         runOnJS(handleDrawUpdate)(x, y);
       }
@@ -398,7 +405,6 @@ export default function FloorEditorScreen({
       setBlocks(newBlocks);
     } else if (activeTool === 'PAN') {
       setSelectedUnitId(block.id);
-      setLeaseRentAmount(block.rent || '');
       setSecurityDeposit('');
       setTenantPhoneSearch('');
       setTenantSearchResult(null);
@@ -525,7 +531,9 @@ export default function FloorEditorScreen({
       setNewTenantName('');
       setNewTenantEmail('');
       setSuggestions([]);
-      Alert.alert('Success', `Tenant "${createdUser.fullName}" created and selected.`);
+      
+      // Auto assign after creation
+      await handleAssignTenant(createdUser);
     } catch (error: any) {
       console.error('[Create Tenant Error]', error);
       setTenantSearchError(error.message || 'Failed to create tenant.');
@@ -534,21 +542,16 @@ export default function FloorEditorScreen({
     }
   };
 
-  const handleAssignTenant = async () => {
-    if (!selectedBlock || !tenantSearchResult) return;
+  const handleAssignTenant = async (userToAssign?: UserSearchResponse) => {
+    const targetUser = userToAssign || tenantSearchResult;
+    if (!selectedBlock || !targetUser) return;
 
-    const totalRent = Number(leaseRentAmount);
     const totalDeposit = Number(securityDeposit || '0');
-    if (!totalRent || totalRent < 0 || totalDeposit < 0) {
-      setTenantSearchError('Enter a valid monthly rent amount first.');
-      return;
-    }
 
     setTenantAssigning(true);
     setTenantSearchError(null);
     try {
       const capacity = selectedBlock.capacity || 1;
-      const rentAmount = Math.round(totalRent / capacity);
       const depositAmount = Math.round(totalDeposit / capacity);
 
       // 1) Auto-save the floor layout first!
@@ -574,9 +577,8 @@ export default function FloorEditorScreen({
       // 2) Now create the lease, which will read the correct, updated unit capacity from the database.
       const today = new Date().toISOString().slice(0, 10);
       const payload = {
-        userId: tenantSearchResult.id,
+        userId: targetUser.id,
         unitId: selectedBlock.id,
-        rentAmount,
         securityDeposit: depositAmount,
         splitStrategy: 'FULL_UNIT' as const,
         moveInDate: today,
@@ -586,26 +588,25 @@ export default function FloorEditorScreen({
       const lease = await createLease(payload, userToken);
 
       updateUnitDetails(selectedBlock.id, {
-        rent: totalRent.toString(),
-        tenants: [...(selectedBlock.tenants || []), tenantSearchResult.fullName],
-        tenantUserId: tenantSearchResult.id,
-        tenantPhone: tenantSearchResult.phoneNumber,
+        tenants: [...(selectedBlock.tenants || []), targetUser.fullName],
+        tenantUserId: targetUser.id,
+        tenantPhone: targetUser.phoneNumber,
         activeLeaseId: lease.id,
         status: 'OCCUPIED',
         activeLeases: [
           ...(selectedBlock.activeLeases || []),
           {
             leaseId: lease.id,
-            tenantUserId: tenantSearchResult.id,
-            tenantName: tenantSearchResult.fullName,
-            tenantPhone: tenantSearchResult.phoneNumber,
+            tenantUserId: targetUser.id,
+            tenantName: targetUser.fullName,
+            tenantPhone: targetUser.phoneNumber,
             rentAmount: lease.rentAmount,
             status: 'ACTIVE',
           }
         ]
       });
 
-      const assignedName = tenantSearchResult.fullName;
+      const assignedName = targetUser.fullName;
       resetTenantAssignmentForm();
       Alert.alert('Success', `${assignedName} has been assigned to Unit ${selectedBlock.unitNumber}.`);
     } catch (error: any) {
@@ -759,7 +760,6 @@ export default function FloorEditorScreen({
               const activeCount = block.activeLeases ? block.activeLeases.length : 0;
               const cap = block.capacity || 1;
               const isVacant = activeCount === 0;
-              const rentDisplay = block.rent ? `₹${Number(block.rent).toLocaleString('en-IN')}` : null;
 
               return (
               <View
@@ -819,15 +819,6 @@ export default function FloorEditorScreen({
                       <Text style={{ fontSize: 9, fontWeight: '800', color: '#1a1a1a' }}>
                         {isVacant ? 'OPEN' : `${activeCount}/${cap}`}
                       </Text>
-                      {/* Rent */}
-                      {rentDisplay && (
-                        <>
-                          <View style={{ width: 1, height: 8, backgroundColor: 'rgba(0,0,0,0.15)' }} />
-                          <Text style={{ fontSize: 8, fontWeight: '700', color: '#444' }} numberOfLines={1}>
-                            {rentDisplay}
-                          </Text>
-                        </>
-                      )}
                     </View>
                   ) : (
                     /* Small 1x1 blocks: compact dot indicator at bottom */
@@ -1048,7 +1039,6 @@ export default function FloorEditorScreen({
                             <TouchableOpacity 
                               onPress={() => {
                                 setSelectedUnitId(null);
-                                setLeaseRentAmount('');
                                 setSecurityDeposit('');
                                 resetTenantAssignmentForm();
                               }}
@@ -1108,7 +1098,7 @@ export default function FloorEditorScreen({
                                     <Text style={styles.statusToggleText}>CANCEL</Text>
                                   </TouchableOpacity>
                                   <TouchableOpacity style={[styles.statusToggle, styles.statusActiveOccupied, { flex: 1 }]} onPress={handleCreateAndSelectTenant} disabled={tenantCreating}>
-                                    {tenantCreating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE</Text>}
+                                    {tenantCreating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE & ASSIGN</Text>}
                                   </TouchableOpacity>
                                 </View>
                               </View>
@@ -1118,21 +1108,6 @@ export default function FloorEditorScreen({
                             {/* Form Input Fields */}
                             <View style={{ gap: 12, marginBottom: 12 }}>
                               <View style={{ flexDirection: 'row', gap: 12 }}>
-                                <View style={[styles.inputGroup, { flex: 1 }]}>
-                                  <Text style={styles.inputLabel}>MONTHLY RENT</Text>
-                                  <View style={styles.inputWrapper}>
-                                    <MaterialIcons name="payments" size={18} color="#006875" />
-                                    <TextInput 
-                                      style={styles.textInput}
-                                      value={leaseRentAmount}
-                                      onChangeText={setLeaseRentAmount}
-                                      placeholder="e.g. 15000"
-                                      keyboardType="numeric"
-                                      placeholderTextColor="#9ba9ab"
-                                    />
-                                  </View>
-                                </View>
-
                                 <View style={[styles.inputGroup, { flex: 1 }]}>
                                   <Text style={styles.inputLabel}>UNIT CAPACITY</Text>
                                   <View style={styles.inputWrapper}>
@@ -1185,9 +1160,6 @@ export default function FloorEditorScreen({
                                             <Text style={[styles.sheetSubtitle, { marginVertical: 0 }]}>{l.tenantPhone}</Text>
                                           ) : null}
                                         </View>
-                                        {l.rentAmount ? (
-                                          <Text style={{ fontSize: 11, color: '#6b7a7d', paddingLeft: 4 }}>Rent Share: ₹{l.rentAmount}/mo</Text>
-                                        ) : null}
                                       </View>
 
                                       <TouchableOpacity 
@@ -1365,7 +1337,7 @@ export default function FloorEditorScreen({
                                           {tenantCreating ? (
                                             <ActivityIndicator size="small" color="#fff" />
                                           ) : (
-                                            <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE</Text>
+                                            <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE & ASSIGN</Text>
                                           )}
                                         </TouchableOpacity>
                                       </View>
@@ -1589,7 +1561,6 @@ export default function FloorEditorScreen({
               style={StyleSheet.absoluteFillObject}
               onPress={() => {
                 setSelectedUnitId(null);
-                setLeaseRentAmount('');
                 setSecurityDeposit('');
                 resetTenantAssignmentForm();
               }}
@@ -1625,7 +1596,6 @@ export default function FloorEditorScreen({
                   <TouchableOpacity 
                     onPress={() => {
                       setSelectedUnitId(null);
-                      setLeaseRentAmount('');
                       setSecurityDeposit('');
                       resetTenantAssignmentForm();
                     }}
@@ -1686,7 +1656,7 @@ export default function FloorEditorScreen({
                         <Text style={styles.statusToggleText}>CANCEL</Text>
                       </TouchableOpacity>
                       <TouchableOpacity style={[styles.statusToggle, styles.statusActiveOccupied, { flex: 1 }]} onPress={handleCreateAndSelectTenant} disabled={tenantCreating}>
-                        {tenantCreating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE</Text>}
+                        {tenantCreating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE & ASSIGN</Text>}
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1695,21 +1665,6 @@ export default function FloorEditorScreen({
                   <>
                 <View style={{ gap: 12, marginBottom: 12 }}>
                   <View style={{ flexDirection: 'row', gap: 12 }}>
-                    <View style={[styles.inputGroup, { flex: 1 }]}>
-                      <Text style={styles.inputLabel}>MONTHLY RENT</Text>
-                      <View style={styles.inputWrapper}>
-                        <MaterialIcons name="payments" size={18} color="#006875" />
-                        <TextInput 
-                          style={styles.textInput}
-                          value={leaseRentAmount}
-                          onChangeText={setLeaseRentAmount}
-                          placeholder="e.g. 15000"
-                          keyboardType="numeric"
-                          placeholderTextColor="#9ba9ab"
-                        />
-                      </View>
-                    </View>
-
                     <View style={[styles.inputGroup, { flex: 1 }]}>
                       <Text style={styles.inputLabel}>UNIT CAPACITY</Text>
                       <View style={styles.inputWrapper}>
@@ -1761,9 +1716,6 @@ export default function FloorEditorScreen({
                                 <Text style={[styles.sheetSubtitle, { marginVertical: 0 }]}>{l.tenantPhone}</Text>
                               ) : null}
                             </View>
-                            {l.rentAmount ? (
-                              <Text style={{ fontSize: 11, color: '#6b7a7d', paddingLeft: 4 }}>Rent Share: ₹{l.rentAmount}/mo</Text>
-                            ) : null}
                           </View>
 
                           <TouchableOpacity 
@@ -1942,7 +1894,7 @@ export default function FloorEditorScreen({
                               {tenantCreating ? (
                                 <ActivityIndicator size="small" color="#fff" />
                               ) : (
-                                <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE</Text>
+                                <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE & ASSIGN</Text>
                               )}
                             </TouchableOpacity>
                           </View>
