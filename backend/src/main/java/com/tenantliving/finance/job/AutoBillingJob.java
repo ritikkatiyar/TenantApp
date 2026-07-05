@@ -9,7 +9,7 @@ import com.tenantliving.finance.repository.LeaseRepository;
 import com.tenantliving.finance.service.BillingWorksheetService;
 import com.tenantliving.finance.service.interfaces.RentCycleService;
 import com.tenantliving.property.domain.PropertyTbl;
-import com.tenantliving.property.repository.PropertyRepository;
+import com.tenantliving.property.service.interfaces.PropertyQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,7 +25,7 @@ import java.util.List;
 @Slf4j
 public class AutoBillingJob {
 
-    private final PropertyRepository propertyRepository;
+    private final PropertyQueryService propertyQueryService;
     private final ChargeConfigRepository chargeConfigRepository;
     private final BillingWorksheetService worksheetService;
     private final LeaseRepository leaseRepository;
@@ -43,7 +43,7 @@ public class AutoBillingJob {
 
         log.info("Starting Auto-Billing Job for Day: {}, Hour: {}, Month: {}", currentDay, currentHour, currentBillingMonth);
 
-        List<PropertyTbl> properties = propertyRepository.findByAutoBillDayOfMonth(currentDay);
+        List<PropertyTbl> properties = propertyQueryService.getPropertiesByAutoBillDayOfMonth(currentDay);
 
         for (PropertyTbl property : properties) {
             if (property.getAutoBillTime() != null && property.getAutoBillTime().getHour() == currentHour) {

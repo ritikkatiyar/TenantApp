@@ -34,13 +34,8 @@ public class PropertyTbl extends BaseEntity {
     @Column(name = "auto_bill_time")
     private java.time.LocalTime autoBillTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = true)
-    @ToString.Exclude
-    private UserTbl owner;
-
-    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
+    @Enumerated(EnumType.STRING)
+    @Column(name = "property_type", nullable = false)
     @Builder.Default
-    private List<UnitTbl> units = new ArrayList<>();
+    private PropertyType propertyType = PropertyType.RENTAL;
 }

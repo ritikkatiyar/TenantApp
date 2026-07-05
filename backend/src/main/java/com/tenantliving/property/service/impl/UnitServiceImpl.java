@@ -1,19 +1,16 @@
 package com.tenantliving.property.service.impl;
 
 import com.tenantliving.common.domain.FacingDirection;
-
 import com.tenantliving.common.exception.BusinessException;
-
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
-import com.tenantliving.property.service.interfaces.PropertyService;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.dto.UnitDTOs;
 import com.tenantliving.property.repository.UnitRepository;
 import com.tenantliving.property.service.interfaces.UnitService;
+import com.tenantliving.property.service.interfaces.PropertyQueryService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,17 +24,11 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UnitServiceImpl implements UnitService {
 
     private final UnitRepository unitRepository;
-    private final PropertyService propertyService;
-
-    @Override
-    @Transactional(readOnly = true)
-    public UnitTbl getUnitById(UUID id) {
-        return unitRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
-    }
+    private final PropertyQueryService propertyQueryService;
 
     @Override
     public List<UnitTbl> saveAll(List<UnitTbl> units) {
@@ -45,56 +36,6 @@ public class UnitServiceImpl implements UnitService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<UnitDTOs.FloorSummaryResponse> getFloorSummaries(UUID propertyId, Integer throughFloor) {
-        PropertyTbl property = propertyService.getPropertyById(propertyId);
-        
-        int maxFromUnits = unitRepository.findMaxFloorByPropertyId(propertyId);
-        int propertyTotalFloors = property.getTotalFloors() != null ? property.getTotalFloors() : 0;
-        int requestedTop = throughFloor != null ? throughFloor : 0;
-        
-        int topFloor = Math.max(Math.max(requestedTop, maxFromUnits), propertyTotalFloors);
-        if (topFloor < 1) {
-            topFloor = 1;
-        }
-
-        Map<Integer, Long> countsByFloor = unitRepository.findByPropertyId(propertyId).stream()
-                .collect(Collectors.groupingBy(UnitTbl::getFloor, Collectors.counting()));
-
-        List<UnitDTOs.FloorSummaryResponse> rows = new ArrayList<>();
-        for (int floorNum = topFloor; floorNum >= 1; floorNum--) {
-            long unitCount = countsByFloor.getOrDefault(floorNum, 0L);
-            String displayLabel = floorNum == 1 ? "Floor 1 (Ground)" : "Floor " + floorNum;
-            rows.add(new UnitDTOs.FloorSummaryResponse(
-                    floorNum,
-                    displayLabel,
-                    unitCount > 0,
-                    unitCount
-            ));
-        }
-        return rows;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UnitTbl> getUnitsByFloor(UUID propertyId, int floorNumber) {
-        if (!propertyService.existsById(propertyId)) {
-            throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
-        }
-        return unitRepository.findByPropertyIdAndFloor(propertyId, floorNumber);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UnitTbl> getUnitsByProperty(UUID propertyId) {
-        if (!propertyService.existsById(propertyId)) {
-            throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
-        }
-        return unitRepository.findByPropertyId(propertyId);
-    }
-
-    @Override
-    @Transactional
     public List<UnitTbl> saveFloorLayout(
             UUID propertyId,
             int floorNumber,
@@ -103,7 +44,7 @@ public class UnitServiceImpl implements UnitService {
         if (floorNumber < 1) {
             throw new BusinessException("Floor number must be at least 1");
         }
-        PropertyTbl property = propertyService.getPropertyById(propertyId);
+        PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
 
         Set<String> seenNumbers = new HashSet<>();
         for (UnitDTOs.FloorLayoutUnitRequest item : items) {
@@ -121,9 +62,6 @@ public class UnitServiceImpl implements UnitService {
                 .filter(u -> !incomingNumbers.contains(u.getUnitNumber()))
                 .toList();
 
-        // Validation against Leases moved to a higher-level check if possible, 
-        // or kept as a repository-level check if we allow cross-module FK checks.
-        // For now, I will keep the units that have leases.
         for (UnitTbl unit : toRemove) {
             unitRepository.delete(unit);
         }
@@ -170,9 +108,8 @@ public class UnitServiceImpl implements UnitService {
     }
 
     @Override
-    @Transactional
     public List<UnitTbl> generateBatchUnits(UUID propertyId, PropertyDTOs.BatchUnitRequest request) {
-        PropertyTbl property = propertyService.getPropertyById(propertyId);
+        PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
         List<UnitTbl> generatedUnits = new ArrayList<>();
         for (int currentFloor = request.startingFloorNumber();
              currentFloor < request.startingFloorNumber() + request.totalFloors();

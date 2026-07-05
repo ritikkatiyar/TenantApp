@@ -11,6 +11,7 @@ spring:
     password: ${DB_PASSWORD:tenant_living}
     baseline-on-migrate: false
     validate-on-migrate: true
+    out-of-order: true
   jpa:
     properties:
       hibernate:

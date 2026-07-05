@@ -3,13 +3,16 @@ package com.tenantliving.auth.service.impl;
 import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.auth.repository.MembershipRepository;
 import com.tenantliving.auth.service.interfaces.AuthorizationService;
-import com.tenantliving.finance.repository.ChargeConfigRepository;
 import com.tenantliving.finance.repository.ExpenseGroupRepository;
 import com.tenantliving.finance.repository.ExpenseRepository;
 import com.tenantliving.finance.repository.ExpenseSplitRepository;
-import com.tenantliving.finance.repository.LeaseRepository;
 import com.tenantliving.finance.repository.RentCycleRepository;
-import com.tenantliving.property.repository.UnitRepository;
+import com.tenantliving.finance.service.interfaces.LeaseQueryService;
+import com.tenantliving.finance.service.ChargeConfigQueryService;
+import com.tenantliving.property.service.interfaces.UnitQueryService;
+import com.tenantliving.property.domain.UnitTbl;
+import com.tenantliving.finance.domain.LeaseTbl;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -26,13 +29,13 @@ import java.util.UUID;
 public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final MembershipRepository membershipRepository;
-    private final UnitRepository unitRepository;
-    private final LeaseRepository leaseRepository;
+    private final UnitQueryService unitQueryService;
+    private final LeaseQueryService leaseQueryService;
     private final ExpenseGroupRepository expenseGroupRepository;
     private final ExpenseRepository expenseRepository;
     private final ExpenseSplitRepository expenseSplitRepository;
     private final RentCycleRepository rentCycleRepository;
-    private final ChargeConfigRepository chargeConfigRepository;
+    private final ChargeConfigQueryService chargeConfigQueryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -94,9 +97,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByUnitId(UUID unitId, String permissionCode) {
         if (unitId == null) return false;
-        return unitRepository.findById(unitId)
-                .map(u -> checkPermission(u.getProperty().getId(), permissionCode))
-                .orElse(false);
+        try {
+            UnitTbl u = unitQueryService.getUnitById(unitId);
+            return checkPermission(u.getProperty().getId(), permissionCode);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
@@ -108,14 +114,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) return false;
         UUID userId = UUID.fromString(currentUser.getId());
         
-        return leaseRepository.findById(leaseId).map(lease -> {
-            // Special case for LEASE_VIEW_OWN
+        try {
+            LeaseTbl lease = leaseQueryService.getLeaseById(leaseId);
             if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.getUserId().toString().equals(currentUser.getId())) {
                 log.debug("User {} has own lease access for lease {}", userId, leaseId);
                 return true;
             }
             return checkPermission(lease.getUnit().getProperty().getId(), permissionCode);
-        }).orElse(false);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
@@ -137,7 +145,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         UUID userId = UUID.fromString(currentUser.getId());
         
         return expenseSplitRepository.findById(splitId).map(split -> {
-            // Special case for own-split settle
             if (split.getUserId().toString().equals(currentUser.getId())) {
                 log.debug("User {} has own expense split access for split {}", userId, splitId);
                 return true;
@@ -168,9 +175,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode) {
         if (chargeConfigId == null) return false;
-        return chargeConfigRepository.findById(chargeConfigId)
-                .map(c -> checkPermission(c.getProperty().getId(), permissionCode))
-                .orElse(false);
+        try {
+            com.tenantliving.finance.dto.ChargeConfigDTOs.ChargeConfigResponse c = chargeConfigQueryService.getChargeConfigById(chargeConfigId);
+            return checkPermission(c.getPropertyId(), permissionCode);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean checkPermission(UUID propertyId, String permissionCode) {

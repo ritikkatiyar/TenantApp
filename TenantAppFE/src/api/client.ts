@@ -67,7 +67,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     let response = await fetch(targetUrl, fetchOptions);
 
     // Automatic Token Refresh Interceptor
-    if (response.status === 401 && authRefreshHandler) {
+    if (response.status === 401 && authRefreshHandler && !path.includes('/auth/refresh') && !path.includes('/auth/login')) {
       console.log(`[API] 401 Unauthorized for ${path}. Attempting token refresh...`);
       const newToken = await authRefreshHandler();
       

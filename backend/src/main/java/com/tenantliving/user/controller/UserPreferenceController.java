@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/users/preference")
+@RequestMapping("/api/v1/user/preference")
 @RequiredArgsConstructor
 public class UserPreferenceController {
 

@@ -6,32 +6,25 @@ import com.tenantliving.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
 import com.tenantliving.finance.repository.ChargeConfigRepository;
 import com.tenantliving.finance.service.ChargeConfigService;
 import com.tenantliving.property.domain.PropertyTbl;
-import com.tenantliving.property.repository.PropertyRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.tenantliving.property.service.interfaces.PropertyService;
+import com.tenantliving.property.service.interfaces.PropertyQueryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ChargeConfigServiceImpl implements ChargeConfigService {
 
     private final ChargeConfigRepository chargeConfigRepository;
-    private final PropertyRepository propertyRepository;
-
-    @Autowired
-    public ChargeConfigServiceImpl(ChargeConfigRepository chargeConfigRepository, PropertyRepository propertyRepository) {
-        this.chargeConfigRepository = chargeConfigRepository;
-        this.propertyRepository = propertyRepository;
-    }
+    private final PropertyQueryService propertyQueryService;
 
     @Override
     public ChargeConfigResponse createChargeConfig(ChargeConfigRequest request) {
-        PropertyTbl property = propertyRepository.findById(request.getPropertyId())
-                .orElseThrow(() -> new IllegalArgumentException("Property not found"));
+        PropertyTbl property = propertyQueryService.getPropertyById(request.getPropertyId());
 
         ChargeConfigTbl config = ChargeConfigTbl.builder()
                 .property(property)
@@ -45,7 +38,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
                 .lateFeePercentage(request.getLateFeePercentage())
                 .autoCarryForward(request.getAutoCarryForward() != null ? request.getAutoCarryForward() : false)
                 .isActive(true)
-                .isSystemRequired(false) // Custom charges created by user are not system required
+                .isSystemRequired(false)
                 .build();
 
         chargeConfigRepository.save(config);
@@ -57,7 +50,6 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
         ChargeConfigTbl config = chargeConfigRepository.findByIdAndIsActiveTrue(id)
                 .orElseThrow(() -> new IllegalArgumentException("Active Charge Config not found"));
 
-        // Do not allow property transfer
         config.setChargeName(request.getChargeName());
         config.setChargeCategory(request.getChargeCategory());
         config.setBillingFrequency(request.getBillingFrequency());
@@ -83,22 +75,6 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
 
         config.setIsActive(false);
         chargeConfigRepository.save(config);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ChargeConfigResponse> getActiveChargesForProperty(UUID propertyId) {
-        return chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ChargeConfigResponse getChargeConfigById(UUID id) {
-        ChargeConfigTbl config = chargeConfigRepository.findByIdAndIsActiveTrue(id)
-                .orElseThrow(() -> new IllegalArgumentException("Active Charge Config not found"));
-        return mapToResponse(config);
     }
 
     private ChargeConfigResponse mapToResponse(ChargeConfigTbl config) {

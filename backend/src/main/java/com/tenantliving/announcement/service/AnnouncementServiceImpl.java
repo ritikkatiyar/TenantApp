@@ -10,13 +10,13 @@ import com.tenantliving.common.domain.LeaseStatus;
 import com.tenantliving.common.domain.BaseEntity;
 import com.tenantliving.common.event.AnnouncementBroadcastEvent;
 import com.tenantliving.finance.domain.LeaseTbl;
-import com.tenantliving.finance.service.interfaces.LeaseService;
+import com.tenantliving.finance.service.interfaces.LeaseQueryService;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.domain.UnitTbl;
-import com.tenantliving.property.service.interfaces.PropertyService;
-import com.tenantliving.property.service.interfaces.UnitService;
+import com.tenantliving.property.service.interfaces.PropertyQueryService;
+import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -31,17 +31,17 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
     private final AnnouncementReceiptRepository announcementReceiptRepository;
-    private final PropertyService propertyService;
-    private final UserService userService;
-    private final LeaseService leaseService;
-    private final UnitService unitService;
+    private final PropertyQueryService propertyQueryService;
+    private final UserQueryService userQueryService;
+    private final LeaseQueryService leaseQueryService;
+    private final UnitQueryService unitQueryService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
     public AnnouncementResponse createAnnouncement(CreateAnnouncementRequest request, UUID creatorId) {
-        PropertyTbl property = propertyService.getPropertyById(request.getPropertyId());
-        UserTbl creator = userService.getUserById(creatorId);
+        PropertyTbl property = propertyQueryService.getPropertyById(request.getPropertyId());
+        UserTbl creator = userQueryService.getUserById(creatorId);
 
         AnnouncementTbl announcement = AnnouncementTbl.builder()
                 .property(property)
@@ -78,7 +78,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     @Override
     @Transactional(readOnly = true)
     public List<AnnouncementResponse> getNoticesForTenant(UUID tenantUserId) {
-        LeaseTbl activeLease = leaseService.findByUserIdAndStatus(tenantUserId, LeaseStatus.ACTIVE)
+        LeaseTbl activeLease = leaseQueryService.findByUserIdAndStatus(tenantUserId, LeaseStatus.ACTIVE)
                 .orElse(null);
 
         if (activeLease == null || activeLease.getUnit() == null || activeLease.getUnit().getProperty() == null) {
@@ -123,7 +123,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         AnnouncementTbl announcement = announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new IllegalArgumentException("Announcement not found with ID: " + announcementId));
 
-        UserTbl user = userService.getUserById(tenantUserId);
+        UserTbl user = userQueryService.getUserById(tenantUserId);
 
         boolean alreadyRead = announcementReceiptRepository.existsByAnnouncementIdAndUserId(announcementId, tenantUserId);
         if (!alreadyRead) {
@@ -139,7 +139,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         List<String> recipientUserIds = new ArrayList<>();
 
         if (targetType == AnnouncementTargetType.PROPERTY) {
-            List<LeaseTbl> activeLeases = leaseService.findActiveLeasesByProperty(propertyId);
+            List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(propertyId);
             for (LeaseTbl lease : activeLeases) {
                 if (lease.getUserId() != null) {
                     recipientUserIds.add(lease.getUserId().toString());
@@ -149,10 +149,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             if (targetValue != null) {
                 try {
                     Integer floorNumber = Integer.valueOf(targetValue);
-                    List<UnitTbl> unitsOnFloor = unitService.getUnitsByFloor(propertyId, floorNumber);
+                    List<UnitTbl> unitsOnFloor = unitQueryService.getUnitsByFloor(propertyId, floorNumber);
                     List<UUID> unitIds = unitsOnFloor.stream().map(BaseEntity::getId).collect(Collectors.toList());
                     if (!unitIds.isEmpty()) {
-                        leaseService.findActiveLeasesByUnitIds(unitIds).values().stream()
+                        leaseQueryService.findActiveLeasesByUnitIds(unitIds).values().stream()
                                 .flatMap(List::stream)
                                 .forEach(lease -> {
                                     if (lease.getUserId() != null) {
@@ -166,7 +166,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             if (targetValue != null) {
                 try {
                     UUID unitId = UUID.fromString(targetValue);
-                    List<LeaseTbl> activeLeases = leaseService.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE);
+                    List<LeaseTbl> activeLeases = leaseQueryService.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE);
                     for (LeaseTbl lease : activeLeases) {
                         if (lease.getUserId() != null) {
                             recipientUserIds.add(lease.getUserId().toString());

@@ -7,7 +7,9 @@ import com.tenantliving.finance.repository.ExpenseRepository;
 import com.tenantliving.finance.service.interfaces.ExpenseService;
 import com.tenantliving.finance.domain.ExpenseGroupTbl;
 import com.tenantliving.finance.service.interfaces.ExpenseGroupService;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
+import com.tenantliving.finance.specification.ExpenseSpecifications;
+import org.springframework.data.jpa.domain.Specification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,13 +26,13 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     private final ExpenseRepository expenseRepository;
     private final ExpenseGroupService expenseGroupService;
-    private final UserService userService;
+    private final UserQueryService userQueryService;
 
     @Override
     @Transactional
     public ExpenseTbl create(ExpenseDTOs.CreateExpenseRequest request) {
         ExpenseGroupTbl group = expenseGroupService.getById(request.expenseGroupId());
-        userService.getUserById(request.createdBy());
+        userQueryService.getUserById(request.createdBy());
         ExpenseTbl expense = ExpenseTbl.builder()
                 .expenseGroup(group)
                 .createdBy(request.createdBy())
@@ -55,17 +57,10 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     @Transactional(readOnly = true)
     public List<ExpenseTbl> list(UUID expenseGroupId, String billingMonth) {
-        List<ExpenseTbl> expenses;
-        if (expenseGroupId != null) {
-            expenses = expenseRepository.findByExpenseGroup_Id(expenseGroupId);
-        } else if (billingMonth != null) {
-            expenses = expenseRepository.findByBillingMonth(billingMonth);
-        } else {
-            expenses = expenseRepository.findAll();
-        }
+        Specification<ExpenseTbl> spec = Specification
+                .where(ExpenseSpecifications.hasExpenseGroupId(expenseGroupId))
+                .and(ExpenseSpecifications.hasBillingMonth(billingMonth));
 
-        return expenses.stream()
-                .filter(expense -> billingMonth == null || billingMonth.equals(expense.getBillingMonth()))
-                .toList();
+        return expenseRepository.findAll(spec);
     }
 }

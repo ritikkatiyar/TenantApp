@@ -3,7 +3,8 @@ package com.tenantliving.finance.controller;
 import com.tenantliving.finance.dto.ChargeConfigDTOs.ChargeConfigRequest;
 import com.tenantliving.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
 import com.tenantliving.finance.service.ChargeConfigService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.tenantliving.finance.service.ChargeConfigQueryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.tenantliving.common.response.ApiResponse;
@@ -14,15 +15,11 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/finance/charge-configs")
-
+@RequiredArgsConstructor
 public class ChargeConfigController {
 
     private final ChargeConfigService chargeConfigService;
-
-    @Autowired
-    public ChargeConfigController(ChargeConfigService chargeConfigService) {
-        this.chargeConfigService = chargeConfigService;
-    }
+    private final ChargeConfigQueryService chargeConfigQueryService;
 
     @PostMapping
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
@@ -48,14 +45,14 @@ public class ChargeConfigController {
     @GetMapping("/property/{propertyId}")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<ChargeConfigResponse>>> getActiveChargesForProperty(@PathVariable UUID propertyId) {
-        List<ChargeConfigResponse> responses = chargeConfigService.getActiveChargesForProperty(propertyId);
+        List<ChargeConfigResponse> responses = chargeConfigQueryService.getActiveChargesForProperty(propertyId);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("@authorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<ChargeConfigResponse>> getChargeConfigById(@PathVariable UUID id) {
-        ChargeConfigResponse response = chargeConfigService.getChargeConfigById(id);
+        ChargeConfigResponse response = chargeConfigQueryService.getChargeConfigById(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

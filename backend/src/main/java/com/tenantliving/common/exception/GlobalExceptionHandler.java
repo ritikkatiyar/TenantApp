@@ -28,6 +28,8 @@ public class GlobalExceptionHandler {
                 .sorted(Comparator.comparing(FieldErrorDetail::field))
                 .toList();
 
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).warn("[VALIDATION FAILED] URI: {}, errors: {}", request.getRequestURI(), fieldErrors);
+
         ApiError apiError = ApiError.withFieldErrors(
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -53,6 +55,8 @@ public class GlobalExceptionHandler {
                 .sorted(Comparator.comparing(FieldErrorDetail::field))
                 .toList();
 
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).warn("[CONSTRAINT VIOLATION] URI: {}, errors: {}", request.getRequestURI(), fieldErrors);
+
         ApiError apiError = ApiError.withFieldErrors(
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -70,6 +74,9 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         HttpStatus status = exception.getStatus();
+        
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).warn("[BUSINESS EXCEPTION] URI: {}, status: {}, message: {}", request.getRequestURI(), status, exception.getMessage());
+
         ApiError apiError = ApiError.of(
                 status.value(),
                 status.getReasonPhrase(),

@@ -2,7 +2,7 @@ package com.tenantliving.auth.service;
 
 import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,13 +20,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserService userService;
+    private final UserQueryService userQueryService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("Loading user by username: {}", username);
 
-        UserTbl user = userService.getUserByEmail(username);
+        UserTbl user = userQueryService.getUserByEmail(username);
 
         log.debug("User found: {}", user.getFullName());
         return UserDetailsImpl.fromUser(user);
@@ -35,7 +35,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserById(String userId) throws UsernameNotFoundException {
         log.debug("Loading user by ID: {}", userId);
 
-        UserTbl user = userService.getUserById(UUID.fromString(userId));
+        UserTbl user = userQueryService.getUserById(UUID.fromString(userId));
 
         return UserDetailsImpl.fromUser(user);
     }

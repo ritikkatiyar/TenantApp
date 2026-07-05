@@ -10,7 +10,7 @@ import com.tenantliving.finance.mapper.ExpenseSplitMapper;
 import com.tenantliving.finance.repository.ExpenseSplitRepository;
 import com.tenantliving.finance.service.interfaces.ExpenseSplitService;
 import com.tenantliving.finance.service.strategy.ExpenseSplitCalculationStrategy;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -29,18 +29,18 @@ public class ExpenseSplitServiceImpl implements ExpenseSplitService {
 
     private final ExpenseSplitRepository expenseSplitRepository;
     private final ExpenseService expenseService;
-    private final UserService userService;
+    private final UserQueryService userQueryService;
     private final Map<com.tenantliving.common.domain.ExpenseSplitType, ExpenseSplitCalculationStrategy> strategies;
 
     public ExpenseSplitServiceImpl(
             ExpenseSplitRepository expenseSplitRepository,
             ExpenseService expenseService,
-            UserService userService,
+            UserQueryService userQueryService,
             List<ExpenseSplitCalculationStrategy> strategies
     ) {
         this.expenseSplitRepository = expenseSplitRepository;
         this.expenseService = expenseService;
-        this.userService = userService;
+        this.userQueryService = userQueryService;
         this.strategies = new EnumMap<>(com.tenantliving.common.domain.ExpenseSplitType.class);
         strategies.forEach(strategy -> strategy.supportedTypes()
                 .forEach(type -> this.strategies.put(type, strategy)));
@@ -93,6 +93,6 @@ public class ExpenseSplitServiceImpl implements ExpenseSplitService {
     }
 
     private void validateParticipants(List<ExpenseSplitDTOs.ParticipantRequest> participants) {
-        participants.forEach(participant -> userService.getUserById(participant.userId()));
+        participants.forEach(participant -> userQueryService.getUserById(participant.userId()));
     }
 }

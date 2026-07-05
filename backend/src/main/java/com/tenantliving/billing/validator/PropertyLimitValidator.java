@@ -1,7 +1,7 @@
 package com.tenantliving.billing.validator;
 
 import com.tenantliving.billing.annotation.SubscriptionFeature;
-import com.tenantliving.property.repository.PropertyRepository;
+import com.tenantliving.property.service.interfaces.PropertyQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.util.UUID;
@@ -10,7 +10,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PropertyLimitValidator implements SubscriptionValidator {
 
-    private final PropertyRepository propertyRepository;
+    private final PropertyQueryService propertyQueryService;
 
     private static final int STARTER_PLAN_LIMIT = 1;      // Free plan: 1 property
     private static final int BASIC_PLAN_LIMIT = 3;        // Basic: 3 properties
@@ -20,7 +20,7 @@ public class PropertyLimitValidator implements SubscriptionValidator {
     @Override
     public boolean validate(UUID userId, String planName) {
         int maxProperties = getPropertyLimitByPlan(planName);
-        int currentPropertyCount = propertyRepository.findByOwnerId(userId).size();
+        int currentPropertyCount = propertyQueryService.getPropertiesByUserId(userId).size();
         return currentPropertyCount < maxProperties;
     }
 

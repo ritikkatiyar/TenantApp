@@ -9,6 +9,7 @@ import { AuthProvider } from '@/src/features/auth/context/AuthProvider';
 import BottomNavigation from '@/src/components/common/navigation/BottomNavigation';
 import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigation';
 import { ScreenWrapper } from '@/src/components/common/layout/ScreenWrapper';
+import { OnboardingGate } from '@/src/components/common/layout/OnboardingGate';
 import { useResponsive } from '@/hooks/useResponsive';
 
 export default function RootLayout() {
@@ -25,28 +26,31 @@ export default function RootLayout() {
           {isDesktop && !hideNavigation && <SidebarNavigation />}
           <View style={{ flex: 1 }}>
             <ScreenWrapper isAuth={hideNavigation}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="login" />
-                <Stack.Screen name="signup" />
-                <Stack.Screen name="command-center" />
-                <Stack.Screen name="ai" />
-                <Stack.Screen name="tenant-home" />
-                <Stack.Screen name="admin" />
-                <Stack.Screen name="analytics" />
-                <Stack.Screen name="reports" />
-                <Stack.Screen name="billing" />
-                <Stack.Screen name="expenses" />
-                <Stack.Screen name="create-expense" />
-                <Stack.Screen name="properties/create" />
-                <Stack.Screen name="properties/[id]" />
-                <Stack.Screen name="properties/[id]/meter-readings" />
-                <Stack.Screen name="escalations" />
-                <Stack.Screen name="announcements" />
-                <Stack.Screen name="tenant-property" />
-                <Stack.Screen name="tenant-maintenance" />
-                <Stack.Screen name="tenant-payments" />
-              </Stack>
+              <OnboardingGate>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="login" />
+                  <Stack.Screen name="signup" />
+                  <Stack.Screen name="onboarding" />
+                  <Stack.Screen name="command-center" />
+                  <Stack.Screen name="ai" />
+                  <Stack.Screen name="tenant-home" />
+                  <Stack.Screen name="admin" />
+                  <Stack.Screen name="analytics" />
+                  <Stack.Screen name="reports" />
+                  <Stack.Screen name="billing" />
+                  <Stack.Screen name="expenses" />
+                  <Stack.Screen name="create-expense" />
+                  <Stack.Screen name="properties/create" />
+                  <Stack.Screen name="properties/[id]" />
+                  <Stack.Screen name="properties/[id]/meter-readings" />
+                  <Stack.Screen name="escalations" />
+                  <Stack.Screen name="announcements" />
+                  <Stack.Screen name="tenant-property" />
+                  <Stack.Screen name="tenant-maintenance" />
+                  <Stack.Screen name="tenant-payments" />
+                </Stack>
+              </OnboardingGate>
             </ScreenWrapper>
             {!isDesktop && !hideNavigation && <BottomNavigation />}
           </View>

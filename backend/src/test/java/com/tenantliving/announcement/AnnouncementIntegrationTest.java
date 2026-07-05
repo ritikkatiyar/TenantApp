@@ -87,7 +87,6 @@ public class AnnouncementIntegrationTest {
                 .city("Test City")
                 .landmark("Test Landmark")
                 .totalFloors(5)
-                .owner(landlord)
                 .build();
         property = propertyRepository.save(property);
 

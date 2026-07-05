@@ -12,10 +12,10 @@ import com.tenantliving.finance.repository.MeterReadingRepository;
 import com.tenantliving.finance.service.MeterReadingService;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.domain.UnitTbl;
-import com.tenantliving.property.repository.PropertyRepository;
-import com.tenantliving.property.repository.UnitRepository;
+import com.tenantliving.property.service.interfaces.PropertyQueryService;
+import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,17 +31,16 @@ import java.util.stream.Collectors;
 public class MeterReadingServiceImpl implements MeterReadingService {
 
     private final MeterReadingRepository meterReadingRepository;
-    private final UnitRepository unitRepository;
+    private final UnitQueryService unitQueryService;
     private final LeaseRepository leaseRepository;
     private final ChargeConfigRepository chargeConfigRepository;
-    private final PropertyRepository propertyRepository;
-    private final UserService userService;
+    private final PropertyQueryService propertyQueryService;
+    private final UserQueryService userQueryService;
 
     @Override
     @Transactional
     public List<MeterReadingResponse> getOrCreateWorksheet(UUID propertyId, UUID chargeConfigId, Integer month, Integer year) {
-        PropertyTbl property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new BusinessException("Property not found"));
+        PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
         ChargeConfigTbl chargeConfig = chargeConfigRepository.findById(chargeConfigId)
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
 
@@ -49,7 +48,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
             throw new BusinessException("Charge config is not a metered strategy");
         }
 
-        List<UnitTbl> units = unitRepository.findByPropertyId(propertyId);
+        List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId);
         List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
         Map<UUID, LeaseTbl> unitToLeaseMap = activeLeases.stream()
                 .collect(Collectors.toMap(l -> l.getUnit().getId(), l -> l, (existing, replacement) -> existing));
@@ -102,7 +101,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
             String tenantName = "Vacant";
             if (lease != null) {
                 try {
-                    UserTbl user = userService.getUserById(lease.getUserId());
+                    UserTbl user = userQueryService.getUserById(lease.getUserId());
                     tenantName = user.getFullName();
                 } catch (Exception e) {
                     tenantName = "Unknown Tenant";

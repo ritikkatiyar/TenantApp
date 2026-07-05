@@ -7,7 +7,7 @@ import com.tenantliving.notification.repository.NotificationLogRepository;
 import com.tenantliving.notification.service.NotificationChannelSender;
 import com.tenantliving.notification.service.NotificationService;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,13 +33,13 @@ public class NotificationServiceImpl implements NotificationService {
     /** All NotificationChannelSender @Component beans are auto-injected here by Spring */
     private final List<NotificationChannelSender> senders;
     private final NotificationLogRepository notificationLogRepository;
-    private final UserService userService;
+    private final UserQueryService userQueryService;
 
     @Override
     public void send(String recipientUserId, NotificationChannel channel, String title, String body) {
         UserTbl recipient;
         try {
-            recipient = userService.getUserById(UUID.fromString(recipientUserId));
+            recipient = userQueryService.getUserById(UUID.fromString(recipientUserId));
         } catch (Exception e) {
             log.warn("[NotificationService] Recipient user not found: {}. Skipping.", recipientUserId);
             return;

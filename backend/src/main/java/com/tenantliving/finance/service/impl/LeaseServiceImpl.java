@@ -1,17 +1,15 @@
 package com.tenantliving.finance.service.impl;
 
 import com.tenantliving.common.domain.LeaseStatus;
-
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.finance.domain.LeaseTbl;
 import com.tenantliving.finance.dto.LeaseDTOs;
 import com.tenantliving.finance.repository.LeaseRepository;
 import com.tenantliving.finance.service.interfaces.LeaseService;
-
 import com.tenantliving.property.domain.UnitTbl;
-import com.tenantliving.property.service.interfaces.UnitService;
+import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.auth.service.interfaces.MembershipService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,24 +23,24 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class LeaseServiceImpl implements LeaseService {
 
     private final LeaseRepository leaseRepository;
-    private final UnitService unitService;
-    private final UserService userService;
+    private final UnitQueryService unitQueryService;
+    private final UserQueryService userQueryService;
     private final MembershipService membershipService;
 
     @Override
-    @Transactional
     public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request) {
         return createLease(request, null);
     }
 
     @Override
-    @Transactional
     public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId) {
-        UserTbl tenant = userService.getUserById(request.userId());
-        UnitTbl unit = unitService.getUnitById(request.unitId());
+        UserTbl tenant = userQueryService.getUserById(request.userId());
+        UnitTbl unit = unitQueryService.getUnitById(request.unitId());
+        
         if (request.moveOutDate() != null && request.moveOutDate().isBefore(request.moveInDate())) {
             throw new BusinessException("moveOutDate cannot be before moveInDate");
         }
@@ -72,49 +70,9 @@ public class LeaseServiceImpl implements LeaseService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public LeaseTbl getLeaseById(UUID id) {
-        return leaseRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByUnitId(UUID unitId) {
-        return leaseRepository.existsByUnit_Id(unitId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public java.util.Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status) {
-        return leaseRepository.findByUserIdAndStatus(userId, status);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public java.util.List<LeaseTbl> findByUnitIdAndStatus(UUID unitId, LeaseStatus status) {
-        return leaseRepository.findByUnitIdAndStatus(unitId, status).stream().toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public java.util.List<LeaseTbl> findActiveLeasesByProperty(UUID propertyId) {
-        return leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE).stream().toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public java.util.Map<UUID, java.util.List<LeaseTbl>> findActiveLeasesByUnitIds(java.util.Collection<UUID> unitIds) {
-        if (unitIds == null || unitIds.isEmpty()) return java.util.Collections.emptyMap();
-        return leaseRepository.findByUnit_IdInAndStatus(unitIds, LeaseStatus.ACTIVE)
-                .stream()
-                .collect(java.util.stream.Collectors.groupingBy(l -> l.getUnit().getId()));
-    }
-
-    @Override
-    @Transactional
     public void deleteLease(UUID id) {
-        LeaseTbl lease = getLeaseById(id);
+        LeaseTbl lease = leaseRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
         UUID tenantId = lease.getUserId();
         UUID propertyId = lease.getUnit().getProperty().getId();
 

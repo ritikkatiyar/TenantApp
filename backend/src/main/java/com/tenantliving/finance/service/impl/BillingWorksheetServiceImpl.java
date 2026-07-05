@@ -13,10 +13,10 @@ import com.tenantliving.finance.repository.LeaseRepository;
 import com.tenantliving.finance.service.BillingWorksheetService;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.domain.UnitTbl;
-import com.tenantliving.property.repository.PropertyRepository;
-import com.tenantliving.property.repository.UnitRepository;
+import com.tenantliving.property.service.interfaces.PropertyQueryService;
+import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,21 +33,20 @@ import java.util.stream.Collectors;
 public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
     private final BillingWorksheetRepository worksheetRepository;
-    private final UnitRepository unitRepository;
+    private final UnitQueryService unitQueryService;
     private final LeaseRepository leaseRepository;
     private final ChargeConfigRepository chargeConfigRepository;
-    private final PropertyRepository propertyRepository;
-    private final UserService userService;
+    private final PropertyQueryService propertyQueryService;
+    private final UserQueryService userQueryService;
 
     @Override
     @Transactional
     public List<WorksheetEntryResponse> getOrCreateWorksheetForMonth(UUID propertyId, UUID chargeConfigId, String billingMonth) {
-        PropertyTbl property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new BusinessException("Property not found"));
+        PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
         ChargeConfigTbl chargeConfig = chargeConfigRepository.findById(chargeConfigId)
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
 
-        List<UnitTbl> units = unitRepository.findByPropertyId(propertyId);
+        List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId);
         List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
         Map<UUID, LeaseTbl> unitToLeaseMap = activeLeases.stream()
                 .collect(Collectors.toMap(l -> l.getUnit().getId(), l -> l, (existing, replacement) -> existing));
@@ -104,7 +103,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
             LeaseTbl lease = unitToLeaseMap.get(r.getUnit().getId());
             String tenantName = "Unknown Tenant";
             try {
-                UserTbl user = userService.getUserById(lease.getUserId());
+                UserTbl user = userQueryService.getUserById(lease.getUserId());
                 tenantName = user.getFullName();
             } catch (Exception e) {
                 // Keep default

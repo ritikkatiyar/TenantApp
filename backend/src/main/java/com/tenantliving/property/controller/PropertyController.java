@@ -5,6 +5,7 @@ import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
 import com.tenantliving.property.service.interfaces.PropertyService;
+import com.tenantliving.property.service.interfaces.PropertyQueryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,27 +14,18 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/property/properties")
 @RequiredArgsConstructor
-    /**
-     * Properties
-     * Property administration
-     */
-
 public class PropertyController {
     private final PropertyService propertyService;
+    private final PropertyQueryService propertyQueryService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
-        /**
-     * Create property
-     * Creates a new property for the authenticated user.
-     */
-
-    
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> createProperty(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody PropertyDTOs.CreatePropertyRequest request) {
@@ -47,14 +39,7 @@ public class PropertyController {
 
     @PutMapping("/{propertyId}")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
-        /**
-     * Update property
-     * Updates an existing property's basic details.
-     */
-
-    
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> updateProperty(
-            
             @PathVariable UUID propertyId,
             @Valid @RequestBody PropertyDTOs.UpdatePropertyRequest request) {
         PropertyTbl updatedProperty = propertyService.updateProperty(propertyId, request);
@@ -63,37 +48,25 @@ public class PropertyController {
 
     @GetMapping("/{propertyId}")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
-        /**
-     * Get property
-     * Retrieves an existing property's basic details.
-     */
-
-    
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> getProperty(
-            
             @PathVariable UUID propertyId) {
-        PropertyTbl property = propertyService.getPropertyById(propertyId);
+        PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
         return ResponseEntity.ok(ApiResponse.success(toResponse(property)));
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
-        /**
-     * Get my properties
-     * Retrieves properties that the authenticated user has access to.
-     */
-    public ResponseEntity<ApiResponse<java.util.List<PropertyDTOs.PropertyResponse>>> getMyProperties(
+    public ResponseEntity<ApiResponse<List<PropertyDTOs.PropertyResponse>>> getMyProperties(
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         UUID userId = UUID.fromString(currentUser.getId());
-        java.util.List<PropertyTbl> properties = propertyService.getPropertiesByUserId(userId);
+        List<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId);
         return ResponseEntity.ok(ApiResponse.success(properties.stream().map(this::toResponse).toList()));
     }
 
     private PropertyDTOs.PropertyResponse toResponse(PropertyTbl property) {
-        UUID ownerId = property.getOwner() != null ? property.getOwner().getId() : null;
         return new PropertyDTOs.PropertyResponse(
                 property.getId(),
                 property.getName(),
@@ -101,29 +74,7 @@ public class PropertyController {
                 property.getCity(),
                 property.getLandmark(),
                 property.getTotalFloors(),
-                ownerId
+                null
         );
-    }
-
-    @DeleteMapping("/{propertyId}")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_DELETE')")
-        /**
-     * Delete property
-     * Deletes an existing property if it has no assigned tenants.
-     */
-
-    
-    public ResponseEntity<ApiResponse<Void>> deleteProperty(
-            
-            @PathVariable UUID propertyId) {
-        try {
-            propertyService.deleteProperty(propertyId);
-            return ResponseEntity.ok(ApiResponse.success(null));
-        } catch (RuntimeException e) {
-            if (e.getMessage() != null && e.getMessage().contains("assigned tenants")) {
-                return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-            }
-            throw e;
-        }
     }
 }

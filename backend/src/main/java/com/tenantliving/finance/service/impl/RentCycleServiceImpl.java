@@ -11,8 +11,10 @@ import com.tenantliving.finance.domain.*;
 import com.tenantliving.finance.dto.RentCycleDTOs;
 import com.tenantliving.finance.mapper.RentCycleMapper;
 import com.tenantliving.finance.repository.*;
-import com.tenantliving.finance.service.interfaces.LeaseService;
+import com.tenantliving.finance.service.interfaces.LeaseQueryService;
 import com.tenantliving.finance.service.interfaces.RentCycleService;
+import com.tenantliving.finance.specification.RentCycleSpecifications;
+import org.springframework.data.jpa.domain.Specification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -34,7 +36,7 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     private final RentCycleRepository rentCycleRepository;
     private final RentCycleChargeRepository rentCycleChargeRepository;
-    private final LeaseService leaseService;
+    private final LeaseQueryService leaseQueryService;
     private final LeaseRepository leaseRepository;
     private final BillingWorksheetRepository worksheetRepository;
     private final MeterReadingRepository meterReadingRepository;
@@ -44,7 +46,7 @@ public class RentCycleServiceImpl implements RentCycleService {
     @Override
     @Transactional
     public RentCycleDTOs.RentCycleResponse generate(RentCycleDTOs.GenerateRentCycleRequest request) {
-        LeaseTbl lease = leaseService.getLeaseById(request.leaseId());
+        LeaseTbl lease = leaseQueryService.getLeaseById(request.leaseId());
         RentCycleTbl cycle = processLeaseGeneration(lease, request.billingMonth(), request.dueDate());
         return toResponse(cycle);
     }
@@ -232,18 +234,13 @@ public class RentCycleServiceImpl implements RentCycleService {
     @Override
     @Transactional(readOnly = true)
     public List<RentCycleDTOs.RentCycleResponse> list(UUID leaseId, String billingMonth, RentCycleStatus status) {
-        List<RentCycleTbl> cycles;
-        if (leaseId != null) {
-            cycles = rentCycleRepository.findByLease_Id(leaseId);
-        } else if (billingMonth != null) {
-            cycles = rentCycleRepository.findByBillingMonth(billingMonth);
-        } else {
-            cycles = rentCycleRepository.findAll();
-        }
+        Specification<RentCycleTbl> spec = Specification
+                .where(RentCycleSpecifications.hasLeaseId(leaseId))
+                .and(RentCycleSpecifications.hasBillingMonth(billingMonth))
+                .and(RentCycleSpecifications.hasStatus(status));
 
-        return cycles.stream()
-                .filter(cycle -> billingMonth == null || billingMonth.equals(cycle.getBillingMonth()))
-                .filter(cycle -> status == null || status == cycle.getStatus())
+        return rentCycleRepository.findAll(spec)
+                .stream()
                 .map(this::toResponse)
                 .toList();
     }

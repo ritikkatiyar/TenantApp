@@ -2,12 +2,13 @@ package com.tenantliving.property.facade;
 
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.finance.domain.LeaseTbl;
-import com.tenantliving.finance.service.interfaces.LeaseService;
+import com.tenantliving.finance.service.interfaces.LeaseQueryService;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.dto.UnitDTOs;
 import com.tenantliving.property.service.interfaces.UnitService;
+import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,16 +29,17 @@ import java.util.stream.Collectors;
 public class UnitLayoutFacade {
 
     private final UnitService unitService;
-    private final LeaseService leaseService;
-    private final UserService userService;
+    private final UnitQueryService unitQueryService;
+    private final LeaseQueryService leaseQueryService;
+    private final UserQueryService userQueryService;
 
     public List<UnitDTOs.UnitResponse> getFloorLayout(UUID propertyId, int floorNumber) {
-        List<UnitTbl> units = unitService.getUnitsByFloor(propertyId, floorNumber);
+        List<UnitTbl> units = unitQueryService.getUnitsByFloor(propertyId, floorNumber);
         return enrichUnits(units);
     }
 
     public List<UnitDTOs.UnitResponse> getAllFloorsLayout(UUID propertyId) {
-        List<UnitTbl> units = unitService.getUnitsByProperty(propertyId);
+        List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId);
         return enrichUnits(units);
     }
 
@@ -46,14 +48,14 @@ public class UnitLayoutFacade {
             int floorNumber,
             List<UnitDTOs.FloorLayoutUnitRequest> items) {
         
-        List<UnitTbl> existingUnits = unitService.getUnitsByFloor(propertyId, floorNumber);
+        List<UnitTbl> existingUnits = unitQueryService.getUnitsByFloor(propertyId, floorNumber);
         Set<String> incomingNumbers = items.stream()
                 .map(UnitDTOs.FloorLayoutUnitRequest::unitNumber)
                 .collect(Collectors.toSet());
         
         for (UnitTbl unit : existingUnits) {
             if (!incomingNumbers.contains(unit.getUnitNumber())) {
-                if (leaseService.existsByUnitId(unit.getId())) {
+                if (leaseQueryService.existsByUnitId(unit.getId())) {
                     throw new BusinessException(
                             HttpStatus.CONFLICT,
                             "Cannot remove unit " + unit.getUnitNumber() + " from the layout while leases reference it"
@@ -67,10 +69,10 @@ public class UnitLayoutFacade {
     }
 
     private List<UnitDTOs.UnitResponse> enrichUnits(List<UnitTbl> units) {
-        Map<UUID, List<LeaseTbl>> activeLeasesByUnitId = leaseService.findActiveLeasesByUnitIds(
+        Map<UUID, List<LeaseTbl>> activeLeasesByUnitId = leaseQueryService.findActiveLeasesByUnitIds(
                 units.stream().map(UnitTbl::getId).collect(Collectors.toSet())
         );
-        Map<UUID, UserTbl> usersById = userService.getUsersByIds(
+        Map<UUID, UserTbl> usersById = userQueryService.getUsersByIds(
                 activeLeasesByUnitId.values().stream()
                         .flatMap(List::stream)
                         .map(LeaseTbl::getUserId)
@@ -99,16 +101,17 @@ public class UnitLayoutFacade {
     }
 
     private List<UnitDTOs.ActiveLeaseSummary> toActiveLeaseSummaries(List<LeaseTbl> leases, Map<UUID, UserTbl> usersById) {
-        if (leases == null || leases.isEmpty()) return List.of();
-        return leases.stream().map(lease -> {
-            UserTbl tenant = usersById.get(lease.getUserId());
-            return new UnitDTOs.ActiveLeaseSummary(
-                    lease.getId(),
-                    lease.getUserId(),
-                    tenant != null ? tenant.getFullName() : null,
-                    tenant != null ? tenant.getPhoneNumber() : null,
-                    lease.getStatus().name()
-            );
-        }).collect(Collectors.toList());
+        return leases.stream()
+                .map(l -> {
+                    UserTbl user = usersById.get(l.getUserId());
+                    return new UnitDTOs.ActiveLeaseSummary(
+                            l.getId(),
+                            l.getUserId(),
+                            user != null ? user.getFullName() : "Unknown User",
+                            user != null ? user.getPhoneNumber() : "",
+                            l.getStatus() != null ? l.getStatus().name() : "ACTIVE"
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }

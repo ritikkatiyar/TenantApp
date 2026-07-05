@@ -31,7 +31,7 @@ import Animated, {
   FadeOut
 } from 'react-native-reanimated';
 import { apiRequest } from '@/src/api/client';
-import { getFloorLayout, ActiveLeaseSummary } from '@/src/features/properties/api/unit.api';
+import { getFloorLayout, ActiveLeaseSummary, UnitResponse } from '@/src/features/properties/api/unit.api';
 import { createLease } from '@/src/features/tenant/api/lease.api';
 import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
 import { useRouter, Href } from 'expo-router';
@@ -542,8 +542,8 @@ export default function FloorEditorScreen({
     }
   };
 
-  const handleAssignTenant = async (userToAssign?: UserSearchResponse) => {
-    const targetUser = userToAssign || tenantSearchResult;
+  const handleAssignTenant = async (userToAssign?: UserSearchResponse | any) => {
+    const targetUser = (userToAssign && userToAssign.id) ? userToAssign : tenantSearchResult;
     if (!selectedBlock || !targetUser) return;
 
     const totalDeposit = Number(securityDeposit || '0');
@@ -568,17 +568,34 @@ export default function FloorEditorScreen({
         facing: 'NORTH'
       }));
 
-      await apiRequest(`/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`, {
+      const savedUnits = await apiRequest<UnitResponse[]>(`/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`, {
         method: 'PUT',
         token: userToken,
         body: JSON.stringify(savePayload)
       });
 
+      const savedUnit = savedUnits.find(u => 
+        (u.gridX === selectedBlock.gridX && u.gridY === selectedBlock.gridY) ||
+        u.unitNumber === selectedBlock.unitNumber
+      );
+      if (!savedUnit) {
+        console.error('[Assign Tenant] Could not find saved unit in response!', {
+          selectedUnitNumber: selectedBlock.unitNumber,
+          selectedCoords: { x: selectedBlock.gridX, y: selectedBlock.gridY },
+          savedUnits: savedUnits.map(u => ({ number: u.unitNumber, x: u.gridX, y: u.gridY }))
+        });
+      }
+      const realUnitId = savedUnit ? savedUnit.id : selectedBlock.id;
+
+      // Update blocks state to update the id to realUnitId and select it
+      setBlocks(prev => prev.map(b => b.id === selectedBlock.id ? { ...b, id: realUnitId } : b));
+      setSelectedUnitId(realUnitId);
+
       // 2) Now create the lease, which will read the correct, updated unit capacity from the database.
       const today = new Date().toISOString().slice(0, 10);
       const payload = {
         userId: targetUser.id,
-        unitId: selectedBlock.id,
+        unitId: realUnitId,
         securityDeposit: depositAmount,
         splitStrategy: 'FULL_UNIT' as const,
         moveInDate: today,
@@ -587,7 +604,7 @@ export default function FloorEditorScreen({
 
       const lease = await createLease(payload, userToken);
 
-      updateUnitDetails(selectedBlock.id, {
+      updateUnitDetails(realUnitId, {
         tenants: [...(selectedBlock.tenants || []), targetUser.fullName],
         tenantUserId: targetUser.id,
         tenantPhone: targetUser.phoneNumber,
@@ -1356,7 +1373,7 @@ export default function FloorEditorScreen({
 
                                       <TouchableOpacity
                                         style={[styles.statusToggle, styles.statusActiveOccupied, { marginHorizontal: 0, paddingVertical: 14, borderRadius: 16 }]}
-                                        onPress={handleAssignTenant}
+                                        onPress={() => handleAssignTenant()}
                                         disabled={tenantAssigning}
                                       >
                                         {tenantAssigning ? (
@@ -1913,7 +1930,7 @@ export default function FloorEditorScreen({
 
                           <TouchableOpacity
                             style={[styles.statusToggle, styles.statusActiveOccupied, { marginHorizontal: 0, paddingVertical: 14, borderRadius: 16 }]}
-                            onPress={handleAssignTenant}
+                            onPress={() => handleAssignTenant()}
                             disabled={tenantAssigning}
                           >
                             {tenantAssigning ? (

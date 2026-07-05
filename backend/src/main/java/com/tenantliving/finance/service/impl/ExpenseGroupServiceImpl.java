@@ -6,8 +6,8 @@ import com.tenantliving.finance.dto.ExpenseGroupDTOs;
 import com.tenantliving.finance.repository.ExpenseGroupRepository;
 import com.tenantliving.finance.service.interfaces.ExpenseGroupService;
 import com.tenantliving.property.domain.UnitTbl;
-import com.tenantliving.property.service.interfaces.UnitService;
-import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.property.service.interfaces.UnitQueryService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,14 +22,14 @@ import java.util.UUID;
 public class ExpenseGroupServiceImpl implements ExpenseGroupService {
 
     private final ExpenseGroupRepository expenseGroupRepository;
-    private final UnitService unitService;
-    private final UserService userService;
+    private final UnitQueryService unitQueryService;
+    private final UserQueryService userQueryService;
 
     @Override
     @Transactional
     public ExpenseGroupTbl create(ExpenseGroupDTOs.CreateExpenseGroupRequest request) {
-        UnitTbl unit = unitService.getUnitById(request.unitId());
-        userService.getUserById(request.createdBy());
+        UnitTbl unit = unitQueryService.getUnitById(request.unitId());
+        userQueryService.getUserById(request.createdBy());
         ExpenseGroupTbl group = ExpenseGroupTbl.builder()
                 .unit(unit)
                 .createdBy(request.createdBy())

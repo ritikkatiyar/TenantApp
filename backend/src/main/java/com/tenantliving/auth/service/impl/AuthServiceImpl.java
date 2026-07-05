@@ -16,6 +16,7 @@ import com.tenantliving.config.AuthProperties;
 import com.tenantliving.config.JwtProperties;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserService;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.auth.service.interfaces.AuthService;
 import com.tenantliving.auth.service.JwtService;
 import com.tenantliving.auth.service.TokenHasher;
@@ -48,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserService userService;
+    private final UserQueryService userQueryService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -58,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public TokenBundle signup(SignupRequest request) {
         String email = normalizeEmail(request.email());
-        if (userService.existsByEmail(email)) {
+        if (userQueryService.existsByEmail(email)) {
             throw new BusinessException(HttpStatus.CONFLICT, "Email already registered");
         }
 
@@ -78,7 +80,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public TokenBundle login(LoginRequest request) {
         String email = normalizeEmail(request.email());
-        Optional<UserTbl> optionalUser = userService.findByEmail(email);
+        Optional<UserTbl> optionalUser = userQueryService.findByEmail(email);
         optionalUser.ifPresent(this::clearExpiredLock);
 
         if (optionalUser.isPresent() && isLocked(optionalUser.get())) {
