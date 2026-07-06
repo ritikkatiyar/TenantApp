@@ -9,6 +9,9 @@ import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.auth.service.interfaces.MembershipService;
 import com.tenantliving.property.repository.UnitRepository;
 import com.tenantliving.common.event.PropertyDeletionEvent;
+import com.tenantliving.finance.service.interfaces.LeaseQueryService;
+import com.tenantliving.common.exception.BusinessException;
+import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +31,7 @@ public class PropertyServiceImpl implements PropertyService {
     private final MembershipService membershipService;
     private final UnitRepository unitRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final LeaseQueryService leaseQueryService;
 
     @Override
     public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID creatorId) {
@@ -63,6 +67,10 @@ public class PropertyServiceImpl implements PropertyService {
 
     @Override
     public void deleteProperty(UUID propertyId) {
+        if (leaseQueryService.existsByPropertyId(propertyId)) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete property because it has assigned tenants or leases.");
+        }
+
         PropertyTbl property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
         

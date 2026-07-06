@@ -59,4 +59,9 @@ public class LeaseQueryServiceImpl implements LeaseQueryService {
                 .stream()
                 .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
     }
+
+    @Override
+    public boolean existsByPropertyId(UUID propertyId) {
+        return leaseRepository.existsByUnit_Property_Id(propertyId);
+    }
 }

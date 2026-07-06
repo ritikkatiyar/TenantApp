@@ -16,4 +16,5 @@ public interface LeaseQueryService {
     List<LeaseTbl> findByUnitIdAndStatus(UUID unitId, LeaseStatus status);
     List<LeaseTbl> findActiveLeasesByProperty(UUID propertyId);
     Map<UUID, List<LeaseTbl>> findActiveLeasesByUnitIds(Collection<UUID> unitIds);
+    boolean existsByPropertyId(UUID propertyId);
 }
