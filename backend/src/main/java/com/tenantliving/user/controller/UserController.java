@@ -8,6 +8,7 @@ import com.tenantliving.user.service.interfaces.UserService;
 import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.user.service.interfaces.MeService;
 import com.tenantliving.auth.principal.UserDetailsImpl;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,7 @@ public class UserController {
     private final UserService userService;
     private final UserQueryService userQueryService;
     private final MeService meService;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/search")
     @PreAuthorize("isAuthenticated()")
@@ -67,6 +69,7 @@ public class UserController {
                 .authUid(email)
                 .fullName(request.fullName().trim())
                 .phoneNumber(phone)
+                .passwordHash(passwordEncoder.encode(phone))
                 .globalRole(com.tenantliving.common.domain.UserRole.USER)
                 .build();
 

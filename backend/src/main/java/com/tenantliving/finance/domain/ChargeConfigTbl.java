@@ -39,7 +39,7 @@ public class ChargeConfigTbl extends BaseEntity {
     @Column(name = "calculation_strategy", nullable = false, length = 50)
     private CalculationStrategyType calculationStrategy;
 
-    @Column(name = "base_rate", nullable = false, precision = 10, scale = 2)
+    @Column(name = "base_rate", precision = 10, scale = 2)
     private BigDecimal baseRate;
 
     @Column(name = "unit_type", length = 50)

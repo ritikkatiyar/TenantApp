@@ -80,4 +80,12 @@ public class PropertyServiceImpl implements PropertyService {
         unitRepository.deleteByPropertyId(propertyId);
         propertyRepository.delete(property);
     }
+
+    @Override
+    public PropertyTbl togglePropertyActiveStatus(UUID propertyId, boolean active) {
+        PropertyTbl property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
+        property.setActive(active);
+        return propertyRepository.save(property);
+    }
 }

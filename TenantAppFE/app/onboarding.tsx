@@ -18,6 +18,12 @@ const MODULES = [
     icon: '🛏️'
   },
   {
+    id: 'INDIVIDUAL',
+    title: 'Individual / Person',
+    description: 'Manage individual tenants or renting agreements.',
+    icon: '👤'
+  },
+  {
     id: 'SOCIETY',
     title: 'Society Management',
     description: 'Manage society members, maintenance, and visitors.',

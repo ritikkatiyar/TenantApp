@@ -21,16 +21,19 @@ public class ChargeConfigQueryServiceImpl implements ChargeConfigQueryService {
     private final ChargeConfigRepository chargeConfigRepository;
 
     @Override
-    public List<ChargeConfigResponse> getActiveChargesForProperty(UUID propertyId) {
-        return chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
+    public List<ChargeConfigResponse> getChargesForProperty(UUID propertyId, boolean includeInactive) {
+        List<ChargeConfigTbl> configs = includeInactive ? 
+                chargeConfigRepository.findAllByPropertyId(propertyId) : 
+                chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId);
+        return configs.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public ChargeConfigResponse getChargeConfigById(UUID id) {
-        ChargeConfigTbl config = chargeConfigRepository.findByIdAndIsActiveTrue(id)
-                .orElseThrow(() -> new IllegalArgumentException("Active Charge Config not found"));
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Charge Config not found"));
         return mapToResponse(config);
     }
 

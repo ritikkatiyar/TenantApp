@@ -20,15 +20,18 @@ import { BlurView } from 'expo-blur';
 import { createChargeConfig, updateChargeConfig, getChargeConfigById } from '@/src/features/finance/api/charge.api';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 export default function CreateExpenseScreen({ token }: { token: string | null }) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
   const { propertyId, chargeId } = useLocalSearchParams<{ propertyId: string, chargeId?: string }>();
   const { isDesktop } = useResponsive();
+  const { showToast } = useToast();
   const isEditMode = !!chargeId;
 
   const [expenseName, setExpenseName] = useState('');
+  const [chargeCategory, setChargeCategory] = useState('CUSTOM');
   const [billingFrequency, setBillingFrequency] = useState('Monthly');
   const [calcMethod, setCalcMethod] = useState('Fixed Rate');
   const [baseRate, setBaseRate] = useState('');
@@ -38,6 +41,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const [autoCarryForward, setAutoCarryForward] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isUnitDropdownOpen, setIsUnitDropdownOpen] = useState(false);
+  const [nameError, setNameError] = useState('');
   const unitScrollRef = useRef<ScrollView>(null);
   const scrollTimeout = useRef<any>(null);
 
@@ -52,6 +56,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       setIsLoading(true);
       const data = await getChargeConfigById(chargeId as string, token as string);
       setExpenseName(data.chargeName);
+      setChargeCategory(data.chargeCategory || 'CUSTOM');
       
       let uiFreq = 'Monthly';
       if (data.billingFrequency === 'ANNUAL') uiFreq = 'Annual';
@@ -62,12 +67,12 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       if (data.calculationStrategy === 'METERED') uiCalc = 'Metered/Consumption';
       setCalcMethod(uiCalc);
 
-      setBaseRate(data.baseRate.toString());
+      setBaseRate(data.baseRate != null ? data.baseRate.toString() : '');
       setApplySalesTax(data.applySalesTax);
       setLateFee(data.lateFeePercentage ? data.lateFeePercentage.toString() : '');
       setAutoCarryForward(data.autoCarryForward || false);
     } catch(e: any) {
-      Alert.alert("Error", "Failed to load charge details");
+      showToast("Failed to load charge details", "error");
     } finally {
       setIsLoading(false);
     }
@@ -75,17 +80,20 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
   const handleSubmit = async () => {
     if (!token) {
-        Alert.alert("Error", "Authentication required");
+        showToast("Authentication required", "error");
         return;
     }
     if (!propertyId) {
-        Alert.alert("Error", "Missing property ID context.");
+        showToast("Missing property ID context.", "error");
         return;
     }
-    if (!expenseName || !baseRate) {
-        Alert.alert("Missing Fields", "Please provide a charge name and base rate.");
+
+    if (!expenseName.trim()) {
+        setNameError("Charge name is required");
+        showToast("Please fix the validation errors first", "error");
         return;
     }
+    setNameError('');
 
     try {
         setIsLoading(true);
@@ -100,11 +108,11 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         const payload = {
             propertyId: propertyId as string,
             chargeName: expenseName,
-            chargeCategory: 'CUSTOM', 
+            chargeCategory: chargeCategory, 
             billingFrequency: freqEnum,
             calculationStrategy: calcStrategyEnum,
             unitType: unitType,
-            baseRate: parseFloat(baseRate),
+            baseRate: baseRate ? parseFloat(baseRate) : null,
             applySalesTax: applySalesTax,
             lateFeePercentage: lateFee ? parseFloat(lateFee) : null,
             autoCarryForward: autoCarryForward,
@@ -112,17 +120,16 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
         if (isEditMode && chargeId) {
             await updateChargeConfig(chargeId as string, payload, token);
-            Alert.alert("Success", "Charge updated successfully!", [
-                { text: "OK", onPress: () => router.back() }
-            ]);
+            showToast("Charge updated successfully!", "success");
+            setTimeout(() => router.back(), 1200);
         } else {
             await createChargeConfig(payload, token);
-            Alert.alert("Success", "Charge configured successfully!", [
-                { text: "OK", onPress: () => router.back() }
-            ]);
+            showToast("Charge configured successfully!", "success");
+            setTimeout(() => router.back(), 1200);
         }
     } catch (e: any) {
-        Alert.alert("Error", e.response?.data?.message || e.message || "Failed to create charge.");
+        const errorMsg = e.response?.data?.message || e.message || "Failed to save charge.";
+        showToast(errorMsg, "error");
     } finally {
         setIsLoading(false);
     }
@@ -148,19 +155,46 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       </View>
 
       <Text style={styles.label}>CHARGE NAME</Text>
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, nameError ? { borderColor: '#ba1a1a', marginBottom: 8 } : null]}>
         <TextInput 
           style={styles.input} 
           placeholder="e.g. Electricity, Sanitation Service" 
           placeholderTextColor="#849495"
           value={expenseName}
-          onChangeText={setExpenseName}
+          onChangeText={(val) => {
+            setExpenseName(val);
+            if (val.trim()) setNameError('');
+          }}
         />
       </View>
+      {nameError ? <Text style={{ color: '#ba1a1a', fontSize: 12, marginTop: -6, marginBottom: 18, fontWeight: '600' }}>{nameError}</Text> : null}
 
       <Text style={styles.label}>CATEGORY</Text>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputText}>Consumables</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 24 }}>
+        {['RENT', 'UTILITY', 'SERVICE', 'PENALTY', 'DISCOUNT', 'CUSTOM'].map((cat) => {
+          const isActive = chargeCategory === cat;
+          return (
+            <TouchableOpacity
+              key={cat}
+              style={{
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                backgroundColor: isActive ? '#006875' : 'rgba(255, 255, 255, 0.5)',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: isActive ? '#006875' : 'rgba(255, 255, 255, 0.9)',
+              }}
+              onPress={() => setChargeCategory(cat)}
+              activeOpacity={0.8}
+            >
+              <Text style={{
+                fontSize: 12,
+                fontWeight: isActive ? '800' : '600',
+                color: isActive ? '#ffffff' : '#5b6b6d',
+              }}>{cat}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <Text style={styles.label}>BILLING FREQUENCY</Text>
@@ -420,7 +454,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       >
         <View style={styles.previewHeaderRow}>
           <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={styles.previewCategory}>CUSTOM CHARGE</Text>
+            <Text style={styles.previewCategory}>{chargeCategory} CHARGE</Text>
             <Text style={styles.previewName} numberOfLines={1}>{expenseName || 'Unnamed Charge'}</Text>
           </View>
           <MaterialIcons name="receipt-long" size={28} color="#00f0ff" />

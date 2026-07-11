@@ -36,6 +36,30 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  const handlePrevMonth = () => {
+    const [yearStr, monthStr] = billingMonth.split('-');
+    let year = parseInt(yearStr);
+    let month = parseInt(monthStr);
+    month -= 1;
+    if (month === 0) {
+      month = 12;
+      year -= 1;
+    }
+    setBillingMonth(`${year}-${String(month).padStart(2, '0')}`);
+  };
+
+  const handleNextMonth = () => {
+    const [yearStr, monthStr] = billingMonth.split('-');
+    let year = parseInt(yearStr);
+    let month = parseInt(monthStr);
+    month += 1;
+    if (month === 13) {
+      month = 1;
+      year += 1;
+    }
+    setBillingMonth(`${year}-${String(month).padStart(2, '0')}`);
+  };
   
   const [entries, setEntries] = useState<WorksheetEntryResponse[]>([]);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
@@ -340,9 +364,19 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               
               <View style={{ width: 250 }}>
                 <Text style={styles.filterLabelCaps}>BILLING MONTH</Text>
-                <View style={styles.monthBadge}>
-                  <MaterialIcons name="calendar-today" size={18} color="#006875" />
-                  <Text style={styles.monthBadgeText}>{billingMonth}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                  <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
+                    <MaterialIcons name="chevron-left" size={20} color="#006875" />
+                  </TouchableOpacity>
+                  
+                  <View style={[styles.monthBadge, { flex: 1, marginTop: 0 }]}>
+                    <MaterialIcons name="calendar-today" size={16} color="#006875" />
+                    <Text style={styles.monthBadgeText}>{billingMonth}</Text>
+                  </View>
+                  
+                  <TouchableOpacity onPress={handleNextMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
+                    <MaterialIcons name="chevron-right" size={20} color="#006875" />
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -360,7 +394,9 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             ) : entries.length === 0 ? (
               <BlurView intensity={60} tint="light" style={styles.emptyStateCard}>
                 <MaterialIcons name="domain-disabled" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
-                <Text style={styles.emptyText}>No units found for mapping.</Text>
+                <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40 }]}>
+                  No occupied units with active leases found for this property. Assign a tenant first to view billing worksheets.
+                </Text>
               </BlurView>
             ) : (
               renderFloorsList()
@@ -424,7 +460,17 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
           
           <View style={styles.monthSelectorRowMobile}>
             <Text style={styles.filterLabelCaps}>MONTH</Text>
-            <Text style={styles.monthBadgeTextMobile}>{billingMonth}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 4 }}>
+                <MaterialIcons name="chevron-left" size={24} color="#006875" />
+              </TouchableOpacity>
+              
+              <Text style={styles.monthBadgeTextMobile}>{billingMonth}</Text>
+              
+              <TouchableOpacity onPress={handleNextMonth} style={{ padding: 4 }}>
+                <MaterialIcons name="chevron-right" size={24} color="#006875" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -439,7 +485,9 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             <ActivityIndicator size="large" color="#006875" style={{ marginTop: 50 }} />
           ) : entries.length === 0 ? (
             <View style={styles.emptyStateCard}>
-              <Text style={styles.emptyText}>No units found for mapping.</Text>
+              <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 20 }]}>
+                No occupied units with active leases found for this property. Assign a tenant first to view billing worksheets.
+              </Text>
             </View>
           ) : (
             renderFloorsList()

@@ -66,6 +66,23 @@ public class PropertyController {
         return ResponseEntity.ok(ApiResponse.success(properties.stream().map(this::toResponse).toList()));
     }
 
+    @DeleteMapping("/{propertyId}")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
+    public ResponseEntity<ApiResponse<Void>> deleteProperty(@PathVariable UUID propertyId) {
+        propertyService.deleteProperty(propertyId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/{propertyId}/toggle-active")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
+    public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> togglePropertyActive(
+            @PathVariable UUID propertyId,
+            @RequestParam boolean active
+    ) {
+        PropertyTbl updatedProperty = propertyService.togglePropertyActiveStatus(propertyId, active);
+        return ResponseEntity.ok(ApiResponse.success(toResponse(updatedProperty)));
+    }
+
     private PropertyDTOs.PropertyResponse toResponse(PropertyTbl property) {
         return new PropertyDTOs.PropertyResponse(
                 property.getId(),
@@ -74,7 +91,8 @@ public class PropertyController {
                 property.getCity(),
                 property.getLandmark(),
                 property.getTotalFloors(),
-                null
+                null,
+                property.isActive()
         );
     }
 }

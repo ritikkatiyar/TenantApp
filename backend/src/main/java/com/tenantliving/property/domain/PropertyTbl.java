@@ -38,4 +38,8 @@ public class PropertyTbl extends BaseEntity {
     @Column(name = "property_type", nullable = false)
     @Builder.Default
     private PropertyType propertyType = PropertyType.RENTAL;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private boolean isActive = true;
 }

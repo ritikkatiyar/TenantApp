@@ -28,6 +28,7 @@ import type { PropertyResponse } from '@/src/types/property';
 import Building3DView from '@/src/features/properties/components/Building3DView';
 import { createAnnouncement } from '@/src/features/announcements/api/announcement.api';
 import { RoleToggle } from '@/src/components/RoleToggle';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
 
@@ -41,7 +42,8 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const { user, accessToken } = useAuth();
-  const { properties, isLoading, error, refreshProperties, deleteProperty } = useProperties();
+  const { properties, isLoading, error, refreshProperties, deleteProperty, togglePropertyActive } = useProperties();
+  const { showToast } = useToast();
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // Notice Board Composer State
@@ -152,8 +154,9 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
           onPress: async () => {
             try {
               await deleteProperty(propertyId);
+              showToast(`Property "${propertyName}" deleted successfully.`, "success");
             } catch (error) {
-              Alert.alert("Delete Failed", (error as Error).message);
+              showToast((error as Error).message, "error");
             }
           }
         }
@@ -168,13 +171,15 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
           <View style={styles.desktopCardRow}>
             {/* Left Side: 3D Building Preview */}
             <View style={styles.desktopCardLeft}>
-              <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerDesktop]}>
+              <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerDesktop, item.isActive === false && { opacity: 0.65 }]}>
                 <View style={{ transform: [{ translateY: -45 }], width: '100%', alignItems: 'center', justifyContent: 'center' }}>
                   {accessToken && <Building3DView propertyId={item.id} token={accessToken} />}
                 </View>
                 
-                <View style={styles.statusPillOverlay}>
-                  <Text style={styles.statusPillText}>ACTIVE</Text>
+                <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]}>
+                  <Text style={[styles.statusPillText, item.isActive === false && { color: '#ef4444' }]}>
+                    {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
+                  </Text>
                 </View>
 
                 <TouchableOpacity 
@@ -207,6 +212,31 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                 <BlurView intensity={65} tint="light" style={styles.desktopMetricRow}>
                   <Text style={styles.propertyMetricLabel}>FLOORS</Text>
                   <Text style={styles.desktopMetricValue}>{item.totalFloors ?? '-'}</Text>
+                </BlurView>
+                <BlurView intensity={65} tint="light" style={styles.desktopMetricRow}>
+                  <Text style={styles.propertyMetricLabel}>PROPERTY LIFE CYCLE</Text>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      try {
+                        const nextState = item.isActive === false;
+                        await togglePropertyActive(item.id, nextState);
+                        showToast(nextState ? `Property "${item.name}" activated!` : `Property "${item.name}" deactivated!`, 'success');
+                      } catch (error: any) {
+                        showToast(error.message || 'Failed to toggle status', 'error');
+                      }
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.desktopMetricValue, { color: item.isActive === false ? '#ef4444' : '#006875', fontWeight: '800' }]}>
+                      {item.isActive === false ? 'DEACTIVATED' : 'ACTIVE'}
+                    </Text>
+                    <MaterialIcons 
+                      name={item.isActive === false ? "toggle-off" : "toggle-on"} 
+                      size={32} 
+                      color={item.isActive === false ? "#8b9ea1" : "#006875"} 
+                    />
+                  </TouchableOpacity>
                 </BlurView>
               </View>
 
@@ -249,13 +279,35 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     }
 
     return (
-      <BlurView intensity={60} tint="light" style={styles.propertyCard}>
-        <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile]}>
+      <BlurView intensity={60} tint="light" style={[styles.propertyCard, item.isActive === false && { opacity: 0.85 }]}>
+        <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile, item.isActive === false && { opacity: 0.65 }]}>
           {accessToken && <Building3DView propertyId={item.id} token={accessToken} />}
           
-          <View style={styles.statusPillOverlay}>
-            <Text style={styles.statusPillText}>ACTIVE</Text>
+          <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]}>
+            <Text style={[styles.statusPillText, item.isActive === false && { color: '#ef4444' }]}>
+              {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
+            </Text>
           </View>
+
+          <TouchableOpacity 
+            style={[styles.deleteButtonOverlay, { right: 60 }]}
+            onPress={async () => {
+              try {
+                const nextState = item.isActive === false;
+                await togglePropertyActive(item.id, nextState);
+                showToast(nextState ? `Property "${item.name}" activated!` : `Property "${item.name}" deactivated!`, 'success');
+              } catch (error: any) {
+                showToast(error.message || 'Failed to toggle status', 'error');
+              }
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons 
+              name={item.isActive === false ? "toggle-off" : "toggle-on"} 
+              size={30} 
+              color={item.isActive === false ? "#8b9ea1" : "#006875"} 
+            />
+          </TouchableOpacity>
 
           <TouchableOpacity 
             style={styles.deleteButtonOverlay}

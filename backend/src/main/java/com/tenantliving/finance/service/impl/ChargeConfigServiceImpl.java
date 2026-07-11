@@ -11,6 +11,11 @@ import com.tenantliving.property.service.interfaces.PropertyQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.tenantliving.common.exception.BusinessException;
+import org.springframework.http.HttpStatus;
+import com.tenantliving.finance.repository.BillingWorksheetRepository;
+import com.tenantliving.finance.repository.MeterReadingRepository;
+import com.tenantliving.finance.repository.RentCycleChargeRepository;
 
 import java.util.UUID;
 
@@ -21,6 +26,9 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
 
     private final ChargeConfigRepository chargeConfigRepository;
     private final PropertyQueryService propertyQueryService;
+    private final BillingWorksheetRepository billingWorksheetRepository;
+    private final MeterReadingRepository meterReadingRepository;
+    private final RentCycleChargeRepository rentCycleChargeRepository;
 
     @Override
     public ChargeConfigResponse createChargeConfig(ChargeConfigRequest request) {
@@ -47,8 +55,8 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
 
     @Override
     public ChargeConfigResponse updateChargeConfig(UUID id, ChargeConfigRequest request) {
-        ChargeConfigTbl config = chargeConfigRepository.findByIdAndIsActiveTrue(id)
-                .orElseThrow(() -> new IllegalArgumentException("Active Charge Config not found"));
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
 
         config.setChargeName(request.getChargeName());
         config.setChargeCategory(request.getChargeCategory());
@@ -66,15 +74,41 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
 
     @Override
     public void deactivateChargeConfig(UUID id) {
-        ChargeConfigTbl config = chargeConfigRepository.findByIdAndIsActiveTrue(id)
-                .orElseThrow(() -> new IllegalArgumentException("Active Charge Config not found"));
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
 
         if (Boolean.TRUE.equals(config.getIsSystemRequired())) {
-            throw new IllegalStateException("Cannot deactivate a system-required charge configuration.");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot deactivate a system-required charge configuration.");
         }
 
         config.setIsActive(false);
         chargeConfigRepository.save(config);
+    }
+
+    @Override
+    public void reactivateChargeConfig(UUID id) {
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
+        config.setIsActive(true);
+        chargeConfigRepository.save(config);
+    }
+
+    @Override
+    public void deleteChargeConfigPermanently(UUID id) {
+        ChargeConfigTbl config = chargeConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
+
+        if (Boolean.TRUE.equals(config.getIsSystemRequired())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete a system-required charge configuration.");
+        }
+
+        if (billingWorksheetRepository.existsByChargeConfigId(id) ||
+                meterReadingRepository.existsByChargeConfigId(id) ||
+                rentCycleChargeRepository.existsByCustomChargeConfigId(id)) {
+            throw new BusinessException(HttpStatus.CONFLICT, "Cannot permanently delete this charge configuration because it has historical billing records. Please keep it deactivated instead.");
+        }
+
+        chargeConfigRepository.delete(config);
     }
 
     private ChargeConfigResponse mapToResponse(ChargeConfigTbl config) {

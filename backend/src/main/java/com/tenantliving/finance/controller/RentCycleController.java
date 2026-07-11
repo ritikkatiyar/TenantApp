@@ -67,6 +67,19 @@ public class RentCycleController {
         return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchPublish(propertyId, billingMonth)));
     }
 
+    @PostMapping("/batch-unpublish")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_UPDATE')")
+    /**
+     * Batch unpublish rent cycles
+     * Reverts all PUBLISHED rent cycles for a property and billing month back to PENDING.
+     */
+    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchUnpublish(
+            @RequestParam UUID propertyId,
+            @RequestParam String billingMonth
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchUnpublish(propertyId, billingMonth)));
+    }
+
     @GetMapping("/pre-flight")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     /**

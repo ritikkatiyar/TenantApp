@@ -22,4 +22,5 @@ export type PropertyResponse = {
   landmark?: string;
   totalFloors?: number;
   ownerId?: string;
+  isActive?: boolean;
 };

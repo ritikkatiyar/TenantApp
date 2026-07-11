@@ -23,9 +23,11 @@ import {
   listRentCycles, 
   getPreFlightChecklist, 
   batchPublishRentCycle,
+  batchUnpublishRentCycle,
   RentCycleResponse, 
   PreFlightChecklistResponse 
 } from '@/src/features/finance/api/rentCycle.api';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 export default function RentRollScreen({ token }: { token: string | null }) {
   const router = useRouter();
@@ -33,11 +35,36 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
+  const { showToast } = useToast();
 
   const [billingMonth, setBillingMonth] = useState<string>(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
+
+  const handlePrevMonth = () => {
+    const [yearStr, monthStr] = billingMonth.split('-');
+    let year = parseInt(yearStr);
+    let month = parseInt(monthStr);
+    month -= 1;
+    if (month === 0) {
+      month = 12;
+      year -= 1;
+    }
+    setBillingMonth(`${year}-${String(month).padStart(2, '0')}`);
+  };
+
+  const handleNextMonth = () => {
+    const [yearStr, monthStr] = billingMonth.split('-');
+    let year = parseInt(yearStr);
+    let month = parseInt(monthStr);
+    month += 1;
+    if (month === 13) {
+      month = 1;
+      year += 1;
+    }
+    setBillingMonth(`${year}-${String(month).padStart(2, '0')}`);
+  };
   
   const [dueDate, setDueDate] = useState<string>(() => {
     const d = new Date();
@@ -48,6 +75,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [invoices, setInvoices] = useState<RentCycleResponse[]>([]);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [checklist, setChecklist] = useState<PreFlightChecklistResponse | null>(null);
@@ -86,18 +114,9 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       const generated = await batchGenerateRentCycle(propertyId as string, billingMonth, dueDate, token);
       setInvoices(generated);
       setHasGenerated(true);
-      if (Platform.OS === 'web') {
-        alert("Rent cycle generated successfully!");
-      } else {
-        Alert.alert("Success", "Rent cycle generated successfully!");
-      }
+      showToast("Rent cycle generated successfully!", "success");
     } catch (e: any) {
-      const msg = e.message || "Failed to generate rent cycle.";
-      if (Platform.OS === 'web') {
-        alert(msg);
-      } else {
-        Alert.alert("Error", msg);
-      }
+      showToast(e.message || "Failed to generate rent cycle.", "error");
     } finally {
       setIsGenerating(false);
     }
@@ -109,20 +128,25 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       setIsPublishing(true);
       const updated = await batchPublishRentCycle(propertyId as string, billingMonth, token);
       setInvoices(updated);
-      if (Platform.OS === 'web') {
-        alert("Invoices published to tenants successfully!");
-      } else {
-        Alert.alert("Success", "Invoices published to tenants successfully!");
-      }
+      showToast("Invoices published to tenants successfully!", "success");
     } catch (e: any) {
-      const msg = e.message || "Failed to publish invoices.";
-      if (Platform.OS === 'web') {
-        alert(msg);
-      } else {
-        Alert.alert("Error", msg);
-      }
+      showToast(e.message || "Failed to publish invoices.", "error");
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    if (!token || !propertyId) return;
+    try {
+      setIsUnpublishing(true);
+      const updated = await batchUnpublishRentCycle(propertyId as string, billingMonth, token);
+      setInvoices(updated);
+      showToast("Invoices reverted to draft successfully!", "success");
+    } catch (e: any) {
+      showToast(e.message || "Failed to unpublish invoices.", "error");
+    } finally {
+      setIsUnpublishing(false);
     }
   };
 
@@ -134,9 +158,19 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     <View style={styles.inner}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Generate Rent Cycle</Text>
-        <View style={styles.monthBadge}>
-          <MaterialIcons name="calendar-today" size={18} color="#006875" />
-          <Text style={styles.monthBadgeText}>{billingMonth}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
+            <MaterialIcons name="chevron-left" size={20} color="#006875" />
+          </TouchableOpacity>
+          
+          <View style={[styles.monthBadge, { marginTop: 0 }]}>
+            <MaterialIcons name="calendar-today" size={16} color="#006875" />
+            <Text style={styles.monthBadgeText}>{billingMonth}</Text>
+          </View>
+          
+          <TouchableOpacity onPress={handleNextMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
+            <MaterialIcons name="chevron-right" size={20} color="#006875" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -201,25 +235,67 @@ export default function RentRollScreen({ token }: { token: string | null }) {
             </View>
 
             {pendingCount > 0 && (
-              <TouchableOpacity 
-                style={[styles.publishBtnContainer, isPublishing && { opacity: 0.7 }]} 
-                onPress={handlePublish}
-                disabled={isPublishing}
-              >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.publishBtn}
+              <>
+                <TouchableOpacity 
+                  style={[styles.publishBtnContainer, isPublishing && { opacity: 0.7 }]} 
+                  onPress={handlePublish}
+                  disabled={isPublishing}
                 >
-                  {isPublishing ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                  <LinearGradient
+                    colors={['#00d4ff', '#0072ff']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.publishBtn}
+                  >
+                    {isPublishing ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={styles.publishBtnText}>
+                        {publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
+                      </Text>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.unpublishBtnContainer, 
+                    isGenerating && { opacity: 0.7 },
+                    { marginTop: 12, width: '100%' }
+                  ]} 
+                  onPress={handleGenerate}
+                  disabled={isGenerating}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.unpublishBtn}>
+                    {isGenerating ? (
+                      <ActivityIndicator color="#006875" size="small" />
+                    ) : (
+                      <Text style={styles.unpublishBtnText}>RE-GENERATE DRAFT INVOICES (RE-RUN CALCULATION)</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {publishedCount > 0 && (
+              <TouchableOpacity 
+                style={[
+                  styles.unpublishBtnContainer, 
+                  isUnpublishing && { opacity: 0.7 },
+                  { marginTop: pendingCount > 0 ? 12 : 0, width: '100%' }
+                ]} 
+                onPress={handleUnpublish}
+                disabled={isUnpublishing}
+                activeOpacity={0.8}
+              >
+                <View style={styles.unpublishBtn}>
+                  {isUnpublishing ? (
+                    <ActivityIndicator color="#006875" size="small" />
                   ) : (
-                    <Text style={styles.publishBtnText}>
-                      {publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
-                    </Text>
+                    <Text style={styles.unpublishBtnText}>REVERT TO DRAFT (UNPUBLISH)</Text>
                   )}
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             )}
           </BlurView>
@@ -396,4 +472,23 @@ const styles = StyleSheet.create({
   mobileHeader: { flexDirection: 'row', alignItems: 'center', padding: 20 },
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.5)', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
   mobileTitle: { fontSize: 22, fontWeight: '800', color: '#151d1e' },
+  unpublishBtnContainer: {
+    shadowColor: '#006875',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#006875',
+    borderRadius: 19,
+    overflow: 'hidden',
+  },
+  unpublishBtn: {
+    height: 38,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unpublishBtnText: { color: '#006875', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
 });

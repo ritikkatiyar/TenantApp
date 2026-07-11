@@ -13,5 +13,7 @@ public interface ChargeConfigRepository extends JpaRepository<ChargeConfigTbl, U
     
     List<ChargeConfigTbl> findAllByPropertyIdAndIsActiveTrue(UUID propertyId);
 
+    List<ChargeConfigTbl> findAllByPropertyId(UUID propertyId);
+
     Optional<ChargeConfigTbl> findByIdAndIsActiveTrue(UUID id);
 }

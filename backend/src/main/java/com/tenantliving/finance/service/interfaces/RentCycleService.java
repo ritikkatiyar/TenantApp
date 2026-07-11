@@ -18,4 +18,6 @@ public interface RentCycleService {
     RentCycleDTOs.RentCycleResponse markPaid(UUID id);
 
     List<RentCycleDTOs.RentCycleResponse> batchPublish(UUID propertyId, String billingMonth);
+
+    List<RentCycleDTOs.RentCycleResponse> batchUnpublish(UUID propertyId, String billingMonth);
 }

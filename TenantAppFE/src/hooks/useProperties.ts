@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { getMyProperties } from '@/src/features/properties/api/propertyList.api';
-import { deletePropertyApi } from '@/src/features/properties/api/property.api';
+import { deletePropertyApi, togglePropertyActiveApi } from '@/src/features/properties/api/property.api';
 import type { PropertyResponse } from '@/src/types/property';
 
 export function useProperties() {
@@ -45,11 +45,27 @@ export function useProperties() {
     }
   }, [accessToken, fetchProperties]);
 
+  const togglePropertyActive = useCallback(async (propertyId: string, active: boolean) => {
+    if (!accessToken) return;
+    try {
+      setIsLoading(true);
+      await togglePropertyActiveApi(propertyId, active, accessToken);
+      await fetchProperties(); // refresh after update
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(msg);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken, fetchProperties]);
+
   return {
     properties,
     isLoading,
     error,
     refreshProperties: fetchProperties,
-    deleteProperty
+    deleteProperty,
+    togglePropertyActive
   };
 }

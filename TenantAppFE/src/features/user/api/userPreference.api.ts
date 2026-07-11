@@ -1,13 +1,13 @@
 import { apiRequest } from '@/src/api/client';
 
 export interface SaveUserPreferenceRequest {
-  activeMode: 'RENTAL' | 'HOSTEL' | 'MESS' | 'SOCIETY';
+  activeMode: 'RENTAL' | 'HOSTEL' | 'MESS' | 'SOCIETY' | 'INDIVIDUAL';
   onboardingDone: boolean;
 }
 
 export interface UserPreferenceResponse {
   userId: string;
-  activeMode: 'RENTAL' | 'HOSTEL' | 'MESS' | 'SOCIETY';
+  activeMode: 'RENTAL' | 'HOSTEL' | 'MESS' | 'SOCIETY' | 'INDIVIDUAL';
   onboardingDone: boolean;
 }
 

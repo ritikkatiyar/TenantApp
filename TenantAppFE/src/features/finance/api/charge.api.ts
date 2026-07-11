@@ -7,7 +7,7 @@ export interface ChargeConfigRequest {
     billingFrequency: string;
     calculationStrategy: string;
     unitType?: string;
-    baseRate: number;
+    baseRate?: number | null;
     applySalesTax: boolean;
     lateFeePercentage: number | null;
 }
@@ -20,7 +20,7 @@ export interface ChargeConfigResponse {
     billingFrequency: string;
     calculationStrategy: string;
     unitType?: string;
-    baseRate: number;
+    baseRate?: number | null;
     applySalesTax: boolean;
     lateFeePercentage: number | null;
     isSystemRequired: boolean;
@@ -42,8 +42,29 @@ export const getActiveChargesForProperty = async (propertyId: string, token: str
     });
 };
 
+export const getChargesForProperty = async (propertyId: string, includeInactive: boolean, token: string): Promise<ChargeConfigResponse[]> => {
+    return apiRequest<ChargeConfigResponse[]>(`/api/v1/finance/charge-configs/property/${propertyId}?includeInactive=${includeInactive}`, {
+        method: 'GET',
+        token
+    });
+};
+
 export const deactivateChargeConfig = async (id: string, token: string): Promise<void> => {
     return apiRequest<void>(`/api/v1/finance/charge-configs/${id}`, {
+        method: 'DELETE',
+        token
+    });
+};
+
+export const reactivateChargeConfig = async (id: string, token: string): Promise<void> => {
+    return apiRequest<void>(`/api/v1/finance/charge-configs/${id}/reactivate`, {
+        method: 'POST',
+        token
+    });
+};
+
+export const deleteChargeConfigPermanently = async (id: string, token: string): Promise<void> => {
+    return apiRequest<void>(`/api/v1/finance/charge-configs/${id}/permanent`, {
         method: 'DELETE',
         token
     });

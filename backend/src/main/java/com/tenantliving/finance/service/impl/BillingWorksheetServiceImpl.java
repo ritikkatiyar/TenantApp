@@ -3,13 +3,16 @@ package com.tenantliving.finance.service.impl;
 import com.tenantliving.auth.principal.UserDetailsImpl;
 import com.tenantliving.common.domain.LeaseStatus;
 import com.tenantliving.common.exception.BusinessException;
+import com.tenantliving.common.domain.RentCycleStatus;
 import com.tenantliving.finance.domain.BillingWorksheetEntryTbl;
 import com.tenantliving.finance.domain.ChargeConfigTbl;
 import com.tenantliving.finance.domain.LeaseTbl;
+import com.tenantliving.finance.domain.RentCycleTbl;
 import com.tenantliving.finance.dto.BillingWorksheetDTOs.*;
 import com.tenantliving.finance.repository.BillingWorksheetRepository;
 import com.tenantliving.finance.repository.ChargeConfigRepository;
 import com.tenantliving.finance.repository.LeaseRepository;
+import com.tenantliving.finance.repository.RentCycleRepository;
 import com.tenantliving.finance.service.BillingWorksheetService;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.domain.UnitTbl;
@@ -38,6 +41,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
     private final ChargeConfigRepository chargeConfigRepository;
     private final PropertyQueryService propertyQueryService;
     private final UserQueryService userQueryService;
+    private final RentCycleRepository rentCycleRepository;
 
     @Override
     @Transactional
@@ -131,7 +135,13 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
                     .orElseThrow(() -> new BusinessException("Worksheet entry not initialized for unit " + unitEntry.getUnitId()));
             
             if (entry.getIsBilled()) {
-                continue; // Skip if this entry has already been processed into a locked invoice
+                List<LeaseTbl> leases = leaseRepository.findByUnitIdAndStatus(unitEntry.getUnitId(), LeaseStatus.ACTIVE);
+                if (!leases.isEmpty()) {
+                    Optional<RentCycleTbl> cycleOpt = rentCycleRepository.findByLease_IdAndBillingMonth(leases.get(0).getId(), request.getBillingMonth());
+                    if (cycleOpt.isPresent() && (cycleOpt.get().getStatus() == RentCycleStatus.PUBLISHED || cycleOpt.get().getStatus() == RentCycleStatus.PAID)) {
+                        continue; // Locked! Skip database save.
+                    }
+                }
             }
             entry.setEnteredValue(unitEntry.getEnteredValue());
             worksheetRepository.save(entry);

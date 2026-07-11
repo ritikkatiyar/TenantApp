@@ -42,10 +42,27 @@ public class ChargeConfigController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
+    @PostMapping("/{id}/reactivate")
+    @PreAuthorize("@authorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
+    public ResponseEntity<ApiResponse<Void>> reactivateChargeConfig(@PathVariable UUID id) {
+        chargeConfigService.reactivateChargeConfig(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @DeleteMapping("/{id}/permanent")
+    @PreAuthorize("@authorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
+    public ResponseEntity<ApiResponse<Void>> deleteChargeConfigPermanently(@PathVariable UUID id) {
+        chargeConfigService.deleteChargeConfigPermanently(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
     @GetMapping("/property/{propertyId}")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
-    public ResponseEntity<ApiResponse<List<ChargeConfigResponse>>> getActiveChargesForProperty(@PathVariable UUID propertyId) {
-        List<ChargeConfigResponse> responses = chargeConfigQueryService.getActiveChargesForProperty(propertyId);
+    public ResponseEntity<ApiResponse<List<ChargeConfigResponse>>> getChargesForProperty(
+            @PathVariable UUID propertyId,
+            @RequestParam(required = false, defaultValue = "false") boolean includeInactive
+    ) {
+        List<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 

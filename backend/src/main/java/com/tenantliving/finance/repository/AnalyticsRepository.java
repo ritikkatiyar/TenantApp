@@ -24,7 +24,7 @@ public class AnalyticsRepository {
     public Object[] getRevenueMetrics(List<UUID> propertyIds, String billingMonth) {
         if (propertyIds == null || propertyIds.isEmpty()) return new Object[]{BigDecimal.ZERO, BigDecimal.ZERO};
         
-        String jpql = "SELECT SUM(r.baseAmount), SUM(CASE WHEN r.status = :statusPaid THEN r.totalAmount ELSE 0.0 END) " +
+        String jpql = "SELECT SUM(r.totalAmount), SUM(CASE WHEN r.status = :statusPaid THEN r.totalAmount ELSE 0.0 END) " +
                       "FROM RentCycleTbl r JOIN r.lease l JOIN l.unit u " +
                       "WHERE u.property.id IN :propertyIds AND r.billingMonth = :billingMonth";
                       

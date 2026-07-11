@@ -5,6 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChargeConfigQueryService {
-    List<ChargeConfigResponse> getActiveChargesForProperty(UUID propertyId);
+    List<ChargeConfigResponse> getChargesForProperty(UUID propertyId, boolean includeInactive);
     ChargeConfigResponse getChargeConfigById(UUID id);
 }

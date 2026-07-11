@@ -48,7 +48,8 @@ public class PropertyDTOs {
             String city,
             String landmark,
             Integer totalFloors,
-            UUID ownerId
+            UUID ownerId,
+            boolean isActive
     ) {}
 
         public record BatchUnitRequest(

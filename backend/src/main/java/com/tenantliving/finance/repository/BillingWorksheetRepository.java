@@ -22,4 +22,6 @@ public interface BillingWorksheetRepository extends JpaRepository<BillingWorkshe
 
     List<BillingWorksheetEntryTbl> findAllByUnitIdAndBillingMonth(
             UUID unitId, String billingMonth);
+
+    boolean existsByChargeConfigId(UUID chargeConfigId);
 }

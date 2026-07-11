@@ -8,4 +8,6 @@ public interface ChargeConfigService {
     ChargeConfigResponse createChargeConfig(ChargeConfigRequest request);
     ChargeConfigResponse updateChargeConfig(UUID id, ChargeConfigRequest request);
     void deactivateChargeConfig(UUID id);
+    void reactivateChargeConfig(UUID id);
+    void deleteChargeConfigPermanently(UUID id);
 }

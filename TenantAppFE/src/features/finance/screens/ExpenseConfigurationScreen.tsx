@@ -14,10 +14,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { BlurView } from 'expo-blur';
-import { getActiveChargesForProperty, deactivateChargeConfig, ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
+import { 
+  getChargesForProperty, 
+  deactivateChargeConfig, 
+  reactivateChargeConfig, 
+  deleteChargeConfigPermanently, 
+  ChargeConfigResponse 
+} from '@/src/features/finance/api/charge.api';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 
 export default function ExpenseConfigurationScreen({ token }: { token: string | null }) {
@@ -27,6 +34,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
+  const { showToast } = useToast();
   
   const [charges, setCharges] = useState<ChargeConfigResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,15 +43,11 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     if (!token || !propertyId) return;
     try {
       setIsLoading(true);
-      const data = await getActiveChargesForProperty(propertyId, token);
+      const data = await getChargesForProperty(propertyId, true, token);
       setCharges(data);
     } catch (e: any) {
       console.error(e);
-      if (Platform.OS === 'web') {
-        alert("Failed to load charges");
-      } else {
-        Alert.alert("Error", "Failed to load charges");
-      }
+      showToast("Failed to load charges", "error");
     } finally {
       setIsLoading(false);
     }
@@ -74,31 +78,68 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replace('_', ' ');
   };
 
-  const handleDelete = async (id: string) => {
-    const performDelete = async () => {
+  const handleDeactivate = async (id: string) => {
+    const performDeactivate = async () => {
       if (!token) return;
       try {
         await deactivateChargeConfig(id, token);
+        showToast("Charge configuration deactivated successfully.", "success");
         loadCharges();
       } catch (e: any) {
-        if (Platform.OS === 'web') {
-          alert(e.message || "Failed to delete");
-        } else {
-          Alert.alert("Error", e.message || "Failed to delete");
-        }
+        showToast(e.message || "Failed to deactivate", "error");
       }
     };
 
     if (Platform.OS === 'web') {
-      const confirmDelete = window.confirm("Are you sure you want to delete this charge configuration? It will not affect past billing cycles, but will no longer be applied to future cycles.");
+      const confirmDeactivate = window.confirm("Are you sure you want to deactivate this charge configuration? It will not be applied to future billing cycles.");
+      if (confirmDeactivate) {
+        await performDeactivate();
+      }
+    } else {
+      Alert.alert("Deactivate Charge", "Are you sure you want to deactivate this charge configuration? It will not be applied to future billing cycles.", [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Deactivate", 
+          style: "destructive",
+          onPress: performDeactivate
+        }
+      ]);
+    }
+  };
+
+  const handleReactivate = async (id: string) => {
+    if (!token) return;
+    try {
+      await reactivateChargeConfig(id, token);
+      showToast("Charge configuration reactivated successfully.", "success");
+      loadCharges();
+    } catch (e: any) {
+      showToast(e.message || "Failed to reactivate", "error");
+    }
+  };
+
+  const handleDeletePermanently = async (id: string) => {
+    const performDelete = async () => {
+      if (!token) return;
+      try {
+        await deleteChargeConfigPermanently(id, token);
+        showToast("Charge configuration deleted permanently.", "success");
+        loadCharges();
+      } catch (e: any) {
+        showToast(e.message || "Failed to delete permanently", "error");
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmDelete = window.confirm("Are you sure you want to delete this configuration permanently? This action cannot be undone.");
       if (confirmDelete) {
         await performDelete();
       }
     } else {
-      Alert.alert("Delete Charge", "Are you sure you want to delete this charge configuration? It will not affect past billing cycles, but will no longer be applied to future cycles.", [
+      Alert.alert("Delete Permanently", "Are you sure you want to delete this configuration permanently? This action cannot be undone.", [
         { text: "Cancel", style: "cancel" },
         { 
-          text: "Delete", 
+          text: "Delete Permanently", 
           style: "destructive",
           onPress: performDelete
         }
@@ -229,7 +270,10 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                   return (
                     <View 
                       key={charge.id}
-                      style={isDesktop ? styles.gridCardWrapper : styles.listCardWrapper}
+                      style={[
+                        isDesktop ? styles.gridCardWrapper : styles.listCardWrapper,
+                        !charge.isActive && { opacity: 0.7 }
+                      ]}
                     >
                       <BlurView intensity={60} tint="light" style={styles.expenseCard}>
                         {/* Upper card area is pressable to edit the config */}
@@ -250,13 +294,13 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                               </Text>
                             </View>
                             <View style={styles.cardRight}>
-                              <View style={[styles.badge, { backgroundColor: charge.isActive ? '#ccfbf1' : '#fef3c7' }]}>
-                                 <Text style={[styles.badgeText, { color: charge.isActive ? '#0d9488' : '#d97706' }]}>
-                                   {charge.isActive ? 'ACTIVE' : 'PENDING'}
+                              <View style={[styles.badge, { backgroundColor: charge.isActive ? '#ccfbf1' : '#fee2e2' }]}>
+                                 <Text style={[styles.badgeText, { color: charge.isActive ? '#0d9488' : '#ef4444' }]}>
+                                   {charge.isActive ? 'ACTIVE' : 'INACTIVE'}
                                  </Text>
                               </View>
                               <View style={styles.amountContainer}>
-                                <Text style={styles.amountBold}>₹{charge.baseRate}</Text>
+                                <Text style={styles.amountBold}>₹{charge.baseRate != null ? charge.baseRate : 'Optional'}</Text>
                                 {charge.calculationStrategy === 'METERED' ? <Text style={styles.amountSuffix}>/ {charge.unitType || 'unit'}</Text> : <Text style={styles.amountSuffix}>/ mo</Text>}
                               </View>
                             </View>
@@ -264,9 +308,9 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                         </TouchableOpacity>
                         
                         {/* Actions Row - sibling to the edit pressable (no nesting) */}
-                        <View style={{ flexDirection: 'row', justifyContent: charge.calculationStrategy === 'METERED' ? 'space-between' : 'flex-end', marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', paddingTop: 16 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', paddingTop: 16 }}>
                           
-                          {charge.calculationStrategy === 'METERED' && (
+                          {charge.calculationStrategy === 'METERED' ? (
                             <TouchableOpacity 
                               onPress={() => {
                                 router.push(`/properties/${propertyId}/meter-readings`);
@@ -276,13 +320,39 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                               <MaterialCommunityIcons name="speedometer" size={16} color="#00bcd4" />
                               <Text style={{ color: '#00bcd4', fontSize: 13, fontWeight: '700' }}>Record Readings</Text>
                             </TouchableOpacity>
+                          ) : (
+                            <View />
                           )}
 
                           {!charge.isSystemRequired ? (
-                            <TouchableOpacity onPress={() => handleDelete(charge.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                              <Feather name="trash-2" size={14} color="#ef4444" />
-                              <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>Delete</Text>
-                            </TouchableOpacity>
+                            <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+                              {charge.isActive ? (
+                                <TouchableOpacity 
+                                  onPress={() => handleDeactivate(charge.id)} 
+                                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                                >
+                                  <Feather name="minus-circle" size={14} color="#ef4444" />
+                                  <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>Deactivate</Text>
+                                </TouchableOpacity>
+                              ) : (
+                                <>
+                                  <TouchableOpacity 
+                                    onPress={() => handleReactivate(charge.id)} 
+                                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                                  >
+                                    <MaterialIcons name="restore" size={14} color="#006875" />
+                                    <Text style={{ color: '#006875', fontSize: 12, fontWeight: '600' }}>Reactivate</Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity 
+                                    onPress={() => handleDeletePermanently(charge.id)} 
+                                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                                  >
+                                    <Feather name="trash-2" size={14} color="#ba1a1a" />
+                                    <Text style={{ color: '#ba1a1a', fontSize: 12, fontWeight: '600' }}>Delete Permanently</Text>
+                                  </TouchableOpacity>
+                                </>
+                              )}
+                            </View>
                           ) : (
                             <Text style={{ color: '#849495', fontSize: 11, fontStyle: 'italic' }}>System Required</Text>
                           )}

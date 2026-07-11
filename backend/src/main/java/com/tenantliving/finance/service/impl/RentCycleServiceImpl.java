@@ -152,8 +152,6 @@ public class RentCycleServiceImpl implements RentCycleService {
                 totalAmount = totalAmount.add(chargeAmount);
             }
 
-            entry.setIsBilled(true);
-            worksheetRepository.save(entry);
         }
 
         // 2. Process Meter Readings (METERED)
@@ -173,8 +171,6 @@ public class RentCycleServiceImpl implements RentCycleService {
             BigDecimal chargeAmount = consumption.multiply(rate);
 
             if (chargeAmount.compareTo(BigDecimal.ZERO) == 0) {
-                reading.setIsBilled(true);
-                meterReadingRepository.save(reading);
                 continue;
             }
 
@@ -191,9 +187,6 @@ public class RentCycleServiceImpl implements RentCycleService {
             rentCycleChargeRepository.save(charge);
 
             totalAmount = totalAmount.add(chargeAmount);
-            
-            reading.setIsBilled(true);
-            meterReadingRepository.save(reading);
         }
 
         cycle.setTotalAmount(totalAmount);
@@ -289,7 +282,84 @@ public class RentCycleServiceImpl implements RentCycleService {
                 if (cycle.getStatus() == RentCycleStatus.PENDING) {
                     cycle.setStatus(RentCycleStatus.PUBLISHED);
                     rentCycleRepository.save(cycle);
+
+                    // LOCK worksheet entries
+                    List<BillingWorksheetEntryTbl> worksheetEntries = worksheetRepository.findAllByUnitIdAndBillingMonth(lease.getUnit().getId(), billingMonth);
+                    for (BillingWorksheetEntryTbl entry : worksheetEntries) {
+                        entry.setIsBilled(true);
+                        worksheetRepository.save(entry);
+                    }
+                    
+                    // LOCK meter readings
+                    try {
+                        String[] parts = billingMonth.split("-");
+                        int year = Integer.parseInt(parts[0]);
+                        int month = Integer.parseInt(parts[1]);
+                        List<MeterReadingTbl> meterReadings = meterReadingRepository.findAllByUnitIdAndBillingMonthAndBillingYear(lease.getUnit().getId(), month, year);
+                        for (MeterReadingTbl reading : meterReadings) {
+                            reading.setIsBilled(true);
+                            meterReadingRepository.save(reading);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to lock meter readings during publishing", e);
+                    }
+
                     log.info("rent_cycle_published rentCycleId={} leaseId={} billingMonth={}",
+                            cycle.getId(), lease.getId(), billingMonth);
+                }
+                responses.add(toResponse(cycle));
+            }
+        }
+        return responses;
+    }
+
+    @Override
+    @Transactional
+    public List<RentCycleDTOs.RentCycleResponse> batchUnpublish(UUID propertyId, String billingMonth) {
+        List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+        
+        // Validation pass
+        for (LeaseTbl lease : activeLeases) {
+            Optional<RentCycleTbl> cycleOpt = rentCycleRepository.findByLease_IdAndBillingMonth(lease.getId(), billingMonth);
+            if (cycleOpt.isPresent()) {
+                RentCycleTbl cycle = cycleOpt.get();
+                if (cycle.getStatus() == RentCycleStatus.PAID) {
+                    throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot unpublish bills because some tenants have already paid.");
+                }
+            }
+        }
+
+        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>();
+        for (LeaseTbl lease : activeLeases) {
+            Optional<RentCycleTbl> cycleOpt = rentCycleRepository.findByLease_IdAndBillingMonth(lease.getId(), billingMonth);
+            if (cycleOpt.isPresent()) {
+                RentCycleTbl cycle = cycleOpt.get();
+                if (cycle.getStatus() == RentCycleStatus.PUBLISHED) {
+                    cycle.setStatus(RentCycleStatus.PENDING);
+                    rentCycleRepository.save(cycle);
+
+                    // UNLOCK worksheet entries
+                    List<BillingWorksheetEntryTbl> worksheetEntries = worksheetRepository.findAllByUnitIdAndBillingMonth(lease.getUnit().getId(), billingMonth);
+                    for (BillingWorksheetEntryTbl entry : worksheetEntries) {
+                        entry.setIsBilled(false);
+                        worksheetRepository.save(entry);
+                    }
+                    
+                    // UNLOCK meter readings
+                    try {
+                        String[] parts = billingMonth.split("-");
+                        int year = Integer.parseInt(parts[0]);
+                        int month = Integer.parseInt(parts[1]);
+                        List<MeterReadingTbl> meterReadings = meterReadingRepository.findAllByUnitIdAndBillingMonthAndBillingYear(lease.getUnit().getId(), month, year);
+                        for (MeterReadingTbl reading : meterReadings) {
+                            reading.setIsBilled(false);
+                            meterReadingRepository.save(reading);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to unlock meter readings during unpublishing", e);
+                    }
+
+                    log.info("rent_cycle_unpublished rentCycleId={} leaseId={} billingMonth={}",
                             cycle.getId(), lease.getId(), billingMonth);
                 }
                 responses.add(toResponse(cycle));

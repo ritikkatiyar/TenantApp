@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -11,20 +12,31 @@ import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigat
 import { ScreenWrapper } from '@/src/components/common/layout/ScreenWrapper';
 import { OnboardingGate } from '@/src/components/common/layout/OnboardingGate';
 import { useResponsive } from '@/hooks/useResponsive';
+import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { isDesktop } = useResponsive();
   const pathname = usePathname();
 
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&family=Hanken+Grotesk:wght@400;600;700;800&display=swap';
+      document.head.appendChild(link);
+    }
+  }, []);
+
   const hideNavigation = pathname === '/login' || pathname === '/signup';
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <View style={{ flex: 1, flexDirection: isDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
-          {isDesktop && !hideNavigation && <SidebarNavigation />}
-          <View style={{ flex: 1 }}>
+      <ToastProvider>
+        <AuthProvider>
+          <View style={{ flex: 1, flexDirection: isDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
+            {isDesktop && !hideNavigation && <SidebarNavigation />}
+            <View style={{ flex: 1 }}>
             <ScreenWrapper isAuth={hideNavigation}>
               <OnboardingGate>
                 <Stack screenOptions={{ headerShown: false }}>
@@ -56,6 +68,7 @@ export default function RootLayout() {
           </View>
         </View>
       </AuthProvider>
+      </ToastProvider>
       <StatusBar style="auto" />
     </ThemeProvider>
   );

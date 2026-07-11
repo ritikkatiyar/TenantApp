@@ -85,3 +85,17 @@ export const batchPublishRentCycle = async (
     }
   );
 };
+
+export const batchUnpublishRentCycle = async (
+  propertyId: string,
+  billingMonth: string,
+  token: string
+): Promise<RentCycleResponse[]> => {
+  return await apiRequest<RentCycleResponse[]>(
+    `/api/v1/finance/rent-cycles/batch-unpublish?propertyId=${propertyId}&billingMonth=${billingMonth}`,
+    {
+      method: 'POST',
+      token
+    }
+  );
+};

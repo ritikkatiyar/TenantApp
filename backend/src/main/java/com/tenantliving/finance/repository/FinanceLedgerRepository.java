@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface FinanceLedgerRepository extends JpaRepository<FinanceLedgerTbl, UUID> {
+    java.util.List<FinanceLedgerTbl> findAllByUnit_Property_IdOrderByCreatedAtDesc(UUID propertyId);
 }

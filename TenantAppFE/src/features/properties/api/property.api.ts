@@ -45,3 +45,10 @@ export function deletePropertyApi(propertyId: string, token: string): Promise<vo
     token,
   });
 }
+
+export function togglePropertyActiveApi(propertyId: string, active: boolean, token: string): Promise<PropertyResponse> {
+  return apiRequest<PropertyResponse>(`/api/v1/property/properties/${propertyId}/toggle-active?active=${active}`, {
+    method: 'POST',
+    token,
+  });
+}

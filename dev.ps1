@@ -291,9 +291,6 @@ Ensure-MavenModuleCompiled -ModuleDir $BackendDir -RequiredClassRelativePaths @(
     "com\tenantliving\TenantLivingApplication.class",
     "com\tenantliving\user\service\impl\UserServiceImpl.class"
 )
-Ensure-MavenModuleCompiled -ModuleDir $AiServiceDir -RequiredClassRelativePaths @(
-    "com\tenantliving\ai\AiServiceApplication.class"
-)
 
 Write-Step "Starting backend on http://localhost:$BackendPort"
 
@@ -313,29 +310,7 @@ $backendProcess = Start-Process `
     -RedirectStandardError $BackendErrLog `
     -PassThru
 
-Write-Step "Starting ai-service on http://localhost:$AiServicePort"
 
-$aiServiceCommand = @"
-`$env:DB_URL='$dbUrl'
-`$env:DB_USERNAME='tenant_living'
-`$env:DB_PASSWORD='tenant_living'
-`$env:SERVER_PORT='$AiServicePort'
-`$env:APP_AI_ENABLED='$env:APP_AI_ENABLED'
-`$env:SPRING_AI_MODEL_CHAT='$env:SPRING_AI_MODEL_CHAT'
-`$env:GEMINI_API_KEY='$env:GEMINI_API_KEY'
-`$env:GEMINI_MODEL='$env:GEMINI_MODEL'
-`$env:GEMINI_TEMPERATURE='$env:GEMINI_TEMPERATURE'
-`$env:BACKEND_BASE_URL='http://localhost:$BackendPort'
-mvn -DskipTests compile spring-boot:run
-"@
-
-$aiServiceProcess = Start-Process `
-    -FilePath "powershell.exe" `
-    -ArgumentList "-NoProfile", "-Command", $aiServiceCommand `
-    -WorkingDirectory $AiServiceDir `
-    -RedirectStandardOutput $AiServiceLog `
-    -RedirectStandardError $AiServiceErrLog `
-    -PassThru
 
 Write-Step "Starting frontend on http://localhost:$FrontendPort"
 
@@ -348,14 +323,12 @@ $frontendProcess = Start-Process `
     -PassThru
 
 Write-Step "Backend log:     $BackendLog"
-Write-Step "AI Service log:  $AiServiceLog"
 Write-Step "Frontend log:    $FrontendLog"
 Write-Step "Press Ctrl+C to stop all services."
 
 try {
-    Get-Content $BackendLog, $BackendErrLog, $AiServiceLog, $AiServiceErrLog, $FrontendLog, $FrontendErrLog -Wait -Tail 0
+    Get-Content $BackendLog, $BackendErrLog, $FrontendLog, $FrontendErrLog -Wait -Tail 0
 } finally {
     Stop-ChildProcess $backendProcess "backend"
-    Stop-ChildProcess $aiServiceProcess "ai-service"
     Stop-ChildProcess $frontendProcess "frontend"
 }

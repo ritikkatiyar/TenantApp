@@ -3,7 +3,7 @@ import { Redirect, usePathname, useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { getUserPreference } from '@/src/features/user/api/userPreference.api';
 import { getMyContext } from '@/src/features/auth/api/me.api';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isReady, accessToken, context, setContext } = useAuth();
@@ -85,7 +85,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     };
   }, [isReady, isAuthenticated, pathname, accessToken, isOnboarded, context]);
 
-  if (!isReady || (isAuthenticated && !isAuthRoute && !isOnboardingRoute && loading)) {
+  if (!isReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
@@ -98,6 +98,15 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     return <Redirect href="/onboarding" />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {isAuthenticated && !isAuthRoute && !isOnboardingRoute && loading && (
+        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(249, 250, 250, 0.8)', zIndex: 9999 }]}>
+          <ActivityIndicator size="large" color="#006875" />
+        </View>
+      )}
+    </>
+  );
 }
 
