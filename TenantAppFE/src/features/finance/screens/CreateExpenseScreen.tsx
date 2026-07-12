@@ -171,7 +171,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
       <Text style={styles.label}>CATEGORY</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 24 }}>
-        {['RENT', 'ELECTRICITY', 'UTILITY', 'SERVICE', 'PENALTY', 'DISCOUNT', 'CUSTOM'].map((cat) => {
+        {['RENT', 'ELECTRICITY', 'SERVICE', 'PENALTY', 'DISCOUNT', 'CUSTOM'].map((cat) => {
           const isActive = chargeCategory === cat;
           return (
             <TouchableOpacity
@@ -473,12 +473,14 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             <Text style={styles.previewValue}>{calcMethod}</Text>
           </View>
           
-          <View style={styles.previewRow}>
-            <Text style={styles.previewLabel}>Rate</Text>
-            <Text style={styles.previewValue}>
-              ₹{baseRate || '0.00'}{calcMethod === 'Fixed Rate' ? '' : ` / ${unitType}`}
-            </Text>
-          </View>
+          {baseRate ? (
+            <View style={styles.previewRow}>
+              <Text style={styles.previewLabel}>Rate</Text>
+              <Text style={styles.previewValue}>
+                ₹{baseRate}{calcMethod === 'Fixed Rate' ? '' : ` / ${unitType}`}
+              </Text>
+            </View>
+          ) : null}
           
           <View style={styles.previewRow}>
             <Text style={styles.previewLabel}>Sales Tax</Text>

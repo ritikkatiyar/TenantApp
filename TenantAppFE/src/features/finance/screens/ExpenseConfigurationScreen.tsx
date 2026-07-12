@@ -326,10 +326,16 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                                    {charge.isActive ? 'ACTIVE' : 'INACTIVE'}
                                  </Text>
                               </View>
-                              <View style={styles.amountContainer}>
-                                <Text style={styles.amountBold}>₹{charge.baseRate != null ? charge.baseRate : 'Optional'}</Text>
-                                {charge.calculationStrategy === 'METERED' ? <Text style={styles.amountSuffix}>/ {charge.unitType || 'unit'}</Text> : <Text style={styles.amountSuffix}>/ mo</Text>}
-                              </View>
+                              {charge.baseRate != null ? (
+                                <View style={styles.amountContainer}>
+                                  <Text style={styles.amountBold}>₹{charge.baseRate}</Text>
+                                  {charge.calculationStrategy === 'METERED' ? (
+                                    <Text style={styles.amountSuffix}>/ {charge.unitType || 'unit'}</Text>
+                                  ) : (
+                                    <Text style={styles.amountSuffix}>/ mo</Text>
+                                  )}
+                                </View>
+                              ) : null}
                             </View>
                           </View>
                         </TouchableOpacity>

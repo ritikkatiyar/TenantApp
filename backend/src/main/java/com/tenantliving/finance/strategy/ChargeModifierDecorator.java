@@ -1,7 +1,7 @@
 package com.tenantliving.finance.strategy;
 
 import com.tenantliving.finance.domain.ChargeConfigTbl;
-import java.math.BigDecimal;
+import java.util.UUID;
 
 public abstract class ChargeModifierDecorator implements ChargeCalculation {
     
@@ -12,7 +12,7 @@ public abstract class ChargeModifierDecorator implements ChargeCalculation {
     }
 
     @Override
-    public BigDecimal calculate(ChargeConfigTbl config, Long unitId) {
-        return wrappedCalculation.calculate(config, unitId);
+    public CalculationResult calculate(ChargeConfigTbl config, UUID unitId, String billingMonth) {
+        return wrappedCalculation.calculate(config, unitId, billingMonth);
     }
 }

@@ -20,6 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.tenantliving.finance.strategy.ChargeCalculationService;
+import com.tenantliving.finance.strategy.CalculationResult;
+import com.tenantliving.user.service.interfaces.UserQueryService;
+import com.tenantliving.user.domain.UserTbl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Comparator;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +47,8 @@ public class RentCycleServiceImpl implements RentCycleService {
     private final MeterReadingRepository meterReadingRepository;
     private final FinanceLedgerRepository financeLedgerRepository;
     private final ChargeConfigRepository chargeConfigRepository;
+    private final ChargeCalculationService chargeCalculationService;
+    private final UserQueryService userQueryService;
 
     @Override
     @Transactional
@@ -61,6 +68,9 @@ public class RentCycleServiceImpl implements RentCycleService {
             RentCycleTbl cycle = processLeaseGeneration(lease, request.billingMonth(), request.dueDate());
             responses.add(toResponse(cycle));
         }
+        
+        responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
+                .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
         return responses;
     }
 
@@ -133,17 +143,13 @@ public class RentCycleServiceImpl implements RentCycleService {
         List<LeaseTbl> activeUnitLeases = leaseRepository.findByUnitIdAndStatus(lease.getUnit().getId(), LeaseStatus.ACTIVE);
         int roommateCount = Math.max(1, activeUnitLeases.size());
 
-        // 1. Process Billing Worksheets (FIXED & CUSTOM)
-        List<BillingWorksheetEntryTbl> worksheetEntries = worksheetRepository.findAllByUnitIdAndBillingMonth(lease.getUnit().getId(), billingMonthStr);
-        for (BillingWorksheetEntryTbl entry : worksheetEntries) {
-            BigDecimal chargeAmount = entry.getEnteredValue() != null ? entry.getEnteredValue() : BigDecimal.ZERO;
+        // 1. Process all active charge configurations using Strategy Engine
+        List<ChargeConfigTbl> activeConfigs = chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(lease.getUnit().getProperty().getId());
+        for (ChargeConfigTbl config : activeConfigs) {
+            CalculationResult result = chargeCalculationService.executeChargePipeline(config, lease.getUnit().getId(), billingMonthStr, false);
+
+            BigDecimal chargeAmount = result.amount();
             if (chargeAmount.compareTo(BigDecimal.ZERO) == 0) {
-                if (entry.getChargeConfig().getBaseRate() == null) {
-                    throw new BusinessException(HttpStatus.BAD_REQUEST, 
-                        "Worksheet entry for '" + entry.getChargeConfig().getChargeName() + 
-                        "' on unit " + lease.getUnit().getUnitNumber() + 
-                        " must be entered in the billing worksheet because it has no configured base rate.");
-                }
                 continue;
             }
 
@@ -151,14 +157,18 @@ public class RentCycleServiceImpl implements RentCycleService {
                 chargeAmount = chargeAmount.divide(BigDecimal.valueOf(roommateCount), 2, java.math.RoundingMode.HALF_UP);
             }
 
-            RentChargeType chargeType = mapCategoryToType(entry.getChargeConfig().getChargeCategory());
+            RentChargeType chargeType = mapCategoryToType(config.getChargeCategory());
+            String desc = config.getChargeName();
+            if (result.descriptionDetail() != null) {
+                desc += " (" + result.descriptionDetail() + ")";
+            }
 
             RentCycleChargeTbl charge = RentCycleChargeTbl.builder()
                     .rentCycle(cycle)
                     .chargeType(chargeType)
-                    .customChargeConfig(entry.getChargeConfig())
+                    .customChargeConfig(config)
                     .amount(chargeAmount)
-                    .description(entry.getChargeConfig().getChargeName())
+                    .description(desc)
                     .build();
             rentCycleChargeRepository.save(charge);
 
@@ -167,46 +177,6 @@ public class RentCycleServiceImpl implements RentCycleService {
             } else {
                 totalAmount = totalAmount.add(chargeAmount);
             }
-
-        }
-
-        // 2. Process Meter Readings (METERED)
-        String[] parts = billingMonthStr.split("-");
-        int year = Integer.parseInt(parts[0]);
-        int month = Integer.parseInt(parts[1]);
-
-        List<MeterReadingTbl> meterReadings = meterReadingRepository.findAllByUnitIdAndBillingMonthAndBillingYear(lease.getUnit().getId(), month, year);
-        for (MeterReadingTbl reading : meterReadings) {
-            BigDecimal current = reading.getCurrentReading();
-            if (current == null) continue; // Reading not entered yet
-
-            BigDecimal consumption = current.subtract(reading.getPreviousReading());
-            if (consumption.compareTo(BigDecimal.ZERO) < 0) consumption = BigDecimal.ZERO;
-
-            BigDecimal rate = reading.getChargeConfig().getBaseRate() != null ? reading.getChargeConfig().getBaseRate() : BigDecimal.ZERO;
-            BigDecimal chargeAmount = consumption.multiply(rate);
-
-            if (chargeAmount.compareTo(BigDecimal.ZERO) == 0) {
-                continue;
-            }
-
-            if (roommateCount > 1) {
-                chargeAmount = chargeAmount.divide(BigDecimal.valueOf(roommateCount), 2, java.math.RoundingMode.HALF_UP);
-            }
-
-            RentChargeType chargeType = mapCategoryToType(reading.getChargeConfig().getChargeCategory());
-            String desc = reading.getChargeConfig().getChargeName() + " (" + consumption + " units)";
-
-            RentCycleChargeTbl charge = RentCycleChargeTbl.builder()
-                    .rentCycle(cycle)
-                    .chargeType(chargeType)
-                    .customChargeConfig(reading.getChargeConfig())
-                    .amount(chargeAmount)
-                    .description(desc)
-                    .build();
-            rentCycleChargeRepository.save(charge);
-
-            totalAmount = totalAmount.add(chargeAmount);
         }
 
         cycle.setTotalAmount(totalAmount);
@@ -236,7 +206,7 @@ public class RentCycleServiceImpl implements RentCycleService {
     private RentChargeType mapCategoryToType(ChargeCategory category) {
         return switch (category) {
             case RENT -> RentChargeType.BASE_RENT;
-            case UTILITY -> RentChargeType.ELECTRICITY;
+            case ELECTRICITY -> RentChargeType.ELECTRICITY;
             case SERVICE -> RentChargeType.MAINTENANCE;
             case PENALTY -> RentChargeType.PENALTY;
             case DISCOUNT -> RentChargeType.DISCOUNT;
@@ -255,6 +225,8 @@ public class RentCycleServiceImpl implements RentCycleService {
         return rentCycleRepository.findAll(spec)
                 .stream()
                 .map(this::toResponse)
+                .sorted(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
+                        .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName))
                 .toList();
     }
 
@@ -330,6 +302,8 @@ public class RentCycleServiceImpl implements RentCycleService {
                 responses.add(toResponse(cycle));
             }
         }
+        responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
+                .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
         return responses;
     }
 
@@ -385,10 +359,22 @@ public class RentCycleServiceImpl implements RentCycleService {
                 responses.add(toResponse(cycle));
             }
         }
+        responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
+                .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
         return responses;
     }
 
     private RentCycleDTOs.RentCycleResponse toResponse(RentCycleTbl cycle) {
-        return RentCycleMapper.toResponse(cycle, rentCycleChargeRepository.findByRentCycle_Id(cycle.getId()));
+        String tenantName = "Unknown Tenant";
+        try {
+            UserTbl user = userQueryService.getUserById(cycle.getLease().getUserId());
+            if (user.getFullName() != null) {
+                tenantName = user.getFullName();
+            }
+        } catch (Exception e) {
+            // Keep default
+        }
+        String unitNumber = cycle.getLease().getUnit() != null ? cycle.getLease().getUnit().getUnitNumber() : "Vacant";
+        return RentCycleMapper.toResponse(cycle, tenantName, unitNumber, rentCycleChargeRepository.findByRentCycle_Id(cycle.getId()));
     }
 }

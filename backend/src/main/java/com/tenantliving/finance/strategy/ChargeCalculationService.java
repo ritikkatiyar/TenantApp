@@ -1,12 +1,10 @@
 package com.tenantliving.finance.strategy;
 
 import com.tenantliving.finance.domain.ChargeConfigTbl;
-import com.tenantliving.finance.domain.RentCycleChargeTbl;
-import com.tenantliving.common.domain.RentChargeType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 public class ChargeCalculationService {
@@ -21,7 +19,7 @@ public class ChargeCalculationService {
     /**
      * Dynamically builds a calculation pipeline (Strategy + Decorators) based on the specific Charge Configuration.
      */
-    public RentCycleChargeTbl executeChargePipeline(ChargeConfigTbl config, Long unitId, boolean isPaymentLate) {
+    public CalculationResult executeChargePipeline(ChargeConfigTbl config, UUID unitId, String billingMonth, boolean isPaymentLate) {
         
         // 1. Get Base Calculation Strategy
         ChargeCalculation calculationPipeline = strategyFactory.getBaseStrategy(config.getCalculationStrategy());
@@ -36,15 +34,7 @@ public class ChargeCalculationService {
             calculationPipeline = new LateFeeDecorator(calculationPipeline);
         }
         
-        // 4. Calculate Final Total!
-        BigDecimal finalAmount = calculationPipeline.calculate(config, unitId);
-        
-        // 5. Generate and return the Charge Record
-        return RentCycleChargeTbl.builder()
-                .chargeType(RentChargeType.CUSTOM)
-                .customChargeConfig(config)
-                .amount(finalAmount)
-                .description(config.getChargeName())
-                .build();
+        // 4. Calculate and return Final Result
+        return calculationPipeline.calculate(config, unitId, billingMonth);
     }
 }

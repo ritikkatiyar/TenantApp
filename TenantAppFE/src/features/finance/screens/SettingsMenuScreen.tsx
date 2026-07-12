@@ -116,13 +116,13 @@ export default function SettingsMenuScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {isDesktop ? (
           <DesktopNavBar 
-            title="Settings" 
+            title="Finance & Billing" 
           />
         ) : (
           <View style={styles.header}>
             <View style={styles.mobileHeaderInner}>
               <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
-                <Text style={styles.compactTitleText}>Settings</Text>
+                <Text style={styles.compactTitleText}>Finance & Billing</Text>
               </Animated.View>
             </View>
           </View>
@@ -140,9 +140,9 @@ export default function SettingsMenuScreen() {
           <View style={isDesktop ? styles.desktopInner : null}>
             <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
               {isDesktop ? (
-                <Text style={styles.titleLineDesktop}>Settings</Text>
+                <Text style={styles.titleLineDesktop}>Finance & Billing</Text>
               ) : (
-                <Text style={styles.titleLine}>Settings</Text>
+                <Text style={styles.titleLine}>Finance & Billing</Text>
               )}
             </Animated.View>
 

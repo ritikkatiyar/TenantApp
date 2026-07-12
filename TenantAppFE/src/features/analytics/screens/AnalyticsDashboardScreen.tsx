@@ -4,9 +4,13 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLandlordDashboard, LandlordAnalyticsDTO } from '../api/analytics.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useResponsive } from '@/hooks/useResponsive';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
 export default function AnalyticsDashboardScreen() {
   const { accessToken } = useAuth();
+  const { isDesktop } = useResponsive();
   const [data, setData] = useState<LandlordAnalyticsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -34,47 +38,55 @@ export default function AnalyticsDashboardScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#f9f9ff', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#004c5a" />
-      </View>
+      <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#006875" />
+      </LinearGradient>
     );
   }
 
   if (errorMsg) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#f9f9ff', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 16, color: '#ba1a1a', textAlign: 'center' }}>Failed to load analytics: {errorMsg}</Text>
-        <TouchableOpacity style={{ marginTop: 16, backgroundColor: '#004c5a', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 4 }} onPress={() => setLoading(true)}>
+      <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ fontFamily: 'Inter', fontSize: 16, color: '#ba1a1a', textAlign: 'center' }}>Failed to load analytics: {errorMsg}</Text>
+        <TouchableOpacity style={{ marginTop: 16, backgroundColor: '#006875', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }} onPress={() => setLoading(true)}>
           <Text style={{ color: '#fff', fontWeight: 'bold' }}>Retry</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     );
   }
 
   if (!data) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#f9f9ff', justifyContent: 'center', alignItems: 'center' }}>
-        <Text>No data available</Text>
-      </View>
+      <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontFamily: 'Inter', fontSize: 16, color: '#151d1e' }}>No data available</Text>
+      </LinearGradient>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9f9ff' }} edges={['top']}>
-      {/* TopAppBar */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#bec8cb' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <TouchableOpacity>
-            <MaterialIcons name="menu" size={24} color="#004c5a" />
-          </TouchableOpacity>
-          <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 32, fontWeight: '700', color: '#004c5a' }}>PropMetric</Text>
-        </View>
-        <TouchableOpacity>
-          <MaterialIcons name="notifications" size={24} color="#004c5a" />
-        </TouchableOpacity>
-      </View>
+    <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        {isDesktop ? (
+          <DesktopNavBar title="Overview" />
+        ) : (
+          <View style={{
+            height: 70,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 24,
+            borderBottomWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.4)',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+          }}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: '#151d1e' }}>Overview</Text>
+            <TouchableOpacity>
+              <MaterialIcons name="notifications" size={24} color="#151d1e" />
+            </TouchableOpacity>
+          </View>
+        )}
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 100, gap: 32 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 100, gap: 32 }}>
         {/* Header & Date Picker */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <View>
@@ -330,6 +342,7 @@ export default function AnalyticsDashboardScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </LinearGradient>
   );
 }
 

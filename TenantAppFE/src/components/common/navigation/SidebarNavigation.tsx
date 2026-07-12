@@ -90,7 +90,7 @@ export default function SidebarNavigation() {
             {renderSidebarLink('groups', 'AI Desk', '/ai')}
             {renderSidebarLink('build', 'Escalations', '/escalations')}
             {renderSidebarLink('campaign', 'Announcements', '/announcements')}
-            {renderSidebarLink('settings', 'Settings', '/expenses')}
+            {renderSidebarLink('account-balance', 'Finance & Billing', '/expenses')}
           </>
         ) : (
           <>

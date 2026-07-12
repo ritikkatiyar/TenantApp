@@ -11,6 +11,8 @@ export interface ChargeResponse {
 export interface RentCycleResponse {
   id: string;
   leaseId: string;
+  tenantName: string;
+  unitNumber: string;
   billingMonth: string;
   totalAmount: number;
   dueDate: string;

@@ -4,6 +4,7 @@ import com.tenantliving.auth.principal.UserDetailsImpl;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.tenantliving.finance.dto.analytics.LandlordAnalyticsDTO;
 import com.tenantliving.finance.service.AnalyticsService;
+import com.tenantliving.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
 
     @GetMapping("/landlord/dashboard")
-    public ResponseEntity<LandlordAnalyticsDTO> getLandlordDashboard(
+    public ResponseEntity<ApiResponse<LandlordAnalyticsDTO>> getLandlordDashboard(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) String billingMonth) {
         
@@ -37,6 +38,6 @@ public class AnalyticsController {
         }
 
         LandlordAnalyticsDTO dashboard = analyticsService.getLandlordAnalytics(userId, billingMonth);
-        return ResponseEntity.ok(dashboard);
+        return ResponseEntity.ok(ApiResponse.success(dashboard));
     }
 }

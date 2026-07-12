@@ -12,11 +12,15 @@ public final class RentCycleMapper {
 
     public static RentCycleDTOs.RentCycleResponse toResponse(
             RentCycleTbl cycle,
+            String tenantName,
+            String unitNumber,
             List<RentCycleChargeTbl> charges
     ) {
         return new RentCycleDTOs.RentCycleResponse(
                 cycle.getId(),
                 cycle.getLease().getId(),
+                tenantName,
+                unitNumber,
                 cycle.getBillingMonth(),
                 cycle.getTotalAmount(),
                 cycle.getDueDate(),

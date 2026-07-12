@@ -304,7 +304,10 @@ export default function RentRollScreen({ token }: { token: string | null }) {
             {invoices.map((invoice, idx) => (
               <BlurView key={invoice.id || idx} intensity={40} tint="light" style={styles.invoiceCard}>
                 <View style={styles.invoiceHeader}>
-                  <Text style={styles.invoiceUnit}>Invoice #{invoice.id?.substring(0, 8)}</Text>
+                  <View>
+                    <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
+                    <Text style={{ fontSize: 12, color: '#5b6b6d', marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
+                  </View>
                   <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
                 </View>
                 

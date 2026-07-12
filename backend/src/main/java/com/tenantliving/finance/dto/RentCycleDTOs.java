@@ -43,6 +43,8 @@ public class RentCycleDTOs {
     public record RentCycleResponse(
             UUID id,
             UUID leaseId,
+            String tenantName,
+            String unitNumber,
             String billingMonth,
             BigDecimal totalAmount,
             LocalDate dueDate,
