@@ -129,11 +129,27 @@ public class RentCycleServiceImpl implements RentCycleService {
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 
+        // Fetch roommates count for the unit
+        List<LeaseTbl> activeUnitLeases = leaseRepository.findByUnitIdAndStatus(lease.getUnit().getId(), LeaseStatus.ACTIVE);
+        int roommateCount = Math.max(1, activeUnitLeases.size());
+
         // 1. Process Billing Worksheets (FIXED & CUSTOM)
         List<BillingWorksheetEntryTbl> worksheetEntries = worksheetRepository.findAllByUnitIdAndBillingMonth(lease.getUnit().getId(), billingMonthStr);
         for (BillingWorksheetEntryTbl entry : worksheetEntries) {
             BigDecimal chargeAmount = entry.getEnteredValue() != null ? entry.getEnteredValue() : BigDecimal.ZERO;
-            if (chargeAmount.compareTo(BigDecimal.ZERO) == 0) continue;
+            if (chargeAmount.compareTo(BigDecimal.ZERO) == 0) {
+                if (entry.getChargeConfig().getBaseRate() == null) {
+                    throw new BusinessException(HttpStatus.BAD_REQUEST, 
+                        "Worksheet entry for '" + entry.getChargeConfig().getChargeName() + 
+                        "' on unit " + lease.getUnit().getUnitNumber() + 
+                        " must be entered in the billing worksheet because it has no configured base rate.");
+                }
+                continue;
+            }
+
+            if (roommateCount > 1) {
+                chargeAmount = chargeAmount.divide(BigDecimal.valueOf(roommateCount), 2, java.math.RoundingMode.HALF_UP);
+            }
 
             RentChargeType chargeType = mapCategoryToType(entry.getChargeConfig().getChargeCategory());
 
@@ -172,6 +188,10 @@ public class RentCycleServiceImpl implements RentCycleService {
 
             if (chargeAmount.compareTo(BigDecimal.ZERO) == 0) {
                 continue;
+            }
+
+            if (roommateCount > 1) {
+                chargeAmount = chargeAmount.divide(BigDecimal.valueOf(roommateCount), 2, java.math.RoundingMode.HALF_UP);
             }
 
             RentChargeType chargeType = mapCategoryToType(reading.getChargeConfig().getChargeCategory());

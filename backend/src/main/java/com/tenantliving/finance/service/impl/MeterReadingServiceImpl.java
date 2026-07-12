@@ -134,6 +134,10 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                 continue;
             }
             
+            if (unitReading.getPreviousReading() != null) {
+                entry.setPreviousReading(unitReading.getPreviousReading());
+            }
+            
             // Validate that current reading is >= previous reading
             if (unitReading.getCurrentReading().compareTo(entry.getPreviousReading()) < 0) {
                 throw new BusinessException("Current reading cannot be less than previous reading for unit " + entry.getUnit().getUnitNumber());

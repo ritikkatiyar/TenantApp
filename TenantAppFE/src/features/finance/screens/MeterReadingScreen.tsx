@@ -35,6 +35,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   
   // Local inputs state: unitId -> string value
   const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [prevInputs, setPrevInputs] = useState<Record<string, string>>({});
   const inputRefs = useRef<Record<string, TextInput | null>>({});
 
   const [expandedFloors, setExpandedFloors] = useState<Record<number, boolean>>({});
@@ -92,10 +93,13 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
       setWorksheet(data);
       
       const newInputs: Record<string, string> = {};
+      const newPrevInputs: Record<string, string> = {};
       data.forEach(item => {
         newInputs[item.unitId] = item.currentReading ? item.currentReading.toString() : '';
+        newPrevInputs[item.unitId] = item.previousReading != null ? item.previousReading.toString() : '0';
       });
       setInputs(newInputs);
+      setPrevInputs(newPrevInputs);
     } catch (e: any) {
       Alert.alert("Error", "Failed to load worksheet.");
     } finally {
@@ -110,9 +114,11 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
     
     worksheet.forEach(row => {
       const valStr = inputs[row.unitId];
+      const prevValStr = prevInputs[row.unitId];
+      const prevVal = prevValStr ? parseFloat(prevValStr) : 0;
       if (valStr) {
         const val = parseFloat(valStr);
-        if (val < row.previousReading) {
+        if (val < prevVal) {
           hasErrors = true;
         }
       }
@@ -127,6 +133,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
       setIsSaving(true);
       const readingsToSave = worksheet.map(row => ({
         unitId: row.unitId,
+        previousReading: prevInputs[row.unitId] ? parseFloat(prevInputs[row.unitId]) : row.previousReading,
         currentReading: inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null
       }));
 
@@ -349,7 +356,30 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                                     <View style={styles.rowLeft}>
                                       <Text style={styles.unitName}>{row.unitName}</Text>
                                       <Text style={styles.tenantName}>{row.tenantName}</Text>
-                                      <Text style={styles.prevReading}>Prev: {row.previousReading}</Text>
+                                      {!row.isBilled ? (
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                                          <Text style={[styles.prevReading, { marginRight: 4 }]}>Prev:</Text>
+                                          <TextInput
+                                            style={{
+                                              borderWidth: 1,
+                                              borderColor: 'rgba(0, 104, 117, 0.2)',
+                                              backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                                              borderRadius: 6,
+                                              paddingHorizontal: 6,
+                                              paddingVertical: 2,
+                                              fontSize: 12,
+                                              width: 70,
+                                              color: '#163235',
+                                              fontWeight: '600',
+                                            }}
+                                            keyboardType="decimal-pad"
+                                            value={prevInputs[row.unitId]}
+                                            onChangeText={(val) => setPrevInputs(prev => ({ ...prev, [row.unitId]: val }))}
+                                          />
+                                        </View>
+                                      ) : (
+                                        <Text style={styles.prevReading}>Prev: {row.previousReading}</Text>
+                                      )}
                                     </View>
                                     
                                     <View style={styles.rowMiddle}>

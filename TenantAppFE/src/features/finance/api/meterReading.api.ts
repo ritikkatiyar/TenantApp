@@ -13,6 +13,7 @@ export interface MeterReadingResponse {
 
 export interface UnitReading {
     unitId: string;
+    previousReading?: number | null;
     currentReading: number | null;
 }
 

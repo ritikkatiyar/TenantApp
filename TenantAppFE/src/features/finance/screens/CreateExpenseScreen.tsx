@@ -171,7 +171,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
 
       <Text style={styles.label}>CATEGORY</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, marginBottom: 24 }}>
-        {['RENT', 'UTILITY', 'SERVICE', 'PENALTY', 'DISCOUNT', 'CUSTOM'].map((cat) => {
+        {['RENT', 'ELECTRICITY', 'UTILITY', 'SERVICE', 'PENALTY', 'DISCOUNT', 'CUSTOM'].map((cat) => {
           const isActive = chargeCategory === cat;
           return (
             <TouchableOpacity

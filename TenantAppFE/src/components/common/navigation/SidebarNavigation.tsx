@@ -67,13 +67,14 @@ export default function SidebarNavigation() {
       <View style={[styles.sidebarHeader, isCollapsed && styles.sidebarHeaderCollapsed]}>
         {!isCollapsed ? (
           <View style={styles.sidebarBrand}>
-            <Text style={styles.sidebarBrandTitle} numberOfLines={1}>TenantApp</Text>
-            <Text style={styles.sidebarBrandSub} numberOfLines={1}>Management Suite</Text>
+            <Text style={styles.sidebarBrandTitle} numberOfLines={1}>Livic</Text>
+            <Text style={styles.sidebarBrandSub} numberOfLines={1}>Living Ecosystem</Text>
           </View>
         ) : (
           <View style={styles.sidebarBrandCollapsed}>
-            <Text style={styles.sidebarBrandTitleCollapsed} numberOfLines={1}>TA</Text>
+            <Text style={styles.sidebarBrandTitleCollapsed} numberOfLines={1}>LV</Text>
           </View>
+
         )}
         <TouchableOpacity onPress={toggleCollapse} style={styles.collapseButton}>
           <MaterialIcons name={isCollapsed ? "chevron-right" : "chevron-left"} size={24} color={Theme.Colors.onSurfaceVariant} />

@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,6 +39,30 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   
   const [charges, setCharges] = useState<ChargeConfigResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const requestConfirmation = (title: string, message: string, onConfirm: () => void | Promise<void>) => {
+    setConfirmModal({
+      visible: true,
+      title,
+      message,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, visible: false }));
+        await onConfirm();
+      }
+    });
+  };
 
   const loadCharges = React.useCallback(async () => {
     if (!token || !propertyId) return;
@@ -91,10 +116,11 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     };
 
     if (Platform.OS === 'web') {
-      const confirmDeactivate = window.confirm("Are you sure you want to deactivate this charge configuration? It will not be applied to future billing cycles.");
-      if (confirmDeactivate) {
-        await performDeactivate();
-      }
+      requestConfirmation(
+        "Deactivate Charge",
+        "Are you sure you want to deactivate this charge configuration? It will not be applied to future billing cycles.",
+        performDeactivate
+      );
     } else {
       Alert.alert("Deactivate Charge", "Are you sure you want to deactivate this charge configuration? It will not be applied to future billing cycles.", [
         { text: "Cancel", style: "cancel" },
@@ -131,10 +157,11 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     };
 
     if (Platform.OS === 'web') {
-      const confirmDelete = window.confirm("Are you sure you want to delete this configuration permanently? This action cannot be undone.");
-      if (confirmDelete) {
-        await performDelete();
-      }
+      requestConfirmation(
+        "Delete Permanently",
+        "Are you sure you want to delete this configuration permanently? This action cannot be undone.",
+        performDelete
+      );
     } else {
       Alert.alert("Delete Permanently", "Are you sure you want to delete this configuration permanently? This action cannot be undone.", [
         { text: "Cancel", style: "cancel" },
@@ -381,6 +408,61 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
           </View>
         </Animated.ScrollView>
       </SafeAreaView>
+
+      {/* Custom Confirmation Modal */}
+      <Modal visible={confirmModal.visible} animationType="fade" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
+          <View style={[styles.modalPopup, { width: 400, padding: 24, borderRadius: 24, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.8)' }]}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#163235', marginBottom: 12 }}>
+              {confirmModal.title}
+            </Text>
+            <Text style={{ fontSize: 14, color: '#6b7a7d', lineHeight: 20, marginBottom: 24, fontWeight: '500' }}>
+              {confirmModal.message}
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <TouchableOpacity 
+                style={{
+                  paddingVertical: 10,
+                  paddingHorizontal: 16,
+                  borderRadius: 100,
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                }}
+                onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#6b7a7d' }}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={{
+                  borderRadius: 100,
+                  overflow: 'hidden',
+                  shadowColor: '#ef4444',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 8,
+                  elevation: 2,
+                }}
+                onPress={confirmModal.onConfirm}
+              >
+                <LinearGradient
+                  colors={['#ff4b4b', '#dc2626']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#ffffff', letterSpacing: 0.5 }}>
+                    Confirm
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </LinearGradient>
   );
 }
@@ -696,5 +778,22 @@ const styles = StyleSheet.create({
     width: '48.5%',
     minWidth: 320,
     minHeight: 160,
+  },
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.4)', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    padding: 20 
+  },
+  modalPopup: { 
+    backgroundColor: '#ffffff', 
+    borderRadius: 24, 
+    padding: 24, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 10 }, 
+    shadowOpacity: 0.15, 
+    shadowRadius: 20, 
+    elevation: 10 
   },
 });

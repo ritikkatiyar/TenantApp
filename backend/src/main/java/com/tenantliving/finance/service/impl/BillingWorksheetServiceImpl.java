@@ -52,8 +52,8 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
         List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId);
         List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
-        Map<UUID, LeaseTbl> unitToLeaseMap = activeLeases.stream()
-                .collect(Collectors.toMap(l -> l.getUnit().getId(), l -> l, (existing, replacement) -> existing));
+        Map<UUID, List<LeaseTbl>> unitToLeasesMap = activeLeases.stream()
+                .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
 
         List<BillingWorksheetEntryTbl> existingEntries = worksheetRepository.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
                 propertyId, chargeConfigId, billingMonth);
@@ -70,13 +70,13 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
         for (UnitTbl unit : units) {
             // SKIP vacant units entirely! Do not create database records for them.
-            if (!unitToLeaseMap.containsKey(unit.getId())) {
+            if (!unitToLeasesMap.containsKey(unit.getId())) {
                 continue;
             }
 
             BillingWorksheetEntryTbl entry = existingEntriesMap.get(unit.getId());
             if (entry == null) {
-                // Determine initial value based on autoCarryForward flag
+                // Determine initial value based on autoCarryForward flag and baseRate
                 BigDecimal initialValue = BigDecimal.ZERO;
                 if (Boolean.TRUE.equals(chargeConfig.getAutoCarryForward())) {
                     Optional<BillingWorksheetEntryTbl> lastEntry = worksheetRepository.findTopByUnitIdAndChargeConfigIdOrderByBillingMonthDesc(unit.getId(), chargeConfigId);
@@ -86,6 +86,9 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
                         // Fallback to base rate if no history exists
                         initialValue = chargeConfig.getBaseRate();
                     }
+                } else if (chargeConfig.getBaseRate() != null) {
+                    // Default to configured baseRate if autoCarryForward is disabled
+                    initialValue = chargeConfig.getBaseRate();
                 }
 
                 entry = BillingWorksheetEntryTbl.builder()
@@ -104,13 +107,23 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
         return finalEntries.stream()
                 .map(r -> {
-            LeaseTbl lease = unitToLeaseMap.get(r.getUnit().getId());
+            List<LeaseTbl> leases = unitToLeasesMap.get(r.getUnit().getId());
             String tenantName = "Unknown Tenant";
-            try {
-                UserTbl user = userQueryService.getUserById(lease.getUserId());
-                tenantName = user.getFullName();
-            } catch (Exception e) {
-                // Keep default
+            if (leases != null && !leases.isEmpty()) {
+                List<String> names = new ArrayList<>();
+                for (LeaseTbl lease : leases) {
+                    try {
+                        UserTbl user = userQueryService.getUserById(lease.getUserId());
+                        if (user.getFullName() != null) {
+                            names.add(user.getFullName());
+                        }
+                    } catch (Exception e) {
+                        // Keep default
+                    }
+                }
+                if (!names.isEmpty()) {
+                    tenantName = String.join(", ", names);
+                }
             }
             return WorksheetEntryResponse.builder()
                     .id(r.getId())

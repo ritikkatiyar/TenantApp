@@ -30,6 +30,7 @@ public class MeterReadingDTOs {
     @AllArgsConstructor
     public static class UnitReading {
         private UUID unitId;
+        private BigDecimal previousReading;
         private BigDecimal currentReading;
     }
 

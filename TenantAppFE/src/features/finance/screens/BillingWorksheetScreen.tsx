@@ -223,19 +223,39 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                               <Text style={styles.billedBadgeText}>BILLED (₹{entry.enteredValue})</Text>
                             </View>
                           ) : (
-                            <View style={styles.inputWrapper}>
-                              {selectedCharge?.calculationStrategy !== 'METERED' && (
-                                <Text style={styles.currencySymbol}>₹</Text>
-                              )}
-                              <TextInput
-                                style={[styles.input, selectedCharge?.calculationStrategy !== 'METERED' && { paddingLeft: 24 }]}
-                                value={editValues[entry.unitId]}
-                                onChangeText={(val) => setEditValues(prev => ({ ...prev, [entry.unitId]: val }))}
-                                keyboardType="numeric"
-                                placeholder="0"
-                                placeholderTextColor="#9ba9ab"
-                              />
-                            </View>
+                            selectedCharge?.calculationStrategy === 'METERED' ? (
+                              <TouchableOpacity 
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  backgroundColor: 'rgba(0, 104, 117, 0.08)',
+                                  borderColor: 'rgba(0, 104, 117, 0.3)',
+                                  borderWidth: 1,
+                                  borderRadius: 12,
+                                  paddingVertical: 6,
+                                  paddingHorizontal: 12,
+                                  gap: 6,
+                                }}
+                                onPress={() => router.push(`/properties/${propertyId}/meter-readings`)}
+                              >
+                                <MaterialIcons name="speed" size={16} color="#006875" />
+                                <Text style={{ color: '#006875', fontSize: 13, fontWeight: '700' }}>Enter Readings</Text>
+                              </TouchableOpacity>
+                            ) : (
+                              <View style={styles.inputWrapper}>
+                                {selectedCharge?.calculationStrategy !== 'METERED' && (
+                                  <Text style={styles.currencySymbol}>₹</Text>
+                                )}
+                                <TextInput
+                                  style={[styles.input, selectedCharge?.calculationStrategy !== 'METERED' && { paddingLeft: 24 }]}
+                                  value={editValues[entry.unitId]}
+                                  onChangeText={(val) => setEditValues(prev => ({ ...prev, [entry.unitId]: val }))}
+                                  keyboardType="numeric"
+                                  placeholder="0"
+                                  placeholderTextColor="#9ba9ab"
+                                />
+                              </View>
+                            )
                           )}
                         </View>
                       </View>

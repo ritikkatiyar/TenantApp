@@ -84,7 +84,7 @@ public class SecurityConfig {
     }
 
     // Simple internal auth filter that checks a pre-shared token header and grants ADMIN role.
-    private class InternalServiceAuthFilter extends OncePerRequestFilter {
+    static class InternalServiceAuthFilter extends OncePerRequestFilter {
 
         private final String header = "Authorization";
         private final String expected;

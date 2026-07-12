@@ -117,6 +117,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(apiError);
     }
 
+    @ExceptionHandler(jakarta.persistence.EntityNotFoundException.class)
+    public ResponseEntity<ApiError> handleEntityNotFound(
+            jakarta.persistence.EntityNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).warn("[ENTITY NOT FOUND] URI: {}, message: {}", request.getRequestURI(), exception.getMessage());
+        ApiError apiError = ApiError.of(
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                "Required entity was not found in the database. Please verify referential integrity: " + exception.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpectedException(
             Exception exception,

@@ -10,4 +10,11 @@ import java.util.UUID;
 @Repository
 public interface MembershipRoleRepository extends JpaRepository<MembershipRoleTbl, UUID> {
     Optional<MembershipRoleTbl> findByCode(String code);
+    
+    java.util.List<MembershipRoleTbl> findByPropertyId(UUID propertyId);
+    java.util.List<MembershipRoleTbl> findByPropertyIdIsNull();
+    
+    Optional<MembershipRoleTbl> findByCodeAndPropertyId(String code, UUID propertyId);
+    Optional<MembershipRoleTbl> findByCodeAndPropertyIdIsNull(String code);
 }
+
