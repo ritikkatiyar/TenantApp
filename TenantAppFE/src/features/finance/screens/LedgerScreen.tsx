@@ -36,19 +36,53 @@ export default function LedgerScreen({ token }: { token: string | null }) {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Pagination and Date Filter States
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [fromDateInput, setFromDateInput] = useState('');
+  const [toDateInput, setToDateInput] = useState('');
+
   const fetchLedger = useCallback(async () => {
     if (!token || !propertyId) return;
     try {
       setIsLoading(true);
-      const data = await getLedgerForProperty(propertyId, token);
-      setLedger(data);
-      setFilteredLedger(data);
+      
+      let validatedFrom: string | undefined = undefined;
+      if (fromDate.trim()) {
+        const d = new Date(fromDate.trim());
+        if (!isNaN(d.getTime())) {
+          validatedFrom = d.toISOString();
+        } else {
+          showToast('Invalid From Date format. Use YYYY-MM-DD.', 'error');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      let validatedTo: string | undefined = undefined;
+      if (toDate.trim()) {
+        const d = new Date(toDate.trim());
+        if (!isNaN(d.getTime())) {
+          validatedTo = d.toISOString();
+        } else {
+          showToast('Invalid To Date format. Use YYYY-MM-DD.', 'error');
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const data = await getLedgerForProperty(propertyId, token, page, 20, validatedFrom, validatedTo);
+      setLedger(data.content);
+      setFilteredLedger(data.content);
+      setTotalPages(data.totalPages);
     } catch (error: any) {
       showToast(error.message || 'Failed to load ledger', 'error');
     } finally {
       setIsLoading(false);
     }
-  }, [propertyId, token, showToast]);
+  }, [propertyId, token, page, fromDate, toDate, showToast]);
 
   useEffect(() => {
     fetchLedger();
@@ -68,6 +102,20 @@ export default function LedgerScreen({ token }: { token: string | null }) {
     );
     setFilteredLedger(filtered);
   }, [searchQuery, ledger]);
+
+  const handleApplyFilters = () => {
+    setPage(0);
+    setFromDate(fromDateInput);
+    setToDate(toDateInput);
+  };
+
+  const handleClearFilters = () => {
+    setPage(0);
+    setFromDateInput('');
+    setToDateInput('');
+    setFromDate('');
+    setToDate('');
+  };
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -141,6 +189,66 @@ export default function LedgerScreen({ token }: { token: string | null }) {
     </View>
   );
 
+  const renderDateFilters = () => (
+    <View style={styles.filtersContainer}>
+      <View style={styles.dateInputContainer}>
+        <Text style={styles.filterLabel}>From:</Text>
+        <TextInput
+          style={styles.dateInput}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor="#6b7a7d"
+          value={fromDateInput}
+          onChangeText={setFromDateInput}
+        />
+      </View>
+      <View style={styles.dateInputContainer}>
+        <Text style={styles.filterLabel}>To:</Text>
+        <TextInput
+          style={styles.dateInput}
+          placeholder="YYYY-MM-DD"
+          placeholderTextColor="#6b7a7d"
+          value={toDateInput}
+          onChangeText={setToDateInput}
+        />
+      </View>
+      <View style={styles.filterButtonsRow}>
+        <TouchableOpacity onPress={handleApplyFilters} style={styles.filterButton}>
+          <Text style={styles.filterButtonText}>Apply</Text>
+        </TouchableOpacity>
+        {(fromDate || toDate || fromDateInput || toDateInput) ? (
+          <TouchableOpacity onPress={handleClearFilters} style={styles.clearFilterButton}>
+            <MaterialIcons name="clear" size={16} color="#6b7a7d" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+    </View>
+  );
+
+  const renderPaginationControls = () => {
+    if (totalPages <= 1) return null;
+    return (
+      <View style={styles.paginationRow}>
+        <TouchableOpacity
+          onPress={() => setPage(p => Math.max(0, p - 1))}
+          disabled={page === 0}
+          style={[styles.pageButton, page === 0 && styles.pageButtonDisabled]}
+        >
+          <MaterialIcons name="chevron-left" size={24} color={page === 0 ? '#b0bec5' : '#006875'} />
+        </TouchableOpacity>
+        <Text style={styles.pageText}>
+          Page {page + 1} of {totalPages}
+        </Text>
+        <TouchableOpacity
+          onPress={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+          disabled={page >= totalPages - 1}
+          style={[styles.pageButton, page >= totalPages - 1 && styles.pageButtonDisabled]}
+        >
+          <MaterialIcons name="chevron-right" size={24} color={page >= totalPages - 1 ? '#b0bec5' : '#006875'} />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderLedgerList = () => {
     if (isLoading) {
       return <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />;
@@ -164,8 +272,9 @@ export default function LedgerScreen({ token }: { token: string | null }) {
             <Text style={[styles.th, { flex: 1 }]}>UNIT</Text>
             <Text style={[styles.th, { flex: 1.5 }]}>TENANT</Text>
             <Text style={[styles.th, { flex: 2 }]}>TRANSACTION TYPE</Text>
-            <Text style={[styles.th, { flex: 3 }]}>DESCRIPTION</Text>
-            <Text style={[styles.th, { flex: 1.5, textAlign: 'right' }]}>AMOUNT</Text>
+            <Text style={[styles.th, { flex: 2.5 }]}>DESCRIPTION</Text>
+            <Text style={[styles.th, { flex: 1.2, textAlign: 'right' }]}>AMOUNT</Text>
+            <Text style={[styles.th, { flex: 1.3, textAlign: 'right' }]}>BALANCE</Text>
           </View>
 
           {filteredLedger.map((item) => {
@@ -176,26 +285,37 @@ export default function LedgerScreen({ token }: { token: string | null }) {
                 <Text style={[styles.td, { flex: 1.5, fontSize: 13, color: '#5b6b6d' }]}>{formatDate(item.createdAt)}</Text>
                 <Text style={[styles.td, { flex: 1, fontWeight: '700' }]}>{item.unitName}</Text>
                 <Text style={[styles.td, { flex: 1.5 }]}>{item.tenantName}</Text>
-                <View style={[styles.td, { flex: 2, flexDirection: 'row' }]}>
+                <View style={{ flex: 2, flexDirection: 'row' }}>
                   <View style={[styles.pill, { backgroundColor: colors.bg }]}>
                     <Text style={[styles.pillText, { color: colors.text }]}>
                       {formatTransactionType(item.transactionType)}
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.td, { flex: 3, fontSize: 13, color: '#5b6b6d' }]} numberOfLines={2}>
+                <Text style={[styles.td, { flex: 2.5, fontSize: 13, color: '#5b6b6d' }]} numberOfLines={2}>
                   {item.description}
                 </Text>
                 <Text style={[
                   styles.td, 
                   { 
-                    flex: 1.5, 
+                    flex: 1.2, 
                     textAlign: 'right', 
                     fontWeight: '800',
                     color: isPayment ? '#059669' : '#dc2626'
                   }
                 ]}>
                   {isPayment ? '+' : '-'} ₹{Math.abs(item.amount).toFixed(2)}
+                </Text>
+                <Text style={[
+                  styles.td, 
+                  { 
+                    flex: 1.3, 
+                    textAlign: 'right', 
+                    fontWeight: '700',
+                    color: '#151d1e'
+                  }
+                ]}>
+                  ₹{(item.balance ?? 0).toFixed(2)}
                 </Text>
               </View>
             );
@@ -213,12 +333,17 @@ export default function LedgerScreen({ token }: { token: string | null }) {
             <BlurView key={item.id} intensity={40} tint="light" style={styles.mobileCard}>
               <View style={styles.cardHeaderRow}>
                 <Text style={styles.cardUnitText}>{item.unitName}</Text>
-                <Text style={[
-                  styles.cardAmountText, 
-                  { color: isPayment ? '#059669' : '#dc2626' }
-                ]}>
-                  {isPayment ? '+' : '-'} ₹{Math.abs(item.amount).toFixed(2)}
-                </Text>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={[
+                    styles.cardAmountText, 
+                    { color: isPayment ? '#059669' : '#dc2626' }
+                  ]}>
+                    {isPayment ? '+' : '-'} ₹{Math.abs(item.amount).toFixed(2)}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#5b6b6d', marginTop: 2 }}>
+                    Bal: ₹{(item.balance ?? 0).toFixed(2)}
+                  </Text>
+                </View>
               </View>
 
               <View style={styles.cardDetailRow}>
@@ -253,12 +378,16 @@ export default function LedgerScreen({ token }: { token: string | null }) {
                     <Text style={styles.titleLineDesktop}>Finance Ledger</Text>
                     <Text style={styles.subtitle}>View audit trails, invoice generation records, and payments received.</Text>
                   </View>
-                  <View style={{ width: 350 }}>
-                    {renderSearchBox()}
+                  <View style={{ gap: 8, alignItems: 'flex-end' }}>
+                    <View style={{ width: 350 }}>
+                      {renderSearchBox()}
+                    </View>
+                    {renderDateFilters()}
                   </View>
                 </View>
 
                 {renderLedgerList()}
+                {renderPaginationControls()}
               </View>
             </ScrollView>
           </>
@@ -280,7 +409,9 @@ export default function LedgerScreen({ token }: { token: string | null }) {
               </Animated.View>
 
               {renderSearchBox()}
+              {renderDateFilters()}
               {renderLedgerList()}
+              {renderPaginationControls()}
             </Animated.ScrollView>
           </>
         )}
@@ -325,9 +456,97 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 44,
     gap: 8,
-    marginBottom: 20
+    marginBottom: 16
   },
   searchInput: { flex: 1, color: '#151d1e', fontSize: 14 },
+
+  // Date filter styles
+  filtersContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    flexWrap: 'wrap'
+  },
+  dateInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    height: 40,
+    gap: 6
+  },
+  filterLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#006875'
+  },
+  dateInput: {
+    width: 90,
+    color: '#151d1e',
+    fontSize: 12,
+    padding: 0
+  },
+  filterButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  filterButton: {
+    backgroundColor: '#006875',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  filterButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700'
+  },
+  clearFilterButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)'
+  },
+
+  // Pagination styles
+  paginationRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    marginTop: 24,
+    marginBottom: 20
+  },
+  pageButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  pageButtonDisabled: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.3)'
+  },
+  pageText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#151d1e'
+  },
   
   emptyCard: {
     padding: 40,
