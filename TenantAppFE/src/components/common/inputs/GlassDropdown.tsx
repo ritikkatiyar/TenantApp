@@ -23,13 +23,13 @@ interface GlassDropdownProps {
 export default function GlassDropdown({ options, value, onChange, placeholder = 'Select an option', icon }: GlassDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownCoords, setDropdownCoords] = useState({ top: 0, left: 0, width: 0 });
-  const triggerRef = useRef<TouchableOpacity>(null);
+  const triggerRef = useRef<any>(null);
   const { isDesktop } = useResponsive();
 
   const selectedOption = options.find(o => o.value === value);
 
   const handleOpen = () => {
-    triggerRef.current?.measure((x, y, width, height, pageX, pageY) => {
+    triggerRef.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
       setDropdownCoords({
         top: pageY + height + 8, 
         left: pageX,

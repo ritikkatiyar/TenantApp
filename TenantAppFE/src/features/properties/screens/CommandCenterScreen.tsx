@@ -29,6 +29,7 @@ import Building3DView from '@/src/features/properties/components/Building3DView'
 import { createAnnouncement } from '@/src/features/announcements/api/announcement.api';
 import { RoleToggle } from '@/src/components/RoleToggle';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
+import FloorLayoutViewerModal from '@/src/features/properties/components/FloorLayoutViewerModal';
 
 const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
 
@@ -45,6 +46,25 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const { properties, isLoading, error, refreshProperties, deleteProperty, togglePropertyActive } = useProperties();
   const { showToast } = useToast();
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // 3D Model Reset Triggers State
+  const [resetTriggers, setResetTriggers] = useState<Record<string, number>>({});
+
+  const triggerReset = (propertyId: string) => {
+    setResetTriggers(prev => ({
+      ...prev,
+      [propertyId]: (prev[propertyId] || 0) + 1
+    }));
+  };
+
+  // Floor Layout Viewer State
+  const [layoutViewerPropertyId, setLayoutViewerPropertyId] = useState<string | null>(null);
+  const [layoutViewerFloorNumber, setLayoutViewerFloorNumber] = useState<number | null>(null);
+
+  const handleFloorClick = (propertyId: string, floorNum: number) => {
+    setLayoutViewerPropertyId(propertyId);
+    setLayoutViewerFloorNumber(floorNum);
+  };
 
   // Notice Board Composer State
   const [selectedPropertyForBroadcast, setSelectedPropertyForBroadcast] = useState<PropertyResponse | null>(null);
@@ -173,8 +193,25 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
             <View style={styles.desktopCardLeft}>
               <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerDesktop, item.isActive === false && { opacity: 0.65 }]}>
                 <View style={{ transform: [{ translateY: -45 }], width: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                  {accessToken && <Building3DView propertyId={item.id} token={accessToken} />}
+                  {accessToken && (
+                    <Building3DView 
+                      propertyId={item.id} 
+                      token={accessToken} 
+                      onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
+                      resetRotationTrigger={resetTriggers[item.id] || 0}
+                      maxContainerHeight={380}
+                    />
+                  )}
                 </View>
+                
+                <TouchableOpacity 
+                  style={styles.resetButtonOverlay}
+                  onPress={() => triggerReset(item.id)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="3d-rotation" size={18} color="#006875" />
+                </TouchableOpacity>
                 
                 <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]}>
                   <Text style={[styles.statusPillText, item.isActive === false && { color: '#ef4444' }]}>
@@ -281,7 +318,24 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     return (
       <BlurView intensity={60} tint="light" style={[styles.propertyCard, item.isActive === false && { opacity: 0.85 }]}>
         <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile, item.isActive === false && { opacity: 0.65 }]}>
-          {accessToken && <Building3DView propertyId={item.id} token={accessToken} />}
+          {accessToken && (
+            <Building3DView 
+              propertyId={item.id} 
+              token={accessToken} 
+              onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
+              resetRotationTrigger={resetTriggers[item.id] || 0}
+              maxContainerHeight={280}
+            />
+          )}
+          
+          <TouchableOpacity 
+            style={styles.resetButtonOverlay}
+            onPress={() => triggerReset(item.id)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="3d-rotation" size={18} color="#006875" />
+          </TouchableOpacity>
           
           <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]}>
             <Text style={[styles.statusPillText, item.isActive === false && { color: '#ef4444' }]}>
@@ -521,13 +575,10 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     </LinearGradient>
   );
 
-  if (isDesktop) {
-    return DesktopShell();
-  }
-
   return (
     <>
-      <LinearGradient
+      {isDesktop ? DesktopShell() : (
+        <LinearGradient
         colors={LUMINOUS_BACKGROUND}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -577,6 +628,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
           )}
         </SafeAreaView>
       </LinearGradient>
+      )}
 
       {/* Broadcast Notice Composer Modal */}
       <Modal
@@ -712,6 +764,20 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
           </View>
         </View>
       </Modal>
+
+      {/* Floor Layout Viewer Modal */}
+      {layoutViewerPropertyId !== null && layoutViewerFloorNumber !== null && (
+        <FloorLayoutViewerModal
+          visible={true}
+          propertyId={layoutViewerPropertyId}
+          floorNumber={layoutViewerFloorNumber}
+          token={accessToken || ''}
+          onClose={() => {
+            setLayoutViewerPropertyId(null);
+            setLayoutViewerFloorNumber(null);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -1243,7 +1309,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   deleteButtonOverlay: {
     position: 'absolute',
@@ -1253,6 +1319,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderRadius: 999,
     zIndex: 10,
+  },
+  resetButtonOverlay: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 999,
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   propertyInfo: {
     marginBottom: 15,

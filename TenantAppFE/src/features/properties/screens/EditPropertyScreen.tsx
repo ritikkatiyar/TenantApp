@@ -52,6 +52,7 @@ export default function EditPropertyScreen({
   const [totalFloors, setTotalFloors] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetRotationTrigger, setResetRotationTrigger] = useState(0);
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const headerOpacity = scrollY.interpolate({
@@ -305,7 +306,22 @@ export default function EditPropertyScreen({
                   <BlurView intensity={60} tint="light" style={styles.card}>
                     <Text style={styles.sectionTitle}>3D MODEL PREVIEW</Text>
                     <View style={styles.desktopBuildingContainer}>
-                      {userToken && <Building3DView propertyId={propertyId} token={userToken} />}
+                      {userToken && (
+                        <Building3DView 
+                          propertyId={propertyId} 
+                          token={userToken} 
+                          resetRotationTrigger={resetRotationTrigger}
+                          maxContainerHeight={260}
+                        />
+                      )}
+                      <TouchableOpacity 
+                        style={styles.resetButtonOverlay}
+                        onPress={() => setResetRotationTrigger(prev => prev + 1)}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialIcons name="3d-rotation" size={18} color="#006875" />
+                      </TouchableOpacity>
                     </View>
                     <View style={styles.previewInfoRow}>
                       <Text style={styles.previewName}>{name || 'Property Preview'}</Text>
@@ -882,7 +898,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'visible',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  resetButtonOverlay: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 999,
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   previewInfoRow: {
     marginTop: 8,

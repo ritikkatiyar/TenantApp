@@ -1,46 +1,313 @@
 import React, { useEffect, useState , useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, Animated, PanResponder } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Text, Animated, PanResponder, TouchableOpacity, Platform } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import { getAllFloorsLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
 
 interface Building3DViewProps {
   propertyId: string;
   token: string;
+  onFloorClick?: (floorNum: number) => void;
+  resetRotationTrigger?: number;
+  maxContainerHeight?: number;
 }
 
-export default function Building3DView({ propertyId, token }: Building3DViewProps) {
+export default function Building3DView({ propertyId, token, onFloorClick, resetRotationTrigger, maxContainerHeight = 260 }: Building3DViewProps) {
   const [units, setUnits] = useState<UnitResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const containerRef = useRef<View>(null);
+  const [containerDimensions, setContainerDimensions] = useState<{ width: number; height: number } | null>(null);
+
+  const handleLayout = (event: any) => {
+    const { width, height } = event.nativeEvent.layout;
+    if (width > 0 && height > 0) {
+      if (!containerDimensions || Math.abs(containerDimensions.width - width) > 2 || Math.abs(containerDimensions.height - height) > 2) {
+        setContainerDimensions({ width, height });
+      }
+    }
+  };
 
   // Animated values for 3D rotation
   const rotateZ = useRef(new Animated.Value(-45)).current;
   const rotateX = useRef(new Animated.Value(60)).current;
+  const lastRotation = useRef(-45);
+  const lastRotationX = useRef(60);
+
+  const [hoveredFloor, setHoveredFloor] = useState<number | null>(null);
+  const floorElevations = useRef<Record<number, Animated.Value>>({}).current;
+  const isDragging = useRef(false);
+
+  const handleMouseMove = (e: any) => {
+    if (Platform.OS !== 'web' || !onFloorClick) return;
+    if (isDragging.current) {
+      if (hoveredFloor !== null) {
+        setHoveredFloor(null);
+      }
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const state = stateRef.current;
+    
+    const innerLeftOffset = (rect.width - (state.buildingWidth + 40)) / 2;
+    const innerTopOffset = (rect.height - state.containerHeight) / 2;
+    
+    const clickX = e.clientX - rect.left - innerLeftOffset;
+    const clickY = e.clientY - rect.top - innerTopOffset;
+    
+    const buildingWidth = state.buildingWidth;
+    const isWithinX = Math.abs(clickX - (buildingWidth + 40) / 2) < (buildingWidth / 2) + 20;
+
+    if (isWithinX) {
+      let closestFloor = state.minFloor;
+      let minDistance = Infinity;
+
+      state.floorNumbers.forEach(fNum => {
+        const yOffset = -(fNum - state.minFloor) * state.dynamicFloorHeight + state.stackHeightOffset - state.buildingHeight / 2 + state.visualIsoHeight / 2 - 25;
+        const floorCenterY = state.containerHeight / 2 + yOffset;
+
+        const dist = Math.abs(clickY - floorCenterY);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestFloor = fNum;
+        }
+      });
+
+      if (minDistance < state.dynamicFloorHeight * 1.5) {
+        if (hoveredFloor !== closestFloor) {
+          setHoveredFloor(closestFloor);
+        }
+      } else {
+        if (hoveredFloor !== null) {
+          setHoveredFloor(null);
+        }
+      }
+    } else {
+      if (hoveredFloor !== null) {
+        setHoveredFloor(null);
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (Platform.OS === 'web' && hoveredFloor !== null) {
+      setHoveredFloor(null);
+    }
+  };
+
+  // Group units by floor and calculate bounding box
+  let minX = 999, maxX = 0, minY = 999, maxY = 0;
+  const floors = units.reduce((acc, unit) => {
+    if (unit.gridX < minX) minX = unit.gridX;
+    if (unit.gridX + unit.gridWidth - 1 > maxX) maxX = unit.gridX + unit.gridWidth - 1;
+    if (unit.gridY < minY) minY = unit.gridY;
+    if (unit.gridY + unit.gridHeight - 1 > maxY) maxY = unit.gridY + unit.gridHeight - 1;
+
+    if (!acc[unit.floor]) acc[unit.floor] = [];
+    acc[unit.floor].push(unit);
+    return acc;
+  }, {} as Record<number, UnitResponse[]>);
+
+  const gridW = maxX - minX + 1;
+  const gridH = maxY - minY + 1;
+
+  const floorNumbers = Object.keys(floors).map(Number).sort((a, b) => a - b);
+  const numFloors = floorNumbers.length > 0 ? floorNumbers.length : 1;
+
+  // Make sure we have an Animated.Value for every floor
+  floorNumbers.forEach(floorNum => {
+    if (!floorElevations[floorNum]) {
+      floorElevations[floorNum] = new Animated.Value(0);
+    }
+  });
+
+  const availableWidth = containerDimensions ? containerDimensions.width - 40 : 260;
+  const availableHeight = containerDimensions ? containerDimensions.height : maxContainerHeight;
+
+  const rawIsoWidth = (gridW + gridH) * 0.707;
+  let dynamicCellSize = Math.floor(availableWidth / rawIsoWidth);
+
+  // Height constraint calculation (target is 85% of available container height)
+  const targetH = availableHeight * 0.85;
+  const heightDivisor = (gridW + gridH) * 0.5 + (numFloors - 1) * 3.5;
+  const maxCellSizeHeight = Math.floor((targetH - 20) / (heightDivisor || 1));
+
+  dynamicCellSize = Math.min(dynamicCellSize, maxCellSizeHeight);
+
+  if (dynamicCellSize > 25) dynamicCellSize = 25;
+  if (dynamicCellSize < 6) dynamicCellSize = 6;
+  
+  const dynamicFloorHeight = dynamicCellSize * 3.5;
+  const buildingWidth = gridW * dynamicCellSize;
+  const buildingHeight = gridH * dynamicCellSize;
+  const minFloor = floorNumbers.length > 0 ? floorNumbers[0] : 1;
+  const stackHeightOffset = (floorNumbers.length > 0 ? floorNumbers.length - 1 : 0) * dynamicFloorHeight;
+  const visualIsoHeight = (gridW + gridH) * dynamicCellSize * 0.5;
+  const containerHeight = visualIsoHeight + stackHeightOffset + 20;
+
+  const stateRef = useRef({
+    floorNumbers,
+    minFloor,
+    dynamicFloorHeight,
+    stackHeightOffset,
+    buildingHeight,
+    visualIsoHeight,
+    containerHeight,
+    onFloorClick,
+    buildingWidth,
+  });
+
+  useEffect(() => {
+    stateRef.current = {
+      floorNumbers,
+      minFloor,
+      dynamicFloorHeight,
+      stackHeightOffset,
+      buildingHeight,
+      visualIsoHeight,
+      containerHeight,
+      onFloorClick,
+      buildingWidth,
+    };
+  });
+
+  useEffect(() => {
+    const animations = Object.keys(floorElevations).map((fKey) => {
+      const fNum = Number(fKey);
+      const toValue = fNum === hoveredFloor ? -12 : 0;
+      return Animated.spring(floorElevations[fNum], {
+        toValue,
+        useNativeDriver: false,
+        friction: 6,
+        tension: 50,
+      });
+    });
+    Animated.parallel(animations).start();
+  }, [hoveredFloor]);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > 10 || Math.abs(gestureState.dy) > 10;
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponder: (evt, gestureState) => true,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+      onPanResponderGrant: (evt, gestureState) => {
+        isDragging.current = true;
+        rotateZ.stopAnimation();
+        rotateX.stopAnimation();
+
+        // Highlight on touch-down for mobile/touch devices
+        if (Platform.OS !== 'web') {
+          const state = stateRef.current;
+          if (state.onFloorClick) {
+            const { locationX, locationY } = evt.nativeEvent;
+            const buildingWidth = state.buildingWidth;
+            const isWithinX = Math.abs(locationX - (buildingWidth + 40) / 2) < (buildingWidth / 2) + 20;
+
+            if (isWithinX) {
+              let closestFloor = state.minFloor;
+              let minDistance = Infinity;
+
+              state.floorNumbers.forEach(fNum => {
+                const yOffset = -(fNum - state.minFloor) * state.dynamicFloorHeight + state.stackHeightOffset - state.buildingHeight / 2 + state.visualIsoHeight / 2 - 25;
+                const floorCenterY = state.containerHeight / 2 + yOffset;
+
+                const dist = Math.abs(locationY - floorCenterY);
+                if (dist < minDistance) {
+                  minDistance = dist;
+                  closestFloor = fNum;
+                }
+              });
+
+              if (minDistance < state.dynamicFloorHeight * 1.5) {
+                setHoveredFloor(closestFloor);
+              }
+            }
+          }
+        } else {
+          setHoveredFloor(null);
+        }
       },
       onPanResponderMove: (evt, gestureState) => {
-        // Invert left/right rotation
-        rotateZ.setValue(-45 - gestureState.dx * 0.5);
-        
-        let newRotX = 60 - gestureState.dy * 0.5;
+        // If they drag significantly, cancel highlight
+        if (Math.abs(gestureState.dx) > 4 || Math.abs(gestureState.dy) > 4) {
+          setHoveredFloor(null);
+        }
+
+        // Subtract to rotate in the natural direction of the drag (drag right -> rotate right)
+        rotateZ.setValue(lastRotation.current - gestureState.dx * 0.5);
+        let newRotX = lastRotationX.current - gestureState.dy * 0.5;
         if (newRotX < 20) newRotX = 20;
         if (newRotX > 80) newRotX = 80;
         rotateX.setValue(newRotX);
       },
-      onPanResponderRelease: () => {
-        // Smooth GPU-accelerated spring back
-        Animated.spring(rotateZ, {
-          toValue: -45,
-          useNativeDriver: true,
-        }).start();
-        Animated.spring(rotateX, {
-          toValue: 60,
-          useNativeDriver: true,
-        }).start();
+      onPanResponderRelease: (evt, gestureState) => {
+        isDragging.current = false;
+        setHoveredFloor(null);
+        
+        lastRotation.current -= gestureState.dx * 0.5;
+        let newRotX = lastRotationX.current - gestureState.dy * 0.5;
+        if (newRotX < 20) newRotX = 20;
+        if (newRotX > 80) newRotX = 80;
+        lastRotationX.current = newRotX;
+        
+        // --- Mathematical Tap Detection for Floors ---
+        if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
+          const state = stateRef.current;
+          if (state.onFloorClick) {
+            const { locationX, locationY } = evt.nativeEvent;
+            
+            let clickX = locationX;
+            let clickY = locationY;
+            if (Platform.OS === 'web' && containerRef.current) {
+              const rect = (containerRef.current as any).getBoundingClientRect?.();
+              if (rect) {
+                const native = evt.nativeEvent as any;
+                const clientX = native.clientX ?? (native.changedTouches?.[0]?.clientX) ?? native.pageX;
+                const clientY = native.clientY ?? (native.changedTouches?.[0]?.clientY) ?? native.pageY;
+                if (clientX !== undefined) {
+                  clickX = clientX - rect.left;
+                }
+                if (clientY !== undefined) {
+                  clickY = clientY - rect.top;
+                }
+              }
+            }
+            
+            console.log('[Building3DView] clickX:', clickX, 'clickY:', clickY, 'floorNumbers:', state.floorNumbers);
+            
+            const buildingWidth = state.buildingWidth;
+            const isWithinX = Math.abs(clickX - (buildingWidth + 40) / 2) < (buildingWidth / 2) + 20;
+            
+            if (isWithinX) {
+              let closestFloor = state.minFloor;
+              let minDistance = Infinity;
+              
+              state.floorNumbers.forEach(fNum => {
+                const yOffset = -(fNum - state.minFloor) * state.dynamicFloorHeight + state.stackHeightOffset - state.buildingHeight / 2 + state.visualIsoHeight / 2 - 25;
+                const floorCenterY = state.containerHeight / 2 + yOffset;
+                
+                const dist = Math.abs(clickY - floorCenterY);
+                console.log(`[Building3DView] Floor ${fNum}: center=${floorCenterY}, dist=${dist}`);
+                if (dist < minDistance) {
+                  minDistance = dist;
+                  closestFloor = fNum;
+                }
+              });
+              
+              console.log(`[Building3DView] Closest: Floor ${closestFloor}, minDistance: ${minDistance}, limit: ${state.dynamicFloorHeight * 1.5}`);
+              
+              if (minDistance < state.dynamicFloorHeight * 1.5) {
+                console.log(`[Building3DView] Triggering click for floor: ${closestFloor}`);
+                state.onFloorClick(closestFloor);
+              }
+            }
+          }
+        }
+      },
+      onPanResponderTerminate: () => {
+        isDragging.current = false;
+        setHoveredFloor(null);
       },
     })
   ).current;
@@ -75,6 +342,29 @@ export default function Building3DView({ propertyId, token }: Building3DViewProp
     };
   }, [propertyId, token]);
 
+  const handleResetRotation = () => {
+    lastRotation.current = -45;
+    lastRotationX.current = 60;
+    Animated.parallel([
+      Animated.timing(rotateZ, {
+        toValue: -45,
+        duration: 400,
+        useNativeDriver: false,
+      }),
+      Animated.timing(rotateX, {
+        toValue: 60,
+        duration: 400,
+        useNativeDriver: false,
+      })
+    ]).start();
+  };
+
+  useEffect(() => {
+    if (resetRotationTrigger !== undefined && resetRotationTrigger > 0) {
+      handleResetRotation();
+    }
+  }, [resetRotationTrigger]);
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -91,134 +381,108 @@ export default function Building3DView({ propertyId, token }: Building3DViewProp
     );
   }
 
-  // Group units by floor and calculate bounding box
-  let minX = 999, maxX = 0, minY = 999, maxY = 0;
-  const floors = units.reduce((acc, unit) => {
-    if (unit.gridX < minX) minX = unit.gridX;
-    if (unit.gridX + unit.gridWidth - 1 > maxX) maxX = unit.gridX + unit.gridWidth - 1;
-    if (unit.gridY < minY) minY = unit.gridY;
-    if (unit.gridY + unit.gridHeight - 1 > maxY) maxY = unit.gridY + unit.gridHeight - 1;
-
-    if (!acc[unit.floor]) acc[unit.floor] = [];
-    acc[unit.floor].push(unit);
-    return acc;
-  }, {} as Record<number, UnitResponse[]>);
-
-  const gridW = maxX - minX + 1;
-  const gridH = maxY - minY + 1;
-
-  // Dynamically calculate cell size so the building always fills the available card space
-  const TARGET_WIDTH = 260; 
-  const rawIsoWidth = (gridW + gridH) * 0.707;
-  let dynamicCellSize = Math.floor(TARGET_WIDTH / rawIsoWidth);
-
-  // Clamp sizes
-  if (dynamicCellSize > 25) dynamicCellSize = 25;
-  if (dynamicCellSize < 6) dynamicCellSize = 6;
-  
-  const dynamicFloorHeight = dynamicCellSize * 3.5;
-
-  const buildingWidth = gridW * dynamicCellSize;
-  const buildingHeight = gridH * dynamicCellSize;
-
-  // Get sorted floor numbers
-  const floorNumbers = Object.keys(floors).map(Number).sort((a, b) => a - b);
-  const minFloor = floorNumbers.length > 0 ? floorNumbers[0] : 1;
-  const stackHeightOffset = (floorNumbers.length > 0 ? floorNumbers.length - 1 : 0) * dynamicFloorHeight;
-
-  // Mathematically calculate the visual height of the isometric projection
-  const visualIsoHeight = (gridW + gridH) * dynamicCellSize * 0.5;
-  const containerHeight = visualIsoHeight + stackHeightOffset + 20;
+  const webMouseProps = Platform.OS === 'web' ? {
+    onMouseMove: handleMouseMove,
+    onMouseLeave: handleMouseLeave,
+  } : {};
 
   return (
     <View 
-      style={[
-        styles.container, 
-        { 
-          width: buildingWidth + 40,
-          height: containerHeight
-        }
-      ]}
-      {...panResponder.panHandlers}
+      onLayout={handleLayout}
+      style={{ position: 'relative', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
+      {...(webMouseProps as any)}
     >
-      {floorNumbers.map((floorNum) => (
-        <View
-          key={`floor-${floorNum}`}
-          style={{
-            position: 'absolute',
-            zIndex: floorNum, // Higher floors should render on top
-            transform: [
-              // Elevate each floor, and shift down visually to fit perfectly within the container bounds accounting for rotation anchors
-              { translateY: -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset - buildingHeight / 2 + visualIsoHeight / 2 - 25 },
-            ],
-          }}
-        >
-          {/* 3D Slab Thickness Extrusion (layer stacking) */}
-          {Array.from({ length: 4 }).map((_, idx) => (
+      <View 
+        ref={containerRef}
+        style={[
+          styles.container, 
+          { 
+            width: buildingWidth + 40,
+            height: containerHeight
+          }
+        ]}
+        {...panResponder.panHandlers}
+      >
+        {floorNumbers.map((floorNum) => {
+          const elevationAnim = floorElevations[floorNum] || new Animated.Value(0);
+          const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset - buildingHeight / 2 + visualIsoHeight / 2 - 25;
+          const isHovered = floorNum === hoveredFloor;
+          
+          return (
             <Animated.View
-              key={`floor-slab-extrusion-${floorNum}-${idx}`}
-              style={[
-                styles.isometricWrapper,
-                styles.slabExtrusion,
-                {
-                  position: 'absolute',
-                  zIndex: -1 - idx, // Render behind/below the units
-                  width: buildingWidth,
-                  height: buildingHeight,
-                  transform: [{ rotateX: tilt }, { rotateZ: spin }],
-                  top: (idx + 1) * 1.5, // Translate downward on screen
-                  opacity: 0.9 - idx * 0.15,
-                }
-              ]}
-            />
-          ))}
+              key={`floor-${floorNum}`}
+              style={{
+                position: 'absolute',
+                zIndex: floorNum, // Higher floors should render on top
+                transform: [
+                  // Elevate each floor, and shift down visually to fit perfectly within the container bounds accounting for rotation anchors
+                  { translateY: Animated.add(baseTranslateY, elevationAnim) },
+                ],
+              }}
+            >
+              {/* 3D Slab Thickness Extrusion (layer stacking) */}
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <Animated.View
+                  key={`floor-slab-extrusion-${floorNum}-${idx}`}
+                  style={[
+                    styles.isometricWrapper,
+                    styles.slabExtrusion,
+                    {
+                      position: 'absolute',
+                      zIndex: -1 - idx, // Render behind/below the units
+                      width: buildingWidth,
+                      height: buildingHeight,
+                      transform: [{ rotateX: tilt }, { rotateZ: spin }],
+                      top: (idx + 1) * 1.5, // Translate downward on screen
+                      opacity: 0.9 - idx * 0.15,
+                      backgroundColor: isHovered ? 'rgba(0, 180, 200, 0.7)' : 'rgba(0, 60, 70, 0.4)',
+                      borderColor: isHovered ? 'rgba(0, 229, 255, 0.5)' : 'rgba(0, 229, 255, 0.15)',
+                    }
+                  ]}
+                />
+              ))}
 
-          {/* Main Floor Plate & Units */}
-          <Animated.View 
-            style={[
-              styles.isometricWrapper, 
-              { 
-                width: buildingWidth,
-                height: buildingHeight,
-                transform: [{ rotateX: tilt }, { rotateZ: spin }] 
-              }
-            ]}
-          >
-            <View style={styles.floorLayer}>
-              {floors[floorNum].map((unit) => {
-                // Dynamically offset units so the building starts at 0,0 inside the wrapper
-                const left = (unit.gridX - minX) * dynamicCellSize;
-                const top = (unit.gridY - minY) * dynamicCellSize;
-                const width = unit.gridWidth * dynamicCellSize;
-                const height = unit.gridHeight * dynamicCellSize;
+              {/* Main Floor Plate & Units */}
+              <Animated.View 
+                style={[
+                  styles.isometricWrapper, 
+                  { 
+                    width: buildingWidth,
+                    height: buildingHeight,
+                    transform: [{ rotateX: tilt }, { rotateZ: spin }] 
+                  }
+                ]}
+              >
+                <View style={styles.floorLayer}>
+                  {floors[floorNum].map((unit) => {
+                    const left = (unit.gridX - minX) * dynamicCellSize;
+                    const top = (unit.gridY - minY) * dynamicCellSize;
+                    const width = unit.gridWidth * dynamicCellSize;
+                    const height = unit.gridHeight * dynamicCellSize;
 
-                // Check if unit has active leases
-                const isOccupied = unit.activeLeases && unit.activeLeases.length > 0;
-                const unitColor = isOccupied ? 'rgba(0, 212, 255, 0.95)' : 'rgba(0, 229, 255, 0.4)';
-                const borderColor = isOccupied ? '#00e5ff' : 'rgba(0, 229, 255, 0.8)';
+                    const isOccupied = unit.activeLeases && unit.activeLeases.length > 0;
+                    
+                    const unitColor = isOccupied 
+                      ? (isHovered ? 'rgba(0, 229, 255, 1)' : 'rgba(0, 212, 255, 0.95)')
+                      : (isHovered ? 'rgba(0, 229, 255, 0.7)' : 'rgba(0, 229, 255, 0.4)');
+                    const borderColor = isHovered ? '#ffffff' : (isOccupied ? '#00e5ff' : 'rgba(0, 229, 255, 0.8)');
 
-                return (
-                  <View
-                    key={unit.id}
-                    style={[
-                      styles.unitBlock,
-                      {
-                        left,
-                        top,
-                        width,
-                        height,
-                        backgroundColor: unitColor,
-                        borderColor: borderColor,
-                        borderWidth: 1.5,
-                      },
-                    ]}
-                  />
-                );
-              })}
-            </View>
-          </Animated.View>
-        </View>
-      ))}
+                    return (
+                      <View
+                        key={unit.id}
+                        style={[
+                          styles.unitBlock,
+                          { left, top, width, height, backgroundColor: unitColor, borderColor: borderColor, borderWidth: 1.5 }
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
+              </Animated.View>
+            </Animated.View>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -228,6 +492,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'visible', // Ensure the 3D stack doesn't clip at the top
+    ...Platform.select({
+      web: {
+        touchAction: 'none',
+        userSelect: 'none',
+      }
+    }) as any,
   },
   loadingContainer: {
     width: 200,

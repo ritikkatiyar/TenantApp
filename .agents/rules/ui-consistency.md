@@ -121,6 +121,15 @@ Primary actions and action triggers must use a unified gradient styling and sizi
 
 ---
 
+### F. Modal Overlays & Selection Modals
+Modal popup cards and configuration overlays must align with the premium styling of the application:
+1. **Background Gradient**: Instead of using solid light backgrounds, modal card containers must utilize the standard diagonal background gradient colors: `colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}`, starting at `(0,0)` and ending at `(1,1)`.
+2. **Rounded Borders**: To ensure the gradient color background does not overlap card corners, configure the styling using `borderRadius: 24` paired with `overflow: 'hidden'`.
+3. **Overlay Backdrop**: The background overlay behind the modal must use a `BlurView` with `intensity: 40` and `tint: "dark"` to draw focus to the foreground modal card.
+4. **Action Hierarchy**: Destructive actions (like "Discard Unit" or "Delete") must be styled with a light-red background (`rgba(229, 57, 53, 0.08)`) and matching red text (`#e53935`), placed at the bottom of the card content.
+
+---
+
 ## 3. Responsive Screen & Layout Architecture
 
 The app is deployed across both mobile screens and desktop web viewers. Viewports must adapt using a hard breakpoint: `isDesktop = windowWidth >= 900`.

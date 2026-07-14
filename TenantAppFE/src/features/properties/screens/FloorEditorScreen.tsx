@@ -12,7 +12,8 @@ import {
   Platform,
   Keyboard,
   ScrollView as RNScrollView,
-  useWindowDimensions
+  useWindowDimensions,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -37,11 +38,34 @@ import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/
 import { useRouter, Href } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { Theme } from '@/src/theme/Theme';
+import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
 const CELL_SIZE = 60;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const UNIT_TYPE_OPTIONS = [
+  { label: '1 BHK', value: 'ONE_BHK' },
+  { label: '2 BHK', value: 'TWO_BHK' },
+  { label: 'Studio Apartment', value: 'STUDIO' },
+  { label: 'Single Unit', value: 'SINGLE_UNIT' },
+  { label: 'Shared Unit', value: 'SHARED_UNIT' },
+];
+
+const normalizeUnitType = (typeVal: string | undefined): string => {
+  if (!typeVal) return 'ONE_BHK';
+  const upperVal = typeVal.toUpperCase();
+  if (['ONE_BHK', 'TWO_BHK', 'STUDIO', 'SINGLE_UNIT', 'SHARED_UNIT'].includes(upperVal)) {
+    return upperVal;
+  }
+  if (typeVal === '1 BHK') return 'ONE_BHK';
+  if (typeVal === '2 BHK') return 'TWO_BHK';
+  if (typeVal === 'Studio Apartment') return 'STUDIO';
+  if (typeVal === 'Single Unit') return 'SINGLE_UNIT';
+  if (typeVal === 'Shared Unit') return 'SHARED_UNIT';
+  return 'ONE_BHK';
+};
 
 interface FloorEditorScreenProps {
   propertyId: string;
@@ -68,6 +92,7 @@ interface UnitBlock {
   status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
   capacity?: number;
   activeLeases?: ActiveLeaseSummary[];
+  type?: string;
 }
 
 export default function FloorEditorScreen({
@@ -77,6 +102,9 @@ export default function FloorEditorScreen({
   onBack,
   onSave
 }: FloorEditorScreenProps) {
+  const [typeSelectionModalVisible, setTypeSelectionModalVisible] = useState(false);
+  const [pendingBlockId, setPendingBlockId] = useState<string | null>(null);
+  const [pendingBlockNum, setPendingBlockNum] = useState<string>('');
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isDesktop = windowWidth >= 900;
   const router = useRouter();
@@ -91,6 +119,7 @@ export default function FloorEditorScreen({
   const [tenantSearchResult, setTenantSearchResult] = useState<UserSearchResponse | null>(null);
   const [tenantSearchLoading, setTenantSearchLoading] = useState(false);
   const [tenantAssigning, setTenantAssigning] = useState(false);
+  const [rentAmount, setRentAmount] = useState('');
   const [securityDeposit, setSecurityDeposit] = useState('');
   const [currentDrawBlock, setCurrentDrawBlock] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
@@ -187,6 +216,7 @@ export default function FloorEditorScreen({
           status: leases.length > 0 ? 'OCCUPIED' : 'VACANT',
           capacity: u.capacity,
           activeLeases: leases,
+          type: normalizeUnitType(u.type),
         };
       });
       setBlocks(mappedBlocks);
@@ -248,15 +278,21 @@ export default function FloorEditorScreen({
 
         const currentNextIndex = nextUnitIndex; 
         const newUnitNum = `${floorNumber}${(currentNextIndex).toString().padStart(2, '0')}`;
+        const newBlockId = `${minX}-${minY}-${Date.now()}`;
         const newBlock: UnitBlock = {
-          id: `${minX}-${minY}-${Date.now()}`,
+          id: newBlockId,
           gridX: minX,
           gridY: minY,
           gridWidth: w,
           gridHeight: h,
           unitNumber: newUnitNum,
-          capacity: 2
+          capacity: 2,
+          type: 'ONE_BHK'
         };
+
+        setPendingBlockId(newBlockId);
+        setPendingBlockNum(newUnitNum);
+        setTypeSelectionModalVisible(true);
 
         setNextUnitIndex(prev => prev + 1);
         return [...prevBlocks, newBlock];
@@ -405,6 +441,7 @@ export default function FloorEditorScreen({
       setBlocks(newBlocks);
     } else if (activeTool === 'PAN') {
       setSelectedUnitId(block.id);
+      setRentAmount('');
       setSecurityDeposit('');
       setTenantPhoneSearch('');
       setTenantSearchResult(null);
@@ -461,6 +498,8 @@ export default function FloorEditorScreen({
     setIsCreatingNewTenant(false);
     setNewTenantName('');
     setNewTenantEmail('');
+    setRentAmount('');
+    setSecurityDeposit('');
     setParentScrollEnabled(true);
   };
 
@@ -547,12 +586,14 @@ export default function FloorEditorScreen({
     if (!selectedBlock || !targetUser) return;
 
     const totalDeposit = Number(securityDeposit || '0');
+    const totalRent = Number(rentAmount || '0');
 
     setTenantAssigning(true);
     setTenantSearchError(null);
     try {
       const capacity = selectedBlock.capacity || 1;
       const depositAmount = Math.round(totalDeposit / capacity);
+      const leaseRentAmount = Math.round(totalRent / capacity);
 
       // 1) Auto-save the floor layout first!
       // This guarantees the modified unit capacity is permanently saved to the database unit table
@@ -563,7 +604,7 @@ export default function FloorEditorScreen({
         gridY: b.gridY,
         gridWidth: b.gridWidth,
         gridHeight: b.gridHeight,
-        type: 'ONE_BHK',
+        type: b.type || 'ONE_BHK',
         capacity: b.id === selectedBlock.id ? capacity : (b.capacity || 2),
         facing: 'NORTH'
       }));
@@ -596,6 +637,7 @@ export default function FloorEditorScreen({
       const payload = {
         userId: targetUser.id,
         unitId: realUnitId,
+        rentAmount: leaseRentAmount,
         securityDeposit: depositAmount,
         splitStrategy: 'FULL_UNIT' as const,
         moveInDate: today,
@@ -684,6 +726,11 @@ export default function FloorEditorScreen({
   const selectedBlock = blocks.find(b => b.id === selectedUnitId);
 
   const handleSave = async () => {
+    if (blocks.length === 0) {
+      Alert.alert('Save Layout', 'Please draw at least one unit before saving.');
+      return;
+    }
+
     setSaving(true);
     try {
       // Map local blocks to backend payload
@@ -693,7 +740,7 @@ export default function FloorEditorScreen({
         gridY: b.gridY,
         gridWidth: b.gridWidth,
         gridHeight: b.gridHeight,
-        type: 'ONE_BHK', // Defaulting for now
+        type: b.type || 'ONE_BHK',
         capacity: b.capacity || 2,
         facing: 'NORTH'  // Defaulting
       }));
@@ -704,9 +751,7 @@ export default function FloorEditorScreen({
         body: JSON.stringify(payload)
       });
 
-      Alert.alert('Success', 'Floor layout saved successfully.', [
-        { text: 'OK', onPress: onSave }
-      ]);
+      onSave();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to save layout.');
     } finally {
@@ -808,8 +853,13 @@ export default function FloorEditorScreen({
                     }
                   ]}
                 >
-                  {/* Unit Number — top area */}
-                  <Text style={[styles.cellText, { color: colorStyles.textColor }]}>{block.unitNumber}</Text>
+                  {/* Unit Number & Type — top area */}
+                  <View style={{ flexDirection: 'column', gap: 1 }}>
+                    <Text style={[styles.cellText, { color: colorStyles.textColor }]}>{block.unitNumber}</Text>
+                    <Text style={{ fontSize: 9, fontWeight: '700', color: colorStyles.textColor + 'cc' }}>
+                      {UNIT_TYPE_OPTIONS.find(opt => opt.value === block.type)?.label || '1 BHK'}
+                    </Text>
+                  </View>
 
                   {/* ── Frosted Info Badge — bottom of block ── */}
                   {(block.gridWidth >= 2 || block.gridHeight >= 2) ? (
@@ -903,6 +953,86 @@ export default function FloorEditorScreen({
       }}>
         {rows}
       </View>
+    );
+  };
+
+  const renderTypeSelectionModal = () => {
+    return (
+      <Modal
+        visible={typeSelectionModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setTypeSelectionModalVisible(false);
+          setPendingBlockId(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFillObject} />
+          <LinearGradient
+            colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.typeModalContent}
+          >
+            <Text style={styles.typeModalTitle}>Configure New Unit</Text>
+            <Text style={styles.typeModalSubtitle}>Select type for Unit {pendingBlockNum}</Text>
+            
+            <View style={styles.typeGrid}>
+              {UNIT_TYPE_OPTIONS.map((option) => {
+                let iconName: keyof typeof MaterialIcons.glyphMap = 'home';
+                let desc = '';
+                if (option.value === 'ONE_BHK') { iconName = 'looks-one'; desc = '1 Bedroom'; }
+                else if (option.value === 'TWO_BHK') { iconName = 'looks-two'; desc = '2 Bedrooms'; }
+                else if (option.value === 'STUDIO') { iconName = 'room-service'; desc = 'Single Studio'; }
+                else if (option.value === 'SINGLE_UNIT') { iconName = 'person'; desc = 'Single Co-living'; }
+                else if (option.value === 'SHARED_UNIT') { iconName = 'people'; desc = 'Shared Co-living'; }
+
+                return (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={styles.typeCard}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      if (pendingBlockId) {
+                        let cap = 2;
+                        if (option.value === 'ONE_BHK') cap = 2;
+                        else if (option.value === 'TWO_BHK') cap = 4;
+                        else if (option.value === 'STUDIO') cap = 1;
+                        else if (option.value === 'SINGLE_UNIT') cap = 1;
+                        else if (option.value === 'SHARED_UNIT') cap = 2;
+
+                        updateUnitDetails(pendingBlockId, { type: option.value, capacity: cap });
+                      }
+                      setTypeSelectionModalVisible(false);
+                      setPendingBlockId(null);
+                    }}
+                  >
+                    <View style={styles.typeCardIconWrapper}>
+                      <MaterialIcons name={iconName} size={28} color="#006875" />
+                    </View>
+                    <Text style={styles.typeCardLabel}>{option.label}</Text>
+                    <Text style={styles.typeCardDesc}>{desc}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            
+            <TouchableOpacity
+              style={[styles.typeCancelButton, { backgroundColor: 'rgba(229, 57, 53, 0.08)' }]}
+              onPress={() => {
+                if (pendingBlockId) {
+                  setBlocks(prev => prev.filter(b => b.id !== pendingBlockId));
+                }
+                setTypeSelectionModalVisible(false);
+                setPendingBlockId(null);
+              }}
+            >
+              <Text style={[styles.typeCancelText, { color: '#e53935' }]}>Discard Unit</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+      </Modal>
     );
   };
 
@@ -1124,6 +1254,17 @@ export default function FloorEditorScreen({
                               <>
                             {/* Form Input Fields */}
                             <View style={{ gap: 12, marginBottom: 12 }}>
+                              <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>UNIT TYPE</Text>
+                                <GlassDropdown
+                                  options={UNIT_TYPE_OPTIONS}
+                                  value={selectedBlock.type || 'ONE_BHK'}
+                                  onChange={(val) => updateUnitDetails(selectedBlock.id, { type: val })}
+                                  placeholder="Select Unit Type"
+                                  icon="home"
+                                />
+                              </View>
+
                               <View style={{ flexDirection: 'row', gap: 12 }}>
                                 <View style={[styles.inputGroup, { flex: 1 }]}>
                                   <Text style={styles.inputLabel}>UNIT CAPACITY</Text>
@@ -1429,6 +1570,7 @@ export default function FloorEditorScreen({
             </View>
           </View>
         </LinearGradient>
+        {renderTypeSelectionModal()}
       </GestureHandlerRootView>
     );
   }
@@ -1578,6 +1720,7 @@ export default function FloorEditorScreen({
               style={StyleSheet.absoluteFillObject}
               onPress={() => {
                 setSelectedUnitId(null);
+                setRentAmount('');
                 setSecurityDeposit('');
                 resetTenantAssignmentForm();
               }}
@@ -1613,6 +1756,7 @@ export default function FloorEditorScreen({
                   <TouchableOpacity 
                     onPress={() => {
                       setSelectedUnitId(null);
+                      setRentAmount('');
                       setSecurityDeposit('');
                       resetTenantAssignmentForm();
                     }}
@@ -1681,6 +1825,17 @@ export default function FloorEditorScreen({
                   /* ── Normal unit fields (mobile) ── */
                   <>
                 <View style={{ gap: 12, marginBottom: 12 }}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>UNIT TYPE</Text>
+                    <GlassDropdown
+                      options={UNIT_TYPE_OPTIONS}
+                      value={selectedBlock.type || 'ONE_BHK'}
+                      onChange={(val) => updateUnitDetails(selectedBlock.id, { type: val })}
+                      placeholder="Select Unit Type"
+                      icon="home"
+                    />
+                  </View>
+
                   <View style={{ flexDirection: 'row', gap: 12 }}>
                     <View style={[styles.inputGroup, { flex: 1 }]}>
                       <Text style={styles.inputLabel}>UNIT CAPACITY</Text>
@@ -1699,6 +1854,21 @@ export default function FloorEditorScreen({
                           editable={!selectedBlock.activeLeases || selectedBlock.activeLeases.length === 0}
                         />
                       </View>
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>MONTHLY RENT</Text>
+                    <View style={styles.inputWrapper}>
+                      <MaterialIcons name="payments" size={18} color="#006875" />
+                      <TextInput 
+                        style={styles.textInput}
+                        placeholder="e.g. 15000"
+                        placeholderTextColor="#9ba9ab"
+                        value={rentAmount}
+                        onChangeText={setRentAmount}
+                        keyboardType="numeric"
+                      />
                     </View>
                   </View>
 
@@ -1972,6 +2142,7 @@ export default function FloorEditorScreen({
         })()}
         </SafeAreaView>
       </LinearGradient>
+      {renderTypeSelectionModal()}
     </GestureHandlerRootView>
   );
 }
@@ -2726,5 +2897,89 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#006875',
     letterSpacing: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  typeModalContent: {
+    width: '90%',
+    maxWidth: 500,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  typeModalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#151d1e',
+    marginBottom: 4,
+  },
+  typeModalSubtitle: {
+    fontSize: 14,
+    color: '#6b7a7d',
+    marginBottom: 20,
+    fontWeight: '600',
+  },
+  typeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  typeCard: {
+    width: '47%',
+    backgroundColor: 'rgba(0, 104, 117, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    gap: 6,
+  },
+  typeCardIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  typeCardLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#151d1e',
+    textAlign: 'center',
+  },
+  typeCardDesc: {
+    fontSize: 11,
+    color: '#6b7a7d',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  typeCancelButton: {
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    width: '100%',
+    alignItems: 'center',
+  },
+  typeCancelText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#6b7a7d',
   },
 });
