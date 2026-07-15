@@ -2,7 +2,7 @@ package com.tenantliving.user.service.impl;
 
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.repository.UserRepository;
+import com.tenantliving.user.service.interfaces.UserCrudService;
 import com.tenantliving.user.service.interfaces.UserQueryService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,39 +23,39 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class UserQueryServiceImpl implements UserQueryService {
 
-    private final UserRepository userRepository;
+    private final UserCrudService userCrudService;
 
     @Override
     public UserTbl getUserById(UUID id) {
-        return userRepository.findById(id)
+        return userCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @Override
     public UserTbl getUserByEmail(String email) {
-        return userRepository.findByAuthUid(normalizeEmail(email))
+        return userCrudService.findByAuthUid(normalizeEmail(email))
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     @Override
     public Optional<UserTbl> findByEmail(String email) {
-        return userRepository.findByAuthUid(normalizeEmail(email));
+        return userCrudService.findByAuthUid(normalizeEmail(email));
     }
 
     @Override
     public Optional<UserTbl> findByPhoneNumber(String phoneNumber) {
-        return userRepository.findByPhoneNumber(normalizePhoneNumber(phoneNumber));
+        return userCrudService.findByPhoneNumber(normalizePhoneNumber(phoneNumber));
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return userRepository.findByAuthUid(normalizeEmail(email)).isPresent();
+        return userCrudService.findByAuthUid(normalizeEmail(email)).isPresent();
     }
 
     @Override
     public Map<UUID, UserTbl> getUsersByIds(Collection<UUID> ids) {
         if (ids == null || ids.isEmpty()) return Collections.emptyMap();
-        return userRepository.findAllById(ids).stream()
+        return userCrudService.findAllById(ids).stream()
                 .collect(Collectors.toMap(UserTbl::getId, u -> u));
     }
 
@@ -64,7 +64,7 @@ public class UserQueryServiceImpl implements UserQueryService {
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
             return Collections.emptyList();
         }
-        return userRepository.findTop10ByPhoneNumberContaining(phoneNumber.trim());
+        return userCrudService.findTop10ByPhoneNumberContaining(phoneNumber.trim());
     }
 
     private static String normalizeEmail(String email) {

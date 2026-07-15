@@ -3,10 +3,10 @@ package com.tenantliving.auth.service.impl;
 import com.tenantliving.auth.domain.MembershipRoleTbl;
 import com.tenantliving.auth.domain.RolePermissionTbl;
 import com.tenantliving.auth.domain.PermissionTbl;
-import com.tenantliving.auth.repository.MembershipRepository;
-import com.tenantliving.auth.repository.MembershipRoleRepository;
-import com.tenantliving.auth.repository.RolePermissionRepository;
-import com.tenantliving.auth.repository.PermissionRepository;
+import com.tenantliving.auth.service.interfaces.MembershipRoleCrudService;
+import com.tenantliving.auth.service.interfaces.RolePermissionCrudService;
+import com.tenantliving.auth.service.interfaces.PermissionCrudService;
+import com.tenantliving.auth.service.interfaces.MembershipCrudService;
 import com.tenantliving.auth.service.interfaces.PropertyRoleService;
 import com.tenantliving.auth.dto.RoleDTOs;
 import com.tenantliving.common.exception.BusinessException;
@@ -32,17 +32,17 @@ import java.util.stream.Collectors;
 @Transactional
 public class PropertyRoleServiceImpl implements PropertyRoleService {
 
-    private final MembershipRoleRepository membershipRoleRepository;
-    private final RolePermissionRepository rolePermissionRepository;
-    private final PermissionRepository permissionRepository;
-    private final MembershipRepository membershipRepository;
+    private final MembershipRoleCrudService membershipRoleCrudService;
+    private final RolePermissionCrudService rolePermissionCrudService;
+    private final PermissionCrudService permissionCrudService;
+    private final MembershipCrudService membershipCrudService;
     private final UserQueryService userQueryService;
 
     @Override
     @Transactional(readOnly = true)
     public List<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId) {
-        List<MembershipRoleTbl> globalRoles = membershipRoleRepository.findByPropertyIdIsNull();
-        List<MembershipRoleTbl> propertyRoles = membershipRoleRepository.findByPropertyId(propertyId);
+        List<MembershipRoleTbl> globalRoles = membershipRoleCrudService.findByPropertyIdIsNull();
+        List<MembershipRoleTbl> propertyRoles = membershipRoleCrudService.findByPropertyId(propertyId);
 
         // Resolve active roles map (property-specific overrides global)
         Map<String, MembershipRoleTbl> rolesMap = new HashMap<>();
@@ -53,11 +53,21 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
             rolesMap.put(r.getCode(), r);
         }
 
+        List<UUID> roleIds = rolesMap.values().stream().map(MembershipRoleTbl::getId).toList();
+        Map<UUID, List<String>> rolePermissionsMap = new HashMap<>();
+        if (!roleIds.isEmpty()) {
+            rolePermissionsMap = rolePermissionCrudService.findByRoleIdIn(roleIds).stream()
+                    .collect(Collectors.groupingBy(
+                            rp -> rp.getRole().getId(),
+                            Collectors.mapping(rp -> rp.getPermission().getCode(), Collectors.toList())
+                    ));
+        }
+
+        final Map<UUID, List<String>> finalRolePermissionsMap = rolePermissionsMap;
+
         return rolesMap.values().stream()
                 .map(role -> {
-                    List<String> perms = rolePermissionRepository.findByRoleId(role.getId()).stream()
-                            .map(rp -> rp.getPermission().getCode())
-                            .toList();
+                    List<String> perms = finalRolePermissionsMap.getOrDefault(role.getId(), List.of());
                     return new RoleDTOs.RoleResponse(
                             role.getId(),
                             role.getCode(),
@@ -84,7 +94,7 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
 
         MembershipRoleTbl role = getResolvedRoleForEdit(propertyId, roleCode, actorId);
         role.setActive(active);
-        membershipRoleRepository.save(role);
+        membershipRoleCrudService.save(role);
     }
 
     @Override
@@ -100,18 +110,18 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
         MembershipRoleTbl role = getResolvedRoleForEdit(propertyId, roleCode, actorId);
 
         // Remove existing mappings
-        List<RolePermissionTbl> existing = rolePermissionRepository.findByRoleId(role.getId());
-        rolePermissionRepository.deleteAll(existing);
+        List<RolePermissionTbl> existing = rolePermissionCrudService.findByRoleId(role.getId());
+        rolePermissionCrudService.deleteAll(existing);
 
         // Save new mappings
-        List<PermissionTbl> permissions = permissionRepository.findByCodeIn(permissionCodes);
+        List<PermissionTbl> permissions = permissionCrudService.findByCodeIn(permissionCodes);
         List<RolePermissionTbl> newMappings = permissions.stream()
                 .map(p -> RolePermissionTbl.builder()
                         .role(role)
                         .permission(p)
                         .build())
                 .toList();
-        rolePermissionRepository.saveAll(newMappings);
+        rolePermissionCrudService.saveAll(newMappings);
     }
 
     @Override
@@ -125,7 +135,7 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
 
 
         // If duplicate custom role exists on the property
-        Optional<MembershipRoleTbl> existing = membershipRoleRepository.findByCodeAndPropertyId(code, propertyId);
+        Optional<MembershipRoleTbl> existing = membershipRoleCrudService.findByCodeAndPropertyId(code, propertyId);
         if (existing.isPresent()) {
             throw new BusinessException(HttpStatus.CONFLICT, "A custom role with this code already exists for the property.");
         }
@@ -153,17 +163,17 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
                 .isActive(true)
                 .build();
         
-        MembershipRoleTbl savedRole = membershipRoleRepository.save(customRole);
+        MembershipRoleTbl savedRole = membershipRoleCrudService.save(customRole);
 
         // Create mappings
-        List<PermissionTbl> permissions = permissionRepository.findByCodeIn(targetPerms);
+        List<PermissionTbl> permissions = permissionCrudService.findByCodeIn(targetPerms);
         List<RolePermissionTbl> mappings = permissions.stream()
                 .map(p -> RolePermissionTbl.builder()
                         .role(savedRole)
                         .permission(p)
                         .build())
                 .toList();
-        rolePermissionRepository.saveAll(mappings);
+        rolePermissionCrudService.saveAll(mappings);
 
         return savedRole;
     }
@@ -173,16 +183,16 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
      * or returns the existing property-specific role.
      */
     private MembershipRoleTbl getResolvedRoleForEdit(UUID propertyId, String roleCode, UUID actorId) {
-        Optional<MembershipRoleTbl> propSpecific = membershipRoleRepository.findByCodeAndPropertyId(roleCode, propertyId);
+        Optional<MembershipRoleTbl> propSpecific = membershipRoleCrudService.findByCodeAndPropertyId(roleCode, propertyId);
         if (propSpecific.isPresent()) {
             return propSpecific.get();
         }
 
-        MembershipRoleTbl globalRole = membershipRoleRepository.findByCodeAndPropertyIdIsNull(roleCode)
+        MembershipRoleTbl globalRole = membershipRoleCrudService.findByCodeAndPropertyIdIsNull(roleCode)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role " + roleCode + " not found."));
 
         // Validate delegation subset rule against the global role's permissions
-        List<String> globalPerms = rolePermissionRepository.findByRoleId(globalRole.getId()).stream()
+        List<String> globalPerms = rolePermissionCrudService.findByRoleId(globalRole.getId()).stream()
                 .map(rp -> rp.getPermission().getCode())
                 .toList();
         validateActorCanDelegate(propertyId, actorId, globalPerms);
@@ -200,17 +210,17 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
                 .isActive(true)
                 .build();
 
-        MembershipRoleTbl savedCloned = membershipRoleRepository.save(cloned);
+        MembershipRoleTbl savedCloned = membershipRoleCrudService.save(cloned);
 
         // Clone default permission mappings
-        List<PermissionTbl> permissions = permissionRepository.findByCodeIn(globalPerms);
+        List<PermissionTbl> permissions = permissionCrudService.findByCodeIn(globalPerms);
         List<RolePermissionTbl> mappings = permissions.stream()
                 .map(p -> RolePermissionTbl.builder()
                         .role(savedCloned)
                         .permission(p)
                         .build())
                 .toList();
-        rolePermissionRepository.saveAll(mappings);
+        rolePermissionCrudService.saveAll(mappings);
 
         return savedCloned;
     }
@@ -232,6 +242,6 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
     }
 
     private Set<String> getActorPermissions(UUID propertyId, UUID actorId) {
-        return membershipRepository.findPermissionCodesByUserIdAndPropertyId(actorId, propertyId);
+        return membershipCrudService.findPermissionCodesByUserIdAndPropertyId(actorId, propertyId);
     }
 }

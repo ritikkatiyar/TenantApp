@@ -101,7 +101,7 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
   };
 
   return (
-    <LinearGradient colors={Theme.Colors.backgroundGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
+    <LinearGradient colors={Theme.Colors.backgroundGradient as [string, string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <Text style={styles.title}>What do you want to manage?</Text>

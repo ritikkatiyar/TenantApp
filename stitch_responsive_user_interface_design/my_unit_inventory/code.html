@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Unit Inventory | FairSquare</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f1f4f6",
+                        "surface-variant": "#e0e3e5",
+                        "tertiary-fixed-dim": "#bdc9c9",
+                        "surface-dim": "#d7dadc",
+                        "background": "#f7fafc",
+                        "on-secondary-fixed": "#001c3a",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#181c1e",
+                        "tertiary-fixed": "#d9e5e5",
+                        "on-secondary-fixed-variant": "#2f486a",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "outline": "#6e7979",
+                        "on-tertiary-container": "#f0fcfc",
+                        "on-primary-fixed": "#002020",
+                        "outline-variant": "#bdc9c8",
+                        "secondary-fixed-dim": "#afc8f0",
+                        "secondary-fixed": "#d4e3ff",
+                        "on-tertiary-fixed": "#131d1e",
+                        "tertiary": "#515c5d",
+                        "on-surface-variant": "#3e4949",
+                        "tertiary-container": "#697575",
+                        "secondary": "#476083",
+                        "inverse-surface": "#2d3133",
+                        "on-background": "#181c1e",
+                        "surface-bright": "#f7fafc",
+                        "surface-tint": "#006a6a",
+                        "inverse-primary": "#76d6d5",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eef1f3",
+                        "secondary-container": "#bdd6ff",
+                        "on-primary-container": "#e3fffe",
+                        "surface-container-high": "#e5e9eb",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-error-container": "#93000a",
+                        "on-secondary-container": "#445d80",
+                        "primary": "#006565",
+                        "primary-fixed": "#93f2f2",
+                        "surface": "#f7fafc",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "primary-container": "#008080",
+                        "on-tertiary-fixed-variant": "#3e4949",
+                        "surface-container": "#ebeef0",
+                        "primary-fixed-dim": "#76d6d5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "xs": "8px",
+                        "gutter": "24px",
+                        "md": "24px",
+                        "lg": "32px",
+                        "sm": "16px",
+                        "margin-mobile": "16px",
+                        "base": "4px",
+                        "xl": "48px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Manrope"],
+                        "label-caps": ["JetBrains Mono"],
+                        "title-md": ["Manrope"],
+                        "financial-data": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "financial-data": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f7fafc;
+            color: #181c1e;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .receipt-dashed {
+            background-image: linear-gradient(to right, #bdc9c8 50%, transparent 50%);
+            background-size: 8px 1px;
+            background-repeat: repeat-x;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="font-body-lg text-body-lg">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim shadow-sm w-full sticky top-0 z-50">
+<div class="flex justify-between items-center h-16 px-margin-mobile md:px-margin-desktop w-full">
+<div class="flex items-center gap-sm">
+<span class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary dark:text-primary-fixed-dim">FairSquare</span>
+</div>
+<div class="hidden md:flex gap-md items-center">
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-colors font-body-sm text-body-sm px-sm py-xs rounded-lg" href="#">Home</a>
+<a class="text-primary font-bold border-b-2 border-primary font-body-sm text-body-sm px-sm py-xs" href="#">Inventory</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-colors font-body-sm text-body-sm px-sm py-xs rounded-lg" href="#">Reports</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-colors font-body-sm text-body-sm px-sm py-xs rounded-lg" href="#">Profile</a>
+</div>
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined p-xs text-on-surface-variant cursor-pointer active:scale-95 transition-all">notifications</button>
+<button class="material-symbols-outlined p-xs text-on-surface-variant cursor-pointer active:scale-95 transition-all">account_circle</button>
+</div>
+</div>
+</header>
+<main class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-lg space-y-xl pb-32">
+<!-- Header & Unit Info -->
+<section class="space-y-sm">
+<h1 class="font-display-lg text-display-lg text-on-surface">My Unit Inventory</h1>
+<p class="text-on-surface-variant font-body-lg max-w-2xl">Review the move-in condition and detailed logs of all appliances and furniture assigned to <span class="font-semibold text-primary">Unit 402, Highline Ridge</span>.</p>
+</section>
+<!-- Bento Grid Layout for Inventory -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Unit Stats Summary (Asymmetric Item) -->
+<div class="md:col-span-4 bg-surface-container-low rounded-xl p-lg space-y-md border border-outline-variant/30">
+<h3 class="font-title-md text-title-md text-primary">Unit Condition Snapshot</h3>
+<div class="space-y-sm">
+<div class="flex justify-between items-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<span class="text-on-surface-variant font-body-sm">Total Items</span>
+<span class="font-financial-data text-financial-data">14</span>
+</div>
+<div class="flex justify-between items-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<span class="text-on-surface-variant font-body-sm">Excellent Condition</span>
+<span class="font-financial-data text-financial-data text-primary">12</span>
+</div>
+<div class="flex justify-between items-center p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/20">
+<span class="text-on-surface-variant font-body-sm">Minor Wear</span>
+<span class="font-financial-data text-financial-data text-secondary">2</span>
+</div>
+</div>
+<div class="receipt-dashed h-px w-full my-md"></div>
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<p class="text-body-sm text-on-surface-variant italic">Last verified by management on Oct 24, 2023 during move-in walkthrough.</p>
+</div>
+</div>
+<!-- Primary Inventory List (Main Content) -->
+<div class="md:col-span-8 space-y-md">
+<div class="flex justify-between items-center">
+<h2 class="font-title-md text-title-md">Major Appliances</h2>
+<span class="font-label-caps text-label-caps bg-secondary-container text-on-secondary-container px-sm py-1 rounded-full uppercase tracking-wider">Read Only</span>
+</div>
+<!-- Checklist Item 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl overflow-hidden hover:shadow-sm transition-all duration-200">
+<div class="flex flex-col md:flex-row h-full">
+<div class="md:w-48 h-48 md:h-auto overflow-hidden relative group">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A premium, modern stainless steel smart refrigerator in a clean, high-end kitchen setting. The lighting is soft and bright, highlighting the brushed metal texture and the sleek digital display on the door. The overall aesthetic is professional and minimalist, fitting a modern corporate property management interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_8-sT9CDZgEACJNcTe5iAAMltIqds2UiW9PZGDPej2WDa2-mJV7wsF-arsv-udKIVO5kF4XDG-3SIYqcfIzL6qN7wAic5c7Wx-OU-0IYG3BDy4PaFg3hb8It3brYq4pxnRc76hoXcqXnp2cxcCNE-bwKoBXv9p8LY9rotd_GEvOIYthPeO4H5dpKbqm7aubO_Lw9yVXhZh8runu1Xl-Jdu2eZpy_xBKOaBEq1nkukKne-_oFoHlvz-IgufIqvPmsne9q4g7Pvmq8"/>
+<div class="absolute bottom-2 right-2 bg-primary/90 text-white px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tighter">Verified</div>
+</div>
+<div class="p-md flex-1 flex flex-col justify-between">
+<div class="space-y-xs">
+<div class="flex justify-between items-start">
+<h4 class="font-title-md text-title-md">Samsung Bespoke Refrigerator</h4>
+<div class="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-lg text-xs font-semibold">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                        Excellent
+                                    </div>
+</div>
+<p class="text-body-sm text-on-surface-variant line-clamp-2">Model: RF29A9671SR. Documentation includes smart hub manual and internal shelf inventory.</p>
+</div>
+<div class="mt-md pt-md border-t border-outline-variant/20 flex justify-between items-center">
+<button class="text-primary font-semibold font-body-sm flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-lg">image</span> View Move-in Photos
+                                </button>
+<span class="text-on-surface-variant font-label-caps text-label-caps">ID: FSC-402-APP01</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Checklist Item 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl overflow-hidden hover:shadow-sm transition-all duration-200">
+<div class="flex flex-col md:flex-row h-full">
+<div class="md:w-48 h-48 md:h-auto overflow-hidden relative group">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A built-in high-performance microwave oven integrated into dark grey cabinetry. The finish is professional black glass and steel, glowing slightly under subtle under-cabinet LED lighting. The style is contemporary and clean, emphasizing functional precision for a luxury apartment unit." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJenu7VUaQw8eVfO2JYdCmKV_Bch_MONF9S4RQO-5pJrjA-Odwr5bKuvZVJ0rxJADUBRGU5j5VGPUkcNCL8iCIO9e5AKTkxJS9xfxV-OCJHNQE-jSVtBG9ktqB11DariGfAc-0JbJ4fzUkBaC6QxTXmpFLOsjde650SPcI7BCbIeMRu62JJNQ4MlTgbnvlpQtJ_ywqBaL3U-T0ywU3dd9noY53gXhfSepEhybbFri3J2NQo6zmmkZsqe1tAFAYT7yfg__AqJdm63A"/>
+<div class="absolute bottom-2 right-2 bg-secondary/90 text-white px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tighter">Note Attached</div>
+</div>
+<div class="p-md flex-1 flex flex-col justify-between">
+<div class="space-y-xs">
+<div class="flex justify-between items-start">
+<h4 class="font-title-md text-title-md">Built-in Microwave Oven</h4>
+<div class="flex items-center gap-1 px-2 py-1 bg-secondary-container/30 text-secondary rounded-lg text-xs font-semibold">
+<span class="material-symbols-outlined text-sm">info</span>
+                                        Minor Wear
+                                    </div>
+</div>
+<p class="text-body-sm text-on-surface-variant line-clamp-2">Model: ME19R7041FS. Note: Small superficial scratch on the interior door seal, noted on Oct 24.</p>
+</div>
+<div class="mt-md pt-md border-t border-outline-variant/20 flex justify-between items-center">
+<button class="text-primary font-semibold font-body-sm flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-lg">image</span> View Move-in Photos
+                                </button>
+<span class="text-on-surface-variant font-label-caps text-label-caps">ID: FSC-402-APP02</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Property-wide Amenities Section -->
+<section class="space-y-lg">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div class="space-y-xs">
+<h2 class="font-headline-lg text-headline-lg">Property-wide Amenities</h2>
+<p class="text-on-surface-variant font-body-lg">Included in your lease at Highline Ridge. Responsibility for common areas is shared.</p>
+</div>
+<button class="bg-primary text-on-primary px-lg py-sm rounded-lg font-semibold font-body-sm hover:bg-primary-container transition-colors shadow-sm active:scale-95">
+                    Book Amenity
+                </button>
+</div>
+<!-- Amenities Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Amenity 1 -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container-low border border-outline-variant/20 h-64">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A crystal clear luxury rooftop swimming pool at sunset. The water is calm, reflecting the soft orange and pink hues of the sky. Minimalist lounge chairs and professional landscaping surround the pool. The atmosphere is serene, high-end, and evokes institutional trust and property value." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSL0ZgFEE_zRLghc2ZJOYdvQz1kWlVbh143hrQi4YFyugJh0HeewKND3hXVTMOi3p1tuBmiC2heThau3pW9O1BKYLEn-qEwnhSab0-1BsiF4fwWKlij5VoTA5OMIaLWwEwqCK2fNWDpM5s4vfZmNfdi_P9Lleta02h0umi7fGDDJb3fSvQypiACwuQr-JxY47lnsjP8rc3_4ITuLusKDmVG-iLtOkYqr0Ad_v2WJFoA2fniQJhksvYRoXmSlt95lkF0aM1qiiSGjc"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
+<div class="absolute bottom-0 left-0 p-lg z-20 w-full space-y-xs">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-white">pool</span>
+<h4 class="font-title-md text-title-md text-white">Skyline Pool &amp; Deck</h4>
+</div>
+<p class="text-white/80 font-body-sm">Level 12 • Open 6:00 AM — 10:00 PM</p>
+</div>
+</div>
+<!-- Amenity 2 -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container-low border border-outline-variant/20 h-64">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A modern, high-tech fitness center with state-of-the-art rowing machines and treadmills. The floor is clean charcoal rubber, and the lighting is bright and industrial-chic. The setting is impeccably clean and organized, conveying a sense of premium service and well-maintained property facilities." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtGlTjIIvD1Q-TLaRUIMpNNVB85a6TL95qhD6WhsXTCBu3DM-bhWgQhnJCN1Zt9-_QanDrhuccj-LC4u2FJ96O5yQVPSMwUaDvrjh30hCSoM7Fi_rUGvNelTm_8DJBWD5LfnuM332mjRjaaG32LQ8OxE4z0VYhrYlLmLkcCAPql9Mx39iFrUDDQ9XQLpHne16rqjHz-HkrcYYAO2FMP0rgdikmZG7oPOS3V_Gd1rEQigp9HeJtm8WiKfl13gr65aVMtqBwe13AJAI"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
+<div class="absolute bottom-0 left-0 p-lg z-20 w-full space-y-xs">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-white">fitness_center</span>
+<h4 class="font-title-md text-title-md text-white">Pro-Fit Gym Suite</h4>
+</div>
+<p class="text-white/80 font-body-sm">Level 2 • Open 24/7</p>
+</div>
+</div>
+<!-- Amenity 3 -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container-low border border-outline-variant/20 h-64">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A sophisticated co-working lounge with individual soundproof pods and large communal tables. The space features mid-century modern furniture, soft warm lighting, and a coffee station in the background. The design is minimalist and highly functional, perfect for a modern professional living environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsy5r7nXzed6ZOiMOzXurdmLqfNjEJVsHLk2mwbx0kXjlZbgVFBEB7CJvKuAcfupKXF-dTW-JaKfvzYtdzX1m1XnT07xmT8qq1djuBCAsUBTl5N_msnZuOGzAIOMxHSD5cITz54HnrsuJjy4dqHqk0mWaThUAOdWwDDFH2fxPGbKu23y7KZJ7BM5pIR-VWU_EwrJiNked-QITiatK7G_dKbqU_bRP04jq8Ez3Rqg-P1kFI-6fx7A0bHGbrQc-41Wdg0ugSZWIsF5o"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
+<div class="absolute bottom-0 left-0 p-lg z-20 w-full space-y-xs">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-white">work</span>
+<h4 class="font-title-md text-title-md text-white">FairSquare Hub</h4>
+</div>
+<p class="text-white/80 font-body-sm">Lobby Level • Key Access Only</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-margin-mobile pb-safe bg-surface dark:bg-surface-dim shadow-lg rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">checklist</span>
+<span class="font-label-caps text-label-caps mt-1">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-caps text-label-caps mt-1">Reports</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-label-caps mt-1">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple interaction for move-in photos button
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if(btn.textContent.includes('View Move-in Photos')) {
+                    console.log('Loading high-resolution move-in condition images...');
+                }
+            });
+        });
+
+        // Tonal layer handling for accessibility on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-md');
+            } else {
+                header.classList.remove('shadow-md');
+            }
+        });
+    </script>
+</body></html>

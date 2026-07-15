@@ -14,7 +14,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+
 import java.util.UUID;
 
 @RestController
@@ -52,18 +56,19 @@ public class AnnouncementController {
      * For tenants, returns scoped notices for their active lease. For landlords/staff, returns all notices for the specified property.
      */
 
-    public ResponseEntity<ApiResponse<List<AnnouncementResponse>>> getAnnouncements(
+    public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getAnnouncements(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
-            @RequestParam(required = false) UUID propertyId) {
+            @RequestParam(required = false) UUID propertyId,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 15) Pageable pageable) {
 
         UUID userId = UUID.fromString(currentUser.getId());
 
         if (propertyId != null && authorizationService.hasPermission(propertyId, "PROPERTY_VIEW")) {
-            return ResponseEntity.ok(ApiResponse.success(announcementService.getAnnouncementsForProperty(propertyId, userId)));
+            return ResponseEntity.ok(ApiResponse.success(announcementService.getAnnouncementsForProperty(propertyId, userId, pageable)));
         }
 
         if (propertyId == null || authorizationService.hasRole(propertyId, "PROPERTY_TENANT")) {
-            return ResponseEntity.ok(ApiResponse.success(announcementService.getNoticesForTenant(userId)));
+            return ResponseEntity.ok(ApiResponse.success(announcementService.getNoticesForTenant(userId, pageable)));
         }
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));

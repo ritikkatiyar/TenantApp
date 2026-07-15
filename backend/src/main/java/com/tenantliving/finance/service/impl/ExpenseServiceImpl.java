@@ -16,7 +16,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.tenantliving.finance.service.interfaces.ExpenseCrudService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 @Service
@@ -24,7 +27,7 @@ import java.util.UUID;
 @Slf4j
 public class ExpenseServiceImpl implements ExpenseService {
 
-    private final ExpenseRepository expenseRepository;
+    private final ExpenseCrudService expenseCrudService;
     private final ExpenseGroupService expenseGroupService;
     private final UserQueryService userQueryService;
 
@@ -41,7 +44,7 @@ public class ExpenseServiceImpl implements ExpenseService {
                 .description(request.description())
                 .billingMonth(request.billingMonth())
                 .build();
-        ExpenseTbl saved = expenseRepository.save(expense);
+        ExpenseTbl saved = expenseCrudService.save(expense);
         log.info("expense_created expenseId={} expenseGroupId={} createdBy={} expenseType={} totalAmount={}",
                 saved.getId(), saved.getExpenseGroup().getId(), saved.getCreatedBy(), saved.getExpenseType(), saved.getTotalAmount());
         return saved;
@@ -50,17 +53,17 @@ public class ExpenseServiceImpl implements ExpenseService {
     @Override
     @Transactional(readOnly = true)
     public ExpenseTbl getById(UUID id) {
-        return expenseRepository.findById(id)
+        return expenseCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Expense not found"));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ExpenseTbl> list(UUID expenseGroupId, String billingMonth) {
+    public Page<ExpenseTbl> list(UUID expenseGroupId, String billingMonth, Pageable pageable) {
         Specification<ExpenseTbl> spec = Specification
                 .where(ExpenseSpecifications.hasExpenseGroupId(expenseGroupId))
                 .and(ExpenseSpecifications.hasBillingMonth(billingMonth));
 
-        return expenseRepository.findAll(spec);
+        return expenseCrudService.findAll(spec, pageable);
     }
 }

@@ -3,7 +3,7 @@ package com.tenantliving.finance.service.impl;
 import com.tenantliving.common.domain.LeaseStatus;
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.finance.domain.LeaseTbl;
-import com.tenantliving.finance.repository.LeaseRepository;
+import com.tenantliving.finance.service.interfaces.LeaseCrudService;
 import com.tenantliving.finance.service.interfaces.LeaseQueryService;
 
 import lombok.RequiredArgsConstructor;
@@ -24,44 +24,44 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class LeaseQueryServiceImpl implements LeaseQueryService {
 
-    private final LeaseRepository leaseRepository;
+    private final LeaseCrudService leaseCrudService;
 
     @Override
     public LeaseTbl getLeaseById(UUID id) {
-        return leaseRepository.findById(id)
+        return leaseCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
     }
 
     @Override
     public boolean existsByUnitId(UUID unitId) {
-        return leaseRepository.existsByUnit_Id(unitId);
+        return leaseCrudService.existsByUnit_Id(unitId);
     }
 
     @Override
     public Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status) {
-        return leaseRepository.findByUserIdAndStatus(userId, status);
+        return leaseCrudService.findByUserIdAndStatus(userId, status);
     }
 
     @Override
     public List<LeaseTbl> findByUnitIdAndStatus(UUID unitId, LeaseStatus status) {
-        return leaseRepository.findByUnitIdAndStatus(unitId, status).stream().toList();
+        return leaseCrudService.findByUnitIdAndStatus(unitId, status).stream().toList();
     }
 
     @Override
     public List<LeaseTbl> findActiveLeasesByProperty(UUID propertyId) {
-        return leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE).stream().toList();
+        return leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE).stream().toList();
     }
 
     @Override
     public Map<UUID, List<LeaseTbl>> findActiveLeasesByUnitIds(Collection<UUID> unitIds) {
         if (unitIds == null || unitIds.isEmpty()) return Collections.emptyMap();
-        return leaseRepository.findByUnit_IdInAndStatus(unitIds, LeaseStatus.ACTIVE)
+        return leaseCrudService.findByUnit_IdInAndStatus(unitIds, LeaseStatus.ACTIVE)
                 .stream()
                 .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
     }
 
     @Override
     public boolean existsByPropertyId(UUID propertyId) {
-        return leaseRepository.existsByUnit_Property_Id(propertyId);
+        return leaseCrudService.existsByUnit_Property_Id(propertyId);
     }
 }

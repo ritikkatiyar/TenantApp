@@ -11,7 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+
 import java.util.UUID;
 
 @RestController
@@ -49,15 +53,16 @@ public class ExpenseController {
      */
 
     
-    public ResponseEntity<ApiResponse<List<ExpenseDTOs.ExpenseResponse>>> list(
+    public ResponseEntity<ApiResponse<Page<ExpenseDTOs.ExpenseResponse>>> list(
             
             @RequestParam(required = true) UUID expenseGroupId,
             
-            @RequestParam(required = false) String billingMonth
+            @RequestParam(required = false) String billingMonth,
+            
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 30) Pageable pageable
     ) {
-        return ResponseEntity.ok(ApiResponse.success(expenseService.list(expenseGroupId, billingMonth)
-                .stream()
-                .map(ExpenseMapper::toResponse)
-                .toList()));
+        Page<ExpenseDTOs.ExpenseResponse> responses = expenseService.list(expenseGroupId, billingMonth, pageable)
+                .map(ExpenseMapper::toResponse);
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 }

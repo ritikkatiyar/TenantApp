@@ -223,6 +223,49 @@ function Stop-ChildProcess {
     }
 }
 
+function Get-PortOccupants {
+    param([int]$Port)
+
+    try {
+        $connections = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop
+    } catch {
+        return @()
+    }
+
+    $processIds = @($connections | Select-Object -ExpandProperty OwningProcess -Unique)
+    return @(
+        foreach ($processId in $processIds) {
+            try {
+                $process = Get-Process -Id $processId -ErrorAction Stop
+                [PSCustomObject]@{
+                    Id = $process.Id
+                    ProcessName = $process.ProcessName
+                }
+            } catch {
+                [PSCustomObject]@{
+                    Id = $processId
+                    ProcessName = "unknown"
+                }
+            }
+        }
+    )
+}
+
+function Assert-PortAvailable {
+    param(
+        [int]$Port,
+        [string]$ServiceName
+    )
+
+    $occupants = @(Get-PortOccupants $Port)
+    if ($occupants.Count -eq 0) {
+        return
+    }
+
+    $details = ($occupants | ForEach-Object { "$($_.ProcessName) (PID $($_.Id))" }) -join ", "
+    throw "$ServiceName port $Port is already in use by $details. Stop that process or rerun with a different port, for example: .\dev.ps1 start -FrontendPort 3001"
+}
+
 function Ensure-MavenModuleCompiled {
     param(
         [string]$ModuleDir,
@@ -291,6 +334,9 @@ Ensure-MavenModuleCompiled -ModuleDir $BackendDir -RequiredClassRelativePaths @(
     "com\tenantliving\TenantLivingApplication.class",
     "com\tenantliving\user\service\impl\UserServiceImpl.class"
 )
+
+Assert-PortAvailable -Port $BackendPort -ServiceName "Backend"
+Assert-PortAvailable -Port $FrontendPort -ServiceName "Frontend"
 
 Write-Step "Starting backend on http://localhost:$BackendPort"
 

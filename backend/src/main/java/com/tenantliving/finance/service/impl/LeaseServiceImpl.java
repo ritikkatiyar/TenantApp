@@ -4,13 +4,14 @@ import com.tenantliving.common.domain.LeaseStatus;
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.finance.domain.LeaseTbl;
 import com.tenantliving.finance.dto.LeaseDTOs;
-import com.tenantliving.finance.repository.LeaseRepository;
 import com.tenantliving.finance.service.interfaces.LeaseService;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.auth.service.interfaces.MembershipService;
+
+import com.tenantliving.finance.service.interfaces.LeaseCrudService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ import java.util.UUID;
 @Transactional
 public class LeaseServiceImpl implements LeaseService {
 
-    private final LeaseRepository leaseRepository;
+    private final LeaseCrudService leaseCrudService;
     private final UnitQueryService unitQueryService;
     private final UserQueryService userQueryService;
     private final MembershipService membershipService;
@@ -47,7 +48,7 @@ public class LeaseServiceImpl implements LeaseService {
         if (unit.getCapacity() == null || unit.getCapacity() <= 0) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Unit capacity must be defined before assigning tenants.");
         }
-        int activeLeaseCount = leaseRepository.findByUnitIdAndStatus(unit.getId(), LeaseStatus.ACTIVE).size();
+        int activeLeaseCount = leaseCrudService.findByUnitIdAndStatus(unit.getId(), LeaseStatus.ACTIVE).size();
         if (activeLeaseCount >= unit.getCapacity()) {
             throw new BusinessException(HttpStatus.CONFLICT, "Unit capacity of " + unit.getCapacity() + " has been reached.");
         }
@@ -63,7 +64,7 @@ public class LeaseServiceImpl implements LeaseService {
                 .moveOutDate(request.moveOutDate())
                 .status(request.status() != null ? request.status() : LeaseStatus.ACTIVE)
                 .build();
-        LeaseTbl saved = leaseRepository.save(lease);
+        LeaseTbl saved = leaseCrudService.save(lease);
         log.info("lease_created leaseId={} userId={} unitId={} status={}",
                 saved.getId(), saved.getUserId(), saved.getUnit().getId(), saved.getStatus());
         return saved;
@@ -71,15 +72,15 @@ public class LeaseServiceImpl implements LeaseService {
 
     @Override
     public void deleteLease(UUID id) {
-        LeaseTbl lease = leaseRepository.findById(id)
+        LeaseTbl lease = leaseCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
         UUID tenantId = lease.getUserId();
         UUID propertyId = lease.getUnit().getProperty().getId();
 
-        leaseRepository.delete(lease);
+        leaseCrudService.delete(lease);
 
         // Check if this tenant has any other active leases in any unit of the same property
-        boolean hasOtherLeases = leaseRepository.existsByUserIdAndPropertyIdAndStatus(
+        boolean hasOtherLeases = leaseCrudService.existsByUserIdAndPropertyIdAndStatus(
                 tenantId, propertyId, LeaseStatus.ACTIVE
         );
 

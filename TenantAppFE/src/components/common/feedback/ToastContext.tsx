@@ -94,7 +94,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
         const okButton = buttons?.[0];
         if (okButton?.onPress) {
-          setTimeout(() => okButton.onPress(), 1200);
+          const onPress = okButton.onPress;
+          setTimeout(() => onPress(), 1200);
         }
       }
     };

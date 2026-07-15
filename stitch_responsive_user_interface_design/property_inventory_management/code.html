@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FairSquare Pro | Property Inventory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&family=Manrope:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Tailwind Config Verbatim -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f1f4f6",
+                    "surface-variant": "#e0e3e5",
+                    "tertiary-fixed-dim": "#bdc9c9",
+                    "surface-dim": "#d7dadc",
+                    "background": "#f7fafc",
+                    "on-secondary-fixed": "#001c3a",
+                    "on-error": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-surface": "#181c1e",
+                    "tertiary-fixed": "#d9e5e5",
+                    "on-secondary-fixed-variant": "#2f486a",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "outline": "#6e7979",
+                    "on-tertiary-container": "#f0fcfc",
+                    "on-primary-fixed": "#002020",
+                    "outline-variant": "#bdc9c8",
+                    "secondary-fixed-dim": "#afc8f0",
+                    "secondary-fixed": "#d4e3ff",
+                    "on-tertiary-fixed": "#131d1e",
+                    "tertiary": "#515c5d",
+                    "on-surface-variant": "#3e4949",
+                    "tertiary-container": "#697575",
+                    "secondary": "#476083",
+                    "inverse-surface": "#2d3133",
+                    "on-background": "#181c1e",
+                    "surface-bright": "#f7fafc",
+                    "surface-tint": "#006a6a",
+                    "inverse-primary": "#76d6d5",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#eef1f3",
+                    "secondary-container": "#bdd6ff",
+                    "on-primary-container": "#e3fffe",
+                    "surface-container-high": "#e5e9eb",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-error-container": "#93000a",
+                    "on-secondary-container": "#445d80",
+                    "primary": "#006565",
+                    "primary-fixed": "#93f2f2",
+                    "surface": "#f7fafc",
+                    "surface-container": "#ebeef0",
+                    "primary-fixed-dim": "#76d6d5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "40px",
+                    "xs": "8px",
+                    "gutter": "24px",
+                    "md": "24px",
+                    "lg": "32px",
+                    "sm": "16px",
+                    "margin-mobile": "16px",
+                    "base": "4px",
+                    "xl": "48px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "label-caps": ["JetBrains Mono"],
+                    "title-md": ["Manrope"],
+                    "financial-data": ["JetBrains Mono"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "display-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "financial-data": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f7fafc;
+            color: #181c1e;
+        }
+        /* Hide scrollbars for sidebars but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .receipt-dashed {
+            border-top: 2px dashed #bdc9c8;
+        }
+    </style>
+</head>
+<body class="font-body-lg text-body-lg">
+<!-- TopNavBar (Shared Component) -->
+<header class="w-full sticky top-0 z-50 bg-surface dark:bg-surface-dim shadow-sm flex justify-between items-center h-16 px-margin-desktop md:pl-72">
+<div class="flex items-center gap-md">
+<span class="font-headline-lg text-headline-lg text-primary dark:text-primary-fixed-dim">FairSquare</span>
+<div class="hidden md:flex items-center gap-sm ml-lg">
+<div class="relative group">
+<input class="bg-surface-container-low border-none rounded-full px-lg py-xs w-64 focus:ring-2 focus:ring-primary transition-all text-body-sm" placeholder="Search inventory..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+</div>
+</div>
+</div>
+<nav class="flex items-center gap-md">
+<div class="cursor-pointer active:scale-95 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<div class="cursor-pointer active:scale-95 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-colors p-1 rounded-full border border-outline-variant">
+<span class="material-symbols-outlined">account_circle</span>
+</div>
+</nav>
+</header>
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden md:flex h-screen w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container flex-col py-lg px-sm gap-xs z-[60]">
+<div class="px-sm mb-lg">
+<h1 class="font-headline-lg text-headline-lg text-primary dark:text-primary-fixed-dim leading-none">FairSquare Pro</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant opacity-70">Institutional Management</p>
+</div>
+<div class="flex-1 space-y-base overflow-y-auto no-scrollbar">
+<!-- Navigation Items - Inventory is Active -->
+<a class="flex items-center gap-sm px-sm py-md bg-secondary-container text-on-secondary-container rounded-lg font-semibold transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">assignment</span>
+<span class="font-body-sm text-body-sm">Inventory</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">home_work</span>
+<span class="font-body-sm text-body-sm">Properties</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-sm text-body-sm">Leases</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-sm text-body-sm">Payments</span>
+</a>
+</div>
+<div class="mt-auto pt-lg border-t border-outline-variant space-y-base">
+<button class="w-full bg-primary text-on-primary font-bold py-md rounded-xl hover:bg-primary-container transition-colors shadow-sm active:scale-95 flex items-center justify-center gap-xs mb-md">
+<span class="material-symbols-outlined">add</span>
+                New Property
+            </button>
+<a class="flex items-center gap-sm px-sm py-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-sm text-body-sm">Settings</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant rounded-lg transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-sm text-body-sm">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:pl-64 pt-4 pb-24 md:pb-8 min-h-screen">
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop space-y-lg">
+<!-- Page Header & Filters -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Property Inventory</h2>
+<p class="text-on-surface-variant font-body-sm">Centralized management of physical assets across all managed properties.</p>
+</div>
+<div class="flex flex-wrap gap-sm">
+<button class="flex items-center gap-xs px-lg py-sm bg-surface-container-high rounded-full font-body-sm text-on-surface-variant hover:bg-surface-variant transition-colors border border-outline-variant">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+                        Filters
+                    </button>
+<div class="h-10 w-[1px] bg-outline-variant mx-1 hidden md:block"></div>
+<button class="flex items-center gap-xs px-lg py-sm bg-secondary-container text-on-secondary-container rounded-full font-body-sm hover:brightness-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">handyman</span>
+                        Due for Service
+                    </button>
+<button class="flex items-center gap-xs px-lg py-sm bg-surface-container-lowest text-on-surface rounded-full font-body-sm border border-outline-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-[20px]">groups</span>
+                        Shared Property
+                    </button>
+</div>
+</section>
+<!-- Statistics Grid -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-surface-variant shadow-sm group hover:shadow-md transition-shadow">
+<p class="text-on-surface-variant font-label-caps uppercase tracking-wider mb-xs">Total Assets</p>
+<h3 class="font-display-lg text-display-lg text-primary leading-tight">412</h3>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm mt-xs">
+<span class="material-symbols-outlined text-green-600 text-[18px]">trending_up</span>
+<span>+12 this month</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-surface-variant shadow-sm group hover:shadow-md transition-shadow">
+<p class="text-on-surface-variant font-label-caps uppercase tracking-wider mb-xs">Maintenance Due</p>
+<h3 class="font-display-lg text-display-lg text-error leading-tight">08</h3>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm mt-xs">
+<span class="material-symbols-outlined text-error text-[18px]">warning</span>
+<span>High priority items</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-surface-variant shadow-sm group hover:shadow-md transition-shadow">
+<p class="text-on-surface-variant font-label-caps uppercase tracking-wider mb-xs">Unassigned</p>
+<h3 class="font-display-lg text-display-lg text-secondary leading-tight">24</h3>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm mt-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">inventory_2</span>
+<span>In storage warehouse</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-surface-variant shadow-sm group hover:shadow-md transition-shadow">
+<p class="text-on-surface-variant font-label-caps uppercase tracking-wider mb-xs">Valuation</p>
+<h3 class="font-financial-data text-display-lg text-on-surface leading-tight">$82k</h3>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm mt-xs">
+<span class="material-symbols-outlined text-[18px]">calculate</span>
+<span>Replacement cost</span>
+</div>
+</div>
+</section>
+<!-- Inventory Table Container -->
+<section class="bg-surface-container-lowest rounded-xl border border-surface-variant shadow-sm overflow-hidden">
+<!-- Search & Actions Bar -->
+<div class="p-md flex flex-col md:flex-row md:items-center justify-between gap-md border-b border-surface-variant">
+<div class="flex items-center gap-md">
+<h4 class="font-title-md text-title-md text-on-surface">Itemized Registry</h4>
+<span class="bg-surface-container-high text-on-surface-variant font-label-caps px-sm py-1 rounded-full">Showing 15 of 412</span>
+</div>
+<div class="flex items-center gap-sm">
+<button class="p-sm text-outline hover:bg-surface-variant rounded-lg transition-colors">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button class="p-sm text-outline hover:bg-surface-variant rounded-lg transition-colors">
+<span class="material-symbols-outlined">print</span>
+</button>
+<button class="bg-primary text-on-primary font-bold px-lg py-sm rounded-lg hover:brightness-110 active:scale-95 transition-all text-body-sm">
+                            Add Item
+                        </button>
+</div>
+</div>
+<!-- Desktop Table View -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container font-label-caps text-on-surface-variant text-[11px] uppercase tracking-widest">
+<th class="px-lg py-md font-medium">Item Details</th>
+<th class="px-lg py-md font-medium">Category</th>
+<th class="px-lg py-md font-medium">Location</th>
+<th class="px-lg py-md font-medium">Condition</th>
+<th class="px-lg py-md font-medium">Status</th>
+<th class="px-lg py-md font-medium text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant">
+<!-- Item Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center overflow-hidden">
+<img class="object-cover w-full h-full" data-alt="A clean, professional close-up of a modern silver stainless steel refrigerator in a bright, minimalist apartment kitchen. The lighting is high-key and soft, emphasizing the metallic textures and pristine environment consistent with a high-end corporate property management app's visual style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCE3to0rxKS_LKmgr6oZf65UX44aFl6oQVxo5JOBMgfu_vMHtVJ9L-bP-zgIgA8Bh-m1cS4or7Bs-3n4X_Uluj--rcR1LxA3w55e11PCvgbh_-BCC-In4a_AYr2FeeAH71Dy2l5xiJ3mJ-MstYkVGMwLcQfUCGp7f37z9LtSLe5WJ_sMcXPjOpeQlkZx9uZ2bOsHmyOEJwg7HPWfESp5D81GbOXveNGZ4BlrsEN9Df46avU_CL9_3mOocGxvyBujLbT0L9mKM3Yef8"/>
+</div>
+<div>
+<p class="font-semibold text-on-surface text-body-sm">Refrigerator (Samsung 700L)</p>
+<p class="text-outline text-[12px] font-financial-data">SN: SAM-8231-90X</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="bg-surface-container-high text-on-surface-variant px-sm py-1 rounded-full text-[12px]">Appliances</span>
+</td>
+<td class="px-lg py-md text-on-surface-variant text-body-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">meeting_room</span>
+                                        Unit #402
+                                    </div>
+</td>
+<td class="px-lg py-md">
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="text-on-surface font-body-sm">Excellent</span>
+</div>
+</td>
+<td class="px-lg py-md">
+<div class="bg-secondary-container text-on-secondary-container px-sm py-1 rounded-full text-[12px] font-medium inline-block">Assigned</div>
+</td>
+<td class="px-lg py-md text-right">
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Item Row 2 (Due for Service) -->
+<tr class="hover:bg-surface-container-low transition-colors group bg-error/5">
+<td class="px-lg py-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center overflow-hidden">
+<img class="object-cover w-full h-full" data-alt="A detailed professional photograph of a modern white wall-mounted air conditioning unit in a contemporary living space. The composition is clean and minimalist, with soft shadows and natural daylight, reflecting a corporate reliability and data-focused design aesthetic for property managers." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTjtGjsvOrCmrvL1de3jLLdpI3U6A5KuFbkI0yYWmLWfyWoM2d2o6BOxrJ_1tWmcJOC11UadUxNZ_6YG8HzYklRxYd99HU-QA8n7z4x0pY9GQZMAwEDYn5HJ0TXtMYke8xyLt4H3xD4We4PtwNiIQuMjNEE01oQRI8qYFuSnRsZwlVX4L4p7V9VLp1PjWs_fNFMeEx2eh9WU4V2SZKeT_iwqv3rAthXSPODguDPCrrf-0I2X3v_45W4PHXOd-oB49i9n3TKhkJ7Dg"/>
+</div>
+<div>
+<p class="font-semibold text-on-surface text-body-sm">HVAC System (Central AC)</p>
+<p class="text-error font-body-sm flex items-center gap-xs mt-1">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                                                Service Due
+                                            </p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="bg-surface-container-high text-on-surface-variant px-sm py-1 rounded-full text-[12px]">HVAC</span>
+</td>
+<td class="px-lg py-md text-on-surface-variant text-body-sm">
+<div class="flex items-center gap-xs text-error font-medium">
+<span class="material-symbols-outlined text-[18px]">groups</span>
+                                        Shared (Roof)
+                                    </div>
+</td>
+<td class="px-lg py-md">
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-orange-400"></div>
+<span class="text-on-surface font-body-sm">Fair</span>
+</div>
+</td>
+<td class="px-lg py-md">
+<div class="bg-primary-container text-on-primary-container px-sm py-1 rounded-full text-[12px] font-medium inline-block">Active</div>
+</td>
+<td class="px-lg py-md text-right">
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Item Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center overflow-hidden">
+<img class="object-cover w-full h-full" data-alt="A high-quality studio shot of a modern dark gray fabric sofa with minimalist wooden legs. The background is a soft neutral color, emphasizing clean lines and durable furniture for rental properties. The style is professional, polished, and fits a modern corporate UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6lB3lvistPOqTJJ1iYObJ_h3uEn5CLkSOwVTR1dD60j3f-igZLO2ND05OqUZi2f5yTY4FT_2ZiV1yayfyLGC1YxHbAui-FslhpEaZ6O2-68DBPrSGKnWE5QzQpPsCYo4xvvoXYcgacj0-65BBJau6jBRi-O7eYxOSiCh-qzY63laWaKx-jp0Jut9hRGAplAyrrkz60mdtz9_pM5ie7MfkPn_Sw425skyw-EO5J63vOk3tM8ber2FXN18uepJA_QyE1nBP3mRuOBM"/>
+</div>
+<div>
+<p class="font-semibold text-on-surface text-body-sm">Sectional Sofa</p>
+<p class="text-outline text-[12px] font-financial-data">ID: FUR-LIV-099</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="bg-surface-container-high text-on-surface-variant px-sm py-1 rounded-full text-[12px]">Furniture</span>
+</td>
+<td class="px-lg py-md text-on-surface-variant text-body-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">meeting_room</span>
+                                        Unit #105
+                                    </div>
+</td>
+<td class="px-lg py-md">
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="text-on-surface font-body-sm">Good</span>
+</div>
+</td>
+<td class="px-lg py-md">
+<div class="bg-surface-variant text-on-surface-variant px-sm py-1 rounded-full text-[12px] font-medium inline-block">Available</div>
+</td>
+<td class="px-lg py-md text-right">
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Item Row 4 (Shared Property) -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-lg py-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center overflow-hidden">
+<img class="object-cover w-full h-full" data-alt="An industrial-grade commercial laundry washing machine in a clean, brightly lit shared facility. The image uses cool tones and high clarity to reflect professional property management software aesthetics, emphasizing durability and maintenance reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChZeaRDST6K8XVlexKoBp_5wReljOM8ix2rEO1LU7Aqdv-1mAhsaTTAQaK3m-AJ9eE8-Lk-WYK3t8WbOuiZ41K9aS5RbK3Xx00K8vSO0PvIZW1HiyCc4dskmULOsgXfiK-MYn2KjjG9_CvID13i1-TinlHdUNo7NX5JZ2SCRC_z_axDBJcjShRihriGyY3pYX_i7TKqiBRJ23_EBp4tl5F_OtuYBqUeA7cb9hXrwc8clMkhB6EoCJdEGknnyywfrNc0iA24qC8DXM"/>
+</div>
+<div>
+<p class="font-semibold text-on-surface text-body-sm">Washing Machine (Ind.)</p>
+<p class="text-outline text-[12px] font-financial-data">SN: LG-DRUM-XL</p>
+</div>
+</div>
+</td>
+<td class="px-lg py-md">
+<span class="bg-surface-container-high text-on-surface-variant px-sm py-1 rounded-full text-[12px]">Laundry</span>
+</td>
+<td class="px-lg py-md text-on-surface-variant text-body-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">groups</span>
+                                        Lobby Shared
+                                    </div>
+</td>
+<td class="px-lg py-md">
+<div class="flex items-center gap-xs">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<span class="text-on-surface font-body-sm">Excellent</span>
+</div>
+</td>
+<td class="px-lg py-md">
+<div class="bg-secondary-container text-on-secondary-container px-sm py-1 rounded-full text-[12px] font-medium inline-block">Assigned</div>
+</td>
+<td class="px-lg py-md text-right">
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer / Pagination -->
+<div class="p-md bg-surface flex items-center justify-between">
+<p class="font-body-sm text-on-surface-variant">Page 1 of 28</p>
+<div class="flex items-center gap-xs">
+<button class="p-xs rounded-lg border border-outline-variant text-outline hover:bg-surface-container transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-xs rounded-lg border border-outline-variant text-outline hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Shared Component - Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface dark:bg-surface-dim shadow-lg flex justify-around items-center h-16 px-margin-mobile pb-safe rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-[10px] mt-1 uppercase">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">checklist</span>
+<span class="font-label-caps text-[10px] mt-1 uppercase">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-caps text-[10px] mt-1 uppercase">Reports</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-[10px] mt-1 uppercase">Profile</span>
+</a>
+</nav>
+<!-- Mobile Floating Action Button -->
+<button class="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform z-40">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<script>
+        // Simple micro-interaction for rows
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', () => {
+                if (row.querySelector('th')) return;
+                // Highlight logic or redirection could go here
+                console.log('Row clicked');
+            });
+        });
+
+        // Filter toggle logic (UI only)
+        const filterBtns = document.querySelectorAll('button[class*="rounded-full"]');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.innerText.includes('Filters')) return;
+                btn.classList.toggle('ring-2');
+                btn.classList.toggle('ring-offset-2');
+                btn.classList.toggle('ring-primary');
+            });
+        });
+    </script>
+</body></html>

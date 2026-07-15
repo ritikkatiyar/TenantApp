@@ -22,5 +22,18 @@ public interface AnnouncementRepository extends JpaRepository<AnnouncementTbl, U
             @Param("unitId") String unitId
     );
 
+    @Query("SELECT a FROM AnnouncementTbl a WHERE a.property.id = :propertyId AND " +
+           "(a.targetType = com.tenantliving.announcement.domain.AnnouncementTargetType.PROPERTY OR " +
+           "(a.targetType = com.tenantliving.announcement.domain.AnnouncementTargetType.FLOOR AND a.targetValue = :floor) OR " +
+           "(a.targetType = com.tenantliving.announcement.domain.AnnouncementTargetType.UNIT AND a.targetValue = :unitId))")
+    org.springframework.data.domain.Page<AnnouncementTbl> findNoticesForTenant(
+            @Param("propertyId") UUID propertyId,
+            @Param("floor") String floor,
+            @Param("unitId") String unitId,
+            org.springframework.data.domain.Pageable pageable
+    );
+
     List<AnnouncementTbl> findByPropertyId(UUID propertyId);
+
+    org.springframework.data.domain.Page<AnnouncementTbl> findByPropertyId(UUID propertyId, org.springframework.data.domain.Pageable pageable);
 }

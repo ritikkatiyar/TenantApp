@@ -130,7 +130,7 @@ public class AnnouncementIntegrationTest {
         assertEquals("Property Broadcast", created.getTitle());
 
         // Fetch notices for tenant
-        List<AnnouncementResponse> tenantNotices = announcementService.getNoticesForTenant(tenant.getId());
+        List<AnnouncementResponse> tenantNotices = announcementService.getNoticesForTenant(tenant.getId(), org.springframework.data.domain.PageRequest.of(0, 10)).getContent();
         assertEquals(1, tenantNotices.size());
         assertEquals("Property Broadcast", tenantNotices.get(0).getTitle());
         assertFalse(tenantNotices.get(0).isRead());
@@ -139,7 +139,7 @@ public class AnnouncementIntegrationTest {
         announcementService.markAsRead(created.getId(), tenant.getId());
 
         // Verify read status
-        tenantNotices = announcementService.getNoticesForTenant(tenant.getId());
+        tenantNotices = announcementService.getNoticesForTenant(tenant.getId(), org.springframework.data.domain.PageRequest.of(0, 10)).getContent();
         assertEquals(1, tenantNotices.size());
         assertTrue(tenantNotices.get(0).isRead());
     }
@@ -171,7 +171,7 @@ public class AnnouncementIntegrationTest {
         announcementService.createAnnouncement(floorRequest, landlord.getId());
 
         // Tenant is on floor 1, unit 101. So they should see the unit notice, but NOT the Floor 2 notice.
-        List<AnnouncementResponse> tenantNotices = announcementService.getNoticesForTenant(tenant.getId());
+        List<AnnouncementResponse> tenantNotices = announcementService.getNoticesForTenant(tenant.getId(), org.springframework.data.domain.PageRequest.of(0, 10)).getContent();
         assertEquals(1, tenantNotices.size());
         assertEquals("Unit Specific Notice", tenantNotices.get(0).getTitle());
     }

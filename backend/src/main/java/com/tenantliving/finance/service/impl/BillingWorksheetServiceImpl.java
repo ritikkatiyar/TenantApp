@@ -9,10 +9,10 @@ import com.tenantliving.finance.domain.ChargeConfigTbl;
 import com.tenantliving.finance.domain.LeaseTbl;
 import com.tenantliving.finance.domain.RentCycleTbl;
 import com.tenantliving.finance.dto.BillingWorksheetDTOs.*;
-import com.tenantliving.finance.repository.BillingWorksheetRepository;
-import com.tenantliving.finance.repository.ChargeConfigRepository;
-import com.tenantliving.finance.repository.LeaseRepository;
-import com.tenantliving.finance.repository.RentCycleRepository;
+import com.tenantliving.finance.service.interfaces.BillingWorksheetCrudService;
+import com.tenantliving.finance.service.interfaces.ChargeConfigCrudService;
+import com.tenantliving.finance.service.interfaces.LeaseCrudService;
+import com.tenantliving.finance.service.interfaces.RentCycleCrudService;
 import com.tenantliving.finance.service.BillingWorksheetService;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.domain.UnitTbl;
@@ -35,37 +35,46 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
-    private final BillingWorksheetRepository worksheetRepository;
+    private final BillingWorksheetCrudService billingWorksheetCrudService;
     private final UnitQueryService unitQueryService;
-    private final LeaseRepository leaseRepository;
-    private final ChargeConfigRepository chargeConfigRepository;
+    private final LeaseCrudService leaseCrudService;
+    private final ChargeConfigCrudService chargeConfigCrudService;
     private final PropertyQueryService propertyQueryService;
     private final UserQueryService userQueryService;
-    private final RentCycleRepository rentCycleRepository;
+    private final RentCycleCrudService rentCycleCrudService;
 
     @Override
     @Transactional
     public List<WorksheetEntryResponse> getOrCreateWorksheetForMonth(UUID propertyId, UUID chargeConfigId, String billingMonth) {
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
-        ChargeConfigTbl chargeConfig = chargeConfigRepository.findById(chargeConfigId)
+        ChargeConfigTbl chargeConfig = chargeConfigCrudService.findById(chargeConfigId)
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
 
         List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId);
-        List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+        List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
         Map<UUID, List<LeaseTbl>> unitToLeasesMap = activeLeases.stream()
                 .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
 
-        List<BillingWorksheetEntryTbl> existingEntries = worksheetRepository.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
+        List<BillingWorksheetEntryTbl> existingEntries = billingWorksheetCrudService.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
                 propertyId, chargeConfigId, billingMonth);
         Map<UUID, BillingWorksheetEntryTbl> existingEntriesMap = existingEntries.stream()
                 .collect(Collectors.toMap(r -> r.getUnit().getId(), r -> r));
 
         List<BillingWorksheetEntryTbl> finalEntries = new ArrayList<>();
+        List<BillingWorksheetEntryTbl> toSave = new ArrayList<>();
         
         UUID authUserId = null;
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetailsImpl) {
             authUserId = UUID.fromString(((UserDetailsImpl) principal).getId());
+        }
+
+        Map<UUID, BigDecimal> carryForwardValues = new HashMap<>();
+        if (Boolean.TRUE.equals(chargeConfig.getAutoCarryForward())) {
+            List<Object[]> results = billingWorksheetCrudService.findLatestValuesForPropertyAndConfig(propertyId, chargeConfigId, billingMonth);
+            for (Object[] row : results) {
+                carryForwardValues.put((UUID) row[0], (BigDecimal) row[1]);
+            }
         }
 
         for (UnitTbl unit : units) {
@@ -79,15 +88,13 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
                 // Determine initial value based on autoCarryForward flag and baseRate
                 BigDecimal initialValue = BigDecimal.ZERO;
                 if (Boolean.TRUE.equals(chargeConfig.getAutoCarryForward())) {
-                    Optional<BillingWorksheetEntryTbl> lastEntry = worksheetRepository.findTopByUnitIdAndChargeConfigIdOrderByBillingMonthDesc(unit.getId(), chargeConfigId);
-                    if (lastEntry.isPresent() && lastEntry.get().getEnteredValue() != null) {
-                        initialValue = lastEntry.get().getEnteredValue();
+                    BigDecimal carryVal = carryForwardValues.get(unit.getId());
+                    if (carryVal != null) {
+                        initialValue = carryVal;
                     } else if (chargeConfig.getBaseRate() != null) {
-                        // Fallback to base rate if no history exists
                         initialValue = chargeConfig.getBaseRate();
                     }
                 } else if (chargeConfig.getBaseRate() != null) {
-                    // Default to configured baseRate if autoCarryForward is disabled
                     initialValue = chargeConfig.getBaseRate();
                 }
 
@@ -100,10 +107,22 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
                         .isBilled(false)
                         .createdBy(authUserId)
                         .build();
-                entry = worksheetRepository.save(entry);
+                toSave.add(entry);
+            } else {
+                finalEntries.add(entry);
             }
-            finalEntries.add(entry);
         }
+
+        if (!toSave.isEmpty()) {
+            List<BillingWorksheetEntryTbl> saved = billingWorksheetCrudService.saveAll(toSave);
+            finalEntries.addAll(saved);
+        }
+
+        Set<UUID> tenantUserIds = activeLeases.stream()
+                .map(LeaseTbl::getUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<UUID, UserTbl> tenantsMap = userQueryService.getUsersByIds(tenantUserIds);
 
         return finalEntries.stream()
                 .map(r -> {
@@ -112,13 +131,9 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
             if (leases != null && !leases.isEmpty()) {
                 List<String> names = new ArrayList<>();
                 for (LeaseTbl lease : leases) {
-                    try {
-                        UserTbl user = userQueryService.getUserById(lease.getUserId());
-                        if (user.getFullName() != null) {
-                            names.add(user.getFullName());
-                        }
-                    } catch (Exception e) {
-                        // Keep default
+                    UserTbl user = tenantsMap.get(lease.getUserId());
+                    if (user != null && user.getFullName() != null) {
+                        names.add(user.getFullName());
                     }
                 }
                 if (!names.isEmpty()) {
@@ -140,24 +155,59 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
     @Override
     @Transactional
     public void saveWorksheet(WorksheetSaveRequest request) {
+        List<UUID> unitIds = request.getEntries().stream()
+                .map(UnitEntry::getUnitId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (unitIds.isEmpty()) return;
+
+        List<BillingWorksheetEntryTbl> existingEntries = billingWorksheetCrudService.findByUnitIdInAndChargeConfigIdAndBillingMonth(
+                unitIds, request.getChargeConfigId(), request.getBillingMonth());
+        Map<UUID, BillingWorksheetEntryTbl> entriesMap = existingEntries.stream()
+                .collect(Collectors.toMap(e -> e.getUnit().getId(), e -> e));
+
+        List<LeaseTbl> activeLeases = leaseCrudService.findByUnit_IdInAndStatus(unitIds, LeaseStatus.ACTIVE);
+        Map<UUID, List<LeaseTbl>> unitToLeasesMap = activeLeases.stream()
+                .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
+
+        List<UUID> activeLeaseIds = activeLeases.stream()
+                .map(LeaseTbl::getId)
+                .collect(Collectors.toList());
+
+        Map<UUID, RentCycleTbl> leaseToCycleMap = new HashMap<>();
+        if (!activeLeaseIds.isEmpty()) {
+            List<RentCycleTbl> cycles = rentCycleCrudService.findByLease_IdInAndBillingMonth(activeLeaseIds, request.getBillingMonth());
+            for (RentCycleTbl cycle : cycles) {
+                leaseToCycleMap.put(cycle.getLease().getId(), cycle);
+            }
+        }
+
+        List<BillingWorksheetEntryTbl> toSave = new ArrayList<>();
+
         for (UnitEntry unitEntry : request.getEntries()) {
             if (unitEntry.getEnteredValue() == null) continue;
             
-            BillingWorksheetEntryTbl entry = worksheetRepository.findByUnitIdAndChargeConfigIdAndBillingMonth(
-                    unitEntry.getUnitId(), request.getChargeConfigId(), request.getBillingMonth())
-                    .orElseThrow(() -> new BusinessException("Worksheet entry not initialized for unit " + unitEntry.getUnitId()));
+            BillingWorksheetEntryTbl entry = entriesMap.get(unitEntry.getUnitId());
+            if (entry == null) {
+                throw new BusinessException("Worksheet entry not initialized for unit " + unitEntry.getUnitId());
+            }
             
             if (entry.getIsBilled()) {
-                List<LeaseTbl> leases = leaseRepository.findByUnitIdAndStatus(unitEntry.getUnitId(), LeaseStatus.ACTIVE);
-                if (!leases.isEmpty()) {
-                    Optional<RentCycleTbl> cycleOpt = rentCycleRepository.findByLease_IdAndBillingMonth(leases.get(0).getId(), request.getBillingMonth());
-                    if (cycleOpt.isPresent() && (cycleOpt.get().getStatus() == RentCycleStatus.PUBLISHED || cycleOpt.get().getStatus() == RentCycleStatus.PAID)) {
+                List<LeaseTbl> leases = unitToLeasesMap.get(unitEntry.getUnitId());
+                if (leases != null && !leases.isEmpty()) {
+                    RentCycleTbl cycle = leaseToCycleMap.get(leases.get(0).getId());
+                    if (cycle != null && (cycle.getStatus() == RentCycleStatus.PUBLISHED || cycle.getStatus() == RentCycleStatus.PAID)) {
                         continue; // Locked! Skip database save.
                     }
                 }
             }
             entry.setEnteredValue(unitEntry.getEnteredValue());
-            worksheetRepository.save(entry);
+            toSave.add(entry);
+        }
+
+        if (!toSave.isEmpty()) {
+            billingWorksheetCrudService.saveAll(toSave);
         }
     }
 }

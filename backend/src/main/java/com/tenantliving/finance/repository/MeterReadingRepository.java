@@ -23,5 +23,13 @@ public interface MeterReadingRepository extends JpaRepository<MeterReadingTbl, U
     List<MeterReadingTbl> findAllByUnitIdAndBillingMonthAndBillingYear(
             UUID unitId, Integer billingMonth, Integer billingYear);
 
+    List<MeterReadingTbl> findByUnitIdInAndChargeConfigIdAndBillingMonthAndBillingYear(
+            java.util.Collection<UUID> unitIds, UUID chargeConfigId, Integer billingMonth, Integer billingYear);
+
+    List<MeterReadingTbl> findByPropertyIdAndBillingMonthAndBillingYear(
+            UUID propertyId, Integer billingMonth, Integer billingYear);
+
+    List<MeterReadingTbl> findByPropertyIdAndChargeConfigId(UUID propertyId, UUID chargeConfigId);
+
     boolean existsByChargeConfigId(UUID chargeConfigId);
 }

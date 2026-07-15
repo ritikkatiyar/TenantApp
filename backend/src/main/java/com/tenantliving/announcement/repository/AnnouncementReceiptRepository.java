@@ -14,5 +14,10 @@ public interface AnnouncementReceiptRepository extends JpaRepository<Announcemen
 
     boolean existsByAnnouncementIdAndUserId(UUID announcementId, UUID userId);
 
+    java.util.List<AnnouncementReceiptTbl> findByUserIdAndAnnouncementIdIn(UUID userId, java.util.Collection<UUID> announcementIds);
+
     long countByAnnouncementId(UUID announcementId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT r.announcement.id, COUNT(r) FROM AnnouncementReceiptTbl r WHERE r.announcement.id IN :announcementIds GROUP BY r.announcement.id")
+    java.util.List<Object[]> countReceiptsByAnnouncementIdIn(@org.springframework.data.repository.query.Param("announcementIds") java.util.Collection<UUID> announcementIds);
 }

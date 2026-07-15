@@ -7,6 +7,7 @@ import com.tenantliving.property.dto.PropertyDTOs;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.dto.UnitDTOs;
 import com.tenantliving.property.repository.UnitRepository;
+import com.tenantliving.property.service.interfaces.UnitCrudService;
 import com.tenantliving.property.service.interfaces.UnitService;
 import com.tenantliving.property.service.interfaces.PropertyQueryService;
 
@@ -27,12 +28,12 @@ import java.util.stream.Collectors;
 @Transactional
 public class UnitServiceImpl implements UnitService {
 
-    private final UnitRepository unitRepository;
+    private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
 
     @Override
     public List<UnitTbl> saveAll(List<UnitTbl> units) {
-        return unitRepository.saveAll(units);
+        return unitCrudService.saveAll(units);
     }
 
     @Override
@@ -53,7 +54,7 @@ public class UnitServiceImpl implements UnitService {
             }
         }
 
-        List<UnitTbl> onFloor = unitRepository.findByPropertyIdAndFloor(propertyId, floorNumber);
+        List<UnitTbl> onFloor = unitCrudService.findByPropertyIdAndFloor(propertyId, floorNumber);
         Set<String> incomingNumbers = items.stream()
                 .map(UnitDTOs.FloorLayoutUnitRequest::unitNumber)
                 .collect(Collectors.toSet());
@@ -62,15 +63,19 @@ public class UnitServiceImpl implements UnitService {
                 .filter(u -> !incomingNumbers.contains(u.getUnitNumber()))
                 .toList();
 
-        for (UnitTbl unit : toRemove) {
-            unitRepository.delete(unit);
-        }
+        // Optimized: batch delete
+        unitCrudService.deleteAll(toRemove);
 
-        Map<String, UnitTbl> existingOnFloorByNumber = unitRepository.findByPropertyIdAndFloor(propertyId, floorNumber)
+        // Optimized: bulk cache unit numbers to avoid exists queries inside loops
+        Set<String> allExistingUnitNumbers = unitCrudService.findByPropertyId(propertyId).stream()
+                .map(UnitTbl::getUnitNumber)
+                .collect(Collectors.toSet());
+
+        Map<String, UnitTbl> existingOnFloorByNumber = unitCrudService.findByPropertyIdAndFloor(propertyId, floorNumber)
                 .stream()
                 .collect(Collectors.toMap(UnitTbl::getUnitNumber, u -> u, (a, b) -> a));
 
-        List<UnitTbl> saved = new ArrayList<>();
+        List<UnitTbl> toSave = new ArrayList<>();
         for (UnitDTOs.FloorLayoutUnitRequest item : items) {
             UnitTbl entity = existingOnFloorByNumber.get(item.unitNumber());
             if (entity != null) {
@@ -81,9 +86,10 @@ public class UnitServiceImpl implements UnitService {
                 entity.setType(item.type());
                 entity.setCapacity(item.capacity());
                 entity.setFacing(item.facing() != null ? item.facing() : FacingDirection.UNKNOWN);
-                saved.add(unitRepository.save(entity));
+                toSave.add(entity);
             } else {
-                if (unitRepository.existsByPropertyIdAndUnitNumber(propertyId, item.unitNumber())) {
+                // Optimized: check in-memory cached Set instead of querying database in loop
+                if (allExistingUnitNumbers.contains(item.unitNumber())) {
                     throw new BusinessException(
                             "Unit number \"" + item.unitNumber() + "\" already exists on another floor for this property"
                     );
@@ -101,10 +107,11 @@ public class UnitServiceImpl implements UnitService {
                         .capacity(item.capacity())
                         .facing(facing)
                         .build();
-                saved.add(unitRepository.save(created));
+                toSave.add(created);
             }
         }
-        return saved;
+        // Optimized: batch save
+        return unitCrudService.saveAll(toSave);
     }
 
     @Override

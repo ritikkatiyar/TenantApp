@@ -3,7 +3,7 @@ package com.tenantliving.finance.service.impl;
 import com.tenantliving.finance.domain.FinanceLedgerTbl;
 import com.tenantliving.finance.domain.LeaseTbl;
 import com.tenantliving.finance.dto.LedgerDTOs.LedgerEntryResponse;
-import com.tenantliving.finance.repository.FinanceLedgerRepository;
+import com.tenantliving.finance.service.interfaces.FinanceLedgerCrudService;
 import com.tenantliving.finance.specification.FinanceLedgerSpecifications;
 import com.tenantliving.finance.service.interfaces.LedgerService;
 import com.tenantliving.user.domain.UserTbl;
@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LedgerServiceImpl implements LedgerService {
 
-    private final FinanceLedgerRepository ledgerRepository;
+    private final FinanceLedgerCrudService financeLedgerCrudService;
     private final UserQueryService userQueryService;
 
     @Override
@@ -40,7 +41,7 @@ public class LedgerServiceImpl implements LedgerService {
                 .and(FinanceLedgerSpecifications.createdAfter(fromDate))
                 .and(FinanceLedgerSpecifications.createdBefore(toDate));
 
-        Page<FinanceLedgerTbl> entriesPage = ledgerRepository.findAll(spec, pageable);
+        Page<FinanceLedgerTbl> entriesPage = financeLedgerCrudService.findAll(spec, pageable);
 
         // Batch fetch tenant users to avoid N+1 query
         Set<UUID> userIds = entriesPage.getContent().stream()
@@ -51,6 +52,23 @@ public class LedgerServiceImpl implements LedgerService {
                 .collect(Collectors.toSet());
 
         Map<UUID, UserTbl> usersMap = userQueryService.getUsersByIds(userIds);
+
+        // Batch fetch running balances to avoid N+1 query
+        List<UUID> entryIds = entriesPage.getContent().stream()
+                .map(FinanceLedgerTbl::getId)
+                .collect(Collectors.toList());
+
+        Map<UUID, BigDecimal> runningBalancesMap = java.util.Collections.emptyMap();
+        if (!entryIds.isEmpty()) {
+            runningBalancesMap = financeLedgerCrudService.getRunningBalancesForEntries(entryIds).stream()
+                    .collect(Collectors.toMap(
+                            row -> (UUID) row[0],
+                            row -> (BigDecimal) row[1],
+                            (existing, replacement) -> existing
+                    ));
+        }
+
+        final Map<UUID, BigDecimal> finalRunningBalancesMap = runningBalancesMap;
 
         return entriesPage.map(entry -> {
             String tenantName = "N/A";
@@ -67,8 +85,10 @@ public class LedgerServiceImpl implements LedgerService {
             // Compute running cumulative balance for this lease at this entry
             BigDecimal runningBalance = entry.getAmount();
             if (lease != null) {
-                runningBalance = ledgerRepository.getRunningBalanceForLeaseAtEntry(
-                        lease.getId(), entry.getCreatedAt(), entry.getId());
+                BigDecimal balance = finalRunningBalancesMap.get(entry.getId());
+                if (balance != null) {
+                    runningBalance = balance;
+                }
             }
 
             return LedgerEntryResponse.builder()

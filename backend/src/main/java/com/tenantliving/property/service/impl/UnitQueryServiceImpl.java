@@ -4,7 +4,7 @@ import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.dto.UnitDTOs;
-import com.tenantliving.property.repository.UnitRepository;
+import com.tenantliving.property.service.interfaces.UnitCrudService;
 import com.tenantliving.property.service.interfaces.PropertyQueryService;
 import com.tenantliving.property.service.interfaces.UnitQueryService;
 
@@ -24,12 +24,12 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class UnitQueryServiceImpl implements UnitQueryService {
 
-    private final UnitRepository unitRepository;
+    private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
 
     @Override
     public UnitTbl getUnitById(UUID id) {
-        return unitRepository.findById(id)
+        return unitCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
     }
 
@@ -37,7 +37,7 @@ public class UnitQueryServiceImpl implements UnitQueryService {
     public List<UnitDTOs.FloorSummaryResponse> getFloorSummaries(UUID propertyId, Integer throughFloor) {
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
         
-        int maxFromUnits = unitRepository.findMaxFloorByPropertyId(propertyId);
+        int maxFromUnits = unitCrudService.findMaxFloorByPropertyId(propertyId);
         int propertyTotalFloors = property.getTotalFloors() != null ? property.getTotalFloors() : 0;
         int requestedTop = throughFloor != null ? throughFloor : 0;
         
@@ -46,7 +46,7 @@ public class UnitQueryServiceImpl implements UnitQueryService {
             topFloor = 1;
         }
 
-        Map<Integer, Long> countsByFloor = unitRepository.findByPropertyId(propertyId).stream()
+        Map<Integer, Long> countsByFloor = unitCrudService.findByPropertyId(propertyId).stream()
                 .collect(Collectors.groupingBy(UnitTbl::getFloor, Collectors.counting()));
 
         List<UnitDTOs.FloorSummaryResponse> rows = new ArrayList<>();
@@ -68,7 +68,7 @@ public class UnitQueryServiceImpl implements UnitQueryService {
         if (!propertyQueryService.existsById(propertyId)) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
         }
-        return unitRepository.findByPropertyIdAndFloor(propertyId, floorNumber);
+        return unitCrudService.findByPropertyIdAndFloor(propertyId, floorNumber);
     }
 
     @Override
@@ -76,6 +76,6 @@ public class UnitQueryServiceImpl implements UnitQueryService {
         if (!propertyQueryService.existsById(propertyId)) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
         }
-        return unitRepository.findByPropertyId(propertyId);
+        return unitCrudService.findByPropertyId(propertyId);
     }
 }

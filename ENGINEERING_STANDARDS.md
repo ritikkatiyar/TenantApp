@@ -121,6 +121,17 @@ Avoid:
 
 ---
 
+## DATA ACCESS & PERFORMANCE RULES
+
+* **No Repository Calls in Loops**: Repository methods (e.g., `save`, `find`, `exists`, `delete`) must NEVER be called inside loops (`for`, `while`) or lambda iteration blocks (like `.forEach()`, `.map()`).
+  * Fetch required data in bulk outside the loop using `IN` queries (e.g., `findAllByXIn()`).
+  * Cache, lookup, and associate data in-memory using Maps or Sets.
+  * Batch execute database modifications (e.g., `saveAll()`, `deleteAll()`) outside the loop.
+* **Mandatory Pagination for Dynamic Lists**: Any query or endpoint returning collections that grow dynamically over time (e.g., Ledger entries, Expenses, Rent Cycles, Announcements, Audit logs) MUST implement pagination using Spring's `Pageable` and return `Page<T>` instead of raw lists (`List<T>`).
+* **Decoupled CRUD Service Layer**: Direct repository injection in high-level business services is discouraged. Abstraction interfaces (`CrudService<T, ID>`) and domain CRUD services (e.g., `UserCrudService`) must be used to wrap direct database repository calls.
+
+---
+
 ## CODE QUALITY RULES
 
 * No commented-out code

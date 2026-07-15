@@ -52,6 +52,8 @@ export default function RootLayout() {
                   <Stack.Screen name="reports" />
                   <Stack.Screen name="billing" />
                   <Stack.Screen name="expenses" />
+                  <Stack.Screen name="leases" />
+                  <Stack.Screen name="inventory" />
                   <Stack.Screen name="create-expense" />
                   <Stack.Screen name="properties/create" />
                   <Stack.Screen name="properties/[id]" />
@@ -59,6 +61,7 @@ export default function RootLayout() {
                   <Stack.Screen name="escalations" />
                   <Stack.Screen name="announcements" />
                   <Stack.Screen name="tenant-property" />
+                  <Stack.Screen name="tenant-inventory" />
                   <Stack.Screen name="tenant-maintenance" />
                   <Stack.Screen name="tenant-payments" />
                 </Stack>

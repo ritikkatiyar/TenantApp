@@ -2,8 +2,8 @@ package com.tenantliving.finance.service.impl;
 
 import com.tenantliving.finance.domain.ChargeConfigTbl;
 import com.tenantliving.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
-import com.tenantliving.finance.repository.ChargeConfigRepository;
 import com.tenantliving.finance.service.ChargeConfigQueryService;
+import com.tenantliving.finance.service.interfaces.ChargeConfigCrudService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,13 +18,13 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ChargeConfigQueryServiceImpl implements ChargeConfigQueryService {
 
-    private final ChargeConfigRepository chargeConfigRepository;
+    private final ChargeConfigCrudService chargeConfigCrudService;
 
     @Override
     public List<ChargeConfigResponse> getChargesForProperty(UUID propertyId, boolean includeInactive) {
         List<ChargeConfigTbl> configs = includeInactive ? 
-                chargeConfigRepository.findAllByPropertyId(propertyId) : 
-                chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId);
+                chargeConfigCrudService.findAllByPropertyId(propertyId) : 
+                chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId);
         return configs.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -32,7 +32,7 @@ public class ChargeConfigQueryServiceImpl implements ChargeConfigQueryService {
 
     @Override
     public ChargeConfigResponse getChargeConfigById(UUID id) {
-        ChargeConfigTbl config = chargeConfigRepository.findById(id)
+        ChargeConfigTbl config = chargeConfigCrudService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Charge Config not found"));
         return mapToResponse(config);
     }

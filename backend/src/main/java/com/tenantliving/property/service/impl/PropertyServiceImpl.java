@@ -2,12 +2,12 @@ package com.tenantliving.property.service.impl;
 
 import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
-import com.tenantliving.property.repository.PropertyRepository;
+import com.tenantliving.property.service.interfaces.PropertyCrudService;
 import com.tenantliving.property.service.interfaces.PropertyService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.auth.service.interfaces.MembershipService;
-import com.tenantliving.property.repository.UnitRepository;
+import com.tenantliving.property.service.interfaces.UnitCrudService;
 import com.tenantliving.common.event.PropertyDeletionEvent;
 import com.tenantliving.finance.service.interfaces.LeaseQueryService;
 import com.tenantliving.common.exception.BusinessException;
@@ -26,10 +26,10 @@ import java.util.UUID;
 @Slf4j
 @Transactional
 public class PropertyServiceImpl implements PropertyService {
-    private final PropertyRepository propertyRepository;
+    private final PropertyCrudService propertyCrudService;
     private final UserQueryService userQueryService;
     private final MembershipService membershipService;
-    private final UnitRepository unitRepository;
+    private final UnitCrudService unitCrudService;
     private final ApplicationEventPublisher eventPublisher;
     private final LeaseQueryService leaseQueryService;
 
@@ -44,7 +44,7 @@ public class PropertyServiceImpl implements PropertyService {
                 .landmark(request.landmark())
                 .totalFloors(request.totalFloors())
                 .build();
-        PropertyTbl savedProperty = propertyRepository.save(property);
+        PropertyTbl savedProperty = propertyCrudService.save(property);
 
         // Assign OWNER role using MembershipService (no cross-module repo manipulation)
         membershipService.createOwnerMembership(savedProperty.getId(), creatorId);
@@ -55,14 +55,14 @@ public class PropertyServiceImpl implements PropertyService {
 
     @Override
     public PropertyTbl updateProperty(UUID propertyId, PropertyDTOs.UpdatePropertyRequest request) {
-        PropertyTbl property = propertyRepository.findById(propertyId)
+        PropertyTbl property = propertyCrudService.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
         property.setName(request.name());
         property.setAddress(request.address());
         property.setCity(request.city());
         property.setLandmark(request.landmark());
         property.setTotalFloors(request.totalFloors());
-        return propertyRepository.save(property);
+        return propertyCrudService.save(property);
     }
 
     @Override
@@ -71,21 +71,21 @@ public class PropertyServiceImpl implements PropertyService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete property because it has assigned tenants or leases.");
         }
 
-        PropertyTbl property = propertyRepository.findById(propertyId)
+        PropertyTbl property = propertyCrudService.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
         
         // Publish synchronous deletion event to let other modules validate/veto/cleanup if necessary
         eventPublisher.publishEvent(new PropertyDeletionEvent(this, propertyId));
         
-        unitRepository.deleteByPropertyId(propertyId);
-        propertyRepository.delete(property);
+        unitCrudService.deleteByPropertyId(propertyId);
+        propertyCrudService.delete(property);
     }
 
     @Override
     public PropertyTbl togglePropertyActiveStatus(UUID propertyId, boolean active) {
-        PropertyTbl property = propertyRepository.findById(propertyId)
+        PropertyTbl property = propertyCrudService.findById(propertyId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
         property.setActive(active);
-        return propertyRepository.save(property);
+        return propertyCrudService.save(property);
     }
 }

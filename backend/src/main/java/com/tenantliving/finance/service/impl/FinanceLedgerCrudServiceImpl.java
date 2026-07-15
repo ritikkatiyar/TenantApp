@@ -1,0 +1,31 @@
+package com.tenantliving.finance.service.impl;
+
+import com.tenantliving.common.service.impl.AbstractCrudService;
+import com.tenantliving.finance.domain.FinanceLedgerTbl;
+import com.tenantliving.finance.repository.FinanceLedgerRepository;
+import com.tenantliving.finance.service.interfaces.FinanceLedgerCrudService;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class FinanceLedgerCrudServiceImpl extends AbstractCrudService<FinanceLedgerTbl, UUID, FinanceLedgerRepository> implements FinanceLedgerCrudService {
+
+    public FinanceLedgerCrudServiceImpl(FinanceLedgerRepository repository) {
+        super(repository);
+    }
+
+    @Override
+    public BigDecimal getRunningBalanceForLeaseAtEntry(UUID leaseId, LocalDateTime createdAt, UUID id) {
+        return repository.getRunningBalanceForLeaseAtEntry(leaseId, createdAt, id);
+    }
+
+    @Override
+    public List<Object[]> getRunningBalancesForEntries(Collection<UUID> ids) {
+        return repository.getRunningBalancesForEntries(ids);
+    }
+}

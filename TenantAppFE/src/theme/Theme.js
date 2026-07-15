@@ -50,7 +50,7 @@ export const Colors = {
   glassStroke: 'rgba(255, 255, 255, 0.8)',
   accentGradientStart: "#00e0ff",
   accentGradientEnd: "#0070ea",
-  backgroundGradient: ["#f4faff", "#ecf5fb", "#d8e2ff"],
+  backgroundGradient: ["#d4f5f9", "#e8f8fb", "#e2e0fb"],
 };
 
 export const Typography = {

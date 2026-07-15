@@ -9,7 +9,7 @@ import com.tenantliving.auth.dto.AuthResponses.AuthUserSummary;
 import com.tenantliving.auth.dto.AuthResponses.TokenBundle;
 import com.tenantliving.auth.dto.AuthResponses.ValidateResponse;
 import com.tenantliving.auth.domain.RefreshTokenTbl;
-import com.tenantliving.auth.repository.RefreshTokenRepository;
+import com.tenantliving.auth.service.interfaces.RefreshTokenCrudService;
 import com.tenantliving.common.domain.UserRole;
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.config.AuthProperties;
@@ -50,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserService userService;
     private final UserQueryService userQueryService;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenCrudService refreshTokenCrudService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
@@ -149,7 +149,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public TokenBundle refresh(RefreshRequest request) {
         String hash = TokenHasher.sha256Hex(request.refreshToken());
-        RefreshTokenTbl stored = refreshTokenRepository.findByTokenHashAndRevokedIsFalse(hash)
+        RefreshTokenTbl stored = refreshTokenCrudService.findByTokenHashAndRevokedIsFalse(hash)
                 .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         if (stored.getExpiresAt().isBefore(Instant.now())) {
@@ -157,15 +157,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         UserTbl user = stored.getUser();
-        refreshTokenRepository.delete(stored);
+        refreshTokenCrudService.delete(stored);
         return issueTokensForUser(user);
     }
 
     @Transactional
     public void logout(LogoutRequest request) {
         String hash = TokenHasher.sha256Hex(request.refreshToken());
-        refreshTokenRepository.findByTokenHashAndRevokedIsFalse(hash)
-                .ifPresent(refreshTokenRepository::delete);
+        refreshTokenCrudService.findByTokenHashAndRevokedIsFalse(hash)
+                .ifPresent(refreshTokenCrudService::delete);
     }
 
     public ValidateResponse validate(ValidateRequest request) {
@@ -213,7 +213,7 @@ public class AuthServiceImpl implements AuthService {
                 .expiresAt(exp)
                 .revoked(false)
                 .build();
-        refreshTokenRepository.save(entity);
+        refreshTokenCrudService.save(entity);
         return plain;
     }
 

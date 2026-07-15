@@ -2,7 +2,7 @@ package com.tenantliving.user.service.impl;
 
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.repository.UserRepository;
+import com.tenantliving.user.service.interfaces.UserCrudService;
 import com.tenantliving.user.service.interfaces.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -15,20 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+    private final UserCrudService userCrudService;
 
     @Override
     public UserTbl createUser(UserTbl user) {
         String normalizedEmail = normalizeEmail(user.getAuthUid());
-        if (userRepository.findByAuthUid(normalizedEmail).isPresent()) {
+        if (userCrudService.findByAuthUid(normalizedEmail).isPresent()) {
             throw new BusinessException(HttpStatus.CONFLICT, "Email already registered");
         }
-        return userRepository.save(user);
+        return userCrudService.save(user);
     }
 
     @Override
     public UserTbl saveUser(UserTbl user) {
-        return userRepository.save(user);
+        return userCrudService.save(user);
     }
 
     private static String normalizeEmail(String email) {

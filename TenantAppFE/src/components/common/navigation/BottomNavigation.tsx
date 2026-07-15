@@ -1,14 +1,13 @@
 import React from 'react';
-import { 
-  View, 
-  TouchableOpacity, 
-  StyleSheet, 
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
   Platform,
   Text,
   useWindowDimensions
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useRouter, usePathname, Href } from 'expo-router';
 import { useProperties } from '@/src/hooks/useProperties';
 
@@ -23,16 +22,16 @@ interface NavItem {
 
 const LANDLORD_NAV_ITEMS: NavItem[] = [
   { id: 'portfolio', icon: 'domain', label: 'Portfolio', route: '/command-center' },
+  { id: 'leases', icon: 'description', label: 'Leases', route: '/leases' as Href },
+  { id: 'inventory', icon: 'inventory', label: 'Items', route: '/inventory' as Href },
   { id: 'finance', icon: 'account-balance', label: 'Finance', route: '/expenses' },
-  { id: 'announcements', icon: 'campaign', label: 'Notices', route: '/announcements' },
-  { id: 'analytics', icon: 'analytics', label: 'Analytics', route: '/analytics' },
 ];
 
 const TENANT_NAV_ITEMS: NavItem[] = [
   { id: 'home', icon: 'home', label: 'Home', route: '/tenant-home' },
   { id: 'property', icon: 'domain', label: 'Property', route: '/tenant-property' },
+  { id: 'inventory', icon: 'inventory', label: 'Items', route: '/tenant-inventory' as Href },
   { id: 'payments', icon: 'payments', label: 'Payments', route: '/tenant-payments' },
-  { id: 'maintenance', icon: 'support-agent', label: 'Support', route: '/tenant-maintenance' },
 ];
 
 export default function BottomNavigation() {
@@ -41,6 +40,7 @@ export default function BottomNavigation() {
   const { width } = useWindowDimensions();
   const { properties } = useProperties();
   const activePropertyId = properties && properties.length > 0 ? properties[0].id : null;
+  const { context } = useAuth();
 
   if (
     width >= 900 ||
@@ -52,8 +52,6 @@ export default function BottomNavigation() {
     return null;
   }
 
-  const { context } = useAuth();
-  
   const isTenantView = context?.isTenant && (!context?.isLandlord || pathname.startsWith('/tenant-'));
   const NAV_ITEMS = isTenantView ? TENANT_NAV_ITEMS : LANDLORD_NAV_ITEMS;
 

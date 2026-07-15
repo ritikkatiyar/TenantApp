@@ -7,7 +7,7 @@ import com.tenantliving.finance.service.interfaces.ExpenseService;
 import com.tenantliving.finance.domain.ExpenseSplitTbl;
 import com.tenantliving.finance.dto.ExpenseSplitDTOs;
 import com.tenantliving.finance.mapper.ExpenseSplitMapper;
-import com.tenantliving.finance.repository.ExpenseSplitRepository;
+import com.tenantliving.finance.service.interfaces.ExpenseSplitCrudService;
 import com.tenantliving.finance.service.interfaces.ExpenseSplitService;
 import com.tenantliving.finance.service.strategy.ExpenseSplitCalculationStrategy;
 import com.tenantliving.user.service.interfaces.UserQueryService;
@@ -27,18 +27,18 @@ import java.util.UUID;
 @Slf4j
 public class ExpenseSplitServiceImpl implements ExpenseSplitService {
 
-    private final ExpenseSplitRepository expenseSplitRepository;
+    private final ExpenseSplitCrudService expenseSplitCrudService;
     private final ExpenseService expenseService;
     private final UserQueryService userQueryService;
     private final Map<com.tenantliving.common.domain.ExpenseSplitType, ExpenseSplitCalculationStrategy> strategies;
 
     public ExpenseSplitServiceImpl(
-            ExpenseSplitRepository expenseSplitRepository,
+            ExpenseSplitCrudService expenseSplitCrudService,
             ExpenseService expenseService,
             UserQueryService userQueryService,
             List<ExpenseSplitCalculationStrategy> strategies
     ) {
-        this.expenseSplitRepository = expenseSplitRepository;
+        this.expenseSplitCrudService = expenseSplitCrudService;
         this.expenseService = expenseService;
         this.userQueryService = userQueryService;
         this.strategies = new EnumMap<>(com.tenantliving.common.domain.ExpenseSplitType.class);
@@ -50,7 +50,7 @@ public class ExpenseSplitServiceImpl implements ExpenseSplitService {
     @Transactional
     public List<ExpenseSplitDTOs.ExpenseSplitResponse> generate(ExpenseSplitDTOs.GenerateExpenseSplitsRequest request) {
         ExpenseTbl expense = expenseService.getById(request.expenseId());
-        if (!expenseSplitRepository.findByExpense_Id(request.expenseId()).isEmpty()) {
+        if (!expenseSplitCrudService.findByExpense_Id(request.expenseId()).isEmpty()) {
             throw new BusinessException(HttpStatus.CONFLICT, "Expense splits already exist for this expense");
         }
 
@@ -61,7 +61,7 @@ public class ExpenseSplitServiceImpl implements ExpenseSplitService {
         }
         List<ExpenseSplitTbl> splits = strategy.calculate(expense, request.splitType(), request.participants());
 
-        List<ExpenseSplitTbl> savedSplits = expenseSplitRepository.saveAll(splits);
+        List<ExpenseSplitTbl> savedSplits = expenseSplitCrudService.saveAll(splits);
         log.info("expense_splits_generated expenseId={} splitType={} splitCount={}",
                 expense.getId(), request.splitType(), savedSplits.size());
         return savedSplits
@@ -73,7 +73,7 @@ public class ExpenseSplitServiceImpl implements ExpenseSplitService {
     @Override
     @Transactional(readOnly = true)
     public List<ExpenseSplitDTOs.ExpenseSplitResponse> myDues(UUID userId) {
-        return expenseSplitRepository.findByUserIdAndStatus(userId, ExpenseSplitStatus.PENDING)
+        return expenseSplitCrudService.findByUserIdAndStatus(userId, ExpenseSplitStatus.PENDING)
                 .stream()
                 .map(ExpenseSplitMapper::toResponse)
                 .toList();
@@ -82,17 +82,21 @@ public class ExpenseSplitServiceImpl implements ExpenseSplitService {
     @Override
     @Transactional
     public ExpenseSplitDTOs.ExpenseSplitResponse settle(UUID id) {
-        ExpenseSplitTbl split = expenseSplitRepository.findById(id)
+        ExpenseSplitTbl split = expenseSplitCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Expense split not found"));
         split.setStatus(ExpenseSplitStatus.SETTLED);
         split.setPaidAt(LocalDateTime.now());
-        ExpenseSplitTbl saved = expenseSplitRepository.save(split);
+        ExpenseSplitTbl saved = expenseSplitCrudService.save(split);
         log.info("expense_split_settled expenseSplitId={} expenseId={} userId={}",
                 saved.getId(), saved.getExpense().getId(), saved.getUserId());
         return ExpenseSplitMapper.toResponse(saved);
     }
 
     private void validateParticipants(List<ExpenseSplitDTOs.ParticipantRequest> participants) {
-        participants.forEach(participant -> userQueryService.getUserById(participant.userId()));
+        List<UUID> userIds = participants.stream().map(ExpenseSplitDTOs.ParticipantRequest::userId).distinct().toList();
+        Map<UUID, com.tenantliving.user.domain.UserTbl> users = userQueryService.getUsersByIds(userIds);
+        if (users.size() != userIds.size()) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "One or more participants not found");
+        }
     }
 }

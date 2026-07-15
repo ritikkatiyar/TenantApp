@@ -3,7 +3,7 @@ package com.tenantliving.finance.service.impl;
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.finance.domain.ExpenseGroupTbl;
 import com.tenantliving.finance.dto.ExpenseGroupDTOs;
-import com.tenantliving.finance.repository.ExpenseGroupRepository;
+import com.tenantliving.finance.service.interfaces.ExpenseGroupCrudService;
 import com.tenantliving.finance.service.interfaces.ExpenseGroupService;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.service.interfaces.UnitQueryService;
@@ -21,7 +21,7 @@ import java.util.UUID;
 @Slf4j
 public class ExpenseGroupServiceImpl implements ExpenseGroupService {
 
-    private final ExpenseGroupRepository expenseGroupRepository;
+    private final ExpenseGroupCrudService expenseGroupCrudService;
     private final UnitQueryService unitQueryService;
     private final UserQueryService userQueryService;
 
@@ -35,7 +35,7 @@ public class ExpenseGroupServiceImpl implements ExpenseGroupService {
                 .createdBy(request.createdBy())
                 .name(request.name())
                 .build();
-        ExpenseGroupTbl saved = expenseGroupRepository.save(group);
+        ExpenseGroupTbl saved = expenseGroupCrudService.save(group);
         log.info("expense_group_created expenseGroupId={} unitId={} createdBy={}",
                 saved.getId(), saved.getUnit().getId(), saved.getCreatedBy());
         return saved;
@@ -44,7 +44,7 @@ public class ExpenseGroupServiceImpl implements ExpenseGroupService {
     @Override
     @Transactional(readOnly = true)
     public ExpenseGroupTbl getById(UUID id) {
-        return expenseGroupRepository.findById(id)
+        return expenseGroupCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Expense group not found"));
     }
 }

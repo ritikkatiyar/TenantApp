@@ -1,13 +1,13 @@
 package com.tenantliving.auth.service.impl;
 
 import com.tenantliving.auth.principal.UserDetailsImpl;
-import com.tenantliving.auth.repository.MembershipRepository;
 import com.tenantliving.auth.service.interfaces.AuthorizationService;
-import com.tenantliving.finance.repository.ExpenseGroupRepository;
-import com.tenantliving.finance.repository.ExpenseRepository;
-import com.tenantliving.finance.repository.ExpenseSplitRepository;
-import com.tenantliving.finance.repository.RentCycleRepository;
+import com.tenantliving.auth.service.interfaces.MembershipCrudService;
+import com.tenantliving.finance.service.interfaces.ExpenseGroupCrudService;
+import com.tenantliving.finance.service.interfaces.ExpenseCrudService;
+import com.tenantliving.finance.service.interfaces.ExpenseSplitCrudService;
 import com.tenantliving.finance.service.interfaces.LeaseQueryService;
+import com.tenantliving.finance.service.interfaces.RentCycleCrudService;
 import com.tenantliving.finance.service.ChargeConfigQueryService;
 import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.property.domain.UnitTbl;
@@ -28,13 +28,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthorizationServiceImpl implements AuthorizationService {
 
-    private final MembershipRepository membershipRepository;
+    private final MembershipCrudService membershipCrudService;
     private final UnitQueryService unitQueryService;
     private final LeaseQueryService leaseQueryService;
-    private final ExpenseGroupRepository expenseGroupRepository;
-    private final ExpenseRepository expenseRepository;
-    private final ExpenseSplitRepository expenseSplitRepository;
-    private final RentCycleRepository rentCycleRepository;
+    private final ExpenseGroupCrudService expenseGroupCrudService;
+    private final ExpenseCrudService expenseCrudService;
+    private final ExpenseSplitCrudService expenseSplitCrudService;
+    private final RentCycleCrudService rentCycleCrudService;
     private final ChargeConfigQueryService chargeConfigQueryService;
 
     @Override
@@ -50,7 +50,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) return false;
 
         UUID userId = UUID.fromString(currentUser.getId());
-        Set<String> userPermissions = membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
+        Set<String> userPermissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         
         for (String code : permissionCodes) {
             if (userPermissions.contains(code)) {
@@ -70,7 +70,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) return false;
 
         UUID userId = UUID.fromString(currentUser.getId());
-        boolean hasRole = membershipRepository.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode);
+        boolean hasRole = membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode);
         log.debug("User {} role check for {} on property {}: {}", userId, roleCode, propertyId, hasRole);
         return hasRole;
     }
@@ -83,7 +83,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
         UUID userId = UUID.fromString(currentUser.getId());
         for (String roleCode : roleCodes) {
-            if (membershipRepository.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode)) {
+            if (membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode)) {
                 log.debug("User {} has role {} on property {}", userId, roleCode, propertyId);
                 return true;
             }
@@ -130,7 +130,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByExpenseGroupId(UUID groupId, String permissionCode) {
         if (groupId == null) return false;
-        return expenseGroupRepository.findById(groupId)
+        return expenseGroupCrudService.findById(groupId)
                 .map(g -> checkPermission(g.getUnit().getProperty().getId(), permissionCode))
                 .orElse(false);
     }
@@ -144,7 +144,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) return false;
         UUID userId = UUID.fromString(currentUser.getId());
         
-        return expenseSplitRepository.findById(splitId).map(split -> {
+        return expenseSplitCrudService.findById(splitId).map(split -> {
             if (split.getUserId().toString().equals(currentUser.getId())) {
                 log.debug("User {} has own expense split access for split {}", userId, splitId);
                 return true;
@@ -157,7 +157,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByExpenseId(UUID expenseId, String permissionCode) {
         if (expenseId == null) return false;
-        return expenseRepository.findById(expenseId)
+        return expenseCrudService.findById(expenseId)
                 .map(e -> checkPermission(e.getExpenseGroup().getUnit().getProperty().getId(), permissionCode))
                 .orElse(false);
     }
@@ -166,7 +166,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode) {
         if (rentCycleId == null) return false;
-        return rentCycleRepository.findById(rentCycleId)
+        return rentCycleCrudService.findById(rentCycleId)
                 .map(r -> checkPermission(r.getLease().getUnit().getProperty().getId(), permissionCode))
                 .orElse(false);
     }
@@ -190,7 +190,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }
 
         UUID userId = UUID.fromString(currentUser.getId());
-        Set<String> permissions = membershipRepository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
+        Set<String> permissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         
         boolean hasPerm = permissions.contains(permissionCode);
         log.debug("User {} permission check for {} on property {}: {}", userId, permissionCode, propertyId, hasPerm);

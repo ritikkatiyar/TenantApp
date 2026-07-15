@@ -2,14 +2,14 @@ package com.tenantliving.property.service.impl;
 
 import com.tenantliving.property.domain.PropertyJoinCodeTbl;
 import com.tenantliving.property.domain.PropertyTbl;
-import com.tenantliving.property.repository.PropertyJoinCodeRepository;
+import com.tenantliving.property.service.interfaces.PropertyJoinCodeCrudService;
 import com.tenantliving.property.service.interfaces.PropertyJoinCodeService;
 import com.tenantliving.property.service.interfaces.PropertyQueryService;
 import com.tenantliving.auth.domain.MembershipTbl;
 import com.tenantliving.auth.domain.MembershipRoleTbl;
-import com.tenantliving.auth.repository.MembershipRoleRepository;
-import com.tenantliving.auth.repository.MembershipRepository;
-import com.tenantliving.auth.repository.RolePermissionRepository;
+import com.tenantliving.auth.service.interfaces.MembershipRoleCrudService;
+import com.tenantliving.auth.service.interfaces.MembershipCrudService;
+import com.tenantliving.auth.service.interfaces.RolePermissionCrudService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.common.exception.BusinessException;
@@ -36,11 +36,11 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
     private static final String ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final PropertyJoinCodeRepository propertyJoinCodeRepository;
+    private final PropertyJoinCodeCrudService propertyJoinCodeCrudService;
     private final PropertyQueryService propertyQueryService;
-    private final MembershipRoleRepository membershipRoleRepository;
-    private final MembershipRepository membershipRepository;
-    private final RolePermissionRepository rolePermissionRepository;
+    private final MembershipRoleCrudService membershipRoleCrudService;
+    private final MembershipCrudService membershipCrudService;
+    private final RolePermissionCrudService rolePermissionCrudService;
     private final UserQueryService userQueryService;
 
     @Override
@@ -50,8 +50,8 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         UserTbl actor = userQueryService.getUserById(actorId);
 
         // Fetch target role
-        MembershipRoleTbl role = membershipRoleRepository.findByCodeAndPropertyId(roleCode, propertyId)
-                .or(() -> membershipRoleRepository.findByCodeAndPropertyIdIsNull(roleCode))
+        MembershipRoleTbl role = membershipRoleCrudService.findByCodeAndPropertyId(roleCode, propertyId)
+                .or(() -> membershipRoleCrudService.findByCodeAndPropertyIdIsNull(roleCode))
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found: " + roleCode));
 
         if (!role.isActive()) {
@@ -60,10 +60,10 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
 
         // Validate delegation subset rule (actor must have all permissions of the target role)
         if (!UserRole.SUPER_ADMIN.equals(actor.getGlobalRole())) {
-            List<String> targetPerms = rolePermissionRepository.findByRoleId(role.getId()).stream()
+            List<String> targetPerms = rolePermissionCrudService.findByRoleId(role.getId()).stream()
                     .map(rp -> rp.getPermission().getCode())
                     .toList();
-            Set<String> actorPerms = membershipRepository.findPermissionCodesByUserIdAndPropertyId(actorId, propertyId);
+            Set<String> actorPerms = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(actorId, propertyId);
             if (!actorPerms.containsAll(targetPerms)) {
                 throw new BusinessException(HttpStatus.FORBIDDEN, 
                         "Cannot invite someone to a role containing permissions you do not possess.");
@@ -84,20 +84,20 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
                 .expiresAt(Instant.now().plusSeconds(172800)) // Expires in 48 hours
                 .build();
 
-        return propertyJoinCodeRepository.save(joinCode);
+        return propertyJoinCodeCrudService.save(joinCode);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<PropertyJoinCodeTbl> getPropertyJoinCodes(UUID propertyId) {
-        return propertyJoinCodeRepository.findByPropertyId(propertyId);
+        return propertyJoinCodeCrudService.findByPropertyId(propertyId);
     }
 
     @Override
     @Transactional
     public MembershipTbl validateAndApplyJoinCode(String code, UUID userId) {
         String cleanCode = code.trim().toUpperCase();
-        PropertyJoinCodeTbl joinCode = propertyJoinCodeRepository.findByCode(cleanCode)
+        PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findByCode(cleanCode)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Invalid join code."));
 
         if (!joinCode.isActive()) {
@@ -106,13 +106,13 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
 
         if (joinCode.getExpiresAt() != null && joinCode.getExpiresAt().isBefore(Instant.now())) {
             joinCode.setActive(false);
-            propertyJoinCodeRepository.save(joinCode);
+            propertyJoinCodeCrudService.save(joinCode);
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has expired.");
         }
 
         if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
             joinCode.setActive(false);
-            propertyJoinCodeRepository.save(joinCode);
+            propertyJoinCodeCrudService.save(joinCode);
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has reached its maximum uses.");
         }
 
@@ -121,7 +121,7 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         MembershipRoleTbl role = joinCode.getRole();
 
         // Check if user already holds this membership
-        if (membershipRepository.existsByUserIdAndPropertyIdAndRoleCode(userId, property.getId(), role.getCode())) {
+        if (membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, property.getId(), role.getCode())) {
             throw new BusinessException(HttpStatus.CONFLICT, "You are already a member of this property with this role.");
         }
 
@@ -133,14 +133,14 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
                 .assignedBy(joinCode.getCreatedBy())
                 .build();
 
-        MembershipTbl savedMembership = membershipRepository.save(membership);
+        MembershipTbl savedMembership = membershipCrudService.save(membership);
 
         // Increment uses
         joinCode.setUsesCount(joinCode.getUsesCount() + 1);
         if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
             joinCode.setActive(false);
         }
-        propertyJoinCodeRepository.save(joinCode);
+        propertyJoinCodeCrudService.save(joinCode);
 
         log.info("join_code_applied userId={} propertyId={} roleCode={} code={}",
                 userId, property.getId(), role.getCode(), cleanCode);

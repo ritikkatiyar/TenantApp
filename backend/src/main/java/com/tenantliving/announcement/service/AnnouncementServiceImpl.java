@@ -3,8 +3,6 @@ package com.tenantliving.announcement.service;
 import com.tenantliving.announcement.domain.*;
 import com.tenantliving.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
 import com.tenantliving.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
-import com.tenantliving.announcement.repository.AnnouncementReceiptRepository;
-import com.tenantliving.announcement.repository.AnnouncementRepository;
 import com.tenantliving.announcement.service.interfaces.AnnouncementService;
 import com.tenantliving.common.domain.LeaseStatus;
 import com.tenantliving.common.domain.BaseEntity;
@@ -17,10 +15,15 @@ import com.tenantliving.property.service.interfaces.PropertyQueryService;
 import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserQueryService;
+import com.tenantliving.announcement.service.interfaces.AnnouncementCrudService;
+import com.tenantliving.announcement.service.interfaces.AnnouncementReceiptCrudService;
+import com.tenantliving.finance.service.interfaces.LeaseCrudService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,10 +32,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AnnouncementServiceImpl implements AnnouncementService {
 
-    private final AnnouncementRepository announcementRepository;
-    private final AnnouncementReceiptRepository announcementReceiptRepository;
+    private final AnnouncementCrudService announcementCrudService;
+    private final AnnouncementReceiptCrudService announcementReceiptCrudService;
     private final PropertyQueryService propertyQueryService;
     private final UserQueryService userQueryService;
+    private final LeaseCrudService leaseCrudService;
     private final LeaseQueryService leaseQueryService;
     private final UnitQueryService unitQueryService;
     private final ApplicationEventPublisher eventPublisher;
@@ -55,7 +59,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 .metadata(request.getMetadata())
                 .build();
 
-        announcement = announcementRepository.save(announcement);
+        announcement = announcementCrudService.save(announcement);
 
         // Fetch recipients user IDs to trigger notifications
         List<String> recipientUserIds = getRecipientUserIds(property.getId(), request.getTargetType(), request.getTargetValue());
@@ -77,61 +81,126 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AnnouncementResponse> getNoticesForTenant(UUID tenantUserId) {
-        LeaseTbl activeLease = leaseQueryService.findByUserIdAndStatus(tenantUserId, LeaseStatus.ACTIVE)
+    public Page<AnnouncementResponse> getNoticesForTenant(UUID tenantUserId, Pageable pageable) {
+        LeaseTbl activeLease = leaseCrudService.findByUserIdAndStatus(tenantUserId, LeaseStatus.ACTIVE)
                 .orElse(null);
 
         if (activeLease == null || activeLease.getUnit() == null || activeLease.getUnit().getProperty() == null) {
-            return Collections.emptyList();
+            return Page.empty(pageable);
         }
 
         UUID propertyId = activeLease.getUnit().getProperty().getId();
         String floorStr = String.valueOf(activeLease.getUnit().getFloor());
         String unitIdStr = activeLease.getUnit().getId().toString();
 
-        List<AnnouncementTbl> announcements = announcementRepository.findNoticesForTenant(propertyId, floorStr, unitIdStr);
+        Page<AnnouncementTbl> announcements = announcementCrudService.findNoticesForTenant(propertyId, floorStr, unitIdStr, pageable);
 
-        return announcements.stream()
-                .map(announcement -> {
-                    boolean isRead = announcementReceiptRepository.existsByAnnouncementIdAndUserId(announcement.getId(), tenantUserId);
-                    return mapToResponse(announcement, isRead, null, null);
-                })
-                .sorted(Comparator.comparing(AnnouncementResponse::getCreatedAt).reversed())
-                .collect(Collectors.toList());
+        // Fetch receipts in bulk for the current page's announcements to avoid N+1 queries in loop
+        List<UUID> announcementIds = announcements.getContent().stream().map(AnnouncementTbl::getId).toList();
+        
+        Set<UUID> readAnnouncementIds = new HashSet<>();
+        if (!announcementIds.isEmpty()) {
+            readAnnouncementIds = announcementReceiptCrudService.findByUserIdAndAnnouncementIdIn(tenantUserId, announcementIds)
+                    .stream()
+                    .map(r -> r.getAnnouncement().getId())
+                    .collect(Collectors.toSet());
+        }
+
+        final Set<UUID> finalReadAnnouncementIds = readAnnouncementIds;
+
+        return announcements.map(announcement -> {
+            boolean isRead = finalReadAnnouncementIds.contains(announcement.getId());
+            return mapToResponse(announcement, isRead, null, null);
+        });
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<AnnouncementResponse> getAnnouncementsForProperty(UUID propertyId, UUID userWithAccessId) {
-        List<AnnouncementTbl> announcements = announcementRepository.findByPropertyId(propertyId);
+    public Page<AnnouncementResponse> getAnnouncementsForProperty(UUID propertyId, UUID userWithAccessId, Pageable pageable) {
+        Page<AnnouncementTbl> announcements = announcementCrudService.findByPropertyId(propertyId, pageable);
 
-        return announcements.stream()
-                .map(announcement -> {
-                    long readCount = announcementReceiptRepository.countByAnnouncementId(announcement.getId());
-                    List<String> recipients = getRecipientUserIds(propertyId, announcement.getTargetType(), announcement.getTargetValue());
-                    long totalRecipients = recipients.size();
+        List<UUID> announcementIds = announcements.getContent().stream().map(AnnouncementTbl::getId).toList();
 
-                    return mapToResponse(announcement, false, readCount, totalRecipients);
-                })
-                .sorted(Comparator.comparing(AnnouncementResponse::getCreatedAt).reversed())
-                .collect(Collectors.toList());
+        // Optimized: Fetch read counts in bulk for these announcements
+        Map<UUID, Long> readCountsMap = new HashMap<>();
+        if (!announcementIds.isEmpty()) {
+            List<Object[]> countResults = announcementReceiptCrudService.countReceiptsByAnnouncementIdIn(announcementIds);
+            for (Object[] row : countResults) {
+                readCountsMap.put((UUID) row[0], (Long) row[1]);
+            }
+        }
+
+        // Optimized: Fetch all active property leases once to group in memory instead of executing DB queries in loop
+        List<LeaseTbl> allActivePropertyLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+        Map<UUID, List<LeaseTbl>> leasesByUnit = allActivePropertyLeases.stream()
+                .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
+        Map<Integer, List<LeaseTbl>> leasesByFloor = allActivePropertyLeases.stream()
+                .collect(Collectors.groupingBy(l -> l.getUnit().getFloor()));
+
+        return announcements.map(announcement -> {
+            long readCount = readCountsMap.getOrDefault(announcement.getId(), 0L);
+            List<String> recipients = getRecipientUserIdsOptimized(
+                    announcement.getTargetType(), announcement.getTargetValue(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
+            long totalRecipients = recipients.size();
+
+            return mapToResponse(announcement, false, readCount, totalRecipients);
+        });
+    }
+
+    private List<String> getRecipientUserIdsOptimized(AnnouncementTargetType targetType, String targetValue, 
+                                                      List<LeaseTbl> allActivePropertyLeases, 
+                                                      Map<UUID, List<LeaseTbl>> leasesByUnit, 
+                                                      Map<Integer, List<LeaseTbl>> leasesByFloor) {
+        List<String> recipientUserIds = new ArrayList<>();
+        if (targetType == AnnouncementTargetType.PROPERTY) {
+            for (LeaseTbl lease : allActivePropertyLeases) {
+                if (lease.getUserId() != null) {
+                    recipientUserIds.add(lease.getUserId().toString());
+                }
+            }
+        } else if (targetType == AnnouncementTargetType.FLOOR) {
+            if (targetValue != null) {
+                try {
+                    Integer floorNumber = Integer.valueOf(targetValue);
+                    List<LeaseTbl> floorLeases = leasesByFloor.getOrDefault(floorNumber, List.of());
+                    for (LeaseTbl lease : floorLeases) {
+                        if (lease.getUserId() != null) {
+                            recipientUserIds.add(lease.getUserId().toString());
+                        }
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        } else if (targetType == AnnouncementTargetType.UNIT) {
+            if (targetValue != null) {
+                try {
+                    UUID unitId = UUID.fromString(targetValue);
+                    List<LeaseTbl> unitLeases = leasesByUnit.getOrDefault(unitId, List.of());
+                    for (LeaseTbl lease : unitLeases) {
+                        if (lease.getUserId() != null) {
+                            recipientUserIds.add(lease.getUserId().toString());
+                        }
+                    }
+                } catch (IllegalArgumentException ignored) {}
+            }
+        }
+        return recipientUserIds.stream().distinct().collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public void markAsRead(UUID announcementId, UUID tenantUserId) {
-        AnnouncementTbl announcement = announcementRepository.findById(announcementId)
+        AnnouncementTbl announcement = announcementCrudService.findById(announcementId)
                 .orElseThrow(() -> new IllegalArgumentException("Announcement not found with ID: " + announcementId));
 
         UserTbl user = userQueryService.getUserById(tenantUserId);
 
-        boolean alreadyRead = announcementReceiptRepository.existsByAnnouncementIdAndUserId(announcementId, tenantUserId);
+        boolean alreadyRead = announcementReceiptCrudService.existsByAnnouncementIdAndUserId(announcementId, tenantUserId);
         if (!alreadyRead) {
             AnnouncementReceiptTbl receipt = AnnouncementReceiptTbl.builder()
                     .announcement(announcement)
                     .user(user)
                     .build();
-            announcementReceiptRepository.save(receipt);
+            announcementReceiptCrudService.save(receipt);
         }
     }
 
@@ -153,12 +222,12 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                     List<UUID> unitIds = unitsOnFloor.stream().map(BaseEntity::getId).collect(Collectors.toList());
                     if (!unitIds.isEmpty()) {
                         leaseQueryService.findActiveLeasesByUnitIds(unitIds).values().stream()
-                                .flatMap(List::stream)
-                                .forEach(lease -> {
-                                    if (lease.getUserId() != null) {
-                                        recipientUserIds.add(lease.getUserId().toString());
-                                    }
-                                });
+                                  .flatMap(List::stream)
+                                  .forEach(lease -> {
+                                      if (lease.getUserId() != null) {
+                                          recipientUserIds.add(lease.getUserId().toString());
+                                      }
+                                  });
                     }
                 } catch (NumberFormatException ignored) {}
             }

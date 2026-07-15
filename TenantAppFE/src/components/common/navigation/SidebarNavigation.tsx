@@ -88,6 +88,8 @@ export default function SidebarNavigation() {
             {renderSidebarLink('business', 'Portfolio', '/command-center')}
             {renderSidebarLink('assessment', 'Reports', '/reports')}
             {renderSidebarLink('groups', 'AI Desk', '/ai')}
+            {renderSidebarLink('description', 'Leases', '/leases' as Href)}
+            {renderSidebarLink('inventory', 'Inventory', '/inventory' as Href)}
             {renderSidebarLink('build', 'Escalations', '/escalations')}
             {renderSidebarLink('campaign', 'Announcements', '/announcements')}
             {renderSidebarLink('account-balance', 'Finance & Billing', '/expenses')}
@@ -96,6 +98,7 @@ export default function SidebarNavigation() {
           <>
             {renderSidebarLink('home', 'Home', '/tenant-home')}
             {renderSidebarLink('domain', 'Property', '/tenant-property')}
+            {renderSidebarLink('inventory', 'Inventory', '/tenant-inventory' as Href)}
             {renderSidebarLink('payments', 'Payments', '/tenant-payments')}
             {renderSidebarLink('support-agent', 'Support', '/tenant-maintenance')}
           </>

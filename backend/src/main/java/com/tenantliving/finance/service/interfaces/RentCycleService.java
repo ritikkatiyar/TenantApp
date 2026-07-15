@@ -3,6 +3,8 @@ package com.tenantliving.finance.service.interfaces;
 import com.tenantliving.common.domain.RentCycleStatus;
 import com.tenantliving.finance.dto.RentCycleDTOs;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,7 +15,7 @@ public interface RentCycleService {
 
     RentCycleDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);
 
-    List<RentCycleDTOs.RentCycleResponse> list(UUID leaseId, String billingMonth, RentCycleStatus status);
+    Page<RentCycleDTOs.RentCycleResponse> list(UUID leaseId, String billingMonth, RentCycleStatus status, Pageable pageable);
 
     RentCycleDTOs.RentCycleResponse markPaid(UUID id);
 

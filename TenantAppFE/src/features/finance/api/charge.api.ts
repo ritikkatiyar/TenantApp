@@ -10,6 +10,7 @@ export interface ChargeConfigRequest {
     baseRate?: number | null;
     applySalesTax: boolean;
     lateFeePercentage: number | null;
+    autoCarryForward?: boolean;
 }
 
 export interface ChargeConfigResponse {
@@ -23,6 +24,7 @@ export interface ChargeConfigResponse {
     baseRate?: number | null;
     applySalesTax: boolean;
     lateFeePercentage: number | null;
+    autoCarryForward?: boolean;
     isSystemRequired: boolean;
     isActive: boolean;
 }

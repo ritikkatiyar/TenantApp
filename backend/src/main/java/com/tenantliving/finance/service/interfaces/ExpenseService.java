@@ -3,7 +3,8 @@ package com.tenantliving.finance.service.interfaces;
 import com.tenantliving.finance.domain.ExpenseTbl;
 import com.tenantliving.finance.dto.ExpenseDTOs;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 public interface ExpenseService {
@@ -11,5 +12,5 @@ public interface ExpenseService {
 
     ExpenseTbl getById(UUID id);
 
-    List<ExpenseTbl> list(UUID expenseGroupId, String billingMonth);
+    Page<ExpenseTbl> list(UUID expenseGroupId, String billingMonth, Pageable pageable);
 }
