@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
     Optional<RentCycleTbl> findByLease_IdAndBillingMonth(UUID leaseId, String billingMonth);
     List<RentCycleTbl> findByLease_Id(UUID leaseId);
+    List<RentCycleTbl> findByLease_IdInAndBillingMonth(List<UUID> leaseIds, String billingMonth);
     List<RentCycleTbl> findByBillingMonth(String billingMonth);
     Page<RentCycleTbl> findAll(Specification<RentCycleTbl> spec, Pageable pageable);
     List<RentCycleTbl> findAll(Specification<RentCycleTbl> spec);

@@ -4,6 +4,9 @@ import com.tenantliving.common.service.impl.AbstractCrudService;
 import com.tenantliving.finance.domain.FinanceLedgerTbl;
 import com.tenantliving.finance.repository.FinanceLedgerRepository;
 import com.tenantliving.finance.service.interfaces.FinanceLedgerCrudService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,6 +20,11 @@ public class FinanceLedgerCrudServiceImpl extends AbstractCrudService<FinanceLed
 
     public FinanceLedgerCrudServiceImpl(FinanceLedgerRepository repository) {
         super(repository);
+    }
+
+    @Override
+    public Page<FinanceLedgerTbl> findAll(Specification<FinanceLedgerTbl> spec, Pageable pageable) {
+        return repository.findAll(spec, pageable);
     }
 
     @Override
