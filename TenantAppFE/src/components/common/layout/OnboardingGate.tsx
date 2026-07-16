@@ -93,6 +93,11 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // If not authenticated and trying to access a protected route, redirect to login
+  if (isReady && !isAuthenticated && !isAuthRoute && pathname !== '/') {
+    return <Redirect href="/login" />;
+  }
+
   // If authenticated, not on auth routes, and not onboarded, redirect to onboarding
   if (isAuthenticated && !isAuthRoute && !isOnboardingRoute && isOnboarded === false) {
     return <Redirect href="/onboarding" />;
