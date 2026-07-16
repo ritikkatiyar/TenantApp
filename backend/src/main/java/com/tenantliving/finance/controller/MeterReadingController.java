@@ -6,6 +6,7 @@ import com.tenantliving.finance.dto.MeterReadingDTOs.MeterReadingResponse;
 import com.tenantliving.finance.service.MeterReadingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class MeterReadingController {
     private final MeterReadingService meterReadingService;
 
     @GetMapping("/worksheet")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<MeterReadingResponse>>> getWorksheet(
             @RequestParam UUID propertyId,
             @RequestParam UUID chargeConfigId,
@@ -29,6 +31,7 @@ public class MeterReadingController {
     }
 
     @PostMapping("/batch-save")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<Void>> batchSaveReadings(@RequestBody MeterReadingRequest request) {
         meterReadingService.batchSaveReadings(request);
         return ResponseEntity.ok(ApiResponse.success(null));

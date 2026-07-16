@@ -1,12 +1,12 @@
 package com.tenantliving.finance.service;
 
 import com.tenantliving.auth.domain.MembershipTbl;
-import com.tenantliving.auth.repository.MembershipRepository;
+import com.tenantliving.auth.service.interfaces.MembershipQueryService;
 import com.tenantliving.finance.dto.analytics.LandlordAnalyticsDTO;
 import com.tenantliving.finance.dto.analytics.LandlordAnalyticsDTO.*;
 import com.tenantliving.finance.repository.AnalyticsRepository;
 import com.tenantliving.user.domain.UserTbl;
-import com.tenantliving.user.repository.UserRepository;
+import com.tenantliving.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,11 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnalyticsService {
 
     private final AnalyticsRepository analyticsRepository;
-    private final MembershipRepository membershipRepository;
-    private final UserRepository userRepository;
+    private final MembershipQueryService membershipQueryService;
+    private final UserQueryService userQueryService;
 
     public LandlordAnalyticsDTO getLandlordAnalytics(UUID landlordId, String billingMonth) {
-        List<MembershipTbl> memberships = membershipRepository.findByUserId(landlordId);
+        List<MembershipTbl> memberships = membershipQueryService.getMembershipsByUserId(landlordId);
         List<UUID> landlordPropertyIds = memberships.stream()
                 .filter(m -> m.getRole() != null && ("PROPERTY_OWNER".equals(m.getRole().getCode()) || "PROPERTY_MANAGER".equals(m.getRole().getCode())))
                 .filter(m -> m.getProperty() != null)
@@ -102,6 +102,15 @@ public class AnalyticsService {
         List<Object[]> defaulterData = analyticsRepository.getDefaulters(landlordPropertyIds);
         List<DefaulterList> defaulterList = new ArrayList<>();
         LocalDate today = LocalDate.now();
+
+        // Bulk fetch tenant details to avoid querying repository inside the loop
+        List<UUID> tenantIds = defaulterData.stream()
+                .map(row -> (UUID) row[0])
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<UUID, UserTbl> usersMap = userQueryService.getUsersByIds(tenantIds);
+
         for (Object[] row : defaulterData) {
             UUID tenantId = (UUID) row[0];
             String unitNumber = (String) row[1];
@@ -112,9 +121,10 @@ public class AnalyticsService {
 
             String tenantName = "Unknown";
             if (tenantId != null) {
-                tenantName = userRepository.findById(tenantId)
-                        .map(UserTbl::getFullName)
-                        .orElse("Unknown");
+                UserTbl user = usersMap.get(tenantId);
+                if (user != null && user.getFullName() != null) {
+                    tenantName = user.getFullName();
+                }
             }
             
             long daysOverdue = dueDate.until(today).getDays();

@@ -65,13 +65,14 @@ export const listRentCycles = async (
   billingMonth: string,
   token: string
 ): Promise<RentCycleResponse[]> => {
-  return await apiRequest<RentCycleResponse[]>(
+  const response = await apiRequest<{ content: RentCycleResponse[] }>(
     `/api/v1/finance/rent-cycles?billingMonth=${billingMonth}`,
     {
       method: 'GET',
       token
     }
   );
+  return response?.content || [];
 };
 
 export const batchPublishRentCycle = async (

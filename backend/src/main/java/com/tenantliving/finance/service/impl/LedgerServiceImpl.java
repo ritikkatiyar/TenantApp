@@ -61,9 +61,18 @@ public class LedgerServiceImpl implements LedgerService {
         Map<UUID, BigDecimal> runningBalancesMap = java.util.Collections.emptyMap();
         if (!entryIds.isEmpty()) {
             runningBalancesMap = financeLedgerCrudService.getRunningBalancesForEntries(entryIds).stream()
+                    .filter(row -> row[0] != null)
                     .collect(Collectors.toMap(
-                            row -> (UUID) row[0],
-                            row -> (BigDecimal) row[1],
+                            row -> {
+                                if (row[0] instanceof UUID) return (UUID) row[0];
+                                return UUID.fromString(row[0].toString());
+                            },
+                            row -> {
+                                if (row[1] == null) return BigDecimal.ZERO;
+                                if (row[1] instanceof BigDecimal) return (BigDecimal) row[1];
+                                if (row[1] instanceof Number) return BigDecimal.valueOf(((Number) row[1]).doubleValue());
+                                return new BigDecimal(row[1].toString());
+                            },
                             (existing, replacement) -> existing
                     ));
         }

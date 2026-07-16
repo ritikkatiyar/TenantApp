@@ -137,10 +137,11 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
     ) {
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).error("[UNEXPECTED ERROR] URI: " + request.getRequestURI(), exception);
         ApiError apiError = ApiError.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Unexpected server error",
+                "Unexpected server error: " + exception.getMessage(),
                 request.getRequestURI()
         );
 
