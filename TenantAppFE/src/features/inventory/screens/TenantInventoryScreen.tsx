@@ -21,21 +21,23 @@ export default function TenantInventoryScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.root}
     >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop && <DesktopNavBar title="My Unit Inventory" />}
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
+          contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
         >
           <View style={styles.header}>
-            <View style={styles.titleBlock}>
-              <Text style={styles.kicker}>READ ONLY</Text>
-              <Text style={[styles.title, !isDesktop && styles.titleMobile]}>My Unit Inventory</Text>
-              <Text style={styles.subtitle}>
-                Review move-in condition records for Unit 402 and the shared amenities included with your lease.
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.reportButtonWrapper} activeOpacity={0.78}>
+            {isDesktop && (
+              <View style={styles.titleBlock}>
+                <Text style={styles.kicker}>READ ONLY</Text>
+                <Text style={[styles.title, !isDesktop && styles.titleMobile]}>My Unit Inventory</Text>
+                <Text style={styles.subtitle}>
+                  Review move-in condition records for Unit 402 and the shared amenities included with your lease.
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity style={[styles.reportButtonWrapper, !isDesktop && { flex: 1, width: '100%' }]} activeOpacity={0.78}>
               <LinearGradient
                 colors={['#00e0ff', '#0072ff']}
                 start={{ x: 0, y: 0 }}
@@ -156,8 +158,8 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, paddingBottom: 120, gap: 24 },
   scrollContentDesktop: { padding: 32, maxWidth: 1200, width: '100%', alignSelf: 'center' },
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 18 },
-  kicker: { fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: Theme.Colors.primary, textTransform: 'uppercase' },
-  title: { fontFamily: 'Manrope', fontSize: 32, fontWeight: '800', lineHeight: 38, color: Theme.Colors.onSurface, marginTop: 6 },
+  kicker: { fontFamily: 'Inter', fontSize: 12, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: Theme.Colors.primary, textTransform: 'uppercase' },
+  title: { fontFamily: 'Inter', fontSize: 32, fontWeight: '800', lineHeight: 38, color: Theme.Colors.onSurface, marginTop: 6 },
   titleMobile: { fontSize: 30, lineHeight: 36 },
   subtitle: { fontFamily: 'Inter', fontSize: 16, fontWeight: '400', lineHeight: 24, color: Theme.Colors.onSurfaceVariant, marginTop: 8, maxWidth: 700 },
   titleBlock: { maxWidth: 720 },
@@ -199,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricLabel: { color: Theme.Colors.onSurfaceVariant, fontWeight: '600', fontSize: 13 },
-  metricValue: { color: Theme.Colors.primary, fontFamily: 'JetBrains Mono', fontWeight: '800' },
+  metricValue: { color: Theme.Colors.primary, fontFamily: 'Inter', fontWeight: '800' },
   dashedDivider: { borderTopWidth: 1, borderTopColor: Theme.Colors.outlineVariant, borderStyle: 'dashed', marginVertical: 2 },
   verifiedRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   verifiedText: { flex: 1, color: Theme.Colors.onSurfaceVariant, fontSize: 13, lineHeight: 19, fontStyle: 'italic' },
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 21, fontWeight: '800', color: Theme.Colors.onSurface },
   sectionSubtitle: { color: Theme.Colors.onSurfaceVariant, marginTop: 4, maxWidth: 620 },
   readOnlyPill: { backgroundColor: Theme.Colors.secondaryFixed, paddingHorizontal: 11, paddingVertical: 5, borderRadius: Theme.Rounded.full },
-  readOnlyText: { fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: Theme.Colors.secondary },
+  readOnlyText: { fontFamily: 'Inter', fontSize: 10, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: Theme.Colors.secondary },
   itemCard: {
     backgroundColor: Theme.Colors.glassFill,
     borderWidth: 1,
@@ -228,7 +230,7 @@ const styles = StyleSheet.create({
   itemFooter: { borderTopWidth: 1, borderTopColor: Theme.Colors.surfaceVariant, paddingTop: 12, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
   photoLink: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   photoLinkText: { color: Theme.Colors.primary, fontWeight: '800', fontSize: 13 },
-  itemId: { color: Theme.Colors.outline, fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: '700' },
+  itemId: { color: Theme.Colors.outline, fontFamily: 'Inter', fontSize: 11, fontWeight: '700' },
   amenitySection: { gap: 16 },
   bookButtonWrapper: { borderRadius: Theme.Rounded.lg, overflow: 'hidden' },
   bookButton: { paddingHorizontal: 16, paddingVertical: 12 },

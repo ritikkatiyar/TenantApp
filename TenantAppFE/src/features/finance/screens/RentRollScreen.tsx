@@ -157,7 +157,8 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const renderContent = () => (
     <View style={styles.inner}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Generate Rent Cycle</Text>
+        {/* Title only needed on desktop; mobile glassy header provides the name */}
+        {isDesktop && <Text style={styles.title}>Generate Rent Cycle</Text>}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
             <MaterialIcons name="chevron-left" size={20} color="#006875" />
@@ -343,7 +344,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
 
   return (
     <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop ? (
           <>
             <DesktopNavBar activeTab="Finance" onBack={() => router.back()} backText="Back to Settings" />
@@ -353,13 +354,19 @@ export default function RentRollScreen({ token }: { token: string | null }) {
           </>
         ) : (
           <>
-            <View style={styles.mobileHeader}>
-              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-              </TouchableOpacity>
-              <Text style={styles.mobileTitle}>Rent Roll</Text>
+            <View style={styles.headerContainer}>
+              <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+              <View style={styles.headerContent}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                  <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+                </TouchableOpacity>
+                <View style={styles.titleWrapper}>
+                  <Text style={styles.compactTitleText}>Rent Roll</Text>
+                </View>
+                <View style={{ width: 40 }} />
+              </View>
             </View>
-            <ScrollView contentContainerStyle={styles.mobileScroll}>
+            <ScrollView contentContainerStyle={[styles.mobileScroll, { paddingTop: 76 }]}>
               {renderContent()}
             </ScrollView>
           </>
@@ -472,9 +479,49 @@ const styles = StyleSheet.create({
   statusBadge: { alignSelf: 'flex-start', backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   statusBadgeText: { fontSize: 11, fontWeight: '800', color: '#d97706' },
   
-  mobileHeader: { flexDirection: 'row', alignItems: 'center', padding: 20 },
-  backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.5)', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  mobileTitle: { fontSize: 22, fontWeight: '800', color: '#151d1e' },
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 56,
+    zIndex: 999,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  backButton: {
+    width: 36, 
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+    justifyContent: 'center', 
+    alignItems: 'center',
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  titleWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  compactTitleText: {
+    fontSize: 18,
+    fontFamily: 'Inter',
+    fontWeight: '800',
+    color: '#0b1c30',
+  },
   unpublishBtnContainer: {
     shadowColor: '#006875',
     shadowOpacity: 0.1,

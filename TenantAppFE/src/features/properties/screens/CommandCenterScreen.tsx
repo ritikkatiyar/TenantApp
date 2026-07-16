@@ -430,7 +430,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   const ListHeader = () => (
     <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-      {isDesktop ? (
+      {isDesktop && (
         <View style={styles.desktopTitleRow}>
           <Text style={styles.mainTitle}>My Properties</Text>
           {properties.length > 0 && (
@@ -450,13 +450,6 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               </LinearGradient>
             </TouchableOpacity>
           )}
-        </View>
-      ) : (
-        <View style={styles.mobileTitleRow}>
-          <View style={styles.largeTitleContainer}>
-            <Text style={styles.titleLine}>My</Text>
-            <Text style={styles.titleLine}>Properties</Text>
-          </View>
         </View>
       )}
       {isDesktop ? (
@@ -584,24 +577,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        <SafeAreaView style={styles.safeArea} edges={['top']}>
-          <View style={styles.mobileHeader}>
-            <Animated.View style={{ opacity: headerOpacity, flex: 1, paddingRight: 10 }}>
-              <Text style={styles.compactHeaderTitle} numberOfLines={1}>My Properties</Text>
-            </Animated.View>
-            <View style={styles.headerRight}>
-              <RoleToggle />
-              <TouchableOpacity style={styles.notificationButton}>
-                <Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} />
-                <View style={styles.notificationBadge} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-                <View style={styles.mobileAvatar}>
-                  <Text style={styles.mobileAvatarText}>{user?.fullName?.[0] || 'A'}</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          </View>
+        <SafeAreaView style={styles.safeArea} edges={[]}>
 
           {isLoading ? (
             <View style={styles.loaderContainer}>
@@ -612,7 +588,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               data={properties}
               renderItem={renderPropertyItem}
               keyExtractor={(item: PropertyResponse) => item.id}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[styles.listContent, { paddingTop: 88 }]}
               ListHeaderComponent={ListHeader}
               ListEmptyComponent={ListEmptyComponent}
               ListFooterComponent={ListFooter}
@@ -1677,6 +1653,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.25)',
     backgroundColor: 'rgba(0, 104, 117, 0.04)',
     marginRight: 10,
+    flexShrink: 0,
   },
   chipActive: {
     backgroundColor: '#006875',

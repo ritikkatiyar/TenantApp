@@ -218,20 +218,24 @@ export default function FloorListOverviewScreen({
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header Section */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-          </TouchableOpacity>
-          <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
-            <Text style={styles.compactTitleText}>Floor Overview</Text>
-          </Animated.View>
+      <SafeAreaView style={styles.safeArea} edges={[]}>
+        {/* Glassy Overlay Header */}
+        <View style={styles.headerContainer}>
+          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+            </TouchableOpacity>
+            <View style={styles.titleWrapper}>
+              <Text style={styles.compactTitleText}>Floor Overview</Text>
+            </View>
+            <View style={{ width: 36 }} />
+          </View>
         </View>
 
         <Animated.ScrollView 
           style={styles.container}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: 76 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#006875" />
@@ -273,31 +277,48 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 32,
-    paddingTop: 20,
-    paddingBottom: 10,
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 56,
+    zIndex: 999,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
-  compactTitleContainer: {
+  titleWrapper: {
     flex: 1,
-    paddingBottom: 16,
+    alignItems: 'center',
   },
   compactTitleText: {
-    fontSize: 22,
+    fontSize: 18,
+    fontFamily: 'Inter',
     fontWeight: '800',
-    color: '#151d1e',
+    color: '#0b1c30',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   largeTitleContainer: {
     marginBottom: 20,

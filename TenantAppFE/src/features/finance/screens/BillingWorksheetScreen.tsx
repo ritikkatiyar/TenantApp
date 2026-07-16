@@ -434,40 +434,23 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-          </TouchableOpacity>
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Worksheets</Text>
+      <SafeAreaView style={styles.safeArea} edges={[]}>
+        {/* Pinned Glassy Overlay Header — clean, title only */}
+        <View style={styles.headerContainer}>
+          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+            </TouchableOpacity>
+            <View style={styles.titleWrapper}>
+              <Text style={styles.compactTitleText}>Worksheets</Text>
+            </View>
+            <View style={{ width: 36 }} />
           </View>
-          
-          <TouchableOpacity 
-            style={[styles.headerSaveBtnWrapper, (isSaving || entries.length === 0) && { opacity: 0.5 }]} 
-            onPress={handleSave}
-            disabled={isSaving || entries.length === 0}
-            activeOpacity={0.85}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerSaveBtn}
-            >
-              {isSaving ? <ActivityIndicator color="#fff" size="small" /> : (
-                <>
-                  <Text style={styles.headerSaveText}>SAVE</Text>
-                  <MaterialIcons name="check" size={14} color="#fff" />
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
         </View>
 
         {/* Filters */}
-        <View style={styles.filterSection}>
+        <View style={[styles.filterSection, { paddingTop: 76 }]}>
           <View style={styles.mobileDropdownWrapper}>
             <GlassDropdown 
               options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
@@ -494,7 +477,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.mobileListContent} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={[styles.mobileListContent, { paddingBottom: 120 }]} keyboardShouldPersistTaps="handled">
           {isLoadingCharges ? (
             <ActivityIndicator size="large" color="#006875" style={{ marginTop: 50 }} />
           ) : charges.length === 0 ? (
@@ -512,8 +495,34 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
           ) : (
             renderFloorsList()
           )}
-          <View style={{ height: 40 }} />
         </ScrollView>
+
+        {/* Floating Save Button */}
+        <View style={styles.floatingSaveBar}>
+          <BlurView intensity={55} tint="light" style={StyleSheet.absoluteFillObject} />
+          <TouchableOpacity
+            style={[styles.floatingSaveBtn, (isSaving || entries.length === 0) && { opacity: 0.5 }]}
+            onPress={handleSave}
+            disabled={isSaving || entries.length === 0}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.floatingSaveBtnInner}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <MaterialIcons name="check" size={20} color="#fff" />
+                  <Text style={styles.floatingSaveText}>SAVE WORKSHEET</Text>
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -586,26 +595,49 @@ const styles = StyleSheet.create({
   },
   
   // Mobile shell specific
-  header: {
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 56,
+    zIndex: 999,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    zIndex: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
   backButton: {
-    width: 40, 
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    width: 36, 
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     justifyContent: 'center', 
     alignItems: 'center',
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  headerTitleContainer: { 
+  titleWrapper: {
     flex: 1,
-    marginLeft: 16,
+    alignItems: 'center',
   },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#151d1e' },
+  compactTitleText: {
+    fontSize: 18,
+    fontFamily: 'Inter',
+    fontWeight: '800',
+    color: '#0b1c30',
+  },
   headerSaveBtnWrapper: {
     borderRadius: 19,
     overflow: 'hidden',
@@ -628,6 +660,41 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  floatingSaveBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    paddingBottom: 28,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.5)',
+    overflow: 'hidden',
+  },
+  floatingSaveBtn: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  floatingSaveBtnInner: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderRadius: 18,
+  },
+  floatingSaveText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   filterSection: {
     paddingBottom: 16,

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RoleToggle } from '@/src/components/RoleToggle';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface TenantPaymentsScreenProps {
   token: string;
@@ -30,18 +31,22 @@ const colors = {
 };
 
 export default function TenantPaymentsScreen({ token, onLogout }: TenantPaymentsScreenProps) {
+  const { isDesktop } = useResponsive();
+
   return (
     <View style={styles.root}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.kicker}>Billing & Rent</Text>
-            <Text style={styles.title}>Payments & History</Text>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
+        {isDesktop && (
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.kicker}>Billing & Rent</Text>
+              <Text style={styles.title}>Payments & History</Text>
+            </View>
+            <RoleToggle />
           </View>
-          <RoleToggle />
-        </View>
+        )}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 88 }]}>
           
           <View style={styles.cycleCard}>
             <View style={styles.cycleTopRow}>

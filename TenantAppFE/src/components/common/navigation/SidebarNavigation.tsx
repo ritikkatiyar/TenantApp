@@ -93,6 +93,7 @@ export default function SidebarNavigation() {
             {renderSidebarLink('build', 'Escalations', '/escalations')}
             {renderSidebarLink('campaign', 'Announcements', '/announcements')}
             {renderSidebarLink('account-balance', 'Finance & Billing', '/expenses')}
+            {renderSidebarLink('settings', 'Settings', '/settings')}
           </>
         ) : (
           <>

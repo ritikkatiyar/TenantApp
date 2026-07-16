@@ -365,22 +365,6 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     }
   }, [resetRotationTrigger]);
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color="#00e5ff" />
-      </View>
-    );
-  }
-
-  if (!units || units.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No Layout</Text>
-      </View>
-    );
-  }
-
   const webMouseProps = Platform.OS === 'web' ? {
     onMouseMove: handleMouseMove,
     onMouseLeave: handleMouseLeave,
@@ -389,33 +373,43 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   return (
     <View 
       onLayout={handleLayout}
-      style={{ position: 'relative', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}
+      style={{ position: 'relative', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', minHeight: maxContainerHeight }}
       {...(webMouseProps as any)}
     >
-      <View 
-        ref={containerRef}
-        style={[
-          styles.container, 
-          { 
-            width: buildingWidth + 40,
-            height: containerHeight
-          }
-        ]}
-        {...panResponder.panHandlers}
-      >
-        {floorNumbers.map((floorNum) => {
-          const elevationAnim = floorElevations[floorNum] || new Animated.Value(0);
-          const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset - buildingHeight / 2 + visualIsoHeight / 2 - 25;
-          const isHovered = floorNum === hoveredFloor;
-          
-          return (
-            <Animated.View
-              key={`floor-${floorNum}`}
-              style={{
-                position: 'absolute',
-                zIndex: floorNum, // Higher floors should render on top
-                transform: [
-                  // Elevate each floor, and shift down visually to fit perfectly within the container bounds accounting for rotation anchors
+      {loading || !containerDimensions ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#00e5ff" />
+        </View>
+      ) : !units || units.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No Layout</Text>
+        </View>
+      ) : (
+        <View 
+          ref={containerRef}
+          style={[
+            styles.container, 
+            { 
+              width: buildingWidth + 40,
+              height: containerHeight
+            }
+          ]}
+          {...panResponder.panHandlers}
+        >
+          {floorNumbers.map((floorNum) => {
+            const elevationAnim = floorElevations[floorNum] || new Animated.Value(0);
+            const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset - buildingHeight / 2 + visualIsoHeight / 2 - 25;
+            const isHovered = floorNum === hoveredFloor;
+            
+            return (
+              <Animated.View
+                key={`floor-${floorNum}`}
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  zIndex: floorNum, // Higher floors should render on top
+                  transform: [
+                    // Elevate each floor, and shift down visually to fit perfectly within the container bounds accounting for rotation anchors
                   { translateY: Animated.add(baseTranslateY, elevationAnim) },
                 ],
               }}
@@ -483,8 +477,9 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
           );
         })}
       </View>
-    </View>
-  );
+    )}
+  </View>
+);
 }
 
 const styles = StyleSheet.create({

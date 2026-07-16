@@ -1071,12 +1071,13 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                     <TouchableOpacity 
                       activeOpacity={0.8}
                       onPress={onClose}
+                      style={styles.saveButton}
                     >
                       <LinearGradient
                         colors={['#00d4ff', '#0072ff']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
-                        style={styles.saveButton}
+                        style={styles.saveButtonGradient}
                       >
                         <Text style={styles.saveButtonText}>CLOSE VIEW</Text>
                       </LinearGradient>

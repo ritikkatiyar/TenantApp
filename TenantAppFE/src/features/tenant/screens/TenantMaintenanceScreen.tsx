@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RoleToggle } from '@/src/components/RoleToggle';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface TenantMaintenanceScreenProps {
   token: string;
@@ -36,26 +37,29 @@ const colors = {
 };
 
 export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaintenanceScreenProps) {
+  const { isDesktop } = useResponsive();
   const [description, setDescription] = useState('');
 
   return (
     <View style={styles.root}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.kicker}>Support Hub</Text>
-            <Text style={styles.title}>Service Center</Text>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
+        {isDesktop && (
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.kicker}>Support Hub</Text>
+              <Text style={styles.title}>Service Center</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <RoleToggle />
+              <TouchableOpacity style={styles.createBtn}>
+                <MaterialIcons name="add-circle" size={20} color="#fff" />
+                <Text style={styles.createBtnText}>Create Ticket</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <RoleToggle />
-            <TouchableOpacity style={styles.createBtn}>
-              <MaterialIcons name="add-circle" size={20} color="#fff" />
-              <Text style={styles.createBtnText}>Create Ticket</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        )}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 88 }]}>
           
           <View style={styles.formCard}>
             <View style={styles.formHeaderRow}>

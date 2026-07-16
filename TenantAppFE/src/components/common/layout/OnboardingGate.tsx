@@ -85,10 +85,10 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     };
   }, [isReady, isAuthenticated, pathname, accessToken, isOnboarded, context]);
 
-  if (!isReady) {
+  if (!isReady || (isAuthenticated && !isAuthRoute && !isOnboardingRoute && (loading || isOnboarded === null))) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa' }}>
+        <ActivityIndicator size="large" color="#006875" />
       </View>
     );
   }
@@ -101,11 +101,6 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      {isAuthenticated && !isAuthRoute && !isOnboardingRoute && loading && (
-        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(249, 250, 250, 0.8)', zIndex: 9999 }]}>
-          <ActivityIndicator size="large" color="#006875" />
-        </View>
-      )}
     </>
   );
 }

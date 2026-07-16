@@ -587,20 +587,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
 
   return (
     <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.mobileHeader}>
-          <View style={{ flex: 1, paddingRight: 10 }}>
-            <Text style={styles.mobileTitle}>Announcements</Text>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/escalations')}>
-              <Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={onLogout}>
-              <View style={styles.mobileAvatar}><Text style={styles.mobileAvatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
-            </TouchableOpacity>
-          </View>
-        </View>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.mobileContent}>
           {showHistory ? (
@@ -1136,26 +1123,30 @@ const styles = StyleSheet.create({
   },
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    padding: 4,
+    flexWrap: 'wrap',
+    gap: 8,
     marginTop: 4,
   },
   segmentButtonWrapper: {
-    flex: 1,
-    minWidth: 0,
+    minWidth: '30%',
+    flexGrow: 1,
   },
   segmentButtonGradient: {
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   segmentButtonInactive: {
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
   },
   segmentText: {
     fontSize: 13,

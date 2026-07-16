@@ -365,15 +365,19 @@ export default function EditPropertyScreen({
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Pinned Header with Back Button and Massive Title */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-          </TouchableOpacity>
-          <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
-            <Text style={styles.compactTitleText}>Edit Property</Text>
-          </Animated.View>
+      <SafeAreaView style={styles.safeArea} edges={[]}>
+        {/* Pinned Glassy Overlay Back Header */}
+        <View style={styles.headerContainer}>
+          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+            </TouchableOpacity>
+            <View style={styles.titleWrapper}>
+              <Text style={styles.compactTitleText}>Edit Property</Text>
+            </View>
+            <View style={{ width: 40 }} />
+          </View>
         </View>
 
         <KeyboardAvoidingView
@@ -381,7 +385,7 @@ export default function EditPropertyScreen({
           style={styles.flex}
         >
           <Animated.ScrollView 
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingTop: 76 }]}
             showsVerticalScrollIndicator={false}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -389,10 +393,6 @@ export default function EditPropertyScreen({
             )}
             scrollEventThrottle={16}
           >
-            <Animated.View style={[styles.largeTitleContainer, { opacity: largeTitleOpacity }]}>
-              <Text style={styles.titleLine}>Edit</Text>
-              <Text style={styles.titleLine}>Property</Text>
-            </Animated.View>
 
             <BlurView intensity={60} tint="light" style={styles.card}>
               <Text style={styles.sectionTitle}>BASIC INFORMATION</Text>
@@ -514,28 +514,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 56,
+    zIndex: 999,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
-  compactTitleContainer: {
+  titleWrapper: {
     flex: 1,
+    alignItems: 'center',
   },
   compactTitleText: {
-    fontSize: 22,
+    fontSize: 18,
+    fontFamily: 'Inter',
     fontWeight: '800',
-    color: '#151d1e',
+    color: '#0b1c30',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   largeTitleContainer: {
     marginTop: 16,

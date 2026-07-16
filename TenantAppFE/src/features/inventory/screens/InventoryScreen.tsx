@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   Image,
   ScrollView,
   StyleSheet,
@@ -29,106 +30,608 @@ import {
 
 type InventoryTab = 'registry' | 'moveIn' | 'moveOut';
 
-const conditionColors: Record<InventoryCondition, string> = {
-  Excellent: '#16a34a',
-  Good: Theme.Colors.primary,
-  Fair: '#d97706',
-  Damaged: Theme.Colors.error,
+const CONDITION_CONFIG: Record<InventoryCondition, { color: string; bg: string }> = {
+  Excellent: { color: '#059669', bg: 'rgba(5,150,105,0.1)'  },
+  Good:      { color: '#0891b2', bg: 'rgba(8,145,178,0.1)'  },
+  Fair:      { color: '#d97706', bg: 'rgba(217,119,6,0.1)'  },
+  Damaged:   { color: '#dc2626', bg: 'rgba(220,38,38,0.1)'  },
 };
+
+const STATUS_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
+  Assigned:      { color: '#059669', bg: 'rgba(5,150,105,0.1)',   dot: '#10b981' },
+  Available:     { color: '#0891b2', bg: 'rgba(8,145,178,0.1)',   dot: '#06b6d4' },
+  Shared:        { color: '#4f46e5', bg: 'rgba(79,70,229,0.1)',   dot: '#6366f1' },
+  'Service Due': { color: '#dc2626', bg: 'rgba(220,38,38,0.08)',  dot: '#ef4444' },
+};
+
+const STAT_GRAD: [string, string][] = [
+  ['#0891b2', '#06b6d4'],
+  ['#dc2626', '#ef4444'],
+  ['#4f46e5', '#7c3aed'],
+  ['#059669', '#10b981'],
+];
+const STAT_COLORS = ['#0891b2', '#dc2626', '#4f46e5', '#059669'];
 
 const formatCurrency = (amount: number) =>
   `Rs. ${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
+// ─── Condition pill ────────────────────────────────────────────────────────────
+function ConditionPill({ condition }: { condition: InventoryCondition }) {
+  const cfg = CONDITION_CONFIG[condition];
+  return (
+    <View style={[styles.conditionPill, { backgroundColor: cfg.bg }]}>
+      <View style={[styles.conditionDot, { backgroundColor: cfg.color }]} />
+      <Text style={[styles.conditionText, { color: cfg.color }]}>{condition}</Text>
+    </View>
+  );
+}
+
+// ─── Status pill ───────────────────────────────────────────────────────────────
+function StatusPill({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? { color: '#6b7280', bg: 'rgba(107,114,128,0.1)', dot: '#9ca3af' };
+  return (
+    <View style={[styles.statusPill, { backgroundColor: cfg.bg }]}>
+      <View style={[styles.statusDot, { backgroundColor: cfg.dot }]} />
+      <Text style={[styles.statusText, { color: cfg.color }]}>{status}</Text>
+    </View>
+  );
+}
+
+// ─── Summary line ──────────────────────────────────────────────────────────────
+function SummaryLine({ label, value, danger = false, bold = false }: {
+  label: string; value: string; danger?: boolean; bold?: boolean;
+}) {
+  return (
+    <View style={styles.summaryLine}>
+      <Text style={[styles.summaryLabel, bold && { fontWeight: '800', color: '#0b1c30' }]}>{label}</Text>
+      <Text style={[styles.summaryValue, danger && { color: '#dc2626' }, bold && { fontSize: 15 }]}>{value}</Text>
+    </View>
+  );
+}
+
+// ─── Mobile inventory card ─────────────────────────────────────────────────────
+function MobileInventoryCard({ item }: { item: InventoryItem }) {
+  const serviceDue = item.status === 'Service Due';
+  return (
+    <BlurView intensity={48} tint="light" style={[styles.inventoryCard, serviceDue && styles.inventoryCardAlert]}>
+      {serviceDue && (
+        <LinearGradient colors={['#dc2626', '#ef4444']} style={styles.alertStripe} />
+      )}
+      <View style={styles.inventoryCardInner}>
+        <Image source={{ uri: item.image }} style={styles.inventoryThumb} />
+        <View style={styles.inventoryContent}>
+          <View style={styles.inventoryTopRow}>
+            <View style={styles.inventoryCategoryPill}>
+              <MaterialIcons name={item.icon} size={11} color="#5b6b6d" />
+              <Text style={styles.inventoryCategoryText}>{item.category}</Text>
+            </View>
+            <StatusPill status={item.status} />
+          </View>
+          <Text style={styles.inventoryName} numberOfLines={1}>{item.name}</Text>
+          <Text style={styles.inventoryMeta} numberOfLines={1}>{item.location} · {item.serial}</Text>
+          <View style={styles.inventoryFooter}>
+            <ConditionPill condition={item.condition} />
+            <Text style={styles.inventoryValue}>{item.value}</Text>
+          </View>
+        </View>
+      </View>
+      {serviceDue && (
+        <View style={styles.serviceAlertBar}>
+          <MaterialIcons name="warning-amber" size={13} color="#dc2626" />
+          <Text style={styles.serviceAlertText}>Service overdue · {item.nextService}</Text>
+        </View>
+      )}
+    </BlurView>
+  );
+}
+
+// ─── Desktop registry row ──────────────────────────────────────────────────────
+function DesktopRegistryRow({ item }: { item: InventoryItem }) {
+  return (
+    <View style={[styles.tableRow, item.status === 'Service Due' && styles.tableRowAlert]}>
+      <View style={[styles.tableCell, styles.itemCell]}>
+        <Image source={{ uri: item.image }} style={styles.itemThumb} />
+        <View style={styles.itemTextBlock}>
+          <Text style={styles.itemName}>{item.name}</Text>
+          <Text style={styles.itemMeta}>SN: {item.serial}</Text>
+        </View>
+      </View>
+      <View style={styles.tableCell}>
+        <View style={styles.categoryChip}>
+          <MaterialIcons name={item.icon} size={13} color="#5b6b6d" />
+          <Text style={styles.categoryChipText}>{item.category}</Text>
+        </View>
+      </View>
+      <View style={styles.tableCell}>
+        <Text style={styles.cellText}>{item.location}</Text>
+      </View>
+      <View style={styles.tableCell}>
+        <ConditionPill condition={item.condition} />
+      </View>
+      <View style={styles.tableCell}>
+        <StatusPill status={item.status} />
+      </View>
+      <View style={[styles.tableCell, { alignItems: 'flex-end' }]}>
+        <Text style={styles.valueText}>{item.value}</Text>
+      </View>
+      <TouchableOpacity style={styles.moreBtn}>
+        <MaterialIcons name="more-vert" size={20} color="#9ca3af" />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Assignment card ───────────────────────────────────────────────────────────
+function AssignmentCard({ item }: { item: AssignmentItem }) {
+  const selected = item.assignmentStatus !== 'Unselected';
+  const isDraft  = item.assignmentStatus === 'Draft';
+
+  return (
+    <BlurView intensity={45} tint="light" style={[styles.assignCard, !selected && styles.assignCardMuted]}>
+      <View style={styles.assignHeader}>
+        <View style={styles.assignIdentity}>
+          <Image source={{ uri: item.image }} style={styles.assignThumb} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.assignName}>{item.location}: {item.name}</Text>
+            <Text style={styles.assignMeta}>SN: {item.serial}</Text>
+          </View>
+        </View>
+        <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+          {selected && <MaterialIcons name="check" size={14} color="#fff" />}
+        </View>
+      </View>
+
+      {selected ? (
+        <>
+          <View style={styles.assignFields}>
+            <View style={styles.assignField}>
+              <Text style={styles.fieldLabel}>CONDITION</Text>
+              <ConditionPill condition={item.assignmentCondition} />
+            </View>
+            <View style={styles.assignField}>
+              <Text style={styles.fieldLabel}>NOTES</Text>
+              <Text style={styles.fieldValue} numberOfLines={1}>{item.notes}</Text>
+            </View>
+          </View>
+          <View style={styles.assignFooter}>
+            <TouchableOpacity style={styles.photoLink}>
+              <MaterialIcons name={item.photoCount > 0 ? 'photo-library' : 'add-a-photo'} size={14} color="#0891b2" />
+              <Text style={styles.photoLinkText}>
+                {item.photoCount > 0 ? `${item.photoCount} photos` : 'Add photo'}
+              </Text>
+            </TouchableOpacity>
+            {isDraft && (
+              <View style={styles.draftBadge}>
+                <Text style={styles.draftBadgeText}>Draft</Text>
+              </View>
+            )}
+          </View>
+        </>
+      ) : (
+        <Text style={styles.assignHint}>Tap to select and document this item's condition</Text>
+      )}
+    </BlurView>
+  );
+}
+
+// ─── Verification card ─────────────────────────────────────────────────────────
+function VerificationCard({ item }: { item: VerificationItem }) {
+  const isDamaged = item.status === 'Damaged';
+  const isReview  = item.status === 'Review';
+  const statusCfg = isDamaged
+    ? { color: '#dc2626', bg: 'rgba(220,38,38,0.1)', label: 'Damaged' }
+    : isReview
+    ? { color: '#d97706', bg: 'rgba(217,119,6,0.1)',  label: 'Under Review' }
+    : { color: '#059669', bg: 'rgba(5,150,105,0.1)',  label: 'Good' };
+
+  return (
+    <BlurView intensity={45} tint="light" style={styles.verifyCard}>
+      <View style={styles.verifyHeader}>
+        <View style={[styles.verifyIconCircle, { backgroundColor: statusCfg.bg }]}>
+          <MaterialIcons name={item.icon} size={20} color={statusCfg.color} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.verifyName}>{item.name}</Text>
+          <Text style={styles.verifyArea}>{item.area}</Text>
+        </View>
+        <View style={[styles.verifyBadge, { backgroundColor: statusCfg.bg }]}>
+          <View style={[styles.statusDot, { backgroundColor: statusCfg.color }]} />
+          <Text style={[styles.verifyBadgeText, { color: statusCfg.color }]}>{statusCfg.label}</Text>
+        </View>
+      </View>
+
+      <View style={styles.conditionCompare}>
+        <View style={styles.conditionCompareItem}>
+          <Text style={styles.compareLabel}>MOVE-IN</Text>
+          <ConditionPill condition={item.moveInCondition} />
+        </View>
+        <MaterialIcons name="arrow-forward" size={18} color="#c4cdd0" />
+        <View style={styles.conditionCompareItem}>
+          <Text style={styles.compareLabel}>RETURN</Text>
+          <ConditionPill condition={item.returnCondition} />
+        </View>
+      </View>
+
+      <View style={styles.photoGrid}>
+        <View style={styles.photoPanel}>
+          <Image source={{ uri: item.moveInPhoto }} style={styles.photoImage} />
+          <BlurView intensity={60} tint="dark" style={styles.photoTag}>
+            <Text style={styles.photoTagText}>MOVE-IN</Text>
+          </BlurView>
+        </View>
+        <View style={styles.photoPanel}>
+          <Image source={{ uri: item.returnPhoto }} style={styles.photoImage} />
+          <BlurView
+            intensity={60}
+            tint={isDamaged ? 'extraLight' : 'dark'}
+            style={[styles.photoTag, isDamaged && styles.photoTagDanger]}
+          >
+            <Text style={[styles.photoTagText, isDamaged && { color: '#dc2626' }]}>RETURN</Text>
+          </BlurView>
+        </View>
+      </View>
+
+      {(isDamaged || isReview) && (
+        <View style={styles.damageRow}>
+          <View style={styles.damageDesc}>
+            <Text style={styles.fieldLabel}>DESCRIPTION</Text>
+            <Text style={styles.damageText}>{item.damageDescription}</Text>
+          </View>
+          {item.deduction > 0 && (
+            <View style={styles.deductionBox}>
+              <Text style={styles.fieldLabel}>DEDUCTION</Text>
+              <Text style={styles.deductionAmount}>{formatCurrency(item.deduction)}</Text>
+            </View>
+          )}
+        </View>
+      )}
+    </BlurView>
+  );
+}
+
+// ─── Registry view ─────────────────────────────────────────────────────────────
+function RegistryView({ items, isDesktop, serviceOnly, onToggleService }: {
+  items: InventoryItem[]; isDesktop: boolean; serviceOnly: boolean; onToggleService: () => void;
+}) {
+  return (
+    <View style={styles.sectionStack}>
+      <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>
+        {inventoryStats.map((stat, i) => (
+          <BlurView key={stat.label} intensity={55} tint="light" style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
+            <LinearGradient colors={STAT_GRAD[i]} style={styles.statIconCircle}>
+              <MaterialIcons name={stat.icon} size={18} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.statValue, { color: STAT_COLORS[i] }]}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={styles.statHelper}>{stat.helper}</Text>
+          </BlurView>
+        ))}
+      </View>
+
+      <BlurView intensity={60} tint="light" style={styles.panel}>
+        <View style={[styles.panelHeader, !isDesktop && styles.panelHeaderMobile]}>
+          <View>
+            <Text style={styles.panelTitle}>Itemized Registry</Text>
+            <Text style={styles.panelSub}>{items.length} of {inventoryItems.length} assets</Text>
+          </View>
+          <View style={styles.panelActions}>
+            <TouchableOpacity
+              style={[styles.filterPill, serviceOnly && styles.filterPillActive]}
+              onPress={onToggleService}
+            >
+              {serviceOnly && (
+                <LinearGradient colors={['#dc2626', '#ef4444']} style={StyleSheet.absoluteFillObject} />
+              )}
+              <MaterialIcons name="handyman" size={14} color={serviceOnly ? '#fff' : '#6b7280'} />
+              <Text style={[styles.filterPillText, serviceOnly && styles.filterPillTextActive]}>Service Due</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn}>
+              <MaterialIcons name="download" size={18} color="#849495" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {isDesktop ? (
+          <View style={styles.tableContainer}>
+            <View style={styles.tableHeaderRow}>
+              {['Item', 'Category', 'Location', 'Condition', 'Status', 'Value', ''].map((h, i) => (
+                <View key={i} style={[styles.tableCell, i === 0 && styles.itemCell, i === 6 && { flex: 0, width: 36 }]}>
+                  <Text style={styles.tableHeaderText}>{h}</Text>
+                </View>
+              ))}
+            </View>
+            {items.map(item => <DesktopRegistryRow key={item.id} item={item} />)}
+          </View>
+        ) : (
+          <View style={styles.cardList}>
+            {items.map(item => <MobileInventoryCard key={item.id} item={item} />)}
+          </View>
+        )}
+      </BlurView>
+    </View>
+  );
+}
+
+// ─── Move-In view ──────────────────────────────────────────────────────────────
+function MoveInView({ isDesktop }: { isDesktop: boolean }) {
+  const selectedCount = assignmentItems.filter(i => i.assignmentStatus !== 'Unselected').length;
+  const photoCount    = assignmentItems.reduce((s, i) => s + i.photoCount, 0);
+  const progress      = selectedCount / assignmentItems.length;
+
+  return (
+    <View style={styles.sectionStack}>
+      <BlurView intensity={35} tint="light" style={styles.moveBanner}>
+        <LinearGradient
+          colors={['rgba(8,145,178,0.85)', 'rgba(79,70,229,0.85)']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={styles.moveBannerContent}>
+          <Text style={styles.moveBannerKicker}>NEW MOVE-IN ASSIGNMENT</Text>
+          <Text style={styles.moveBannerTitle}>Jordan Mitchell</Text>
+          <Text style={styles.moveBannerMeta}>Lease #L-8824 · Unit 402-B · Move-in Jul 20, 2026</Text>
+        </View>
+        <View style={styles.progressBox}>
+          <Text style={styles.progressFraction}>{selectedCount}/{assignmentItems.length}</Text>
+          <Text style={styles.progressSublabel}>items done</Text>
+          <View style={styles.progressTrack}>
+            <LinearGradient
+              colors={['#a5f3fc', '#fff']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={[styles.progressFill, { width: `${progress * 100}%` as any }]}
+            />
+          </View>
+        </View>
+      </BlurView>
+
+      <View style={[styles.workflowGrid, isDesktop && styles.workflowGridDesktop]}>
+        <View style={styles.workflowMain}>
+          <View style={styles.workflowHeader}>
+            <Text style={styles.panelTitle}>Inventory Checklist</Text>
+            <View style={styles.panelActions}>
+              <TouchableOpacity style={styles.ghostBtn}><Text style={styles.ghostBtnText}>Select All</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.ghostBtn}><Text style={styles.ghostBtnText}>Filter</Text></TouchableOpacity>
+            </View>
+          </View>
+          {assignmentItems.map(item => <AssignmentCard key={item.id} item={item} />)}
+        </View>
+
+        <BlurView intensity={65} tint="light" style={styles.rail}>
+          <View style={styles.railHeader}>
+            <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.railIconCircle}>
+              <MaterialIcons name="how-to-reg" size={18} color="#fff" />
+            </LinearGradient>
+            <Text style={styles.panelTitle}>Summary</Text>
+          </View>
+          <View style={styles.railBody}>
+            <SummaryLine label="Selected Items"  value={`${selectedCount} items`} />
+            <SummaryLine label="Photos Attached" value={`${photoCount} photos`} />
+            <SummaryLine label="Needs Attention" value="1 item" danger />
+            <View style={styles.railDivider} />
+            <SummaryLine label="Kitchen Appliances" value="98/100" />
+            <SummaryLine label="Living Fixtures"    value="Draft" />
+          </View>
+          <TouchableOpacity style={styles.primaryWideBtn} activeOpacity={0.82}>
+            <LinearGradient
+              colors={['#0891b2', '#0072ff']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={styles.primaryWideBtnInner}
+            >
+              <MaterialIcons name="how-to-reg" size={18} color="#fff" />
+              <Text style={styles.primaryWideBtnText}>Confirm Assignment</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.ghostWideBtn}>
+            <Text style={styles.ghostWideBtnText}>Save as Draft</Text>
+          </TouchableOpacity>
+        </BlurView>
+      </View>
+    </View>
+  );
+}
+
+// ─── Move-Out view ─────────────────────────────────────────────────────────────
+function MoveOutView({ isDesktop, securityDeposit, totalDeductions, netRefund }: {
+  isDesktop: boolean; securityDeposit: number; totalDeductions: number; netRefund: number;
+}) {
+  return (
+    <View style={styles.sectionStack}>
+      <BlurView intensity={35} tint="light" style={styles.moveBanner}>
+        <LinearGradient
+          colors={['rgba(220,38,38,0.8)', 'rgba(217,119,6,0.8)']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={styles.moveBannerContent}>
+          <Text style={styles.moveBannerKicker}>MOVE-OUT INSPECTION</Text>
+          <Text style={styles.moveBannerTitle}>Alex Rivera</Text>
+          <Text style={styles.moveBannerMeta}>Lease #L-7142 · Unit 302-A · Move-out Jul 28, 2026</Text>
+        </View>
+        <View style={styles.moveOutDatePill}>
+          <MaterialIcons name="event" size={16} color="#fff" />
+          <Text style={styles.moveOutDateText}>Jul 28, 2026</Text>
+        </View>
+      </BlurView>
+
+      <View style={[styles.workflowGrid, isDesktop && styles.workflowGridDesktop]}>
+        <View style={styles.workflowMain}>
+          {verificationItems.map(item => <VerificationCard key={item.id} item={item} />)}
+        </View>
+
+        <BlurView intensity={65} tint="light" style={styles.rail}>
+          <View style={styles.railHeader}>
+            <LinearGradient colors={['#dc2626', '#ef4444']} style={styles.railIconCircle}>
+              <MaterialIcons name="receipt-long" size={18} color="#fff" />
+            </LinearGradient>
+            <Text style={styles.panelTitle}>Settlement</Text>
+          </View>
+          <View style={styles.railBody}>
+            <SummaryLine label="Security Deposit"  value={formatCurrency(securityDeposit)} bold />
+            <View style={styles.railDivider} />
+            {verificationItems.filter(i => i.deduction > 0).map(i => (
+              <SummaryLine key={i.id} label={i.name} value={`-${formatCurrency(i.deduction)}`} danger />
+            ))}
+            <SummaryLine label="Total Deductions" value={`-${formatCurrency(totalDeductions)}`} danger bold />
+            <View style={styles.railDivider} />
+          </View>
+          <View style={styles.refundBlock}>
+            <Text style={styles.refundLabel}>NET REFUND</Text>
+            <Text style={styles.refundAmount}>{formatCurrency(netRefund)}</Text>
+          </View>
+          <TouchableOpacity style={styles.primaryWideBtn} activeOpacity={0.82}>
+            <LinearGradient
+              colors={['#059669', '#10b981']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={styles.primaryWideBtnInner}
+            >
+              <Text style={styles.primaryWideBtnText}>Confirm & Settle</Text>
+              <MaterialIcons name="send" size={16} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.ghostWideBtn, styles.ghostWideBtnDanger]}>
+            <Text style={[styles.ghostWideBtnText, { color: '#dc2626' }]}>Dispute Settlement</Text>
+          </TouchableOpacity>
+        </BlurView>
+      </View>
+    </View>
+  );
+}
+
+// ─── Main screen ───────────────────────────────────────────────────────────────
 export default function InventoryScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
-  const params = useLocalSearchParams<{ tab?: string; leaseId?: string }>();
-  const initialTab: InventoryTab = params.tab === 'moveIn' || params.tab === 'moveOut' ? params.tab : 'registry';
-  const [activeTab, setActiveTab] = useState<InventoryTab>(initialTab);
-  const [query, setQuery] = useState('');
+  const params    = useLocalSearchParams<{ tab?: string; leaseId?: string }>();
+  const initialTab: InventoryTab =
+    params.tab === 'moveIn' || params.tab === 'moveOut' ? params.tab : 'registry';
+  const [activeTab, setActiveTab]     = useState<InventoryTab>(initialTab);
+  const [query, setQuery]             = useState('');
   const [serviceOnly, setServiceOnly] = useState(false);
 
-  const filteredItems = useMemo(() => {
-    return inventoryItems.filter((item) => {
-      const matchesQuery = `${item.name} ${item.location} ${item.category} ${item.serial}`
-        .toLowerCase()
-        .includes(query.trim().toLowerCase());
-      const matchesService = !serviceOnly || item.status === 'Service Due';
-      return matchesQuery && matchesService;
-    });
-  }, [query, serviceOnly]);
+  const filteredItems = useMemo(() =>
+    inventoryItems.filter(item => {
+      const matchQ = `${item.name} ${item.location} ${item.category} ${item.serial}`
+        .toLowerCase().includes(query.trim().toLowerCase());
+      return matchQ && (!serviceOnly || item.status === 'Service Due');
+    }),
+  [query, serviceOnly]);
 
-  const totalDeductions = verificationItems.reduce((sum, item) => sum + item.deduction, 0);
+  const totalDeductions = verificationItems.reduce((s, i) => s + i.deduction, 0);
   const securityDeposit = 30000;
-  const netRefund = securityDeposit - totalDeductions;
+  const netRefund       = securityDeposit - totalDeductions;
+
+  const TABS: { id: InventoryTab; label: string; icon: React.ComponentProps<typeof MaterialIcons>['name'] }[] = [
+    { id: 'registry', label: 'Registry',   icon: 'inventory-2'  },
+    { id: 'moveIn',   label: 'Move-In',    icon: 'how-to-reg'   },
+    { id: 'moveOut',  label: 'Settlement', icon: 'receipt-long' },
+  ];
 
   return (
     <LinearGradient
       colors={Theme.Colors.backgroundGradient as [string, string, string]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       style={styles.root}
     >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop && <DesktopNavBar title="Inventory" />}
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
+          contentContainerStyle={[styles.scroll, isDesktop ? styles.scrollDesktop : { paddingTop: 88 }]}
         >
-          <View style={styles.pageHeader}>
-            <View style={styles.titleBlock}>
-              <Text style={styles.kicker}>INVENTORY LIFECYCLE</Text>
-              <Text style={[styles.title, !isDesktop && styles.titleMobile]}>Property Inventory</Text>
-              <Text style={styles.subtitle}>
-                Track move-in assignment, condition evidence, move-out verification, and deposit settlement.
-              </Text>
-              {params.leaseId ? (
-                <Text style={styles.contextLine}>Lease context: {params.leaseId}</Text>
-              ) : null}
-            </View>
-
-            <View style={styles.headerActions}>
-              <BlurView intensity={50} tint="light" style={styles.searchBox}>
-                <MaterialIcons name="search" size={20} color={Theme.Colors.outline} />
-                <TextInput
-                  value={query}
-                  onChangeText={setQuery}
-                  placeholder="Search inventory..."
-                  placeholderTextColor={Theme.Colors.outline}
-                  style={styles.searchInput}
-                />
-              </BlurView>
-              <TouchableOpacity style={styles.primaryButtonWrapper} activeOpacity={0.82}>
-                <LinearGradient
-                  colors={['#00e0ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.primaryButton}
-                >
-                  <MaterialIcons name="add" size={18} color={Theme.Colors.onPrimary} />
-                  <Text style={styles.primaryButtonText}>Add Item</Text>
+          {/* Desktop page header */}
+          {isDesktop && (
+            <View style={styles.pageHeader}>
+              <View>
+                <Text style={styles.kicker}>INVENTORY LIFECYCLE</Text>
+                <Text style={styles.title}>Property Inventory</Text>
+                <Text style={styles.subtitle}>
+                  Track move-in assignment, condition evidence, verification and deposit settlement.
+                </Text>
+                {params.leaseId && <Text style={styles.contextLine}>Lease: {params.leaseId}</Text>}
+              </View>
+              <TouchableOpacity style={styles.addBtnWrapper} activeOpacity={0.82}>
+                <LinearGradient colors={['#0891b2', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addBtn}>
+                  <MaterialIcons name="add" size={18} color="#fff" />
+                  <Text style={styles.addBtnText}>Add Item</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
+          )}
+
+          {/* Mobile search + add row */}
+          {!isDesktop && (
+            <View style={styles.mobileTopBar}>
+              <View style={styles.searchBox}>
+                <MaterialIcons name="search" size={18} color="#9ca3af" />
+                <TextInput
+                  value={query} onChangeText={setQuery}
+                  placeholder="Search inventory..."
+                  placeholderTextColor="#9ca3af"
+                  style={styles.searchInput}
+                />
+                {query.length > 0 && (
+                  <TouchableOpacity onPress={() => setQuery('')}>
+                    <MaterialIcons name="close" size={16} color="#9ca3af" />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <TouchableOpacity style={styles.addIconBtn} activeOpacity={0.82}>
+                <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.addIconBtnInner}>
+                  <MaterialIcons name="add" size={20} color="#fff" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Tab bar */}
+          <View style={styles.tabBar}>
+            {TABS.map(t => {
+              const active = activeTab === t.id;
+              return (
+                <TouchableOpacity
+                  key={t.id}
+                  style={[styles.tab, active && styles.tabActive]}
+                  onPress={() => setActiveTab(t.id)}
+                  activeOpacity={0.75}
+                >
+                  {active && (
+                    <LinearGradient
+                      colors={t.id === 'moveOut' ? ['#dc2626', '#ef4444'] : ['#0891b2', '#0072ff']}
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                      style={StyleSheet.absoluteFillObject}
+                    />
+                  )}
+                  <MaterialIcons name={t.icon} size={16} color={active ? '#fff' : '#6b7280'} />
+                  <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
-          <View style={styles.tabs}>
-            {renderTab('registry', 'Registry', 'inventory-2', activeTab, setActiveTab)}
-            {renderTab('moveIn', 'Move-In', 'how-to-reg', activeTab, setActiveTab)}
-            {renderTab('moveOut', 'Settlement', 'receipt-long', activeTab, setActiveTab)}
-          </View>
+          {/* Desktop search for registry */}
+          {isDesktop && activeTab === 'registry' && (
+            <View style={styles.desktopSearchRow}>
+              <View style={[styles.searchBox, { maxWidth: 420 }]}>
+                <MaterialIcons name="search" size={18} color="#9ca3af" />
+                <TextInput
+                  value={query} onChangeText={setQuery}
+                  placeholder="Search inventory..."
+                  placeholderTextColor="#9ca3af"
+                  style={styles.searchInput}
+                />
+              </View>
+            </View>
+          )}
 
           {activeTab === 'registry' && (
             <RegistryView
               items={filteredItems}
               isDesktop={isDesktop}
               serviceOnly={serviceOnly}
-              onToggleService={() => setServiceOnly((value) => !value)}
+              onToggleService={() => setServiceOnly(v => !v)}
             />
           )}
-
-          {activeTab === 'moveIn' && <MoveInView isDesktop={isDesktop} />}
-
+          {activeTab === 'moveIn'  && <MoveInView  isDesktop={isDesktop} />}
           {activeTab === 'moveOut' && (
             <MoveOutView
               isDesktop={isDesktop}
@@ -143,616 +646,192 @@ export default function InventoryScreen() {
   );
 }
 
-function renderTab(
-  id: InventoryTab,
-  label: string,
-  icon: React.ComponentProps<typeof MaterialIcons>['name'],
-  activeTab: InventoryTab,
-  setActiveTab: (tab: InventoryTab) => void,
-) {
-  const active = activeTab === id;
-  return (
-    <TouchableOpacity
-      key={id}
-      style={[styles.tab, active && styles.tabActive]}
-      onPress={() => setActiveTab(id)}
-      activeOpacity={0.75}
-    >
-      <MaterialIcons name={icon} size={18} color={active ? Theme.Colors.onPrimary : Theme.Colors.primary} />
-      <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
-function RegistryView({
-  items,
-  isDesktop,
-  onToggleService,
-  serviceOnly,
-}: {
-  items: InventoryItem[];
-  isDesktop: boolean;
-  onToggleService: () => void;
-  serviceOnly: boolean;
-}) {
-  return (
-    <View style={styles.sectionStack}>
-      <View style={[styles.statsGrid, isDesktop && styles.statsGridDesktop]}>
-        {inventoryStats.map((stat) => (
-          <BlurView key={stat.label} intensity={60} tint="light" style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
-            <View style={styles.statIcon}>
-              <MaterialIcons name={stat.icon} size={20} color={stat.label === 'Maintenance Due' ? Theme.Colors.error : Theme.Colors.primary} />
-            </View>
-            <Text style={styles.statLabel}>{stat.label}</Text>
-            <Text style={[styles.statValue, stat.label === 'Maintenance Due' && styles.statValueError]}>{stat.value}</Text>
-            <Text style={styles.statHelper}>{stat.helper}</Text>
-          </BlurView>
-        ))}
-      </View>
-
-      <BlurView intensity={65} tint="light" style={styles.panel}>
-        <View style={[styles.panelHeader, !isDesktop && styles.panelHeaderMobile]}>
-          <View>
-            <Text style={styles.panelTitle}>Itemized Registry</Text>
-            <Text style={styles.panelSubtitle}>Showing {items.length} of {inventoryItems.length} assets</Text>
-          </View>
-          <View style={styles.filterActions}>
-            <TouchableOpacity
-              style={[styles.filterPill, serviceOnly && styles.filterPillActive]}
-              onPress={onToggleService}
-              activeOpacity={0.75}
-            >
-              <MaterialIcons name="handyman" size={17} color={serviceOnly ? Theme.Colors.onPrimary : Theme.Colors.primary} />
-              <Text style={[styles.filterPillText, serviceOnly && styles.filterPillTextActive]}>Due for Service</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} activeOpacity={0.75}>
-              <MaterialIcons name="download" size={20} color={Theme.Colors.onSurfaceVariant} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={isDesktop ? styles.registryTable : styles.registryCards}>
-          {items.map((item) =>
-            isDesktop ? <DesktopRegistryRow key={item.id} item={item} /> : <MobileInventoryCard key={item.id} item={item} />,
-          )}
-        </View>
-      </BlurView>
-    </View>
-  );
-}
-
-function DesktopRegistryRow({ item }: { item: InventoryItem }) {
-  return (
-    <View style={[styles.tableRow, item.status === 'Service Due' && styles.serviceRow]}>
-      <View style={[styles.tableCell, styles.itemCell]}>
-        <Image source={{ uri: item.image }} style={styles.itemThumb} />
-        <View style={styles.itemText}>
-          <Text style={styles.itemName}>{item.name}</Text>
-          <Text style={styles.itemMeta}>SN: {item.serial}</Text>
-        </View>
-      </View>
-      <View style={styles.tableCell}>
-        <Text style={styles.categoryPill}>{item.category}</Text>
-      </View>
-      <View style={styles.tableCell}>
-        <Text style={styles.cellText}>{item.location}</Text>
-      </View>
-      <View style={styles.tableCell}>
-        <ConditionDot condition={item.condition} />
-      </View>
-      <View style={styles.tableCell}>
-        <StatusBadge status={item.status} />
-      </View>
-      <TouchableOpacity style={styles.moreButton}>
-        <MaterialIcons name="more-vert" size={20} color={Theme.Colors.outline} />
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function MobileInventoryCard({ item }: { item: InventoryItem }) {
-  return (
-    <BlurView intensity={45} tint="light" style={[styles.mobileCard, item.status === 'Service Due' && styles.serviceRow]}>
-      <Image source={{ uri: item.image }} style={styles.mobileCardImage} />
-      <View style={styles.mobileCardBody}>
-        <View style={styles.mobileCardTop}>
-          <View style={styles.iconSquare}>
-            <MaterialIcons name={item.icon} size={20} color={Theme.Colors.primary} />
-          </View>
-          <StatusBadge status={item.status} />
-        </View>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemMeta}>{item.location} - {item.serial}</Text>
-        <View style={styles.mobileCardFooter}>
-          <ConditionDot condition={item.condition} />
-          <Text style={styles.itemValue}>{item.value}</Text>
-        </View>
-      </View>
-    </BlurView>
-  );
-}
-
-function MoveInView({ isDesktop }: { isDesktop: boolean }) {
-  const selectedCount = assignmentItems.filter((item) => item.assignmentStatus !== 'Unselected').length;
-  const photoCount = assignmentItems.reduce((sum, item) => sum + item.photoCount, 0);
-
-  return (
-    <View style={styles.sectionStack}>
-      <View style={styles.leaseBanner}>
-        <View>
-          <Text style={styles.bannerKicker}>NEW MOVE-IN ASSIGNMENT</Text>
-          <Text style={styles.bannerTitle}>Assignment for Lease #L-8824</Text>
-          <Text style={styles.bannerMeta}>Tenant: Jordan Mitchell - Unit 402-B - Move-in: Jul 20, 2026</Text>
-        </View>
-        <View style={styles.progressBox}>
-          <Text style={styles.progressText}>{selectedCount}/9 Items</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${(selectedCount / 9) * 100}%` }]} />
-          </View>
-        </View>
-      </View>
-
-      <View style={[styles.workflowGrid, isDesktop && styles.workflowGridDesktop]}>
-        <View style={styles.workflowMain}>
-          <View style={styles.workflowHeader}>
-            <Text style={styles.panelTitle}>Inventory Checklist</Text>
-            <View style={styles.filterActions}>
-              <TouchableOpacity style={styles.smallButton}>
-                <Text style={styles.smallButtonText}>Select All</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.smallButton}>
-                <Text style={styles.smallButtonText}>Filter Rooms</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {assignmentItems.map((item) => (
-            <AssignmentCard key={item.id} item={item} />
-          ))}
-        </View>
-
-        <BlurView intensity={65} tint="light" style={styles.summaryRail}>
-          <Text style={styles.panelTitle}>Assignment Summary</Text>
-          <SummaryLine label="Total Selected Items" value={`${selectedCount} Items`} />
-          <SummaryLine label="Documented Photos" value={`${photoCount} Photos`} />
-          <SummaryLine label="Requires Attention" value="1 Item" danger />
-          <View style={styles.dashedDivider} />
-          <Text style={styles.railLabel}>CONDITION PROFILE</Text>
-          <SummaryLine label="Kitchen Appliances" value="98/100" />
-          <SummaryLine label="Living Fixtures" value="Draft" />
-          <TouchableOpacity style={styles.primaryWideButtonWrapper} activeOpacity={0.82}>
-            <LinearGradient
-              colors={['#00e0ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.primaryWideButton}
-            >
-              <MaterialIcons name="how-to-reg" size={18} color={Theme.Colors.onPrimary} />
-              <Text style={styles.primaryButtonText}>Confirm Assignment</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryWideButton} activeOpacity={0.75}>
-            <Text style={styles.secondaryWideButtonText}>Save as Draft</Text>
-          </TouchableOpacity>
-        </BlurView>
-      </View>
-    </View>
-  );
-}
-
-function AssignmentCard({ item }: { item: AssignmentItem }) {
-  const selected = item.assignmentStatus !== 'Unselected';
-
-  return (
-    <BlurView intensity={45} tint="light" style={[styles.assignmentCard, !selected && styles.assignmentCardMuted]}>
-      <Image source={{ uri: item.image }} style={styles.assignmentImage} />
-      <View style={styles.assignmentContent}>
-        <View style={styles.assignmentHeader}>
-          <View style={styles.itemText}>
-            <Text style={styles.itemName}>{item.location}: {item.name}</Text>
-            <Text style={styles.itemMeta}>Serial: {item.serial} - Last inspected: 2 months ago</Text>
-          </View>
-          <View style={[styles.checkbox, selected && styles.checkboxActive]}>
-            {selected && <MaterialIcons name="check" size={16} color={Theme.Colors.onPrimary} />}
-          </View>
-        </View>
-
-        {selected ? (
-          <View style={styles.assignmentFields}>
-            <View style={styles.fakeInput}>
-              <Text style={styles.inputLabel}>CONDITION AT ASSIGNMENT</Text>
-              <Text style={styles.fakeInputText}>{item.assignmentCondition} / Normal Wear</Text>
-            </View>
-            <View style={styles.fakeInput}>
-              <Text style={styles.inputLabel}>ASSIGNMENT NOTES</Text>
-              <Text style={styles.fakeInputText} numberOfLines={1}>{item.notes}</Text>
-            </View>
-          </View>
-        ) : (
-          <Text style={styles.mutedHint}>Select this item to assign condition details.</Text>
-        )}
-
-        <View style={styles.cardActionRow}>
-          <Text style={styles.linkAction}>{item.photoCount > 0 ? `${item.photoCount} photos attached` : 'Add verification photo'}</Text>
-          <Text style={styles.historyText}>Condition History</Text>
-        </View>
-      </View>
-    </BlurView>
-  );
-}
-
-function MoveOutView({
-  isDesktop,
-  securityDeposit,
-  totalDeductions,
-  netRefund,
-}: {
-  isDesktop: boolean;
-  securityDeposit: number;
-  totalDeductions: number;
-  netRefund: number;
-}) {
-  return (
-    <View style={styles.sectionStack}>
-      <View style={styles.settlementHeader}>
-        <View>
-          <Text style={styles.kicker}>MOVE-OUT INSPECTION</Text>
-          <Text style={[styles.title, styles.compactTitle]}>Move-Out Verification</Text>
-          <Text style={styles.subtitle}>Review return condition and finalize settlement for Tenant: Alex Rivera.</Text>
-        </View>
-        <View style={styles.datePill}>
-          <MaterialIcons name="calendar-today" size={16} color={Theme.Colors.primary} />
-          <Text style={styles.datePillText}>Move-Out: Jul 28, 2026</Text>
-        </View>
-      </View>
-
-      <View style={[styles.workflowGrid, isDesktop && styles.workflowGridDesktop]}>
-        <View style={styles.workflowMain}>
-          {verificationItems.map((item) => (
-            <VerificationCard key={item.id} item={item} />
-          ))}
-        </View>
-
-        <BlurView intensity={65} tint="light" style={styles.summaryRail}>
-          <View style={styles.railTitleRow}>
-            <MaterialIcons name="receipt-long" size={22} color={Theme.Colors.primary} />
-            <Text style={styles.panelTitle}>Settlement Preview</Text>
-          </View>
-          <SummaryLine label="Security Deposit" value={formatCurrency(securityDeposit)} />
-          <View style={styles.dashedDivider} />
-          {verificationItems
-            .filter((item) => item.deduction > 0)
-            .map((item) => (
-              <SummaryLine key={item.id} label={item.name} value={`-${formatCurrency(item.deduction)}`} danger />
-            ))}
-          <SummaryLine label="Total Deductions" value={`-${formatCurrency(totalDeductions)}`} danger />
-          <View style={styles.dashedDivider} />
-          <Text style={styles.railLabel}>NET REFUND</Text>
-          <Text style={styles.refundValue}>{formatCurrency(netRefund)}</Text>
-          <TouchableOpacity style={styles.primaryWideButtonWrapper} activeOpacity={0.82}>
-            <LinearGradient
-              colors={['#00e0ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.primaryWideButton}
-            >
-              <Text style={styles.primaryButtonText}>Confirm & Settle</Text>
-              <MaterialIcons name="send" size={18} color={Theme.Colors.onPrimary} />
-            </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryWideButton} activeOpacity={0.75}>
-            <Text style={styles.secondaryWideButtonText}>Dispute Settlement</Text>
-          </TouchableOpacity>
-        </BlurView>
-      </View>
-    </View>
-  );
-}
-
-function VerificationCard({ item }: { item: VerificationItem }) {
-  const statusStyle = item.status === 'Damaged' ? styles.statusDanger : item.status === 'Review' ? styles.statusReview : styles.statusGood;
-
-  return (
-    <BlurView intensity={45} tint="light" style={styles.verificationCard}>
-      <View style={styles.verificationHeader}>
-        <View style={styles.verificationTitleRow}>
-          <View style={styles.iconSquare}>
-            <MaterialIcons name={item.icon} size={20} color={Theme.Colors.primary} />
-          </View>
-          <View style={styles.itemText}>
-            <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemMeta}>{item.area}</Text>
-          </View>
-        </View>
-        <View style={[styles.statusChip, statusStyle]}>
-          <Text style={styles.statusChipText}>{item.status}</Text>
-        </View>
-      </View>
-
-      <View style={styles.photoCompareGrid}>
-        <PhotoPanel label="Move-In" uri={item.moveInPhoto} dark />
-        <PhotoPanel label="Return" uri={item.returnPhoto} />
-      </View>
-
-      <View style={styles.damagePanel}>
-        <View style={styles.damageDescription}>
-          <Text style={styles.inputLabel}>DAMAGE DESCRIPTION</Text>
-          <Text style={styles.damageText}>{item.damageDescription}</Text>
-        </View>
-        <View style={styles.deductionBox}>
-          <Text style={styles.inputLabel}>ESTIMATED DEDUCTION</Text>
-          <Text style={[styles.deductionValue, item.deduction > 0 && styles.deductionValueDanger]}>
-            {formatCurrency(item.deduction)}
-          </Text>
-        </View>
-      </View>
-    </BlurView>
-  );
-}
-
-function PhotoPanel({ label, uri, dark = false }: { label: string; uri: string; dark?: boolean }) {
-  return (
-    <View style={styles.photoPanel}>
-      <Image source={{ uri }} style={styles.photoImage} />
-      <View style={[styles.photoLabel, dark ? styles.photoLabelDark : styles.photoLabelPrimary]}>
-        <Text style={styles.photoLabelText}>{label}</Text>
-      </View>
-    </View>
-  );
-}
-
-function ConditionDot({ condition }: { condition: InventoryCondition }) {
-  return (
-    <View style={styles.conditionRow}>
-      <View style={[styles.conditionDot, { backgroundColor: conditionColors[condition] }]} />
-      <Text style={styles.conditionText}>{condition}</Text>
-    </View>
-  );
-}
-
-function StatusBadge({ status }: { status: InventoryItem['status'] }) {
-  const danger = status === 'Service Due';
-  return (
-    <View style={[styles.statusBadge, danger && styles.statusBadgeDanger]}>
-      <Text style={[styles.statusBadgeText, danger && styles.statusBadgeTextDanger]}>{status}</Text>
-    </View>
-  );
-}
-
-function SummaryLine({ label, value, danger = false }: { label: string; value: string; danger?: boolean }) {
-  return (
-    <View style={styles.summaryLine}>
-      <Text style={styles.summaryLabel}>{label}</Text>
-      <Text style={[styles.summaryValue, danger && styles.summaryValueDanger]}>{value}</Text>
-    </View>
-  );
-}
-
+// ─── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 120, gap: 22 },
-  scrollContentDesktop: { padding: 32, maxWidth: 1240, width: '100%', alignSelf: 'center' },
-  pageHeader: { gap: 18 },
-  titleBlock: { maxWidth: 720 },
-  kicker: { fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: Theme.Colors.primary, textTransform: 'uppercase' },
-  title: { fontFamily: 'Manrope', fontSize: 32, fontWeight: '800', lineHeight: 38, color: Theme.Colors.onSurface, marginTop: 6 },
-  compactTitle: { fontSize: 30 },
-  titleMobile: { fontSize: 30, lineHeight: 36 },
-  subtitle: { fontFamily: 'Inter', fontSize: 16, fontWeight: '400', lineHeight: 24, color: Theme.Colors.onSurfaceVariant, marginTop: 8 },
-  contextLine: { color: Theme.Colors.primary, fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: '800', marginTop: 8 },
-  headerActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center' },
+  scroll: { padding: 16, paddingBottom: 120, gap: 16 },
+  scrollDesktop: { padding: 32, maxWidth: 1280, width: '100%', alignSelf: 'center' },
+
+  pageHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 8 },
+  kicker: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2, color: '#0891b2', textTransform: 'uppercase' },
+  title: { fontSize: 32, fontWeight: '800', color: '#0b1c30', lineHeight: 38, marginTop: 4 },
+  subtitle: { fontSize: 15, color: '#5b6b6d', marginTop: 8, lineHeight: 22, maxWidth: 600 },
+  contextLine: { color: '#0891b2', fontSize: 12, fontWeight: '800', marginTop: 6 },
+  addBtnWrapper: { borderRadius: 14, overflow: 'hidden' },
+  addBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: 8 },
+  addBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+
+  mobileTopBar: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  addIconBtn: { width: 46, height: 46, borderRadius: 14, overflow: 'hidden' },
+  addIconBtnInner: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
   searchBox: {
-    minWidth: 260,
-    flex: 1,
-    maxWidth: 420,
-    height: 48,
-    borderRadius: Theme.Rounded.lg,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    overflow: 'hidden',
+    flex: 1, height: 46, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 14,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', paddingHorizontal: 12, gap: 8,
   },
-  searchInput: { flex: 1, color: Theme.Colors.onSurface, fontSize: 15 },
-  primaryButtonWrapper: {
-    height: 48,
-    borderRadius: Theme.Rounded.lg,
-    overflow: 'hidden',
-  },
-  primaryButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-    gap: 8,
-  },
-  primaryButtonText: { color: Theme.Colors.onPrimary, fontSize: 13, fontWeight: '800' },
-  tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  searchInput: { flex: 1, fontSize: 14, color: '#0b1c30' },
+  desktopSearchRow: { marginBottom: 4 },
+
+  tabBar: { flexDirection: 'row', gap: 8 },
   tab: {
-    height: 42,
-    borderRadius: Theme.Rounded.full,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    height: 40, paddingHorizontal: 16, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', overflow: 'hidden',
   },
-  tabActive: { backgroundColor: Theme.Colors.primary, borderColor: Theme.Colors.primary },
-  tabText: { color: Theme.Colors.primary, fontWeight: '800', fontSize: 13 },
-  tabTextActive: { color: Theme.Colors.onPrimary },
-  sectionStack: { gap: 18 },
-  statsGrid: { gap: 12 },
-  statsGridDesktop: { flexDirection: 'row' },
+  tabActive: { borderColor: 'transparent' },
+  tabText: { fontSize: 13, fontWeight: '700', color: '#6b7280' },
+  tabTextActive: { color: '#fff' },
+
+  sectionStack: { gap: 16 },
+
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  statsRowDesktop: { flexWrap: 'nowrap' },
   statCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
-    borderRadius: Theme.Rounded.lg,
-    padding: 16,
-    minHeight: 118,
-    overflow: 'hidden',
+    flex: 1, flexBasis: '46%', minHeight: 110, borderRadius: 18,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.3)', padding: 16, overflow: 'hidden', gap: 3,
   },
-  statCardDesktop: { flex: 1 },
-  statIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(0,104,117,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  statLabel: { fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: Theme.Colors.onSurfaceVariant, textTransform: 'uppercase' },
-  statValue: { fontSize: 34, fontWeight: '800', color: Theme.Colors.primary, marginTop: 5 },
-  statValueError: { color: Theme.Colors.error },
-  statHelper: { fontSize: 13, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
-  panel: {
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-    borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
-    borderRadius: Theme.Rounded.lg,
-    overflow: 'hidden',
-  },
-  panelHeader: {
-    padding: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.Colors.outlineVariant,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  panelHeaderMobile: { alignItems: 'flex-start', flexDirection: 'column' },
-  panelTitle: { fontSize: 20, fontWeight: '800', color: Theme.Colors.onSurface },
-  panelSubtitle: { fontSize: 13, color: Theme.Colors.onSurfaceVariant, marginTop: 3 },
-  filterActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
-  filterPill: {
-    height: 38,
-    borderRadius: Theme.Rounded.full,
-    paddingHorizontal: 13,
-    backgroundColor: Theme.Colors.surfaceContainerHigh,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  filterPillActive: { backgroundColor: Theme.Colors.primary },
-  filterPillText: { color: Theme.Colors.primary, fontWeight: '700', fontSize: 12 },
-  filterPillTextActive: { color: Theme.Colors.onPrimary },
-  iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: Theme.Rounded.lg,
-    backgroundColor: Theme.Colors.surfaceContainerHigh,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  registryTable: { paddingVertical: 4 },
-  registryCards: { padding: 14, gap: 12 },
-  tableRow: { flexDirection: 'row', alignItems: 'center', minHeight: 78, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: Theme.Colors.surfaceVariant },
-  serviceRow: { backgroundColor: 'rgba(186,26,26,0.055)' },
+  statCardDesktop: { flexBasis: 0 },
+  statIconCircle: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  statValue: { fontSize: 28, fontWeight: '900', fontFamily: 'Inter' },
+  statLabel: { fontSize: 11, fontWeight: '700', color: '#6b7280', letterSpacing: 0.5, textTransform: 'uppercase' },
+  statHelper: { fontSize: 11, color: '#9ca3af', marginTop: 1 },
+
+  panel: { borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.35)', overflow: 'hidden' },
+  panelHeader: { padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.055)', gap: 12 },
+  panelHeaderMobile: { flexDirection: 'column', alignItems: 'stretch' },
+  panelTitle: { fontSize: 18, fontWeight: '800', color: '#0b1c30' },
+  panelSub: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  panelActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  filterPill: { flexDirection: 'row', alignItems: 'center', height: 34, paddingHorizontal: 12, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', gap: 6, overflow: 'hidden' },
+  filterPillActive: { borderColor: 'transparent' },
+  filterPillText: { fontSize: 12, fontWeight: '700', color: '#6b7280' },
+  filterPillTextActive: { color: '#fff' },
+  iconBtn: { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.6)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)' },
+
+  tableContainer: { paddingBottom: 4 },
+  tableHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 10, backgroundColor: 'rgba(0,0,0,0.02)', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.055)' },
+  tableHeaderText: { fontSize: 11, fontWeight: '800', color: '#9ca3af', letterSpacing: 0.5, textTransform: 'uppercase' },
+  tableRow: { flexDirection: 'row', alignItems: 'center', minHeight: 72, paddingHorizontal: 18, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.04)' },
+  tableRowAlert: { backgroundColor: 'rgba(220,38,38,0.04)' },
   tableCell: { flex: 1, justifyContent: 'center' },
-  itemCell: { flex: 2.1, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  itemThumb: { width: 46, height: 46, borderRadius: Theme.Rounded.lg, backgroundColor: Theme.Colors.surfaceVariant },
-  itemText: { flex: 1, minWidth: 0 },
-  itemName: { color: Theme.Colors.onSurface, fontWeight: '800', fontSize: 15 },
-  itemMeta: { color: Theme.Colors.outline, fontSize: 12, marginTop: 3 },
-  categoryPill: { alignSelf: 'flex-start', color: Theme.Colors.onSurfaceVariant, backgroundColor: Theme.Colors.surfaceContainerHigh, paddingHorizontal: 10, paddingVertical: 5, borderRadius: Theme.Rounded.full, fontSize: 12, fontWeight: '700' },
-  cellText: { color: Theme.Colors.onSurfaceVariant, fontSize: 13, fontWeight: '600' },
-  moreButton: { padding: 8 },
-  mobileCard: { backgroundColor: Theme.Colors.glassFill, borderRadius: Theme.Rounded.lg, borderWidth: 1, borderColor: Theme.Colors.glassStroke, overflow: 'hidden' },
-  mobileCardImage: { width: '100%', height: 150, backgroundColor: Theme.Colors.surfaceVariant },
-  mobileCardBody: { padding: 14, gap: 10 },
-  mobileCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  iconSquare: { width: 40, height: 40, borderRadius: Theme.Rounded.lg, backgroundColor: Theme.Colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' },
-  mobileCardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  itemValue: { fontFamily: 'JetBrains Mono', color: Theme.Colors.onSurface, fontWeight: '800' },
-  conditionRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  conditionDot: { width: 8, height: 8, borderRadius: 4 },
-  conditionText: { color: Theme.Colors.onSurface, fontWeight: '700', fontSize: 13 },
-  statusBadge: { alignSelf: 'flex-start', backgroundColor: Theme.Colors.secondaryFixed, paddingHorizontal: 10, paddingVertical: 5, borderRadius: Theme.Rounded.full },
-  statusBadgeDanger: { backgroundColor: Theme.Colors.errorContainer },
-  statusBadgeText: { color: Theme.Colors.secondary, fontSize: 11, fontWeight: '800' },
-  statusBadgeTextDanger: { color: Theme.Colors.onErrorContainer },
-  leaseBanner: {
-    backgroundColor: Theme.Colors.primary,
-    borderRadius: Theme.Rounded.lg,
-    padding: 22,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 18,
-    overflow: 'hidden',
-  },
-  bannerKicker: { fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: 'rgba(255,255,255,0.75)' },
-  bannerTitle: { fontSize: 26, lineHeight: 32, fontWeight: '800', color: Theme.Colors.onPrimary, marginTop: 4 },
-  bannerMeta: { color: 'rgba(255,255,255,0.82)', marginTop: 8, fontSize: 14 },
-  progressBox: { minWidth: 180, justifyContent: 'flex-end', gap: 9 },
-  progressText: { color: Theme.Colors.onPrimary, fontFamily: 'JetBrains Mono', fontWeight: '800', textAlign: 'right' },
-  progressTrack: { height: 8, backgroundColor: 'rgba(255,255,255,0.24)', borderRadius: 999, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: Theme.Colors.inversePrimary },
-  workflowGrid: { gap: 18 },
+  itemCell: { flex: 2.2, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  itemThumb: { width: 44, height: 44, borderRadius: 10, backgroundColor: '#e5e7eb' },
+  itemTextBlock: { flex: 1 },
+  itemName: { fontSize: 14, fontWeight: '800', color: '#0b1c30' },
+  itemMeta: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  categoryChip: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,0,0,0.05)', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start' },
+  categoryChipText: { fontSize: 11, fontWeight: '700', color: '#5b6b6d' },
+  cellText: { fontSize: 13, color: '#5b6b6d', fontWeight: '500' },
+  valueText: { fontSize: 13, fontWeight: '800', color: '#0b1c30' },
+  moreBtn: { padding: 6 },
+
+  cardList: { padding: 14, gap: 12 },
+  inventoryCard: { borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)', backgroundColor: 'rgba(255,255,255,0.3)', overflow: 'hidden' },
+  inventoryCardAlert: { borderColor: 'rgba(220,38,38,0.25)' },
+  alertStripe: { height: 3 },
+  inventoryCardInner: { flexDirection: 'row', gap: 12, padding: 14 },
+  inventoryThumb: { width: 76, height: 76, borderRadius: 12, backgroundColor: '#e5e7eb' },
+  inventoryContent: { flex: 1, gap: 4 },
+  inventoryTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  inventoryCategoryPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.05)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  inventoryCategoryText: { fontSize: 10, fontWeight: '700', color: '#5b6b6d' },
+  inventoryName: { fontSize: 14, fontWeight: '800', color: '#0b1c30' },
+  inventoryMeta: { fontSize: 11, color: '#9ca3af' },
+  inventoryFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
+  inventoryValue: { fontSize: 13, fontWeight: '800', color: '#0b1c30' },
+  serviceAlertBar: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(220,38,38,0.07)', paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1, borderTopColor: 'rgba(220,38,38,0.12)' },
+  serviceAlertText: { fontSize: 11, fontWeight: '700', color: '#dc2626' },
+
+  conditionPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
+  conditionDot: { width: 6, height: 6, borderRadius: 3 },
+  conditionText: { fontSize: 11, fontWeight: '800' },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  statusText: { fontSize: 11, fontWeight: '800' },
+
+  moveBanner: { borderRadius: 22, overflow: 'hidden', minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: 16 },
+  moveBannerContent: { flex: 1 },
+  moveBannerKicker: { fontSize: 10, fontWeight: '800', color: 'rgba(255,255,255,0.7)', letterSpacing: 1 },
+  moveBannerTitle: { fontSize: 22, fontWeight: '900', color: '#fff', marginTop: 4 },
+  moveBannerMeta: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  progressBox: { alignItems: 'flex-end', gap: 4, minWidth: 100 },
+  progressFraction: { fontSize: 24, fontWeight: '900', color: '#fff' },
+  progressSublabel: { fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
+  progressTrack: { width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 99, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 99 },
+  moveOutDatePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+  moveOutDateText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+
+  workflowGrid: { gap: 14 },
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   workflowMain: { flex: 1.9, gap: 12 },
-  workflowHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  smallButton: { backgroundColor: Theme.Colors.surfaceContainerHigh, paddingHorizontal: 12, paddingVertical: 8, borderRadius: Theme.Rounded.lg },
-  smallButtonText: { color: Theme.Colors.onSurfaceVariant, fontWeight: '800', fontSize: 12 },
-  assignmentCard: { backgroundColor: Theme.Colors.glassFill, borderWidth: 1, borderColor: Theme.Colors.glassStroke, borderRadius: Theme.Rounded.lg, padding: 12, flexDirection: 'row', gap: 14, overflow: 'hidden' },
-  assignmentCardMuted: { opacity: 0.62, borderStyle: 'dashed' },
-  assignmentImage: { width: 92, height: 92, borderRadius: Theme.Rounded.lg, backgroundColor: Theme.Colors.surfaceVariant },
-  assignmentContent: { flex: 1, gap: 12 },
-  assignmentHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 1.5, borderColor: Theme.Colors.outline, alignItems: 'center', justifyContent: 'center' },
-  checkboxActive: { backgroundColor: Theme.Colors.primary, borderColor: Theme.Colors.primary },
-  assignmentFields: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  fakeInput: { flex: 1, minWidth: 190, backgroundColor: Theme.Colors.surface, borderWidth: 1, borderColor: Theme.Colors.outlineVariant, borderRadius: Theme.Rounded.lg, padding: 10 },
-  inputLabel: { fontSize: 10, fontWeight: '800', color: Theme.Colors.outline, letterSpacing: 0.7 },
-  fakeInputText: { color: Theme.Colors.onSurface, fontWeight: '700', marginTop: 5, fontSize: 13 },
-  mutedHint: { color: Theme.Colors.onSurfaceVariant, fontSize: 13 },
-  cardActionRow: { borderTopWidth: 1, borderTopColor: Theme.Colors.surfaceVariant, paddingTop: 10, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
-  linkAction: { color: Theme.Colors.primary, fontWeight: '800', fontSize: 12 },
-  historyText: { color: Theme.Colors.onSurfaceVariant, fontSize: 12, fontWeight: '700' },
-  summaryRail: { flex: 1, minWidth: 280, backgroundColor: 'rgba(255, 255, 255, 0.45)', borderWidth: 1, borderColor: Theme.Colors.glassStroke, borderRadius: Theme.Rounded.lg, padding: 18, gap: 14, overflow: 'hidden' },
-  summaryLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 14 },
-  summaryLabel: { color: Theme.Colors.onSurfaceVariant, fontSize: 13, flex: 1 },
-  summaryValue: { color: Theme.Colors.onSurface, fontWeight: '800', fontSize: 13, fontFamily: 'JetBrains Mono' },
-  summaryValueDanger: { color: Theme.Colors.error },
-  dashedDivider: { height: 1, borderStyle: 'dashed', borderTopWidth: 1, borderTopColor: Theme.Colors.outlineVariant, marginVertical: 3 },
-  railLabel: { fontFamily: 'JetBrains Mono', fontSize: 12, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: Theme.Colors.primary },
-  primaryWideButtonWrapper: { minHeight: 48, borderRadius: Theme.Rounded.lg, overflow: 'hidden', marginTop: 4 },
-  primaryWideButton: { flex: 1, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
-  secondaryWideButton: { minHeight: 46, borderRadius: Theme.Rounded.lg, borderWidth: 1, borderColor: Theme.Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  secondaryWideButtonText: { color: Theme.Colors.primary, fontWeight: '800', fontSize: 13 },
-  settlementHeader: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' },
-  datePill: { backgroundColor: 'rgba(255, 255, 255, 0.74)', borderRadius: Theme.Rounded.lg, paddingHorizontal: 13, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  datePillText: { color: Theme.Colors.onSurface, fontWeight: '800', fontSize: 12 },
-  verificationCard: { backgroundColor: Theme.Colors.glassFill, borderWidth: 1, borderColor: Theme.Colors.glassStroke, borderRadius: Theme.Rounded.lg, padding: 14, gap: 14, overflow: 'hidden' },
-  verificationHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
-  verificationTitleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  statusChip: { borderRadius: Theme.Rounded.full, paddingHorizontal: 10, paddingVertical: 6 },
-  statusDanger: { backgroundColor: Theme.Colors.errorContainer },
-  statusReview: { backgroundColor: Theme.Colors.tertiaryFixed },
-  statusGood: { backgroundColor: Theme.Colors.primaryFixed },
-  statusChipText: { color: Theme.Colors.onSurface, fontSize: 11, fontWeight: '800' },
-  photoCompareGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  photoPanel: { flex: 1, minWidth: 220, height: 190, borderRadius: Theme.Rounded.lg, overflow: 'hidden', backgroundColor: Theme.Colors.surfaceVariant },
+  workflowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  ghostBtn: { backgroundColor: 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10 },
+  ghostBtnText: { fontSize: 12, fontWeight: '700', color: '#5b6b6d' },
+
+  assignCard: { borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)', backgroundColor: 'rgba(255,255,255,0.35)', overflow: 'hidden', padding: 14, gap: 12 },
+  assignCardMuted: { opacity: 0.6 },
+  assignHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  assignIdentity: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  assignThumb: { width: 56, height: 56, borderRadius: 10, backgroundColor: '#e5e7eb' },
+  assignName: { fontSize: 14, fontWeight: '800', color: '#0b1c30' },
+  assignMeta: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: '#d1d5db', alignItems: 'center', justifyContent: 'center' },
+  checkboxSelected: { backgroundColor: '#0891b2', borderColor: '#0891b2' },
+  assignFields: { flexDirection: 'row', gap: 10 },
+  assignField: { flex: 1, gap: 5 },
+  fieldLabel: { fontSize: 9, fontWeight: '800', color: '#9ca3af', letterSpacing: 0.8, textTransform: 'uppercase' },
+  fieldValue: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  assignFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
+  photoLink: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  photoLinkText: { fontSize: 12, fontWeight: '700', color: '#0891b2' },
+  draftBadge: { backgroundColor: 'rgba(217,119,6,0.1)', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 },
+  draftBadgeText: { fontSize: 11, fontWeight: '800', color: '#d97706' },
+  assignHint: { fontSize: 12, color: '#9ca3af', paddingTop: 4 },
+
+  rail: { flex: 1, minWidth: 260, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.35)', padding: 16, gap: 14, overflow: 'hidden' },
+  railHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  railIconCircle: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  railBody: { gap: 10 },
+  railDivider: { height: 1, backgroundColor: 'rgba(0,0,0,0.07)', marginVertical: 2 },
+  summaryLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  summaryLabel: { fontSize: 13, color: '#6b7280', flex: 1 },
+  summaryValue: { fontSize: 13, fontWeight: '800', color: '#0b1c30' },
+
+  verifyCard: { borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)', backgroundColor: 'rgba(255,255,255,0.35)', overflow: 'hidden', padding: 16, gap: 14 },
+  verifyHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  verifyIconCircle: { width: 42, height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  verifyName: { fontSize: 15, fontWeight: '800', color: '#0b1c30' },
+  verifyArea: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  verifyBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  verifyBadgeText: { fontSize: 11, fontWeight: '800' },
+  conditionCompare: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  conditionCompareItem: { gap: 4 },
+  compareLabel: { fontSize: 9, fontWeight: '800', color: '#9ca3af', letterSpacing: 0.8, textTransform: 'uppercase' },
+  photoGrid: { flexDirection: 'row', gap: 10 },
+  photoPanel: { flex: 1, height: 160, borderRadius: 14, overflow: 'hidden', backgroundColor: '#e5e7eb' },
   photoImage: { width: '100%', height: '100%' },
-  photoLabel: { position: 'absolute', top: 10, left: 10, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  photoLabelDark: { backgroundColor: 'rgba(0,0,0,0.55)' },
-  photoLabelPrimary: { backgroundColor: 'rgba(0,104,117,0.88)' },
-  photoLabelText: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.8 },
-  damagePanel: { backgroundColor: Theme.Colors.surfaceContainerLow, borderRadius: Theme.Rounded.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: Theme.Colors.outlineVariant, padding: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  damageDescription: { flex: 1, minWidth: 220 },
-  damageText: { color: Theme.Colors.onSurface, lineHeight: 20, marginTop: 5, fontSize: 13 },
-  deductionBox: { minWidth: 150 },
-  deductionValue: { fontFamily: 'JetBrains Mono', color: Theme.Colors.onSurfaceVariant, fontSize: 18, fontWeight: '800', marginTop: 6 },
-  deductionValueDanger: { color: Theme.Colors.error },
-  railTitleRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  refundValue: { fontSize: 34, fontWeight: '800', color: Theme.Colors.primary, fontFamily: 'JetBrains Mono' },
+  photoTag: { position: 'absolute', top: 8, left: 8, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, overflow: 'hidden' },
+  photoTagDanger: { backgroundColor: 'rgba(220,38,38,0.15)' },
+  photoTagText: { fontSize: 9, fontWeight: '900', color: '#fff', letterSpacing: 0.8 },
+  damageRow: { flexDirection: 'row', gap: 12, backgroundColor: 'rgba(220,38,38,0.04)', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: 'rgba(220,38,38,0.1)' },
+  damageDesc: { flex: 1, gap: 4 },
+  damageText: { fontSize: 13, color: '#374151', lineHeight: 19 },
+  deductionBox: { gap: 4, alignItems: 'flex-end' },
+  deductionAmount: { fontSize: 18, fontWeight: '900', color: '#dc2626' },
+
+  refundBlock: { backgroundColor: 'rgba(5,150,105,0.08)', borderRadius: 14, padding: 14, gap: 2, borderWidth: 1, borderColor: 'rgba(5,150,105,0.15)' },
+  refundLabel: { fontSize: 10, fontWeight: '800', color: '#059669', letterSpacing: 0.8, textTransform: 'uppercase' },
+  refundAmount: { fontSize: 30, fontWeight: '900', color: '#059669', fontFamily: 'Inter' },
+
+  primaryWideBtn: { borderRadius: 14, overflow: 'hidden' },
+  primaryWideBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
+  primaryWideBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  ghostWideBtn: { borderRadius: 14, borderWidth: 1, borderColor: 'rgba(0,0,0,0.12)', paddingVertical: 13, alignItems: 'center' },
+  ghostWideBtnDanger: { borderColor: 'rgba(220,38,38,0.3)' },
+  ghostWideBtnText: { fontSize: 13, fontWeight: '700', color: '#5b6b6d' },
 });

@@ -24,6 +24,8 @@ type AuthProviderProps = {
   children: React.ReactNode;
 };
 
+let activeRefreshPromise: Promise<TokenBundle | null> | null = null;
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authData, setAuthData] = useState<TokenBundle | null>(null);
   const [context, setContext] = useState<MyContextResponse | null>(null);
@@ -74,17 +76,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return null;
     }
 
-    try {
-      const nextAuthData = await refresh({ refreshToken: authData.refreshToken });
-      setAuthData(nextAuthData);
-      await writeStoredAuth(nextAuthData);
-      return nextAuthData;
-    } catch (error) {
-      console.warn('Session refresh failed:', error);
-      setAuthData(null);
-      await clearStoredAuth();
-      return null;
+    if (activeRefreshPromise) {
+      return activeRefreshPromise;
     }
+
+    activeRefreshPromise = (async () => {
+      try {
+        const nextAuthData = await refresh({ refreshToken: authData.refreshToken });
+        setAuthData(nextAuthData);
+        await writeStoredAuth(nextAuthData);
+        return nextAuthData;
+      } catch (error) {
+        console.warn('Session refresh failed:', error);
+        setAuthData(null);
+        await clearStoredAuth();
+        return null;
+      } finally {
+        activeRefreshPromise = null;
+      }
+    })();
+
+    return activeRefreshPromise;
   }, [authData?.refreshToken]);
 
   // Register the refresh handler with the API client

@@ -55,25 +55,25 @@ export const Colors = {
 
 export const Typography = {
   displayMetrics: {
-    fontFamily: 'Manrope',
+    fontFamily: 'Inter',
     fontSize: 48,
     fontWeight: '800',
     lineHeight: 56,
   },
   headlineXl: {
-    fontFamily: 'Manrope',
+    fontFamily: 'Inter',
     fontSize: 32,
     fontWeight: '800',
     lineHeight: 38,
   },
   headlineLg: {
-    fontFamily: 'Manrope',
+    fontFamily: 'Inter',
     fontSize: 24,
     fontWeight: '700',
     lineHeight: 31,
   },
   headlineMd: {
-    fontFamily: 'Manrope',
+    fontFamily: 'Inter',
     fontSize: 24,
     fontWeight: '700',
     lineHeight: 32,
@@ -91,14 +91,14 @@ export const Typography = {
     lineHeight: 24,
   },
   labelCaps: {
-    fontFamily: 'JetBrains Mono',
+    fontFamily: 'Inter',
     fontSize: 12,
     fontWeight: '700',
     lineHeight: 14,
     letterSpacing: 1.2,
   },
   buttonText: {
-    fontFamily: 'Manrope',
+    fontFamily: 'Inter',
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 14,

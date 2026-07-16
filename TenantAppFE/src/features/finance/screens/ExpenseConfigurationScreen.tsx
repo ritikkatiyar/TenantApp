@@ -193,7 +193,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {/* Pinned header */}
         {isDesktop ? (
           <DesktopNavBar 
@@ -202,20 +202,22 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             backText="Back to Property" 
           />
         ) : (
-          <View style={styles.header}>
-            <View style={styles.mobileHeaderInner}>
+          <View style={styles.headerContainer}>
+            <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+            <View style={styles.headerContent}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+                <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
               </TouchableOpacity>
-              <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
+              <View style={styles.titleWrapper}>
                 <Text style={styles.compactTitleText}>Charge Configuration</Text>
-              </Animated.View>
+              </View>
+              <View style={{ width: 40 }} />
             </View>
           </View>
         )}
 
         <Animated.ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 76 }]}
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -224,17 +226,12 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
           scrollEventThrottle={16}
         >
           <View style={isDesktop ? styles.desktopInner : null}>
-            {/* Hero Titles */}
-            <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-              {isDesktop ? (
+            {/* Hero Titles - Desktop only; mobile uses glassy header */}
+            {isDesktop && (
+              <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
                 <Text style={styles.titleLineDesktop}>Charge Configuration</Text>
-              ) : (
-                <>
-                  <Text style={styles.titleLine}>Charge</Text>
-                  <Text style={styles.titleLine}>Configuration</Text>
-                </>
-              )}
-            </Animated.View>
+              </Animated.View>
+            )}
 
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeader}>Active Definitions ({(charges || []).length})</Text>
@@ -480,29 +477,48 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 56,
+    zIndex: 999,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    zIndex: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
-  compactTitleContainer: {
+  titleWrapper: {
     flex: 1,
+    alignItems: 'center',
   },
   compactTitleText: {
-    fontSize: 22,
+    fontSize: 18,
+    fontFamily: 'Inter',
     fontWeight: '800',
-    color: '#151d1e',
+    color: '#0b1c30',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   desktopBackButton: {
     flexDirection: 'row',

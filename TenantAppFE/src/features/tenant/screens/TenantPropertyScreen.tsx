@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RoleToggle } from '@/src/components/RoleToggle';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface TenantPropertyScreenProps {
   token: string;
@@ -29,18 +30,22 @@ const colors = {
 };
 
 export default function TenantPropertyScreen({ token, onLogout }: TenantPropertyScreenProps) {
+  const { isDesktop } = useResponsive();
+
   return (
     <View style={styles.root}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.kicker}>MY PROPERTY</Text>
-            <Text style={styles.title}>My Home</Text>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
+        {isDesktop && (
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.kicker}>MY PROPERTY</Text>
+              <Text style={styles.title}>My Home</Text>
+            </View>
+            <RoleToggle />
           </View>
-          <RoleToggle />
-        </View>
+        )}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 88 }]}>
           
           <View style={styles.mainCard}>
             <View style={styles.mainCardHeaderRow}>

@@ -160,14 +160,18 @@ export default function LedgerScreen({ token }: { token: string | null }) {
     extrapolate: 'clamp',
   });
 
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-        <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-      </TouchableOpacity>
-      <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
-        <Text style={styles.compactTitleText}>Finance Ledger</Text>
-      </Animated.View>
+  const renderGlassyHeader = () => (
+    <View style={styles.headerContainer}>
+      <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+      <View style={styles.headerContent}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+        </TouchableOpacity>
+        <View style={styles.titleWrapper}>
+          <Text style={styles.compactTitleText}>Finance Ledger</Text>
+        </View>
+        <View style={{ width: 36 }} />
+      </View>
     </View>
   );
 
@@ -367,7 +371,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
   return (
     <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop ? (
           <>
             <DesktopNavBar activeTab="Finance" onBack={() => router.back()} backText="Back to Settings" />
@@ -393,7 +397,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
           </>
         ) : (
           <>
-            {renderHeader()}
+            {renderGlassyHeader()}
             <Animated.ScrollView
               contentContainerStyle={styles.mobileScroll}
               showsVerticalScrollIndicator={false}
@@ -403,10 +407,13 @@ export default function LedgerScreen({ token }: { token: string | null }) {
               )}
               scrollEventThrottle={16}
             >
-              <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-                <Text style={styles.titleLine}>Finance</Text>
-                <Text style={styles.titleLine}>Ledger</Text>
-              </Animated.View>
+              {/* Hero title — desktop only; mobile uses glassy header */}
+              {false && (
+                <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
+                  <Text style={styles.titleLine}>Finance</Text>
+                  <Text style={styles.titleLine}>Ledger</Text>
+                </Animated.View>
+              )}
 
               {renderSearchBox()}
               {renderDateFilters()}
@@ -423,26 +430,46 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 56,
+    zIndex: 999,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    zIndex: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
-  backButton: { 
-    width: 40, 
-    height: 40, 
-    borderRadius: 20, 
-    backgroundColor: 'rgba(255,255,255,0.5)', 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  titleWrapper: {
+    flex: 1,
+    alignItems: 'center',
   },
-  compactTitleContainer: { flex: 1 },
-  compactTitleText: { fontSize: 22, fontWeight: '800', color: '#151d1e' },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  compactTitleText: { fontSize: 18, fontFamily: 'Inter', fontWeight: '800', color: '#0b1c30' },
   
-  mobileScroll: { paddingHorizontal: 24, paddingBottom: 60 },
+  mobileScroll: { paddingHorizontal: 24, paddingTop: 76, paddingBottom: 60 },
   titleContainer: { marginTop: 16, marginBottom: 24 },
   titleLine: { fontSize: 44, fontWeight: '800', color: '#151d1e', lineHeight: 48 },
   

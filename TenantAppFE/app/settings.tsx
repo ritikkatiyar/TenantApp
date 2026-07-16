@@ -11,6 +11,8 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
+import { useProperties } from '@/src/hooks/useProperties';
+
 const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
 
 
@@ -30,7 +32,9 @@ const ALL_PERMISSIONS = [
 
 export default function SystemPreferencesRoute() {
   const router = useRouter();
-  const { propertyId } = useLocalSearchParams();
+  const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
+  const { properties } = useProperties();
+  const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   const { accessToken, context } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
@@ -329,29 +333,21 @@ export default function SystemPreferencesRoute() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={isDesktop ? ['top'] : []}>
       <LinearGradient colors={LUMINOUS_BACKGROUND} style={StyleSheet.absoluteFillObject} />
       
       {/* Header */}
-      {isDesktop ? (
+      {isDesktop && (
         <DesktopNavBar 
           onBack={() => router.back()} 
           backText="Back to Portfolio" 
           title="System Preferences" 
         />
-      ) : (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={26} color="#163235" />
-          </TouchableOpacity>
-          <Text style={styles.title}>System Preferences</Text>
-          <View style={{ width: 32 }} />
-        </View>
       )}
 
 
       {/* Tabs */}
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, !isDesktop && { marginTop: 88 }]}>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'roles' && styles.tabActive]}
           onPress={() => setActiveTab('roles')}

@@ -1,11 +1,10 @@
-import React, { useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Animated, 
+import React, { useRef, useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
   TouchableOpacity,
-  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,20 +14,21 @@ import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
+import { listRentCycles } from '@/src/features/finance/api/rentCycle.api';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 export default function SettingsMenuScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
+  const { accessToken } = useAuth();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
 
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [40, 90],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [publishedCount, setPublishedCount] = useState<number | null>(null);
 
   const largeTitleOpacity = scrollY.interpolate({
     inputRange: [0, 70],
@@ -36,74 +36,199 @@ export default function SettingsMenuScreen() {
     extrapolate: 'clamp',
   });
 
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 420,
+      useNativeDriver: true,
+    }).start();
+
+    // Try to fetch quick stats
+    const fetchStats = async () => {
+      try {
+        if (!accessToken) return;
+        const today = new Date();
+        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const data = await listRentCycles(month, accessToken);
+        if (data) {
+          setPendingCount(data.filter((i: any) => i.status === 'PENDING').length);
+          setPublishedCount(data.filter((i: any) => i.status === 'PUBLISHED').length);
+        }
+      } catch {
+        // silent — stats are optional
+      }
+    };
+    fetchStats();
+  }, [accessToken]);
+
   const menuItems = [
     {
+      step: 1,
       id: 'charge-config',
       title: 'Charge Configuration',
-      description: 'Manage base rents, utilities, and billing logic.',
+      description: 'Set up rents, utilities & billing logic',
       icon: 'receipt-long',
       route: `/expenses/charge-config?propertyId=${propertyId}`,
-      color: '#0891b2',
-      bg: '#cffafe'
+      gradientColors: ['#0891b2', '#06b6d4'] as const,
+      accentColor: '#0891b2',
+      bg: 'rgba(8, 145, 178, 0.1)',
     },
     {
+      step: 2,
       id: 'worksheets',
       title: 'Billing Worksheets',
-      description: 'Input variable readings and one-off charges.',
+      description: 'Input meter readings & variable charges',
       icon: 'edit-document',
       route: `/expenses/billing-worksheet?propertyId=${propertyId}`,
-      color: '#4f46e5',
-      bg: '#e0e7ff'
+      gradientColors: ['#4f46e5', '#7c3aed'] as const,
+      accentColor: '#4f46e5',
+      bg: 'rgba(79, 70, 229, 0.1)',
     },
     {
+      step: 3,
       id: 'rent-roll',
       title: 'Generate Rent Roll',
-      description: 'Finalize drafts and publish monthly invoices to tenants.',
+      description: 'Publish monthly invoices to tenants',
       icon: 'point-of-sale',
       route: `/expenses/rent-roll?propertyId=${propertyId}`,
-      color: '#059669',
-      bg: '#d1fae5'
+      gradientColors: ['#059669', '#10b981'] as const,
+      accentColor: '#059669',
+      bg: 'rgba(5, 150, 105, 0.1)',
     },
     {
+      step: 4,
       id: 'ledger',
       title: 'Finance Ledger',
-      description: 'View immutable audit trail of all transactions.',
+      description: 'Audit trail of all transactions',
       icon: 'account-balance',
       route: `/expenses/ledger?propertyId=${propertyId}`,
-      color: '#0d9488',
-      bg: '#ccfbf1'
+      gradientColors: ['#0d9488', '#14b8a6'] as const,
+      accentColor: '#0d9488',
+      bg: 'rgba(13, 148, 136, 0.1)',
     },
-    {
-      id: 'preferences',
-      title: 'System Preferences',
-      description: 'General property-level settings and defaults.',
-      icon: 'settings',
-      route: `/expenses/preferences?propertyId=${propertyId}`,
-      color: '#dc2626',
-      bg: '#fee2e2'
-    }
   ];
 
-  const renderMenuItem = (item: any) => (
-    <TouchableOpacity 
-      key={item.id}
-      activeOpacity={0.7}
-      onPress={() => router.push(item.route)}
-      style={isDesktop ? styles.gridItem : styles.listItem}
-    >
-      <BlurView intensity={60} tint="light" style={styles.menuCard}>
-        <View style={styles.cardContent}>
-          <View style={[styles.iconWrapper, { backgroundColor: item.bg }]}>
-            <MaterialIcons name={item.icon as any} size={28} color={item.color} />
+  const renderMobileContent = () => (
+    <Animated.View style={{ opacity: fadeAnim }}>
+      {/* Quick Stats Hero */}
+      <BlurView intensity={55} tint="light" style={styles.statsHero}>
+        <LinearGradient
+          colors={['rgba(0, 168, 204, 0.12)', 'rgba(99, 102, 241, 0.08)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.statsGradient}
+        >
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {publishedCount !== null ? publishedCount : '—'}
+              </Text>
+              <Text style={styles.statLabel}>Published</Text>
+              <View style={[styles.statDot, { backgroundColor: '#10b981' }]} />
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, pendingCount && pendingCount > 0 ? styles.statWarning : null]}>
+                {pendingCount !== null ? pendingCount : '—'}
+              </Text>
+              <Text style={styles.statLabel}>Pending</Text>
+              <View style={[styles.statDot, { backgroundColor: '#f59e0b' }]} />
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {publishedCount !== null && pendingCount !== null
+                  ? publishedCount + pendingCount
+                  : '—'}
+              </Text>
+              <Text style={styles.statLabel}>Total</Text>
+              <View style={[styles.statDot, { backgroundColor: '#6366f1' }]} />
+            </View>
           </View>
-          <View style={styles.textContainer}>
-            <Text style={styles.menuTitle}>{item.title}</Text>
-            <Text style={styles.menuDesc}>{item.description}</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={24} color="#849495" />
-        </View>
+          <Text style={styles.statsSubtitle}>This billing cycle</Text>
+        </LinearGradient>
       </BlurView>
-    </TouchableOpacity>
+
+      {/* Workflow Label */}
+      <View style={styles.workflowLabelRow}>
+        <View style={styles.workflowLine} />
+        <Text style={styles.workflowLabel}>BILLING PIPELINE</Text>
+        <View style={styles.workflowLine} />
+      </View>
+
+      {/* Menu Items */}
+      <View style={styles.listContainer}>
+        {menuItems.map((item, index) => (
+          <Animated.View
+            key={item.id}
+            style={{
+              opacity: fadeAnim,
+              transform: [{
+                translateY: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [24 + index * 8, 0],
+                }),
+              }],
+            }}
+          >
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={() => router.push(item.route as any)}
+              style={styles.listItem}
+            >
+              <BlurView intensity={55} tint="light" style={styles.menuCard}>
+                {/* Left accent stripe */}
+                <LinearGradient
+                  colors={item.gradientColors}
+                  style={styles.cardStripe}
+                />
+                <View style={styles.cardContent}>
+                  {/* Step badge */}
+                  <View style={styles.stepBadgeWrapper}>
+                    <LinearGradient
+                      colors={item.gradientColors}
+                      style={styles.stepBadge}
+                    >
+                      <Text style={styles.stepNumber}>{item.step}</Text>
+                    </LinearGradient>
+                    {/* Icon below badge */}
+                    <View style={[styles.iconWrapper, { backgroundColor: item.bg }]}>
+                      <MaterialIcons name={item.icon as any} size={22} color={item.accentColor} />
+                    </View>
+                  </View>
+
+                  {/* Text */}
+                  <View style={styles.textContainer}>
+                    <Text style={styles.menuTitle}>{item.title}</Text>
+                    <Text style={styles.menuDesc}>{item.description}</Text>
+                  </View>
+
+                  {/* Chevron */}
+                  <View style={[styles.chevronWrapper, { backgroundColor: item.bg }]}>
+                    <MaterialIcons name="chevron-right" size={20} color={item.accentColor} />
+                  </View>
+                </View>
+
+                {/* Connector dot to next step */}
+                {index < menuItems.length - 1 && (
+                  <View style={styles.connectorDot}>
+                    <MaterialIcons name="arrow-downward" size={12} color="rgba(0,104,117,0.35)" />
+                  </View>
+                )}
+              </BlurView>
+            </TouchableOpacity>
+          </Animated.View>
+        ))}
+      </View>
+
+      {/* Bottom note */}
+      <BlurView intensity={30} tint="light" style={styles.tipCard}>
+        <MaterialIcons name="lightbulb-outline" size={16} color="#0891b2" />
+        <Text style={styles.tipText}>
+          Follow steps 1 → 4 for a complete billing cycle each month.
+        </Text>
+      </BlurView>
+    </Animated.View>
   );
 
   return (
@@ -113,23 +238,13 @@ export default function SettingsMenuScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {isDesktop ? (
-          <DesktopNavBar 
-            title="Finance & Billing" 
-          />
-        ) : (
-          <View style={styles.header}>
-            <View style={styles.mobileHeaderInner}>
-              <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
-                <Text style={styles.compactTitleText}>Finance & Billing</Text>
-              </Animated.View>
-            </View>
-          </View>
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
+        {isDesktop && (
+          <DesktopNavBar title="Finance & Billing" />
         )}
 
         <Animated.ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 88 }]}
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -138,17 +253,39 @@ export default function SettingsMenuScreen() {
           scrollEventThrottle={16}
         >
           <View style={isDesktop ? styles.desktopInner : null}>
-            <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-              {isDesktop ? (
+            {isDesktop && (
+              <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
                 <Text style={styles.titleLineDesktop}>Finance & Billing</Text>
-              ) : (
-                <Text style={styles.titleLine}>Finance & Billing</Text>
-              )}
-            </Animated.View>
+              </Animated.View>
+            )}
 
-            <View style={isDesktop ? styles.gridContainer : styles.listContainer}>
-              {menuItems.map(renderMenuItem)}
-            </View>
+            {isDesktop ? (
+              <View style={styles.gridContainer}>
+                {menuItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    activeOpacity={0.75}
+                    onPress={() => router.push(item.route as any)}
+                    style={styles.gridItem}
+                  >
+                    <BlurView intensity={60} tint="light" style={styles.menuCard}>
+                      <View style={styles.cardContent}>
+                        <View style={[styles.iconWrapper, { backgroundColor: item.bg }]}>
+                          <MaterialIcons name={item.icon as any} size={28} color={item.accentColor} />
+                        </View>
+                        <View style={styles.textContainer}>
+                          <Text style={styles.menuTitle}>{item.title}</Text>
+                          <Text style={styles.menuDesc}>{item.description}</Text>
+                        </View>
+                        <MaterialIcons name="chevron-right" size={24} color="#849495" />
+                      </View>
+                    </BlurView>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              renderMobileContent()
+            )}
           </View>
         </Animated.ScrollView>
       </SafeAreaView>
@@ -159,27 +296,9 @@ export default function SettingsMenuScreen() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  mobileHeaderInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  compactTitleContainer: { flex: 1 },
-  compactTitleText: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#151d1e',
-  },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 120,
   },
   desktopInner: {
@@ -187,71 +306,219 @@ const styles = StyleSheet.create({
     maxWidth: 1000,
     alignSelf: 'center',
   },
-  titleContainer: {
-    marginBottom: 40,
-  },
-  titleLine: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: '#151d1e',
-    lineHeight: 52,
-    letterSpacing: -1,
-  },
+  titleContainer: { marginBottom: 40 },
   titleLineDesktop: {
     fontSize: 32,
     fontWeight: '800',
     color: '#151d1e',
     lineHeight: 38,
   },
-  listContainer: {
-    gap: 16,
+
+  // — Quick Stats Hero —
+  statsHero: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.75)',
+    marginBottom: 24,
+    shadowColor: '#006875',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 4,
   },
+  statsGradient: {
+    padding: 20,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#0b1c30',
+    fontFamily: 'Inter',
+  },
+  statWarning: {
+    color: '#d97706',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#5b6b6d',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  statDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(0, 104, 117, 0.12)',
+  },
+  statsSubtitle: {
+    textAlign: 'center',
+    fontSize: 11,
+    color: '#849495',
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+
+  // — Workflow Label —
+  workflowLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  workflowLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(0, 104, 117, 0.15)',
+  },
+  workflowLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#849495',
+    letterSpacing: 1.2,
+  },
+
+  // — Menu Items —
+  listContainer: {
+    gap: 0,
+  },
+  listItem: {
+    width: '100%',
+    marginBottom: 2,
+  },
+  menuCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    overflow: 'hidden',
+    shadowColor: '#006875',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
+    marginBottom: 12,
+  },
+  cardStripe: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingLeft: 20,
+    paddingRight: 16,
+    gap: 14,
+  },
+  stepBadgeWrapper: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  stepBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  stepNumber: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#fff',
+  },
+  iconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textContainer: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0b1c30',
+    marginBottom: 3,
+    fontFamily: 'Inter',
+  },
+  menuDesc: {
+    fontSize: 13,
+    color: '#6b7a7d',
+    lineHeight: 18,
+  },
+  chevronWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  connectorDot: {
+    alignSelf: 'center',
+    marginBottom: -6,
+    marginTop: -4,
+    zIndex: 10,
+    opacity: 0.6,
+  },
+
+  // — Tip Card —
+  tipCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.7)',
+    overflow: 'hidden',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#5b6b6d',
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+
+  // Desktop
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 24,
   },
-  listItem: {
-    width: '100%',
-  },
   gridItem: {
     width: '48%',
     minWidth: 300,
   },
-  menuCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    overflow: 'hidden',
-    boxShadow: '0px 10px 30px rgba(0, 104, 117, 0.05)',
-  },
-  cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 24,
-  },
-  iconWrapper: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  textContainer: {
-    flex: 1,
-    marginRight: 12,
-  },
-  menuTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#151d1e',
-    marginBottom: 6,
-  },
-  menuDesc: {
-    fontSize: 14,
-    color: '#5b6b6d',
-    lineHeight: 20,
-  }
 });

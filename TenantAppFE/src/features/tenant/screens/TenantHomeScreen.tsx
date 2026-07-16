@@ -71,26 +71,15 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
 
   return (
     <View style={styles.root}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.kicker}>MY PROPERTY</Text>
-            <Text style={styles.title}>My Home</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <RoleToggle />
-            <TouchableOpacity style={styles.iconButton} onPress={onLogout}>
-              <MaterialIcons name="logout" size={22} color={colors.onBackground} />
-            </TouchableOpacity>
-          </View>
-        </View>
+      <SafeAreaView style={styles.safeArea} edges={[]}>
+        {/* Header is handled globally */}
 
         {loading ? (
           <View style={styles.center}>
             <ActivityIndicator color={colors.primary} />
           </View>
         ) : lease ? (
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingTop: 88 }]}>
             
             {criticalUnread.map((ann) => (
               <View key={ann.id} style={styles.criticalBanner}>
@@ -248,6 +237,7 @@ const styles = StyleSheet.create({
   kicker: { color: colors.primary, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 4 },
   title: { color: colors.onBackground, fontSize: 32, fontWeight: '800' },
   iconButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceLowest, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.outlineVariant, marginLeft: 12 },
+  menuButton: { padding: 5 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scrollContent: { paddingBottom: 30, gap: 20 },
   

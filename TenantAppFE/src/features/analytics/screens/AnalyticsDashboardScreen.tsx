@@ -65,36 +65,20 @@ export default function AnalyticsDashboardScreen() {
 
   return (
     <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        {isDesktop ? (
-          <DesktopNavBar title="Overview" />
-        ) : (
-          <View style={{
-            height: 70,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingHorizontal: 24,
-            borderBottomWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.4)',
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-          }}>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: '#151d1e' }}>Overview</Text>
-            <TouchableOpacity>
-              <MaterialIcons name="notifications" size={24} color="#151d1e" />
-            </TouchableOpacity>
-          </View>
-        )}
+      <SafeAreaView style={{ flex: 1 }} edges={isDesktop ? ['top'] : []}>
+        {isDesktop && <DesktopNavBar title="Overview" />}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 100, gap: 32 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: isDesktop ? 24 : 88, paddingBottom: 100, gap: 32 }}>
         {/* Header & Date Picker */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <View>
-            <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#6f797c', textTransform: 'uppercase' }}>Financial Overview</Text>
-            <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 24, fontWeight: '600', color: '#111c2c', marginTop: 4 }}>Portfolio Analytics</Text>
-          </View>
+        <View style={{ flexDirection: 'row', justifyContent: isDesktop ? 'space-between' : 'flex-end', alignItems: 'flex-end' }}>
+          {isDesktop && (
+            <View>
+              <Text style={{ fontFamily: 'Inter', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#6f797c', textTransform: 'uppercase' }}>Financial Overview</Text>
+              <Text style={{ fontFamily: 'Inter', fontSize: 24, fontWeight: '600', color: '#111c2c', marginTop: 4 }}>Portfolio Analytics</Text>
+            </View>
+          )}
           <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#dee8ff', paddingHorizontal: 16, paddingVertical: 4, borderRadius: 4 }}>
-            <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#004c5a' }}>Monthly</Text>
+            <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#004c5a' }}>Monthly</Text>
             <MaterialIcons name="expand-more" size={18} color="#004c5a" />
           </TouchableOpacity>
         </View>
@@ -102,12 +86,12 @@ export default function AnalyticsDashboardScreen() {
         {/* 1. Financial KPIs & Visual Comparison Chart */}
         <View style={{ gap: 20 }}>
           <View style={{ borderLeftWidth: 4, borderLeftColor: '#004c5a', paddingLeft: 8 }}>
-            <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Financial Performance</Text>
+            <Text style={{ fontFamily: 'Inter', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Financial Performance</Text>
           </View>
 
           {/* Graphical Comparison Bar Chart */}
           <View style={{ backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#bec8cb', padding: 20, borderRadius: 12 }}>
-            <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 13, fontWeight: '700', color: '#6f797c', marginBottom: 16 }}>PORTFOLIO cash Flow COMPARISON</Text>
+            <Text style={{ fontFamily: 'Inter', fontSize: 13, fontWeight: '700', color: '#6f797c', marginBottom: 16 }}>PORTFOLIO cash Flow COMPARISON</Text>
             
             <View style={{ height: 160, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', borderBottomWidth: 1, borderBottomColor: '#bec8cb', paddingBottom: 8, gap: 16 }}>
               {/* Expected Column */}
@@ -121,8 +105,8 @@ export default function AnalyticsDashboardScreen() {
                   shadowOpacity: 0.2,
                   shadowRadius: 4
                 }} />
-                <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: '700', color: '#4f46e5', marginTop: 8 }}>₹{data.revenue.expected.toFixed(0)}</Text>
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 10, color: '#6f797c', marginTop: 2 }}>Expected</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 11, fontWeight: '700', color: '#4f46e5', marginTop: 8 }}>₹{data.revenue.expected.toFixed(0)}</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 10, color: '#6f797c', marginTop: 2 }}>Expected</Text>
               </View>
 
               {/* Collected Column */}
@@ -136,8 +120,8 @@ export default function AnalyticsDashboardScreen() {
                   shadowOpacity: 0.2,
                   shadowRadius: 4
                 }} />
-                <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: '700', color: '#059669', marginTop: 8 }}>₹{data.revenue.collected.toFixed(0)}</Text>
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 10, color: '#6f797c', marginTop: 2 }}>Collected</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 11, fontWeight: '700', color: '#059669', marginTop: 8 }}>₹{data.revenue.collected.toFixed(0)}</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 10, color: '#6f797c', marginTop: 2 }}>Collected</Text>
               </View>
 
               {/* Expenses Column */}
@@ -151,8 +135,8 @@ export default function AnalyticsDashboardScreen() {
                   shadowOpacity: 0.2,
                   shadowRadius: 4
                 }} />
-                <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: '700', color: '#dc2626', marginTop: 8 }}>₹{data.expenses.totalExpenses.toFixed(0)}</Text>
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 10, color: '#6f797c', marginTop: 2 }}>Expenses</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 11, fontWeight: '700', color: '#dc2626', marginTop: 8 }}>₹{data.expenses.totalExpenses.toFixed(0)}</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 10, color: '#6f797c', marginTop: 2 }}>Expenses</Text>
               </View>
             </View>
           </View>
@@ -161,18 +145,18 @@ export default function AnalyticsDashboardScreen() {
             {/* Revenue Card */}
             <View style={{ backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#bec8cb', padding: 16, borderRadius: 12 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#6f797c' }}>TOTAL REVENUE</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#6f797c' }}>TOTAL REVENUE</Text>
                 <MaterialIcons name="payments" size={24} color="rgba(0, 76, 90, 0.6)" />
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 24, fontWeight: '600', color: '#004c5a' }}>₹{data.revenue.collected.toLocaleString()}</Text>
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#6f797c' }}>/ ₹{data.revenue.expected.toLocaleString()}</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 24, fontWeight: '600', color: '#004c5a' }}>₹{data.revenue.collected.toLocaleString()}</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#6f797c' }}>/ ₹{data.revenue.expected.toLocaleString()}</Text>
               </View>
               {/* Collection Rate Progress */}
               <View style={{ marginTop: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#111c2c' }}>Collection Rate</Text>
-                  <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 14, fontWeight: 'bold', color: '#004c5a' }}>{data.revenue.collectionRate}%</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#111c2c' }}>Collection Rate</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: 'bold', color: '#004c5a' }}>{data.revenue.collectionRate}%</Text>
                 </View>
                 <View style={{ width: '100%', height: 6, backgroundColor: 'rgba(190, 200, 203, 0.3)', borderRadius: 4 }}>
                   <View style={{ width: `${Math.min(data.revenue.collectionRate, 100)}%`, height: '100%', backgroundColor: '#004c5a', borderRadius: 4 }} />
@@ -183,26 +167,26 @@ export default function AnalyticsDashboardScreen() {
             {/* Expenses Card */}
             <View style={{ backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#bec8cb', padding: 16, borderRadius: 12 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#6f797c' }}>TOTAL EXPENSES</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#6f797c' }}>TOTAL EXPENSES</Text>
                 <MaterialIcons name="receipt-long" size={24} color="rgba(186, 26, 26, 0.6)" />
               </View>
-              <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 24, fontWeight: '600', color: '#111c2c' }}>₹{data.expenses.totalExpenses.toLocaleString()}</Text>
+              <Text style={{ fontFamily: 'Inter', fontSize: 24, fontWeight: '600', color: '#111c2c' }}>₹{data.expenses.totalExpenses.toLocaleString()}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
                 <MaterialIcons name="trending-up" size={18} color="#ba1a1a" />
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#ba1a1a' }}>{data.expenses.growthFromLastMonth}% from last month</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#ba1a1a' }}>{data.expenses.growthFromLastMonth}% from last month</Text>
               </View>
             </View>
 
             {/* Net Profit Card */}
             <View style={{ backgroundColor: '#004c5a', padding: 16, borderRadius: 12, position: 'relative', overflow: 'hidden' }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255, 255, 255, 0.8)' }}>NET PROFIT</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255, 255, 255, 0.8)' }}>NET PROFIT</Text>
                 <MaterialIcons name="trending-up" size={24} color="rgba(255, 255, 255, 0.8)" />
               </View>
-              <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 24, fontWeight: 'bold', color: '#ffffff' }}>₹{data.profit.netProfit.toLocaleString()}</Text>
+              <Text style={{ fontFamily: 'Inter', fontSize: 24, fontWeight: 'bold', color: '#ffffff' }}>₹{data.profit.netProfit.toLocaleString()}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
                 <MaterialIcons name="arrow-upward" size={18} color="#aaedff" />
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#aaedff' }}>{data.profit.growth}% growth</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#aaedff' }}>{data.profit.growth}% growth</Text>
               </View>
             </View>
           </View>
@@ -211,14 +195,14 @@ export default function AnalyticsDashboardScreen() {
         {/* 2. Portfolio Occupancy */}
         <View style={{ gap: 16 }}>
           <View style={{ borderLeftWidth: 4, borderLeftColor: '#004c5a', paddingLeft: 8 }}>
-            <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Portfolio Occupancy</Text>
+            <Text style={{ fontFamily: 'Inter', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Portfolio Occupancy</Text>
           </View>
           <View style={{ backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#bec8cb', borderRadius: 12, overflow: 'hidden' }}>
             {data.occupancy.map((occ, idx) => (
               <View key={occ.propertyId} style={{ padding: 16, borderBottomWidth: idx < data.occupancy.length - 1 ? 1 : 0, borderBottomColor: 'rgba(190, 200, 203, 0.3)' }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 16, fontWeight: '600', color: '#111c2c' }}>{occ.propertyName}</Text>
-                  <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 14, color: '#004c5a' }}>{occ.occupancyRate}%</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 16, fontWeight: '600', color: '#111c2c' }}>{occ.propertyName}</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#004c5a' }}>{occ.occupancyRate}%</Text>
                 </View>
                 <View style={{ width: '100%', height: 8, backgroundColor: 'rgba(190, 200, 203, 0.2)', borderRadius: 4, overflow: 'hidden' }}>
                   <View style={{ width: `${Math.min(occ.occupancyRate, 100)}%`, height: '100%', backgroundColor: '#004c5a', borderRadius: 4 }} />
@@ -231,7 +215,7 @@ export default function AnalyticsDashboardScreen() {
         {/* 3. Operational Overhead Stacked Chart & Breakdowns */}
         <View style={{ gap: 16 }}>
           <View style={{ borderLeftWidth: 4, borderLeftColor: '#004c5a', paddingLeft: 8 }}>
-            <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Operational Overhead Breakdown</Text>
+            <Text style={{ fontFamily: 'Inter', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Operational Overhead Breakdown</Text>
           </View>
 
           {(() => {
@@ -266,13 +250,13 @@ export default function AnalyticsDashboardScreen() {
                           <View key={type} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                               <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors[i % colors.length] }} />
-                              <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#111c2c', textTransform: 'capitalize' }}>
+                              <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#111c2c', textTransform: 'capitalize' }}>
                                 {type.toLowerCase().replace(/_/g, ' ')}
                               </Text>
                             </View>
                             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                              <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 14, fontWeight: '700', color: '#111c2c' }}>₹{amount.toLocaleString()}</Text>
-                              <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 12, color: '#6f797c' }}>({pct.toFixed(1)}%)</Text>
+                              <Text style={{ fontFamily: 'Inter', fontSize: 14, fontWeight: '700', color: '#111c2c' }}>₹{amount.toLocaleString()}</Text>
+                              <Text style={{ fontFamily: 'Inter', fontSize: 12, color: '#6f797c' }}>({pct.toFixed(1)}%)</Text>
                             </View>
                           </View>
                         );
@@ -282,7 +266,7 @@ export default function AnalyticsDashboardScreen() {
                 ) : (
                   <View style={{ paddingVertical: 20, alignItems: 'center' }}>
                     <MaterialIcons name="pie-chart-outlined" size={40} color="#bec8cb" />
-                    <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#6f797c', marginTop: 8 }}>No overhead expenses logged for this period.</Text>
+                    <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#6f797c', marginTop: 8 }}>No overhead expenses logged for this period.</Text>
                   </View>
                 )}
               </View>
@@ -294,7 +278,7 @@ export default function AnalyticsDashboardScreen() {
         <View style={{ gap: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View style={{ borderLeftWidth: 4, borderLeftColor: '#ba1a1a', paddingLeft: 8 }}>
-              <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Payment Defaulters</Text>
+              <Text style={{ fontFamily: 'Inter', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Payment Defaulters</Text>
             </View>
             <View style={{ backgroundColor: '#ffdad6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100 }}>
               <Text style={{ color: '#93000a', fontSize: 10, fontWeight: 'bold' }}>{data.defaulters.length} CRITICAL</Text>
@@ -304,15 +288,15 @@ export default function AnalyticsDashboardScreen() {
             {data.defaulters.map((defaulter, idx) => (
               <View key={idx} style={{ backgroundColor: '#ffffff', borderLeftWidth: 4, borderLeftColor: '#ba1a1a', borderTopWidth: 1, borderBottomWidth: 1, borderRightWidth: 1, borderColor: '#bec8cb', padding: 16, borderTopRightRadius: 8, borderBottomRightRadius: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } }}>
                 <View>
-                  <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 16, fontWeight: 'bold', color: '#111c2c' }}>{defaulter.tenantName}</Text>
-                  <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#6f797c' }}>Due {defaulter.daysOverdue} days ago</Text>
-                  <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 12, color: '#6f797c' }}>{defaulter.propertyName} - {defaulter.unitNumber}</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 16, fontWeight: 'bold', color: '#111c2c' }}>{defaulter.tenantName}</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#6f797c' }}>Due {defaulter.daysOverdue} days ago</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 12, color: '#6f797c' }}>{defaulter.propertyName} - {defaulter.unitNumber}</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 8 }}>
-                  <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 20, fontWeight: '600', color: '#ba1a1a' }}>- ₹{defaulter.amountDue.toLocaleString()}</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 20, fontWeight: '600', color: '#ba1a1a' }}>- ₹{defaulter.amountDue.toLocaleString()}</Text>
                   <TouchableOpacity style={{ backgroundColor: '#476083', paddingHorizontal: 16, paddingVertical: 4, borderRadius: 100, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                     <MaterialIcons name="mail" size={14} color="#ffffff" />
-                    <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 12, fontWeight: '700', color: '#ffffff' }}>Remind</Text>
+                    <Text style={{ fontFamily: 'Inter', fontSize: 12, fontWeight: '700', color: '#ffffff' }}>Remind</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -323,18 +307,18 @@ export default function AnalyticsDashboardScreen() {
         {/* 5. Yield Analysis */}
         <View style={{ gap: 16 }}>
           <View style={{ borderLeftWidth: 4, borderLeftColor: '#004c5a', paddingLeft: 8 }}>
-            <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Yield Analysis</Text>
+            <Text style={{ fontFamily: 'Inter', fontSize: 20, fontWeight: '600', color: '#111c2c' }}>Yield Analysis</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
             {data.yieldAnalysis.map((yieldItem, idx) => (
               <View key={idx} style={{ minWidth: 240, backgroundColor: '#e7eeff', padding: 16, borderRadius: 8, borderWidth: 1, borderColor: '#bec8cb' }}>
-                <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 12, fontWeight: '700', color: '#6f797c', textTransform: 'uppercase', marginBottom: 4 }}>{yieldItem.propertyName}</Text>
+                <Text style={{ fontFamily: 'Inter', fontSize: 12, fontWeight: '700', color: '#6f797c', textTransform: 'uppercase', marginBottom: 4 }}>{yieldItem.propertyName}</Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                   <View>
-                    <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 20, fontWeight: 'bold', color: '#004c5a' }}>{yieldItem.netYield}%</Text>
-                    <Text style={{ fontFamily: 'Hanken Grotesk', fontSize: 14, color: '#6f797c' }}>Net Yield</Text>
+                    <Text style={{ fontFamily: 'Inter', fontSize: 20, fontWeight: 'bold', color: '#004c5a' }}>{yieldItem.netYield}%</Text>
+                    <Text style={{ fontFamily: 'Inter', fontSize: 14, color: '#6f797c' }}>Net Yield</Text>
                   </View>
-                  <Text style={{ fontFamily: 'JetBrains Mono', fontSize: 16, fontWeight: '600', color: '#004c5a' }}>(Mock Data)</Text>
+                  <Text style={{ fontFamily: 'Inter', fontSize: 16, fontWeight: '600', color: '#004c5a' }}>(Mock Data)</Text>
                 </View>
               </View>
             ))}

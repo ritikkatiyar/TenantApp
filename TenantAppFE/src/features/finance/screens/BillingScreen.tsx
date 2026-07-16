@@ -142,24 +142,23 @@ export default function BillingScreen({ token }: BillingScreenProps) {
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {/* Header */}
-        <View style={styles.header}>
-          {isDesktop ? (
-            <TouchableOpacity onPress={() => router.back()} style={styles.desktopBackButton}>
-              <MaterialIcons name="arrow-back-ios" size={20} color={Theme.Colors.onSurface} />
-              <Text style={styles.desktopBackButtonText}>Back</Text>
-            </TouchableOpacity>
-          ) : (
+      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
+        {/* Glassy Overlay Header */}
+        <View style={styles.headerContainer}>
+          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+          <View style={styles.headerContent}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back-ios" size={20} color={Theme.Colors.onSurface} />
+              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
             </TouchableOpacity>
-          )}
-          <Text style={styles.headerTitle}>CHOOSE YOUR POWER</Text>
-          <View style={{ width: 40 }} />
+            <View style={styles.titleWrapper}>
+              <Text style={styles.headerTitle}>CHOOSE YOUR POWER</Text>
+            </View>
+            {isDesktop && <View style={{ width: 40 }} />}
+            {!isDesktop && <View style={{ width: 36 }} />}
+          </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 72 }]} showsVerticalScrollIndicator={false}>
           
           {/* Quick Wallet Summary Card */}
           <BlurView intensity={60} tint="light" style={styles.walletStatusCard}>
@@ -429,42 +428,47 @@ const styles = StyleSheet.create({
     marginTop: 15,
     fontSize: 16,
   },
-  header: {
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 56,
+    zIndex: 999,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+  },
+  titleWrapper: {
+    flex: 1,
+    alignItems: 'center',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Theme.Colors.glassFill,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  desktopBackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 100,
-    backgroundColor: Theme.Colors.glassFill,
-    borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
-  },
-  desktopBackButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Theme.Colors.onSurface,
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerTitle: {
     color: Theme.Colors.onSurface,
-    fontSize: 18,
+    fontSize: 15,
+    fontFamily: 'Inter',
     fontWeight: '800',
     letterSpacing: 1,
   },
