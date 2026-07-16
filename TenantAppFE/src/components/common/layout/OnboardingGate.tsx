@@ -15,11 +15,25 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const isAuthRoute = pathname === '/login' || pathname === '/signup';
   const isOnboardingRoute = pathname === '/onboarding';
 
+  console.log('[OnboardingGate] Render:', {
+    isReady,
+    isAuthenticated,
+    pathname,
+    isAuthRoute,
+    isOnboardingRoute,
+    isOnboarded,
+    loading,
+    hasAccessToken: !!accessToken,
+    hasContext: !!context,
+  });
+
   useEffect(() => {
+    console.log('[OnboardingGate] Effect triggered');
     let isMounted = true;
 
     if (!isAuthenticated) {
       if (isOnboarded !== null) {
+        console.log('[OnboardingGate] Resetting isOnboarded to null because not authenticated');
         setIsOnboarded(null);
       }
       return;
@@ -27,6 +41,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
 
     if (isOnboardingRoute) {
       if (isOnboarded !== null) {
+        console.log('[OnboardingGate] Resetting isOnboarded to null because on onboarding route');
         setIsOnboarded(null);
       }
       return;
@@ -41,12 +56,14 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
       const runInit = async () => {
         const shouldShowSpinner = isOnboarded === null || !context;
         if (shouldShowSpinner && isMounted) {
+          console.log('[OnboardingGate] Setting loading to true');
           setLoading(true);
         }
 
         try {
           let currentContext = context;
           if (!currentContext) {
+            console.log('[OnboardingGate] Fetching user context');
             currentContext = await getMyContext(accessToken);
             if (isMounted) {
               setContext(currentContext);
@@ -56,22 +73,26 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
           if (currentContext.isTenant && !currentContext.isLandlord) {
             // Pure tenants bypass onboarding
             if (isMounted) {
+              console.log('[OnboardingGate] Pure tenant, setting isOnboarded to true');
               setIsOnboarded(true);
             }
           } else {
             // Check preference for landlords/others
+            console.log('[OnboardingGate] Fetching user preferences');
             const pref = await getUserPreference(accessToken);
             if (isMounted) {
+              console.log('[OnboardingGate] Setting isOnboarded to', pref.onboardingDone);
               setIsOnboarded(pref.onboardingDone);
             }
           }
         } catch (error) {
-          // If error (e.g. 404 meaning no preference saved yet), we treat as not onboarded
+          console.error('[OnboardingGate] Error during init:', error);
           if (isMounted) {
             setIsOnboarded(false);
           }
         } finally {
           if (shouldShowSpinner && isMounted) {
+            console.log('[OnboardingGate] Setting loading to false');
             setLoading(false);
           }
         }
@@ -85,7 +106,8 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     };
   }, [isReady, isAuthenticated, pathname, accessToken, isOnboarded, context]);
 
-  if (!isReady || (isAuthenticated && !isAuthRoute && !isOnboardingRoute && (loading || isOnboarded === null))) {
+  if (!isReady) {
+    console.log('[OnboardingGate] Rendering initial spinner because not ready');
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa' }}>
         <ActivityIndicator size="large" color="#006875" />
@@ -95,17 +117,27 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
 
   // If not authenticated and trying to access a protected route, redirect to login
   if (isReady && !isAuthenticated && !isAuthRoute && pathname !== '/') {
+    console.log('[OnboardingGate] Redirecting to /login');
     return <Redirect href="/login" />;
   }
 
   // If authenticated, not on auth routes, and not onboarded, redirect to onboarding
   if (isAuthenticated && !isAuthRoute && !isOnboardingRoute && isOnboarded === false) {
+    console.log('[OnboardingGate] Redirecting to /onboarding');
     return <Redirect href="/onboarding" />;
   }
 
+  const showSpinner = isAuthenticated && !isAuthRoute && !isOnboardingRoute && (loading || isOnboarded === null);
+
+  console.log('[OnboardingGate] Rendering main view. showSpinner:', showSpinner);
   return (
     <>
       {children}
+      {showSpinner && (
+        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa', zIndex: 9999 }]}>
+          <ActivityIndicator size="large" color="#006875" />
+        </View>
+      )}
     </>
   );
 }

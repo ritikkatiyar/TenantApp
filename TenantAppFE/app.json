@@ -55,9 +55,11 @@
       "reactCompiler": true
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "ef6ef4c4-b2a3-4471-bac7-9ef9fef0a2f1"
       }
-    }
+    },
+    "owner": "ritikkatiyar"
   }
 }
