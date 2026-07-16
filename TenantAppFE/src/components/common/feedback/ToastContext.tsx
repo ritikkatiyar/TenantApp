@@ -66,6 +66,8 @@ function ToastItem({
   const insets = useSafeAreaInsets();
   const config = TOAST_CONFIG[toast.type];
 
+  const isWeb = Platform.OS === 'web';
+
   return (
     <Animated.View
       style={[
@@ -80,39 +82,44 @@ function ToastItem({
       {/* Glow shadow effect */}
       <View style={[styles.glowLayer, { backgroundColor: config.glowColor }]} />
 
-      <BlurView intensity={70} tint="light" style={styles.toastBlur}>
-        {/* Left accent stripe */}
-        <LinearGradient
-          colors={config.gradientColors}
-          style={styles.accentStripe}
-        />
-
-        {/* Icon */}
-        <View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }]}>
-          <MaterialIcons
-            name={config.icon as any}
-            size={22}
-            color={config.accentColor}
-          />
+      {isWeb ? (
+        // Web fallback: plain frosted View (BlurView can crash on mobile browsers)
+        <View style={[styles.toastBlur, styles.toastBlurWeb]}>
+          <LinearGradient colors={config.gradientColors} style={styles.accentStripe} />
+          <View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }]}>
+            <MaterialIcons name={config.icon as any} size={22} color={config.accentColor} />
+          </View>
+          <View style={styles.textBlock}>
+            {toast.title && (
+              <Text style={[styles.toastTitle, { color: config.accentColor }]} numberOfLines={1}>
+                {toast.title}
+              </Text>
+            )}
+            <Text style={styles.toastMessage} numberOfLines={3}>{toast.message}</Text>
+          </View>
+          <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <MaterialIcons name="close" size={16} color="#849495" />
+          </TouchableOpacity>
         </View>
-
-        {/* Text */}
-        <View style={styles.textBlock}>
-          {toast.title && (
-            <Text style={[styles.toastTitle, { color: config.accentColor }]} numberOfLines={1}>
-              {toast.title}
-            </Text>
-          )}
-          <Text style={styles.toastMessage} numberOfLines={3}>
-            {toast.message}
-          </Text>
-        </View>
-
-        {/* Dismiss */}
-        <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <MaterialIcons name="close" size={16} color="#849495" />
-        </TouchableOpacity>
-      </BlurView>
+      ) : (
+        <BlurView intensity={70} tint="light" style={styles.toastBlur}>
+          <LinearGradient colors={config.gradientColors} style={styles.accentStripe} />
+          <View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }]}>
+            <MaterialIcons name={config.icon as any} size={22} color={config.accentColor} />
+          </View>
+          <View style={styles.textBlock}>
+            {toast.title && (
+              <Text style={[styles.toastTitle, { color: config.accentColor }]} numberOfLines={1}>
+                {toast.title}
+              </Text>
+            )}
+            <Text style={styles.toastMessage} numberOfLines={3}>{toast.message}</Text>
+          </View>
+          <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <MaterialIcons name="close" size={16} color="#849495" />
+          </TouchableOpacity>
+        </BlurView>
+      )}
     </Animated.View>
   );
 }
@@ -294,6 +301,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
+  },
+  toastBlurWeb: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(20px)',
   },
   dismissBtn: {
     width: 28,
