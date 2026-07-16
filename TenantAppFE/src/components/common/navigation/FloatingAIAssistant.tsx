@@ -35,10 +35,6 @@ const EXAMPLES = [
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
   const { accessToken } = useAuth();
-  
-  if (isDesktop || !accessToken) {
-    return null;
-  }
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -65,6 +61,10 @@ export default function FloatingAIAssistant() {
       useNativeDriver: false, // need false for layout dimensions anim
     }).start();
   }, [isOpen]);
+
+  if (isDesktop || !accessToken) {
+    return null;
+  }
 
   const handleOpen = () => {
     // Pulse bubble before opening

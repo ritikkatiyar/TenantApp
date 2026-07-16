@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Platform, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, Platform, Alert, TouchableOpacity, Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -130,6 +130,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const slideAnim = useRef(new Animated.Value(60)).current;
   const timerRef = useRef<any>(null);
   const originalAlertRef = useRef(Alert.alert);
+  
+  interface ConfirmButton {
+    text: string;
+    style?: 'default' | 'cancel' | 'destructive';
+    onPress?: () => void | Promise<void>;
+  }
+
+  interface ConfirmDialogState {
+    title: string;
+    message: string;
+    buttons: ConfirmButton[];
+  }
+
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
 
   const hideToast = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -172,15 +186,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const isConfirmation = buttons && buttons.length > 1;
 
       if (isConfirmation) {
-        if (Platform.OS === 'web') {
-          const cancelButton = buttons.find((b: any) => b.style === 'cancel');
-          const primaryButton = buttons.find((b: any) => b.style !== 'cancel');
-          const confirmed = window.confirm(`${titleStr ? titleStr + '\n\n' : ''}${msg}`);
-          if (confirmed) primaryButton?.onPress?.();
-          else cancelButton?.onPress?.();
-        } else {
-          originalAlertRef.current(title, message, buttons, options);
-        }
+        setConfirmDialog({
+          title: titleStr,
+          message: msg,
+          buttons: buttons
+        });
       } else {
         const lc = (titleStr + msg).toLowerCase();
         const type: ToastType =
@@ -221,6 +231,57 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           slideAnim={slideAnim}
           onDismiss={hideToast}
         />
+      )}
+      {confirmDialog && (
+        <Modal
+          transparent
+          animationType="fade"
+          visible={!!confirmDialog}
+          onRequestClose={() => setConfirmDialog(null)}
+        >
+          <View style={styles.modalOverlay}>
+            {Platform.OS === 'web' ? (
+              <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(10, 20, 30, 0.4)', backdropFilter: 'blur(8px)' } as any]} />
+            ) : (
+              <BlurView intensity={45} tint="dark" style={StyleSheet.absoluteFillObject} />
+            )}
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>{confirmDialog.title}</Text>
+              <Text style={styles.modalMessage}>{confirmDialog.message}</Text>
+              <View style={styles.modalButtonsRow}>
+                {confirmDialog.buttons.map((btn, index) => {
+                  const isDestructive = btn.style === 'destructive';
+                  const isCancel = btn.style === 'cancel';
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.modalButton,
+                        isDestructive && styles.modalButtonDestructive,
+                        isCancel && styles.modalButtonCancel,
+                      ]}
+                      onPress={() => {
+                        setConfirmDialog(null);
+                        btn.onPress?.();
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.modalButtonText,
+                          isDestructive && styles.modalButtonTextDestructive,
+                          isCancel && styles.modalButtonTextCancel,
+                        ]}
+                      >
+                        {btn.text}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </Modal>
       )}
     </ToastContext.Provider>
   );
@@ -313,5 +374,81 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  modalCard: {
+    width: 320,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(20px)',
+      } as any
+    })
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1a1f26',
+    marginBottom: 8,
+    textAlign: 'center',
+    fontFamily: 'Inter',
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#4e5d6d',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+    fontFamily: 'Inter',
+    fontWeight: '500',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  modalButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#006875',
+  },
+  modalButtonDestructive: {
+    backgroundColor: '#ff3b30',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#f1f3f5',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  modalButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
+    fontFamily: 'Inter',
+  },
+  modalButtonTextDestructive: {
+    color: '#ffffff',
+  },
+  modalButtonTextCancel: {
+    color: '#495057',
   },
 });
