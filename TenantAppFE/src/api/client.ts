@@ -1,6 +1,7 @@
 import { apiUrl, aiApiUrl } from '../config/api';
 import type { ApiResponse } from '@/src/types/api';
 import { ApiError } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
@@ -50,7 +51,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   const timeoutId = setTimeout(() => controller.abort(), timeout);
   
   const targetUrl = useAiApi ? aiApiUrl(path) : apiUrl(path);
-  console.log(`[API Request] ${requestOptions.method || 'GET'} ${path}`);
+  logger.debug(`[API Request] ${requestOptions.method || 'GET'} ${path}`);
 
   try {
     const fetchOptions = {
@@ -68,11 +69,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
     // Automatic Token Refresh Interceptor
     if (response.status === 401 && authRefreshHandler && !path.includes('/auth/refresh') && !path.includes('/auth/login')) {
-      console.log(`[API] 401 Unauthorized for ${path}. Attempting token refresh...`);
+      logger.warn(`[API] 401 Unauthorized for ${path}. Attempting token refresh...`);
       const newToken = await authRefreshHandler();
       
       if (newToken) {
-        console.log('[API] Refresh successful. Retrying request...');
+        logger.info('[API] Refresh successful. Retrying request...');
         // Update the token in headers and retry
         fetchOptions.headers = {
           ...fetchOptions.headers,
@@ -90,13 +91,13 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
         'Request failed.';
       const fieldErrors = (data as any)?.fieldErrors || (data?.error as any)?.fieldErrors;
       
-      const logMessage = `[API ERROR] ${response.status} ${path} | ${message}`;
+      const logMessage = `${response.status} ${path} | ${message}`;
       const logData = { correlationId: fetchOptions.headers['X-Correlation-Id'] };
       
       if (response.status >= 400 && response.status < 500) {
-        console.warn(logMessage, logData);
+        logger.warn(logMessage, logData);
       } else {
-        console.error(logMessage, logData);
+        logger.error(logMessage, undefined, logData);
       }
 
       throw new ApiError(message, response.status, fieldErrors);
@@ -109,7 +110,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     }
     
     if (!(error instanceof ApiError)) {
-      console.error(`[API ERROR] Network/Unknown: ${path} | ${error.message}`);
+      logger.error(`Network/Unknown: ${path} | ${error.message}`, error);
     }
     
     throw error;

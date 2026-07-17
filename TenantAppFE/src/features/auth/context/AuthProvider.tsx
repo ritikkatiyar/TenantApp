@@ -5,6 +5,7 @@ import { setAuthRefreshHandler } from '@/src/api/client';
 import type { AuthUserSummary, TokenBundle } from '@/src/types/auth';
 import { clearStoredAuth, readStoredAuth, writeStoredAuth } from '@/src/features/auth/utils/tokenStorage';
 import { MyContextResponse } from '@/src/features/auth/api/me.api';
+import { logger } from '@/src/utils/logger';
 
 type AuthContextValue = {
   accessToken: string;
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         await logout({ refreshToken });
       } catch (error) {
-        console.warn('Logout token revoke failed:', error);
+        logger.warn('Logout token revoke failed:', error);
       }
     }
   }, [authData?.refreshToken]);
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await writeStoredAuth(nextAuthData);
         return nextAuthData;
       } catch (error) {
-        console.warn('Session refresh failed:', error);
+        logger.warn('Session refresh failed:', error);
         setAuthData(null);
         await clearStoredAuth();
         return null;

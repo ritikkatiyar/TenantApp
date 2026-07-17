@@ -2,7 +2,7 @@
 
 ## Current Rating
 
-Current frontend quality score: **6.5 / 10**
+Current frontend quality score: **7.2 / 10** (Phase 1 complete)
 
 The app is usable and visually strong, and `npm run build` succeeds. It is not yet at a FAANG-style production bar because strict TypeScript and lint are not clean, several screens are too large, styling is duplicated, and production logging/error handling needs tightening.
 
@@ -103,30 +103,30 @@ This weakens type safety and makes large refactors riskier.
 
 ## Phase Plan
 
-### Phase 1 - CI Baseline: Lint And Typecheck Clean
+### Phase 1 - CI Baseline: Lint And Typecheck Clean [COMPLETED]
 
 Goal: raise score from **6.5 to 7.2**.
 
 Tasks:
 
-- Fix the React hook rule violation in `BottomNavigation.tsx`.
-- Fix strict TypeScript errors in:
+- [x] Fix the React hook rule violation in `BottomNavigation.tsx`.
+- [x] Fix strict TypeScript errors in:
   - `ToastContext.tsx`
   - `GlassDropdown.tsx`
   - `ModeSelectionScreen.tsx`
   - `CreateExpenseScreen.tsx`
   - `FloorEditorScreen.tsx`
-- Remove unused imports and unused variables that lint reports.
-- Fix missing hook dependencies where safe.
-- Add scripts if needed:
+- [x] Remove unused imports and unused variables that lint reports.
+- [x] Fix missing hook dependencies where safe.
+- [x] Add scripts if needed:
   - `typecheck`: `tsc --noEmit`
   - `quality`: run lint, typecheck, and build.
 
 Acceptance:
 
-- `npm run lint` passes.
-- `npx tsc --noEmit` passes.
-- `npm run build` passes.
+- [x] `npm run lint` passes (0 errors).
+- [x] `npx tsc --noEmit` passes (0 errors).
+- [x] `npm run build` passes (0 errors).
 
 ### Phase 2 - Production Logging And Error UX
 
