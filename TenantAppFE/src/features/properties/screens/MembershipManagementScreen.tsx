@@ -8,6 +8,7 @@ import { getMemberships, assignRole, removeRole, transferOwnership, MembershipRe
 import { apiRequest } from '@/src/api/client';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { Theme } from '@/src/theme/Theme';
+import { formatErrorMessage } from '@/src/utils/errors';
 
 interface UserSearchResponse {
   id: string;
@@ -46,7 +47,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
       const data = await getMemberships(accessToken, propertyId);
       setMemberships(data);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to load memberships');
+      Alert.alert('Error', formatErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -62,7 +63,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
       });
       setSearchResults(data);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to search user');
+      Alert.alert('Error', formatErrorMessage(err));
     } finally {
       setSearching(false);
     }
@@ -82,7 +83,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
       loadMemberships();
       Alert.alert('Success', 'Role assigned successfully');
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to assign role');
+      Alert.alert('Error', formatErrorMessage(err));
     }
   };
 
@@ -95,7 +96,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
           await removeRole(accessToken, propertyId, membership.id);
           loadMemberships();
         } catch (err: any) {
-          Alert.alert('Error', err.message || 'Failed to remove role');
+          Alert.alert('Error', formatErrorMessage(err));
         }
       }}
     ]);
@@ -111,7 +112,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
           loadMemberships();
           Alert.alert('Success', 'Ownership transferred successfully');
         } catch (err: any) {
-          Alert.alert('Error', err.message || 'Failed to transfer ownership');
+          Alert.alert('Error', formatErrorMessage(err));
         }
       }}
     ]);

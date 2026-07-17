@@ -21,6 +21,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur'; // Ensure BlurView is available for web and mobile
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { logger } from '@/src/utils/logger';
+import { formatErrorMessage } from '@/src/utils/errors';
 import { Gesture, GestureDetector, GestureHandlerRootView, ScrollView, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -536,8 +537,8 @@ export default function FloorEditorScreen({
       setTenantPhoneSearch(exactMatch.phoneNumber || '');
       setSuggestions([]);
     } catch (error: any) {
-      console.error('[Search Tenant Error]', error);
-      setTenantSearchError(error.message || 'Search failed.');
+      logger.error('[Search Tenant Error]', error);
+      setTenantSearchError(formatErrorMessage(error));
     } finally {
       setTenantSearchLoading(false);
     }
@@ -575,8 +576,8 @@ export default function FloorEditorScreen({
       // Auto assign after creation
       await handleAssignTenant(createdUser);
     } catch (error: any) {
-      console.error('[Create Tenant Error]', error);
-      setTenantSearchError(error.message || 'Failed to create tenant.');
+      logger.error('[Create Tenant Error]', error);
+      setTenantSearchError(formatErrorMessage(error));
     } finally {
       setTenantCreating(false);
     }
@@ -621,7 +622,7 @@ export default function FloorEditorScreen({
         u.unitNumber === selectedBlock.unitNumber
       );
       if (!savedUnit) {
-        console.error('[Assign Tenant] Could not find saved unit in response!', {
+        logger.error('[Assign Tenant] Could not find saved unit in response!', {
           selectedUnitNumber: selectedBlock.unitNumber,
           selectedCoords: { x: selectedBlock.gridX, y: selectedBlock.gridY },
           savedUnits: savedUnits.map(u => ({ number: u.unitNumber, x: u.gridX, y: u.gridY }))
@@ -670,8 +671,8 @@ export default function FloorEditorScreen({
       resetTenantAssignmentForm();
       Alert.alert('Success', `${assignedName} has been assigned to Unit ${selectedBlock.unitNumber}.`);
     } catch (error: any) {
-      console.error('[Assign Tenant Error]', error);
-      setTenantSearchError(error.message || 'Assignment failed.');
+      logger.error('[Assign Tenant Error]', error);
+      setTenantSearchError(formatErrorMessage(error));
     } finally {
       setTenantAssigning(false);
     }
@@ -713,8 +714,8 @@ export default function FloorEditorScreen({
 
               Alert.alert('Removed', `${displayName} has been removed from Unit ${selectedBlock.unitNumber}.`);
             } catch (error: any) {
-              console.error('[Remove Tenant Error]', error);
-              Alert.alert('Error', error.message || 'Failed to remove tenant.');
+              logger.error('[Remove Tenant Error]', error);
+              Alert.alert('Error', formatErrorMessage(error));
             } finally {
               setLoading(false);
             }
@@ -754,7 +755,7 @@ export default function FloorEditorScreen({
 
       onSave();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save layout.');
+      Alert.alert('Error', formatErrorMessage(error));
     } finally {
       setSaving(false);
     }

@@ -18,6 +18,7 @@ import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { formatErrorMessage } from '@/src/utils/errors';
 import { getProperty } from '@/src/features/properties/api/property.api';
 import { getFloorSummaries, FloorSummaryResponse } from '@/src/features/properties/api/unit.api';
 import { useFocusEffect, useRouter, Href } from 'expo-router';
@@ -76,7 +77,7 @@ export default function FloorListOverviewScreen({
       const floorData = await getFloorSummaries(propertyId, userToken, property.totalFloors);
       setFloors([...floorData].sort((a, b) => b.floorNumber - a.floorNumber));
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to load configuration');
+      Alert.alert('Error', formatErrorMessage(error));
     } finally {
       setLoading(false);
     }

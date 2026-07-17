@@ -31,6 +31,7 @@ import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/
 import { apiRequest } from '@/src/api/client';
 import { Theme } from '@/src/theme/Theme';
 import { logger } from '@/src/utils/logger';
+import { formatErrorMessage } from '@/src/utils/errors';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
@@ -249,8 +250,8 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       setTenantPhoneSearch(exactMatch.phoneNumber || '');
       setSuggestions([]);
     } catch (error: any) {
-      console.error('[Search Tenant Error]', error);
-      setTenantSearchError(error.message || 'Search failed.');
+      logger.error('[Search Tenant Error]', error);
+      setTenantSearchError(formatErrorMessage(error));
     } finally {
       setTenantSearchLoading(false);
     }
@@ -287,8 +288,8 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       
       await handleAssignTenant(createdUser);
     } catch (error: any) {
-      console.error('[Create Tenant Error]', error);
-      setTenantSearchError(error.message || 'Failed to create tenant.');
+      logger.error('[Create Tenant Error]', error);
+      setTenantSearchError(formatErrorMessage(error));
     } finally {
       setTenantCreating(false);
     }
@@ -346,8 +347,8 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       resetTenantAssignmentForm();
       Alert.alert('Success', `${assignedName} has been assigned to Unit ${selectedBlock.unitNumber}.`);
     } catch (error: any) {
-      console.error('[Assign Tenant Error]', error);
-      setTenantSearchError(error.message || 'Assignment failed.');
+      logger.error('[Assign Tenant Error]', error);
+      setTenantSearchError(formatErrorMessage(error));
     } finally {
       setTenantAssigning(false);
     }
@@ -389,8 +390,8 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
 
               Alert.alert('Removed', `${displayName} has been removed from Unit ${selectedBlock.unitNumber}.`);
             } catch (error: any) {
-              console.error('[Remove Tenant Error]', error);
-              Alert.alert('Error', error.message || 'Failed to remove tenant.');
+              logger.error('[Remove Tenant Error]', error);
+              Alert.alert('Error', formatErrorMessage(error));
             } finally {
               setLoading(false);
             }

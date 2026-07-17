@@ -22,6 +22,7 @@ import GlassDropdown, { DropdownOption } from '@/src/components/common/inputs/Gl
 import { useProperties } from '@/src/hooks/useProperties';
 import { getActiveChargesForProperty, ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
 import { getOrCreateWorksheet, batchSaveWorksheet, WorksheetEntryResponse } from '@/src/features/finance/api/worksheet.api';
+import { formatErrorMessage } from '@/src/utils/errors';
 
 export default function BillingWorksheetScreen({ token }: { token: string | null }) {
   const router = useRouter();
@@ -147,7 +148,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
       
       Alert.alert("Success", "Worksheet saved successfully!");
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to save worksheet");
+      Alert.alert("Error", formatErrorMessage(error));
     } finally {
       setIsSaving(false);
     }

@@ -4,6 +4,7 @@ import { getMyProperties } from '@/src/features/properties/api/propertyList.api'
 import { deletePropertyApi, togglePropertyActiveApi } from '@/src/features/properties/api/property.api';
 import type { PropertyResponse } from '@/src/types/property';
 import { logger } from '@/src/utils/logger';
+import { formatErrorMessage } from '@/src/utils/errors';
 
 export function useProperties() {
   const { user, accessToken } = useAuth();
@@ -20,7 +21,7 @@ export function useProperties() {
       const data = await getMyProperties(accessToken);
       setProperties(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setError(formatErrorMessage(err));
       logger.error('Error fetching properties:', err);
     } finally {
       setIsLoading(false);
@@ -38,7 +39,7 @@ export function useProperties() {
       await deletePropertyApi(propertyId, accessToken);
       await fetchProperties(); // refresh after deletion
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'An unknown error occurred';
+      const msg = formatErrorMessage(err);
       setError(msg);
       throw err; // re-throw so the caller can show an alert
     } finally {
@@ -53,7 +54,7 @@ export function useProperties() {
       await togglePropertyActiveApi(propertyId, active, accessToken);
       await fetchProperties(); // refresh after update
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'An unknown error occurred';
+      const msg = formatErrorMessage(err);
       setError(msg);
       throw err;
     } finally {
