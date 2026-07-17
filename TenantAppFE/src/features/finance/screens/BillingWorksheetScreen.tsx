@@ -145,17 +145,9 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
         entries: payloadEntries
       }, token);
       
-      if (Platform.OS === 'web') {
-        alert("Worksheet saved successfully!");
-      } else {
-        Alert.alert("Success", "Worksheet saved successfully!");
-      }
+      Alert.alert("Success", "Worksheet saved successfully!");
     } catch (error: any) {
-      if (Platform.OS === 'web') {
-        alert(error.message || "Failed to save worksheet");
-      } else {
-        Alert.alert("Error", error.message || "Failed to save worksheet");
-      }
+      Alert.alert("Error", error.message || "Failed to save worksheet");
     } finally {
       setIsSaving(false);
     }
