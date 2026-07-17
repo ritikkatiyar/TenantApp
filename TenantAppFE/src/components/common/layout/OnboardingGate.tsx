@@ -106,6 +106,19 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     };
   }, [isReady, isAuthenticated, pathname, accessToken, isOnboarded, context]);
 
+  // Programmatic redirection to avoid layout engine unmount constraints of Redirect component
+  useEffect(() => {
+    if (!isReady) return;
+
+    if (!isAuthenticated && !isAuthRoute && pathname !== '/') {
+      console.log('[OnboardingGate] Redirecting to /login programmatically');
+      router.replace('/login');
+    } else if (isAuthenticated && !isAuthRoute && !isOnboardingRoute && isOnboarded === false) {
+      console.log('[OnboardingGate] Redirecting to /onboarding programmatically');
+      router.replace('/onboarding');
+    }
+  }, [isReady, isAuthenticated, isAuthRoute, isOnboardingRoute, isOnboarded, pathname]);
+
   if (!isReady) {
     console.log('[OnboardingGate] Rendering initial spinner because not ready');
     return (
@@ -115,16 +128,18 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If not authenticated and trying to access a protected route, redirect to login
-  if (isReady && !isAuthenticated && !isAuthRoute && pathname !== '/') {
-    console.log('[OnboardingGate] Redirecting to /login');
-    return <Redirect href="/login" />;
-  }
+  // Render a clean loading spinner while transition redirects are in progress
+  const isPendingRedirect = 
+    (!isAuthenticated && !isAuthRoute && pathname !== '/') ||
+    (isAuthenticated && !isAuthRoute && !isOnboardingRoute && isOnboarded === false);
 
-  // If authenticated, not on auth routes, and not onboarded, redirect to onboarding
-  if (isAuthenticated && !isAuthRoute && !isOnboardingRoute && isOnboarded === false) {
-    console.log('[OnboardingGate] Redirecting to /onboarding');
-    return <Redirect href="/onboarding" />;
+  if (isPendingRedirect) {
+    console.log('[OnboardingGate] Rendering redirect pending spinner');
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa' }}>
+        <ActivityIndicator size="large" color="#006875" />
+      </View>
+    );
   }
 
   const showSpinner = isAuthenticated && !isAuthRoute && !isOnboardingRoute && (loading || isOnboarded === null);

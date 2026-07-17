@@ -208,7 +208,7 @@ function AssignmentCard({ item }: { item: AssignmentItem }) {
           </View>
         </>
       ) : (
-        <Text style={styles.assignHint}>Tap to select and document this item's condition</Text>
+        <Text style={styles.assignHint}>{"Tap to select and document this item's condition"}</Text>
       )}
     </BlurView>
   );
