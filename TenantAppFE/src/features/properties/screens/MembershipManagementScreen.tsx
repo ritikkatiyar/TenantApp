@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert, Modal, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -9,6 +8,12 @@ import { apiRequest } from '@/src/api/client';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { Theme } from '@/src/theme/Theme';
 import { formatErrorMessage } from '@/src/utils/errors';
+import { PageShell } from '@/src/components/common/layout/PageShell';
+import { ResponsiveHeader } from '@/src/components/common/layout/ResponsiveHeader';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { StatusPill } from '@/src/components/common/display/StatusPill';
+import { ActionButton } from '@/src/components/common/inputs/ActionButton';
+import { ConfirmDialog } from '@/src/components/common/feedback/ConfirmDialog';
 
 interface UserSearchResponse {
   id: string;
@@ -35,6 +40,15 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
   
   const [selectedUser, setSelectedUser] = useState<UserSearchResponse | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>('PROPERTY_MANAGER');
+
+  // ConfirmDialog states
+  const [removeDialogVisible, setRemoveDialogVisible] = useState(false);
+  const [membershipToRemove, setMembershipToRemove] = useState<MembershipResponse | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const [transferDialogVisible, setTransferDialogVisible] = useState(false);
+  const [membershipToTransfer, setMembershipToTransfer] = useState<MembershipResponse | null>(null);
+  const [isTransferring, setIsTransferring] = useState(false);
 
   useEffect(() => {
     loadMemberships();
@@ -87,72 +101,82 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
     }
   };
 
-  const handleRemoveRole = (membership: MembershipResponse) => {
-    Alert.alert('Confirm', `Remove ${membership.fullName} from property?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => {
-        if (!accessToken) return;
-        try {
-          await removeRole(accessToken, propertyId, membership.id);
-          loadMemberships();
-        } catch (err: any) {
-          Alert.alert('Error', formatErrorMessage(err));
-        }
-      }}
-    ]);
+  const triggerRemoveRole = (membership: MembershipResponse) => {
+    setMembershipToRemove(membership);
+    setRemoveDialogVisible(true);
   };
 
-  const handleTransferOwnership = (membership: MembershipResponse) => {
-    Alert.alert('Confirm Transfer', `Transfer ownership to ${membership.fullName}? You will be demoted to Manager.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Transfer', style: 'destructive', onPress: async () => {
-        if (!accessToken) return;
-        try {
-          await transferOwnership(accessToken, propertyId, { toUserId: membership.userId });
-          loadMemberships();
-          Alert.alert('Success', 'Ownership transferred successfully');
-        } catch (err: any) {
-          Alert.alert('Error', formatErrorMessage(err));
-        }
-      }}
-    ]);
+  const executeRemoveRole = async () => {
+    if (!accessToken || !membershipToRemove) return;
+    try {
+      setIsRemoving(true);
+      await removeRole(accessToken, propertyId, membershipToRemove.id);
+      setRemoveDialogVisible(false);
+      setMembershipToRemove(null);
+      loadMemberships();
+    } catch (err: any) {
+      Alert.alert('Error', formatErrorMessage(err));
+    } finally {
+      setIsRemoving(false);
+    }
+  };
+
+  const triggerTransferOwnership = (membership: MembershipResponse) => {
+    setMembershipToTransfer(membership);
+    setTransferDialogVisible(true);
+  };
+
+  const executeTransferOwnership = async () => {
+    if (!accessToken || !membershipToTransfer) return;
+    try {
+      setIsTransferring(true);
+      await transferOwnership(accessToken, propertyId, { toUserId: membershipToTransfer.userId });
+      setTransferDialogVisible(false);
+      setMembershipToTransfer(null);
+      loadMemberships();
+      Alert.alert('Success', 'Ownership transferred successfully');
+    } catch (err: any) {
+      Alert.alert('Error', formatErrorMessage(err));
+    } finally {
+      setIsTransferring(false);
+    }
   };
 
   const renderItem = ({ item }: { item: MembershipResponse }) => (
-    <View style={styles.card}>
+    <GlassCard style={styles.card}>
       <View style={styles.cardInfo}>
         <Text style={styles.name}>{item.fullName}</Text>
         <Text style={styles.email}>{item.email}</Text>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{item.roleName || item.roleCode}</Text>
-        </View>
+        <StatusPill status={item.roleName || item.roleCode} style={styles.pillOverride} />
       </View>
       <View style={styles.cardActions}>
         {item.roleCode !== 'PROPERTY_OWNER' && (
-          <TouchableOpacity onPress={() => handleTransferOwnership(item)} style={styles.actionBtn}>
+          <TouchableOpacity onPress={() => triggerTransferOwnership(item)} style={styles.actionBtn}>
             <MaterialIcons name="swap-horiz" size={20} color={Theme.Colors.primary} />
           </TouchableOpacity>
         )}
         {item.roleCode !== 'PROPERTY_OWNER' && (
-          <TouchableOpacity onPress={() => handleRemoveRole(item)} style={styles.actionBtn}>
+          <TouchableOpacity onPress={() => triggerRemoveRole(item)} style={styles.actionBtn}>
             <MaterialIcons name="delete-outline" size={20} color={Theme.Colors.error} />
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </GlassCard>
+  );
+
+  const renderHeaderRight = () => (
+    <TouchableOpacity onPress={() => setSearchModalVisible(true)} style={styles.addBtn}>
+      <MaterialIcons name="person-add" size={24} color={Theme.Colors.primary} />
+    </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <MaterialIcons name="arrow-back" size={24} color={Theme.Colors.onSurface} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Manage Staff</Text>
-        <TouchableOpacity onPress={() => setSearchModalVisible(true)} style={styles.addBtn}>
-          <MaterialIcons name="person-add" size={24} color={Theme.Colors.primary} />
-        </TouchableOpacity>
-      </View>
+    <PageShell contentContainerStyle={styles.container}>
+      <ResponsiveHeader 
+        title="Manage Staff" 
+        onBack={() => router.back()} 
+        rightAction={renderHeaderRight()}
+      />
 
       {loading ? (
         <View style={styles.center}>
@@ -169,6 +193,35 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
           }
         />
       )}
+
+      {/* Remove Role confirmation */}
+      <ConfirmDialog
+        visible={removeDialogVisible}
+        title="Remove Staff"
+        message={`Are you sure you want to remove ${membershipToRemove?.fullName || ''} from this property?`}
+        onConfirm={executeRemoveRole}
+        onCancel={() => {
+          setRemoveDialogVisible(false);
+          setMembershipToRemove(null);
+        }}
+        confirmText="Remove"
+        isDestructive
+        loading={isRemoving}
+      />
+
+      {/* Transfer Ownership confirmation */}
+      <ConfirmDialog
+        visible={transferDialogVisible}
+        title="Transfer Ownership"
+        message={`Transfer ownership to ${membershipToTransfer?.fullName || ''}? You will be demoted to Manager.`}
+        onConfirm={executeTransferOwnership}
+        onCancel={() => {
+          setTransferDialogVisible(false);
+          setMembershipToTransfer(null);
+        }}
+        confirmText="Transfer"
+        loading={isTransferring}
+      />
 
       {/* Add Staff Modal */}
       <Modal visible={searchModalVisible} animationType="slide" transparent>
@@ -195,9 +248,12 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
                     onChangeText={setSearchPhone}
                     keyboardType="phone-pad"
                   />
-                  <TouchableOpacity style={styles.searchBtn} onPress={handleSearch} disabled={searching}>
-                    {searching ? <ActivityIndicator color="#fff" /> : <Text style={styles.searchBtnText}>Search</Text>}
-                  </TouchableOpacity>
+                  <ActionButton 
+                    title="Search" 
+                    onPress={handleSearch} 
+                    loading={searching}
+                    style={styles.searchBtn} 
+                  />
                 </View>
 
                 <FlatList
@@ -236,72 +292,47 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
                   </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.assignBtn} onPress={handleAssignRole}>
-                  <Text style={styles.assignBtnText}>Assign Role</Text>
-                </TouchableOpacity>
+                <ActionButton 
+                  title="Assign Role" 
+                  onPress={handleAssignRole}
+                  style={styles.assignBtn}
+                />
               </>
             )}
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </PageShell>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafa',
+    paddingHorizontal: 0,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  backBtn: { padding: 4 },
   addBtn: { padding: 4 },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Theme.Colors.onSurface,
-  },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   list: {
-    padding: 20,
+    padding: Theme.Spacing.containerPadding,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    padding: 16,
   },
   cardInfo: { flex: 1 },
   name: { fontSize: 16, fontWeight: '700', color: Theme.Colors.onSurface },
   email: { fontSize: 13, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
-  roleBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#e6f7ff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+  pillOverride: {
     marginTop: 8,
   },
-  roleText: { fontSize: 11, fontWeight: '600', color: '#0050b3' },
   cardActions: { flexDirection: 'row', gap: 12 },
   actionBtn: { padding: 8, backgroundColor: '#f5f5f5', borderRadius: 8 },
   emptyText: { textAlign: 'center', color: Theme.Colors.onSurfaceVariant, marginTop: 40 },
@@ -325,7 +356,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontSize: 20, fontWeight: '700' },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 8, color: Theme.Colors.onSurfaceVariant },
-  searchRow: { flexDirection: 'row', gap: 12 },
+  searchRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   searchInput: {
     flex: 1,
     borderWidth: 1,
@@ -333,14 +364,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    height: 48,
   },
   searchBtn: {
-    backgroundColor: Theme.Colors.primary,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    height: 48,
   },
-  searchBtnText: { color: '#fff', fontWeight: '600' },
   userResult: {
     padding: 16,
     backgroundColor: '#f5f5f5',
@@ -365,11 +394,7 @@ const styles = StyleSheet.create({
   roleOptionText: { fontWeight: '600', color: Theme.Colors.onSurfaceVariant },
   roleOptionTextActive: { color: Theme.Colors.primary },
   assignBtn: {
-    backgroundColor: Theme.Colors.primary,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
     marginTop: 24,
   },
-  assignBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
+

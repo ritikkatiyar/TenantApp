@@ -4,20 +4,14 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  ScrollView, 
-  ActivityIndicator,
-  Alert,
-  Platform 
+  ActivityIndicator
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
-import { Colors, Rounded, Spacing } from '@/src/theme/Theme';
+import { Theme } from '@/src/theme/Theme';
 import { 
   batchGenerateRentCycle, 
   listRentCycles, 
@@ -28,6 +22,13 @@ import {
   PreFlightChecklistResponse 
 } from '@/src/features/finance/api/rentCycle.api';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
+import { PageShell } from '@/src/components/common/layout/PageShell';
+import { ResponsiveHeader } from '@/src/components/common/layout/ResponsiveHeader';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { StatCard } from '@/src/components/common/display/StatCard';
+import { SectionHeader } from '@/src/components/common/display/SectionHeader';
+import { StatusPill } from '@/src/components/common/display/StatusPill';
+import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 
 export default function RentRollScreen({ token }: { token: string | null }) {
   const router = useRouter();
@@ -101,7 +102,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
         setChecklist(flightData);
       }
     } catch (e) {
-      console.error("Failed to check invoices", e);
+      // Handled silently since checking can fail initially
     } finally {
       setIsLoading(false);
     }
@@ -154,32 +155,35 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const publishedCount = invoices.filter(inv => inv.status === 'PUBLISHED').length;
   const pendingCount = invoices.filter(inv => inv.status === 'PENDING').length;
 
+  const renderMonthSelector = () => (
+    <View style={styles.selectorContainer}>
+      <TouchableOpacity onPress={handlePrevMonth} style={styles.arrowBadge}>
+        <MaterialIcons name="chevron-left" size={20} color={Theme.Colors.primary} />
+      </TouchableOpacity>
+      
+      <View style={styles.monthBadge}>
+        <MaterialIcons name="calendar-today" size={16} color={Theme.Colors.primary} />
+        <Text style={styles.monthBadgeText}>{billingMonth}</Text>
+      </View>
+      
+      <TouchableOpacity onPress={handleNextMonth} style={styles.arrowBadge}>
+        <MaterialIcons name="chevron-right" size={20} color={Theme.Colors.primary} />
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderContent = () => (
     <View style={styles.inner}>
-      <View style={styles.headerRow}>
-        {/* Title only needed on desktop; mobile glassy header provides the name */}
-        {isDesktop && <Text style={styles.title}>Generate Rent Cycle</Text>}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
-            <MaterialIcons name="chevron-left" size={20} color="#006875" />
-          </TouchableOpacity>
-          
-          <View style={[styles.monthBadge, { marginTop: 0 }]}>
-            <MaterialIcons name="calendar-today" size={16} color="#006875" />
-            <Text style={styles.monthBadgeText}>{billingMonth}</Text>
-          </View>
-          
-          <TouchableOpacity onPress={handleNextMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
-            <MaterialIcons name="chevron-right" size={20} color="#006875" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <SectionHeader
+        title={isDesktop ? "Generate Rent Cycle" : ""}
+        rightAction={renderMonthSelector()}
+      />
 
       {isLoading ? (
-        <ActivityIndicator size="large" color="#006875" style={{ marginTop: 50 }} />
+        <ActivityIndicator size="large" color={Theme.Colors.primary} style={{ marginTop: 50 }} />
       ) : !hasGenerated ? (
-        <BlurView intensity={60} tint="light" style={styles.card}>
-          <MaterialIcons name="fact-check" size={48} color="#006875" style={{ marginBottom: 16 }} />
+        <GlassCard style={styles.card}>
+          <MaterialIcons name="fact-check" size={48} color={Theme.Colors.primary} style={{ marginBottom: 16 }} />
           <Text style={styles.cardTitle}>Pre-flight Checklist</Text>
           <Text style={styles.cardText}>Ensure all meter readings and custom billing worksheets for {billingMonth} have been completed before generating.</Text>
           
@@ -200,114 +204,86 @@ export default function RentRollScreen({ token }: { token: string | null }) {
           )}
 
           <View style={[styles.statusBox, checklist && !checklist.isReady && { backgroundColor: '#fee2e2' }]}>
-            <MaterialIcons name={checklist && !checklist.isReady ? "warning" : "info-outline"} size={20} color={checklist && !checklist.isReady ? "#b91c1c" : "#006875"} />
+            <MaterialIcons 
+              name={checklist && !checklist.isReady ? "warning" : "info-outline"} 
+              size={20} 
+              color={checklist && !checklist.isReady ? "#b91c1c" : Theme.Colors.primary} 
+            />
             <Text style={[styles.statusText, checklist && !checklist.isReady && { color: '#b91c1c' }]}>
               {checklist && !checklist.isReady ? "Please complete required readings before generating." : `Ready to compile invoices for ${billingMonth}`}
             </Text>
           </View>
 
-          <TouchableOpacity 
-            style={[styles.generateBtn, isGenerating && { opacity: 0.7 }]} 
+          <ActionButton
+            title="GENERATE INVOICES"
             onPress={handleGenerate}
+            loading={isGenerating}
             disabled={isGenerating || !!(checklist && !checklist.isReady)}
-          >
-            {isGenerating ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.generateBtnText}>GENERATE INVOICES</Text>
-            )}
-          </TouchableOpacity>
-        </BlurView>
+            style={styles.generateBtn}
+          />
+        </GlassCard>
       ) : (
         <View style={styles.resultsContainer}>
-          <BlurView intensity={40} tint="light" style={styles.summaryCard}>
+          <GlassCard style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Total Expected Revenue</Text>
             <Text style={styles.summaryAmount}>₹ {totalRevenue.toFixed(2)}</Text>
             
             <View style={styles.summaryStatusRow}>
-              <View style={[styles.summaryStatusBadge, styles.statusPublished]}>
-                <MaterialIcons name="check-circle" size={12} color="#0369a1" style={{ marginRight: 4 }} />
-                <Text style={[styles.summaryStatusText, { color: '#0369a1' }]}>{publishedCount} Published</Text>
-              </View>
-              <View style={[styles.summaryStatusBadge, styles.statusPending]}>
-                <MaterialIcons name="hourglass-empty" size={12} color="#d97706" style={{ marginRight: 4 }} />
-                <Text style={[styles.summaryStatusText, { color: '#d97706' }]}>{pendingCount} Pending</Text>
-              </View>
+              <StatCard
+                label="Published"
+                value={publishedCount}
+                trend="Tenant App notified"
+                trendType="positive"
+                iconName="check-circle"
+                style={styles.miniStat}
+              />
+              <StatCard
+                label="Pending Drafts"
+                value={pendingCount}
+                trend="Awaiting publish"
+                trendType="neutral"
+                iconName="hourglass-empty"
+                style={styles.miniStat}
+              />
             </View>
 
             {pendingCount > 0 && (
-              <>
-                <TouchableOpacity 
-                  style={[styles.publishBtnContainer, isPublishing && { opacity: 0.7 }]} 
+              <View style={styles.actionGroup}>
+                <ActionButton
+                  title={publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
                   onPress={handlePublish}
-                  disabled={isPublishing}
-                >
-                  <LinearGradient
-                    colors={['#00d4ff', '#0072ff']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.publishBtn}
-                  >
-                    {isPublishing ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <Text style={styles.publishBtnText}>
-                        {publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
-                      </Text>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
+                  loading={isPublishing}
+                  style={styles.publishBtn}
+                />
 
-                <TouchableOpacity 
-                  style={[
-                    styles.unpublishBtnContainer, 
-                    isGenerating && { opacity: 0.7 },
-                    { marginTop: 12, width: '100%' }
-                  ]} 
+                <ActionButton
+                  title="RE-GENERATE DRAFT INVOICES"
                   onPress={handleGenerate}
-                  disabled={isGenerating}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.unpublishBtn}>
-                    {isGenerating ? (
-                      <ActivityIndicator color="#006875" size="small" />
-                    ) : (
-                      <Text style={styles.unpublishBtnText}>RE-GENERATE DRAFT INVOICES (RE-RUN CALCULATION)</Text>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              </>
+                  loading={isGenerating}
+                  variant="outline"
+                  style={styles.reGenerateBtn}
+                />
+              </View>
             )}
 
             {publishedCount > 0 && (
-              <TouchableOpacity 
-                style={[
-                  styles.unpublishBtnContainer, 
-                  isUnpublishing && { opacity: 0.7 },
-                  { marginTop: pendingCount > 0 ? 12 : 0, width: '100%' }
-                ]} 
+              <ActionButton
+                title="REVERT TO DRAFT (UNPUBLISH)"
                 onPress={handleUnpublish}
-                disabled={isUnpublishing}
-                activeOpacity={0.8}
-              >
-                <View style={styles.unpublishBtn}>
-                  {isUnpublishing ? (
-                    <ActivityIndicator color="#006875" size="small" />
-                  ) : (
-                    <Text style={styles.unpublishBtnText}>REVERT TO DRAFT (UNPUBLISH)</Text>
-                  )}
-                </View>
-              </TouchableOpacity>
+                loading={isUnpublishing}
+                variant="danger"
+                style={[styles.publishBtn, { marginTop: pendingCount > 0 ? 12 : 0 }]}
+              />
             )}
-          </BlurView>
+          </GlassCard>
 
           <View style={styles.invoiceList}>
             {invoices.map((invoice, idx) => (
-              <BlurView key={invoice.id || idx} intensity={40} tint="light" style={styles.invoiceCard}>
+              <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
                 <View style={styles.invoiceHeader}>
                   <View>
                     <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
-                    <Text style={{ fontSize: 12, color: '#5b6b6d', marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
+                    <Text style={{ fontSize: 12, color: Theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
                   </View>
                   <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
                 </View>
@@ -321,20 +297,8 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                   ))}
                 </View>
                 
-                <View style={[
-                  styles.statusBadge, 
-                  invoice.status === 'PAID' && { backgroundColor: '#d1fae5' },
-                  invoice.status === 'PUBLISHED' && { backgroundColor: '#e0f2fe' },
-                  invoice.status === 'OVERDUE' && { backgroundColor: '#fee2e2' }
-                ]}>
-                  <Text style={[
-                    styles.statusBadgeText,
-                    invoice.status === 'PAID' && { color: '#059669' },
-                    invoice.status === 'PUBLISHED' && { color: '#0369a1' },
-                    invoice.status === 'OVERDUE' && { color: '#b91c1c' }
-                  ]}>{invoice.status}</Text>
-                </View>
-              </BlurView>
+                <StatusPill status={invoice.status} />
+              </GlassCard>
             ))}
           </View>
         </View>
@@ -343,47 +307,23 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   );
 
   return (
-    <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop ? (
-          <>
-            <DesktopNavBar activeTab="Finance" onBack={() => router.back()} backText="Back to Settings" />
-            <ScrollView contentContainerStyle={styles.desktopScroll}>
-              {renderContent()}
-            </ScrollView>
-          </>
-        ) : (
-          <>
-            <View style={styles.headerContainer}>
-              <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
-              <View style={styles.headerContent}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                  <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
-                </TouchableOpacity>
-                <View style={styles.titleWrapper}>
-                  <Text style={styles.compactTitleText}>Rent Roll</Text>
-                </View>
-                <View style={{ width: 40 }} />
-              </View>
-            </View>
-            <ScrollView contentContainerStyle={[styles.mobileScroll, { paddingTop: 76 }]}>
-              {renderContent()}
-            </ScrollView>
-          </>
-        )}
-      </SafeAreaView>
-    </LinearGradient>
+    <PageShell scrollable edges={isDesktop ? ['top'] : []} contentContainerStyle={isDesktop ? styles.desktopScroll : styles.mobileScroll}>
+      {isDesktop ? (
+        <DesktopNavBar activeTab="Finance" onBack={() => router.back()} backText="Back to Settings" />
+      ) : (
+        <ResponsiveHeader title="Rent Roll" onBack={() => router.back()} />
+      )}
+      {renderContent()}
+    </PageShell>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
-  safeArea: { flex: 1 },
-  desktopScroll: { padding: 40, alignItems: 'center' },
-  mobileScroll: { padding: 20 },
+  desktopScroll: { paddingVertical: 40, alignItems: 'center' },
+  mobileScroll: { paddingVertical: 10 },
   inner: { width: '100%', maxWidth: 800 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  title: { fontSize: 32, fontWeight: '800', color: '#151d1e' },
+  selectorContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  arrowBadge: { padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.45)', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.7)' },
   monthBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -395,150 +335,54 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.8)',
   },
-  monthBadgeText: { fontSize: 14, fontWeight: '700', color: '#006875' },
+  monthBadgeText: { fontSize: 14, fontWeight: '700', color: Theme.Colors.primary },
   
-  card: { padding: 40, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', alignItems: 'center', marginTop: 20 },
-  cardTitle: { fontSize: 22, fontWeight: '800', color: '#151d1e', marginBottom: 12 },
-  cardText: { fontSize: 15, color: '#5b6b6d', textAlign: 'center', marginBottom: 32, maxWidth: 500, lineHeight: 22 },
+  card: { padding: Theme.Spacing.containerPadding, alignItems: 'center', marginTop: 10 },
+  cardTitle: { ...Theme.Typography.headlineMd, color: Theme.Colors.onBackground, marginBottom: 12 },
+  cardText: { ...Theme.Typography.bodyMd, color: Theme.Colors.outline, textAlign: 'center', marginBottom: 32, maxWidth: 500, lineHeight: 22 },
   checklistGrid: { flexDirection: 'row', gap: 24, marginBottom: 24, width: '100%', justifyContent: 'center' },
   checklistItem: { backgroundColor: 'rgba(255,255,255,0.7)', padding: 16, borderRadius: 12, alignItems: 'center', flex: 1, maxWidth: 200 },
-  checklistLabel: { fontSize: 12, fontWeight: '700', color: '#5b6b6d', textTransform: 'uppercase', marginBottom: 8 },
-  checklistValue: { fontSize: 20, fontWeight: '800', color: '#006875' },
+  checklistLabel: { fontSize: 12, fontWeight: '700', color: Theme.Colors.outline, textTransform: 'uppercase', marginBottom: 8 },
+  checklistValue: { fontSize: 20, fontWeight: '800', color: Theme.Colors.primary },
   statusBox: { flexDirection: 'row', backgroundColor: '#e0f2fe', padding: 16, borderRadius: 12, marginBottom: 32, width: '100%', alignItems: 'center', gap: 8 },
   statusText: { fontSize: 14, fontWeight: '700', color: '#0369a1' },
-  generateBtn: { backgroundColor: '#0072ff', paddingVertical: 16, paddingHorizontal: 40, borderRadius: 12, shadowColor: '#0072ff', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
-  generateBtnText: { color: '#fff', fontSize: 14, fontWeight: '800', letterSpacing: 1 },
+  generateBtn: { width: '100%', maxWidth: 300 },
   
   resultsContainer: { width: '100%' },
   summaryCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: Rounded.xl,
-    padding: Spacing.containerPadding,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    overflow: 'hidden',
+    padding: Theme.Spacing.containerPadding,
     marginBottom: 24,
     alignItems: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 30,
-    elevation: 3,
   },
-  summaryLabel: { fontSize: 14, fontWeight: '700', color: '#5b6b6d', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
-  summaryAmount: { fontSize: 36, fontWeight: '800', color: '#059669', marginBottom: 12 },
+  summaryLabel: { fontSize: 14, fontWeight: '700', color: Theme.Colors.outline, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
+  summaryAmount: { fontSize: 36, fontWeight: '800', color: '#00875a', marginBottom: 24 },
   summaryStatusRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 24,
+    width: '100%',
   },
-  summaryStatusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+  miniStat: {
+    flex: 1,
   },
-  statusPublished: {
-    backgroundColor: '#e0f2fe',
-  },
-  statusPending: {
-    backgroundColor: '#fef3c7',
-  },
-  summaryStatusText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  publishBtnContainer: {
-    shadowColor: '#0072ff',
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+  actionGroup: {
+    width: '100%',
+    gap: 12,
   },
   publishBtn: {
-    height: 38,
-    paddingHorizontal: 24,
-    borderRadius: 19,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: '100%',
   },
-  publishBtnText: { color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  reGenerateBtn: {
+    width: '100%',
+  },
   
   invoiceList: { gap: 16 },
-  invoiceCard: { padding: 20, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)' },
+  invoiceCard: { padding: 20 },
   invoiceHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(0,104,117,0.1)' },
-  invoiceUnit: { fontSize: 16, fontWeight: '800', color: '#151d1e' },
-  invoiceTotal: { fontSize: 18, fontWeight: '800', color: '#006875' },
+  invoiceUnit: { fontSize: 16, fontWeight: '800', color: Theme.Colors.onBackground },
+  invoiceTotal: { fontSize: 18, fontWeight: '800', color: Theme.Colors.primary },
   chargesList: { gap: 8, marginBottom: 16 },
   chargeRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  chargeDesc: { fontSize: 14, color: '#5b6b6d', fontWeight: '500' },
-  chargeAmt: { fontSize: 14, color: '#151d1e', fontWeight: '600' },
-  statusBadge: { alignSelf: 'flex-start', backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  statusBadgeText: { fontSize: 11, fontWeight: '800', color: '#d97706' },
-  
-  headerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 56,
-    zIndex: 999,
-    borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
-    overflow: 'hidden',
-  },
-  headerContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-  },
-  backButton: {
-    width: 36, 
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
-    justifyContent: 'center', 
-    alignItems: 'center',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  titleWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  compactTitleText: {
-    fontSize: 18,
-    fontFamily: 'Inter',
-    fontWeight: '800',
-    color: '#0b1c30',
-  },
-  unpublishBtnContainer: {
-    shadowColor: '#006875',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#006875',
-    borderRadius: 19,
-    overflow: 'hidden',
-  },
-  unpublishBtn: {
-    height: 38,
-    paddingHorizontal: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  unpublishBtnText: { color: '#006875', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  chargeDesc: { fontSize: 14, color: Theme.Colors.outline, fontWeight: '500' },
+  chargeAmt: { fontSize: 14, color: Theme.Colors.onBackground, fontWeight: '600' },
 });

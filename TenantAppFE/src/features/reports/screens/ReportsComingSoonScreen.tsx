@@ -1,68 +1,61 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { PageShell } from '@/src/components/common/layout/PageShell';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { ActionButton } from '@/src/components/common/inputs/ActionButton';
+import { Theme } from '@/src/theme/Theme';
 
 export default function ReportsComingSoonScreen() {
   const { isDesktop } = useResponsive();
+  const router = useRouter();
 
   return (
-    <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {isDesktop && (
-          <DesktopNavBar 
-            title="Reports" 
+    <PageShell contentContainerStyle={styles.container}>
+      {isDesktop && (
+        <DesktopNavBar 
+          title="Reports" 
+        />
+      )}
+      <View style={styles.centerContainer}>
+        <GlassCard style={styles.glassCard}>
+          <View style={styles.iconCircle}>
+            <MaterialIcons name="assessment" size={48} color={Theme.Colors.primary} />
+          </View>
+          <Text style={styles.title}>Reports Coming Soon</Text>
+          <Text style={styles.subtitle}>
+            We are working hard to bring you comprehensive reporting and deep analytics features. Stay tuned!
+          </Text>
+          <ActionButton
+            title="Go Back"
+            onPress={() => router.back()}
+            variant="outline"
+            style={styles.backBtn}
           />
-        )}
-        <View style={styles.container}>
-          <BlurView intensity={70} tint="light" style={styles.glassCard}>
-            <View style={styles.iconCircle}>
-              <MaterialIcons name="assessment" size={48} color="#006875" />
-            </View>
-            <Text style={styles.title}>Reports Coming Soon</Text>
-            <Text style={styles.subtitle}>
-              We are working hard to bring you comprehensive reporting and deep analytics features. Stay tuned!
-            </Text>
-          </BlurView>
-        </View>
-      </SafeAreaView>
-    </LinearGradient>
+        </GlassCard>
+      </View>
+    </PageShell>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
   container: {
+    paddingHorizontal: 0,
+  },
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: Theme.Spacing.containerPadding,
   },
   glassCard: {
     width: '100%',
     maxWidth: 500,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: 24,
-    padding: 40,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    boxShadow: '0px 10px 30px rgba(0, 104, 117, 0.05)',
-    overflow: 'hidden',
+    padding: Theme.Spacing.containerPadding * 1.5,
   },
   iconCircle: {
     width: 90,
@@ -71,19 +64,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: Theme.Spacing.stackLg,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#151d1e',
+    ...Theme.Typography.headlineXl,
+    color: Theme.Colors.onBackground,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: Theme.Spacing.stackSm,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#6b7a7d',
+    ...Theme.Typography.bodyMd,
+    color: Theme.Colors.outline,
     lineHeight: 22,
     textAlign: 'center',
+    marginBottom: Theme.Spacing.stackLg,
+  },
+  backBtn: {
+    width: '100%',
+    maxWidth: 200,
   },
 });
+
