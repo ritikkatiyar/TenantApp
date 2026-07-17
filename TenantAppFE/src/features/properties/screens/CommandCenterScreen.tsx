@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Href, useRouter } from 'expo-router';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { logger } from '@/src/utils/logger';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { PropertyResponse } from '@/src/types/property';
@@ -77,21 +78,21 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
   const handleSendBroadcast = async () => {
-    console.log('[Broadcast] handleSendBroadcast called');
-    console.log('[Broadcast] selectedProperty:', selectedPropertyForBroadcast?.id, 'hasToken:', !!accessToken);
+    logger.debug('[Broadcast] handleSendBroadcast called');
+    logger.debug('[Broadcast] selectedProperty:', selectedPropertyForBroadcast?.id, 'hasToken:', !!accessToken);
     
     if (!selectedPropertyForBroadcast || !accessToken) {
-      console.warn('[Broadcast] Early return: no property or token');
+      logger.warn('[Broadcast] Early return: no property or token');
       return;
     }
     
     if (!broadcastTitle.trim() || !broadcastContent.trim()) {
-      console.warn('[Broadcast] Early return: title or content missing');
+      logger.warn('[Broadcast] Early return: title or content missing');
       Alert.alert('Validation', 'Title and Content are required.');
       return;
     }
 
-    console.log('[Broadcast] Validation passed, starting send...');
+    logger.debug('[Broadcast] Validation passed, starting send...');
     setSendingBroadcast(true);
     try {
       const payload = {
@@ -103,12 +104,12 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
         targetType: broadcastTargetType,
         targetValue: broadcastTargetType !== 'PROPERTY' ? broadcastTargetValue : undefined,
       };
-      console.log('[Broadcast] Payload:', payload);
-      console.log('[Broadcast] Calling createAnnouncement...');
+      logger.debug('[Broadcast] Payload:', payload);
+      logger.debug('[Broadcast] Calling createAnnouncement...');
       
       await createAnnouncement(accessToken, payload);
 
-      console.log('[Broadcast] Success!');
+      logger.info('[Broadcast] Success!');
       Alert.alert('Success', 'Announcement broadcasted successfully!');
       
       setBroadcastTitle('');
@@ -119,7 +120,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
       setBroadcastTargetValue('');
       setSelectedPropertyForBroadcast(null);
     } catch (err: any) {
-      console.error('[Broadcast] Error:', err);
+      logger.error('[Broadcast] Error:', err);
       Alert.alert('Error', err.message || 'Failed to send broadcast');
     } finally {
       setSendingBroadcast(false);
@@ -299,7 +300,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                   activeOpacity={0.8}
                   style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperDesktop]}
                   onPress={() => {
-                    console.log('[Broadcast] Desktop broadcast button pressed for property:', item.id, item.name);
+                    logger.debug('[Broadcast] Desktop broadcast button pressed for property:', item.id, item.name);
                     setSelectedPropertyForBroadcast(item);
                   }}
                 >
@@ -413,7 +414,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
           activeOpacity={0.8}
           style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperMobile]}
           onPress={() => {
-            console.log('[Broadcast] Mobile broadcast button pressed for property:', item.id, item.name);
+            logger.debug('[Broadcast] Mobile broadcast button pressed for property:', item.id, item.name);
             setSelectedPropertyForBroadcast(item);
           }}
         >
@@ -612,7 +613,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
         visible={!!selectedPropertyForBroadcast}
         animationType="slide"
         onRequestClose={() => {
-          console.log('[Broadcast] Modal close requested');
+          logger.debug('[Broadcast] Modal close requested');
           setSelectedPropertyForBroadcast(null);
         }}
       >

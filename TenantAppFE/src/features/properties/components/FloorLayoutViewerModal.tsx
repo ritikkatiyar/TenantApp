@@ -30,6 +30,7 @@ import { createLease } from '@/src/features/tenant/api/lease.api';
 import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
 import { apiRequest } from '@/src/api/client';
 import { Theme } from '@/src/theme/Theme';
+import { logger } from '@/src/utils/logger';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
@@ -196,7 +197,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       });
       setBlocks(mappedBlocks);
     } catch (error) {
-      console.log('Error fetching layout:', error);
+      logger.warn('Error fetching layout:', error);
     } finally {
       setLoading(false);
     }

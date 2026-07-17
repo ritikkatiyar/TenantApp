@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur'; // Ensure BlurView is available for web and mobile
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { logger } from '@/src/utils/logger';
 import { Gesture, GestureDetector, GestureHandlerRootView, ScrollView, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -234,7 +235,7 @@ export default function FloorEditorScreen({
       });
       setNextUnitIndex(maxIndex + 1);
     } catch (error: any) {
-      console.log('No existing layout or error:', error.message);
+      logger.warn('No existing layout or error:', error.message);
     } finally {
       setLoading(false);
     }

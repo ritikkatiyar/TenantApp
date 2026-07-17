@@ -3,6 +3,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { getMyProperties } from '@/src/features/properties/api/propertyList.api';
 import { deletePropertyApi, togglePropertyActiveApi } from '@/src/features/properties/api/property.api';
 import type { PropertyResponse } from '@/src/types/property';
+import { logger } from '@/src/utils/logger';
 
 export function useProperties() {
   const { user, accessToken } = useAuth();
@@ -20,7 +21,7 @@ export function useProperties() {
       setProperties(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      console.error('Error fetching properties:', err);
+      logger.error('Error fetching properties:', err);
     } finally {
       setIsLoading(false);
     }

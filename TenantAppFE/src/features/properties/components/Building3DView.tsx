@@ -3,6 +3,7 @@ import { View, StyleSheet, ActivityIndicator, Text, Animated, PanResponder, Touc
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { getAllFloorsLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
+import { logger } from '@/src/utils/logger';
 
 interface Building3DViewProps {
   propertyId: string;
@@ -274,7 +275,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
               }
             }
             
-            console.log('[Building3DView] clickX:', clickX, 'clickY:', clickY, 'floorNumbers:', state.floorNumbers);
+            logger.debug('[Building3DView] clickX:', clickX, 'clickY:', clickY, 'floorNumbers:', state.floorNumbers);
             
             const buildingWidth = state.buildingWidth;
             const isWithinX = Math.abs(clickX - (buildingWidth + 40) / 2) < (buildingWidth / 2) + 20;
@@ -288,17 +289,17 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                 const floorCenterY = state.containerHeight / 2 + yOffset;
                 
                 const dist = Math.abs(clickY - floorCenterY);
-                console.log(`[Building3DView] Floor ${fNum}: center=${floorCenterY}, dist=${dist}`);
+                logger.debug(`[Building3DView] Floor ${fNum}: center=${floorCenterY}, dist=${dist}`);
                 if (dist < minDistance) {
                   minDistance = dist;
                   closestFloor = fNum;
                 }
               });
               
-              console.log(`[Building3DView] Closest: Floor ${closestFloor}, minDistance: ${minDistance}, limit: ${state.dynamicFloorHeight * 1.5}`);
+              logger.debug(`[Building3DView] Closest: Floor ${closestFloor}, minDistance: ${minDistance}, limit: ${state.dynamicFloorHeight * 1.5}`);
               
               if (minDistance < state.dynamicFloorHeight * 1.5) {
-                console.log(`[Building3DView] Triggering click for floor: ${closestFloor}`);
+                logger.debug(`[Building3DView] Triggering click for floor: ${closestFloor}`);
                 state.onFloorClick(closestFloor);
               }
             }
@@ -331,7 +332,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
           setUnits(layout);
         }
       } catch (error) {
-        console.error('Failed to fetch layouts for 3D building:', error);
+        logger.error('Failed to fetch layouts for 3D building:', error);
       } finally {
         if (isMounted) setLoading(false);
       }

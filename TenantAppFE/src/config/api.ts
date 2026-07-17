@@ -13,8 +13,10 @@ function getDefaultBaseUrl(port: string): string {
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || getDefaultBaseUrl(DEFAULT_PORT);
 export const AI_API_BASE_URL = process.env.EXPO_PUBLIC_AI_API_URL || getDefaultBaseUrl(DEFAULT_AI_PORT);
 
-console.log('[API] Using Base URL:', API_BASE_URL);
-console.log('[API] Using AI Base URL:', AI_API_BASE_URL);
+import { logger } from '../utils/logger';
+
+logger.info('[API] Using Base URL:', API_BASE_URL);
+logger.info('[API] Using AI Base URL:', AI_API_BASE_URL);
 
 export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;

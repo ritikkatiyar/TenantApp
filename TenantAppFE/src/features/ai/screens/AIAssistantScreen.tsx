@@ -19,6 +19,7 @@ import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { logger } from '@/src/utils/logger';
 
 type AIAssistantScreenProps = {
   token: string;
@@ -93,7 +94,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                   reject(new Error(jobStatus.errorMessage || 'AI execution failed.'));
                 }
               } catch (pollErr) {
-                console.warn('AI polling transient error:', pollErr);
+                logger.warn('AI polling transient error:', pollErr);
               }
             }, 1500);
           });

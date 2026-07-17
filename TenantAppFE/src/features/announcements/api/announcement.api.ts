@@ -1,4 +1,5 @@
 import { apiRequest } from '@/src/api/client';
+import { logger } from '@/src/utils/logger';
 
 export interface Announcement {
   id: string;
@@ -46,18 +47,18 @@ export function createAnnouncement(
     metadata?: string;
   }
 ): Promise<Announcement> {
-  console.log('[Announcement API] createAnnouncement called with:', body);
+  logger.debug('[Announcement API] createAnnouncement called with:', body);
   return apiRequest<Announcement>('/api/v1/announcements', {
     method: 'POST',
     token,
     body: JSON.stringify(body),
   })
     .then((result) => {
-      console.log('[Announcement API] Success:', result);
+      logger.info('[Announcement API] Success:', result);
       return result;
     })
     .catch((error) => {
-      console.error('[Announcement API] Error:', error);
+      logger.error('[Announcement API] Error:', error);
       throw error;
     });
 }
