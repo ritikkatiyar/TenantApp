@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, Modal, 
-  ScrollView, Platform, Pressable 
+  ScrollView, Platform, Pressable, Dimensions 
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -20,104 +20,127 @@ interface GlassDropdownProps {
   icon?: keyof typeof MaterialIcons.glyphMap;
 }
 
-export default function GlassDropdown({ options, value, onChange, placeholder = 'Select an option', icon }: GlassDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownCoords, setDropdownCoords] = useState({ top: 0, left: 0, width: 0 });
-  const triggerRef = useRef<any>(null);
-  const { isDesktop } = useResponsive();
-
-  const selectedOption = options.find(o => o.value === value);
-
-  const handleOpen = () => {
-    triggerRef.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-      setDropdownCoords({
-        top: pageY + height + 8, 
-        left: pageX,
-        width: width,
-      });
-      setIsOpen(true);
-    });
-  };
-
-  const handleSelect = (val: string) => {
-    onChange(val);
-    setIsOpen(false);
-  };
-
-  return (
-    <>
-      <TouchableOpacity 
-        ref={triggerRef}
-        activeOpacity={0.7} 
-        style={styles.dropdownTrigger}
-        onPress={handleOpen}
-      >
-        <View style={styles.triggerContent}>
-          {icon && <MaterialIcons name={icon} size={20} color="#006875" style={{ marginRight: 8 }} />}
-          <Text style={[styles.triggerText, !selectedOption && styles.placeholderText]}>
-            {selectedOption ? selectedOption.label : placeholder}
-          </Text>
-        </View>
-        <MaterialIcons name={isOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={24} color="#5b6b6d" />
-      </TouchableOpacity>
-
-      <Modal
-        visible={isOpen}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsOpen(false)}
-      >
-        <Pressable 
-          style={styles.modalOverlay} 
-          onPress={() => setIsOpen(false)}
-        >
-          <View 
-            style={[
-              styles.dropdownMenu, 
-              { 
-                top: dropdownCoords.top, 
-                left: dropdownCoords.left, 
-                width: dropdownCoords.width 
-              }
-            ]}
-          >
-            <Pressable>
-              <BlurView intensity={90} tint="light" style={styles.blurContainer}>
-                <ScrollView 
-                  style={styles.scrollView}
-                  contentContainerStyle={styles.scrollContent}
-                  showsVerticalScrollIndicator={true}
-                >
-                  {options.map((option, index) => {
-                    const isSelected = option.value === value;
-                    return (
-                      <TouchableOpacity
-                        key={option.value}
-                        style={[
-                          styles.optionItem,
-                          index !== options.length - 1 && styles.optionBorder
-                        ]}
-                        activeOpacity={0.7}
-                        onPress={() => handleSelect(option.value)}
-                      >
-                        <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
-                          {option.label}
-                        </Text>
-                        {isSelected && (
-                          <MaterialIcons name="check" size={20} color="#0072ff" />
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </BlurView>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
-    </>
-  );
+export interface GlassDropdownRef {
+  open: () => void;
+  close: () => void;
 }
+
+const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
+  ({ options, value, onChange, placeholder = 'Select an option', icon }, ref) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [dropdownCoords, setDropdownCoords] = useState({ top: 0, left: 0, width: 0 });
+    const triggerRef = useRef<any>(null);
+    const { isDesktop } = useResponsive();
+
+    const selectedOption = options.find(o => o.value === value);
+
+    const handleOpen = () => {
+      triggerRef.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+        const windowHeight = Dimensions.get('window').height;
+        const dropdownHeight = 250; // Max height threshold for options menu
+        const spaceBelow = windowHeight - (pageY + height);
+        
+        let topPosition = pageY + height + 8;
+        // If there isn't enough space below, and enough space exists above, flip the direction
+        if (spaceBelow < dropdownHeight && pageY > dropdownHeight) {
+          topPosition = pageY - dropdownHeight - 8;
+        }
+
+        setDropdownCoords({
+          top: topPosition, 
+          left: pageX,
+          width: width,
+        });
+        setIsOpen(true);
+      });
+    };
+
+    useImperativeHandle(ref, () => ({
+      open: handleOpen,
+      close: () => setIsOpen(false),
+    }));
+
+    const handleSelect = (val: string) => {
+      onChange(val);
+      setIsOpen(false);
+    };
+
+    return (
+      <>
+        <TouchableOpacity 
+          ref={triggerRef}
+          activeOpacity={0.7} 
+          style={styles.dropdownTrigger}
+          onPress={handleOpen}
+        >
+          <View style={styles.triggerContent}>
+            {icon && <MaterialIcons name={icon} size={20} color="#006875" style={{ marginRight: 8 }} />}
+            <Text 
+              numberOfLines={1} 
+              style={[styles.triggerText, !selectedOption && styles.placeholderText, { flex: 1 }]}
+            >
+              {selectedOption ? selectedOption.label : placeholder}
+            </Text>
+          </View>
+          <MaterialIcons name={isOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={24} color="#5b6b6d" />
+        </TouchableOpacity>
+
+        <Modal
+          visible={isOpen}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setIsOpen(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setIsOpen(false)}>
+            <View 
+              style={[
+                styles.dropdownMenu, 
+                { 
+                  top: dropdownCoords.top, 
+                  left: dropdownCoords.left, 
+                  width: dropdownCoords.width 
+                }
+              ]}
+            >
+              <Pressable style={{ width: '100%' }}>
+                <BlurView tint="light" intensity={60} style={styles.blurContainer}>
+                  <ScrollView 
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={Platform.OS === 'web'}
+                  >
+                    {options.map((option, idx) => {
+                      const isSelected = option.value === value;
+                      return (
+                        <TouchableOpacity
+                          key={option.value}
+                          style={[
+                            styles.optionItem,
+                            idx < options.length - 1 && styles.optionBorder
+                          ]}
+                          onPress={() => handleSelect(option.value)}
+                        >
+                          <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                            {option.label}
+                          </Text>
+                          {isSelected && (
+                            <MaterialIcons name="check" size={20} color="#0072ff" />
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </BlurView>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+      </>
+    );
+  }
+);
+
+export default GlassDropdown;
 
 const styles = StyleSheet.create({
   dropdownTrigger: {
@@ -130,7 +153,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    minWidth: 200,
     width: '100%',
   },
   triggerContent: {

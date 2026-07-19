@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -117,26 +119,76 @@ public class UnitServiceImpl implements UnitService {
     @Override
     public List<UnitTbl> generateBatchUnits(UUID propertyId, PropertyDTOs.BatchUnitRequest request) {
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
+        if (request.totalFloors() > 1 || (property.getTotalFloors() != null && request.totalFloors() == property.getTotalFloors() && request.startingFloorNumber() == 1)) {
+            boolean hasExistingUnits = !unitCrudService.findByPropertyId(propertyId).isEmpty();
+            if (hasExistingUnits) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot configure units globally because this property already has configured floors.");
+            }
+        }
         List<UnitTbl> generatedUnits = new ArrayList<>();
+        int totalGridWidth = 10;
+        int totalGridHeight = 15;
+        int n = request.unitsPerFloor();
+
+        // Calculate rows (R) to keep units as square-ish as possible.
+        // Aspect ratio of grid is 10:15 (2:3).
+        // Ideal R is roughly sqrt(1.5 * n).
+        int r = (int) Math.round(Math.sqrt(1.5 * n));
+        
+        // Constrain R so that columns per row don't exceed gridWidth (10) 
+        // and rows don't exceed gridHeight (15).
+        r = Math.max((int) Math.ceil(n / 10.0), r);
+        r = Math.min(totalGridHeight, Math.max(1, r));
+
+        // Basic height & remainder height per row
+        int basicHeight = totalGridHeight / r;
+        int remainderHeight = totalGridHeight % r;
+
+        // Distribute units across rows
+        int basicUnitsPerRow = n / r;
+        int remainderUnits = n % r;
+
         for (int currentFloor = request.startingFloorNumber();
              currentFloor < request.startingFloorNumber() + request.totalFloors();
              currentFloor++) {
-            for (int unitIndex = 1; unitIndex <= request.unitsPerFloor(); unitIndex++) {
-                String prefix = request.prefix() != null ? request.prefix() : "";
-                String unitNumber = prefix + currentFloor + String.format("%02d", unitIndex);
-                UnitTbl unit = UnitTbl.builder()
-                        .property(property)
-                        .unitNumber(unitNumber)
-                        .floor(currentFloor)
-                        .gridY(currentFloor)
-                        .gridX(unitIndex)
-                        .gridWidth(1)
-                        .gridHeight(1)
-                        .type(request.unitType())
-                        .capacity(request.capacity())
-                        .facing(FacingDirection.UNKNOWN)
-                        .build();
-                generatedUnits.add(unit);
+
+            int currentY = 0;
+            int unitGlobalIndex = 1;
+
+            for (int rowIdx = 0; rowIdx < r; rowIdx++) {
+                int rowHeight = basicHeight + (rowIdx < remainderHeight ? 1 : 0);
+                int unitsInThisRow = basicUnitsPerRow + (rowIdx < remainderUnits ? 1 : 0);
+
+                int basicWidth = totalGridWidth / unitsInThisRow;
+                int remainderWidth = totalGridWidth % unitsInThisRow;
+
+                int currentX = 0;
+
+                for (int colIdx = 0; colIdx < unitsInThisRow; colIdx++) {
+                    int unitWidth = Math.max(1, basicWidth + (colIdx < remainderWidth ? 1 : 0));
+
+                    String prefix = request.prefix() != null ? request.prefix() : "";
+                    String unitNumber = prefix + currentFloor + String.format("%02d", unitGlobalIndex);
+
+                    UnitTbl unit = UnitTbl.builder()
+                            .property(property)
+                            .unitNumber(unitNumber)
+                            .floor(currentFloor)
+                            .gridX(currentX)
+                            .gridY(currentY)
+                            .gridWidth(unitWidth)
+                            .gridHeight(rowHeight)
+                            .type(request.unitType())
+                            .capacity(request.capacity())
+                            .facing(FacingDirection.UNKNOWN)
+                            .build();
+
+                    generatedUnits.add(unit);
+                    currentX += unitWidth;
+                    unitGlobalIndex++;
+                }
+
+                currentY += rowHeight;
             }
         }
         return saveAll(generatedUnits);

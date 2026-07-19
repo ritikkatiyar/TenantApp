@@ -16,7 +16,7 @@ export default function CreatePropertyRoute() {
       userToken={accessToken}
       ownerId={user?.id || ''}
       onBack={() => router.back()}
-      onSaveAndConfigure={() => router.replace('/command-center')}
+      onSaveAndConfigure={(propertyId: string) => router.replace(`/properties/${propertyId}/floors`)}
     />
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -19,6 +19,7 @@ import { Theme } from '@/src/theme/Theme';
 import { login } from '@/src/features/auth/api/auth.api';
 
 export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }) {
+  const passwordInputRef = useRef(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -98,14 +99,25 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }) {
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="mail-outline" size={20} color={Theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { paddingRight: 44 }]}
                     placeholder="super@admin.system"
                     placeholderTextColor={Theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    returnKeyType="next"
+                    onSubmitEditing={() => passwordInputRef.current?.focus()}
+                    blurOnSubmit={false}
                   />
+                  {email ? (
+                    <TouchableOpacity 
+                      style={styles.clearIcon}
+                      onPress={() => setEmail('')}
+                    >
+                      <MaterialIcons name="cancel" size={20} color={Theme.Colors.outlineVariant} />
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
               </View>
 
@@ -115,12 +127,15 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }) {
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="lock-outline" size={20} color={Theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    ref={passwordInputRef}
+                    style={[styles.input, { paddingRight: 44 }]}
                     placeholder="••••••••"
                     placeholderTextColor={Theme.Colors.outlineVariant}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
+                    returnKeyType="done"
+                    onSubmitEditing={handleLogin}
                   />
                   <TouchableOpacity 
                     style={styles.passwordToggleIcon}
@@ -270,6 +285,12 @@ const styles = StyleSheet.create({
     right: Theme.Spacing.stackMd,
     zIndex: 1,
     padding: 4, // easier to tap
+  },
+  clearIcon: {
+    position: 'absolute',
+    right: Theme.Spacing.stackMd,
+    zIndex: 1,
+    padding: 4,
   },
   input: {
     width: '100%',

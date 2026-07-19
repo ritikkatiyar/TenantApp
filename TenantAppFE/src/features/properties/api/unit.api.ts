@@ -55,3 +55,21 @@ export function getAllFloorsLayout(propertyId: string, token: string): Promise<U
     token,
   });
 }
+
+export interface BatchUnitRequest {
+  totalFloors: number;
+  unitsPerFloor: number;
+  startingFloorNumber: number;
+  prefix: string;
+  capacity: number;
+  unitType: string;
+}
+
+export function generateBatchUnits(propertyId: string, request: BatchUnitRequest, token: string): Promise<UnitResponse[]> {
+  const path = `/api/v1/property/properties/${propertyId}/units/batch`;
+  return apiRequest<UnitResponse[]>(path, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(request),
+  });
+}

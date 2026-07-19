@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback , useRef } from 'react';
+import React, { useState, useCallback , useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -9,7 +9,8 @@ import {
   RefreshControl,
   Alert,
   Animated,
-  useWindowDimensions
+  useWindowDimensions,
+  TextInput
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,9 +21,18 @@ import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { getProperty } from '@/src/features/properties/api/property.api';
-import { getFloorSummaries, FloorSummaryResponse } from '@/src/features/properties/api/unit.api';
+import { getFloorSummaries, FloorSummaryResponse, generateBatchUnits } from '@/src/features/properties/api/unit.api';
 import { useFocusEffect, useRouter, Href } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+
+const UNIT_TYPE_OPTIONS = [
+  { label: '1 BHK', value: 'ONE_BHK' },
+  { label: '2 BHK', value: 'TWO_BHK' },
+  { label: 'Studio Apartment', value: 'STUDIO' },
+  { label: 'Single Unit', value: 'SINGLE_UNIT' },
+  { label: 'Shared Unit', value: 'SHARED_UNIT' },
+];
 
 interface FloorListOverviewScreenProps {
   propertyId: string;
@@ -47,6 +57,9 @@ export default function FloorListOverviewScreen({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [totalFloorsFromProperty, setTotalFloorsFromProperty] = useState<number | undefined>(undefined);
+  const [quickCounts, setQuickCounts] = useState<Record<number, string>>({});
+  const [quickUnitTypes, setQuickUnitTypes] = useState<Record<number, string>>({});
+  const [generatingFloor, setGeneratingFloor] = useState<number | null>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const headerOpacity = scrollY.interpolate({
@@ -92,6 +105,54 @@ export default function FloorListOverviewScreen({
       console.error(error);
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const handleQuickCountChange = (floorNum: number, value: string) => {
+    setQuickCounts(prev => ({
+      ...prev,
+      [floorNum]: value
+    }));
+  };
+
+  const handleQuickUnitTypeChange = (floorNum: number, value: string) => {
+    setQuickUnitTypes(prev => ({
+      ...prev,
+      [floorNum]: value
+    }));
+  };
+
+  const handleQuickGenerate = async (floorNum: number) => {
+    const countStr = quickCounts[floorNum];
+    if (!countStr || parseInt(countStr, 10) < 1) {
+      Alert.alert('Validation', 'Please enter a valid number of units.');
+      return;
+    }
+
+    const count = parseInt(countStr, 10);
+    const unitType = quickUnitTypes[floorNum] || 'SINGLE_UNIT';
+    setGeneratingFloor(floorNum);
+
+    try {
+      await generateBatchUnits(propertyId, {
+        totalFloors: 1,
+        unitsPerFloor: count,
+        startingFloorNumber: floorNum,
+        prefix: '',
+        capacity: 1,
+        unitType: unitType
+      }, userToken);
+
+      Alert.alert('Success', `Successfully created ${count} units on Floor ${floorNum}`);
+      setQuickCounts(prev => ({
+        ...prev,
+        [floorNum]: ''
+      }));
+      onRefresh();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to generate units.');
+    } finally {
+      setGeneratingFloor(null);
     }
   };
 
@@ -157,11 +218,66 @@ export default function FloorListOverviewScreen({
             end={{ x: 1, y: 0 }}
             style={styles.configureButton}
           >
-            <MaterialIcons name="add" size={20} color="#fff" />
-            <Text style={styles.configureButtonText}>Configure</Text>
+            <MaterialIcons name="gesture" size={20} color="#fff" />
+            <Text style={styles.configureButtonText}>Draw Layout (Visual Editor)</Text>
           </LinearGradient>
         )}
       </TouchableOpacity>
+
+      {!floor.configured && (
+        <View style={styles.quickCreateSection}>
+          <Text style={styles.quickCreateTitle}>QUICK CREATE UNITS</Text>
+          <View style={styles.quickCreateRow}>
+            <View style={{ width: '30%' }}>
+              <TextInput
+                style={[
+                  styles.quickCreateInput,
+                  {
+                    width: '100%',
+                    height: 48,
+                    flex: 0,
+                    textAlign: 'center',
+                    borderRadius: 12,
+                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                    paddingHorizontal: 0,
+                  }
+                ]}
+                placeholder="#"
+                placeholderTextColor="#bac9cc"
+                keyboardType="numeric"
+                maxLength={2}
+                value={quickCounts[floor.floorNumber] || ''}
+                onChangeText={(val) => handleQuickCountChange(floor.floorNumber, val.replace(/[^0-9]/g, ''))}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <GlassDropdown
+                options={UNIT_TYPE_OPTIONS}
+                value={quickUnitTypes[floor.floorNumber] || 'SINGLE_UNIT'}
+                onChange={(val) => handleQuickUnitTypeChange(floor.floorNumber, val)}
+                placeholder="Unit Type"
+                icon="home"
+              />
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[styles.quickGenerateButton, { marginTop: 12 }]}
+            onPress={() => handleQuickGenerate(floor.floorNumber)}
+            disabled={generatingFloor === floor.floorNumber}
+            activeOpacity={0.8}
+          >
+            {generatingFloor === floor.floorNumber ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Text style={styles.quickGenerateButtonText}>Generate</Text>
+                <MaterialIcons name="flash-on" size={16} color="#fff" />
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </BlurView>
   );
 
@@ -662,5 +778,77 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     maxWidth: '48%',
     minWidth: 320,
+  },
+  quickCreateSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  quickCreateTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#006875',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  quickCreateRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+    width: '100%',
+  },
+  stepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 12,
+    overflow: 'hidden',
+    height: 48,
+    width: 120,
+  },
+  stepperButton: {
+    width: 36,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  stepperInput: {
+    width: 48,
+    height: '100%',
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#151d1e',
+    backgroundColor: 'transparent',
+  },
+  quickCreateInput: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#151d1e',
+  },
+  quickGenerateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#006875',
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 8,
+  },
+  quickGenerateButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

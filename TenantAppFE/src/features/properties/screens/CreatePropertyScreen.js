@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -20,7 +20,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Theme } from '@/src/theme/Theme';
 import { createProperty } from '@/src/features/properties/api/property.api';
+import { generateBatchUnits } from '@/src/features/properties/api/unit.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+
+const UNIT_TYPE_OPTIONS = [
+  { label: '1 BHK', value: 'ONE_BHK' },
+  { label: '2 BHK', value: 'TWO_BHK' },
+  { label: 'Studio Apartment', value: 'STUDIO' },
+  { label: 'Single Unit', value: 'SINGLE_UNIT' },
+  { label: 'Shared Unit', value: 'SHARED_UNIT' },
+];
 
 export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userToken, ownerId }) {
   const { width } = useWindowDimensions();
@@ -33,11 +43,23 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   const [city, setCity] = useState('');
   const [landmark, setLandmark] = useState('');
   const [totalFloors, setTotalFloors] = useState('');
+  const [globalUnitsPerFloor, setGlobalUnitsPerFloor] = useState('');
+  const [globalUnitType, setGlobalUnitType] = useState('SINGLE_UNIT');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
   const [showErrors, setShowErrors] = useState(false);
+  const unitTypeDropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
+      const timer = setTimeout(() => {
+        unitTypeDropdownRef.current?.open();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [globalUnitsPerFloor]);
 
   const shakeName = useRef(new Animated.Value(0)).current;
   const shakeAddress = useRef(new Animated.Value(0)).current;
@@ -107,6 +129,17 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
           totalFloors: parseInt(totalFloors, 10)
         },
       });
+
+      if (globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
+        await generateBatchUnits(property.id, {
+          totalFloors: parseInt(totalFloors, 10),
+          unitsPerFloor: parseInt(globalUnitsPerFloor, 10),
+          startingFloorNumber: 1,
+          prefix: '',
+          capacity: 1,
+          unitType: globalUnitType
+        }, userToken);
+      }
 
       if (onSaveAndConfigure) {
         onSaveAndConfigure(property.id, parseInt(totalFloors, 10));
@@ -220,26 +253,57 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
           </View>
         </View>
 
-        {/* Total Floors Input */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Total Floors</Text>
-          <Animated.View style={[
-            styles.inputWrapper,
-            { transform: [{ translateX: shakeFloors }] }
-          ]}>
-            <TextInput
-              style={[
-                styles.inputWithIconRight,
-                showErrors && (!totalFloors || parseInt(totalFloors, 10) < 1) ? { borderColor: '#e53935' } : null
-              ]}
-              placeholder="0"
-              placeholderTextColor="#bac9cc"
-              value={totalFloors}
-              onChangeText={(val) => { setTotalFloors(val); setShowErrors(false); setErrorMsg(''); }}
-              keyboardType="numeric"
-            />
-            <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIconRight} />
-          </Animated.View>
+        <View style={[styles.row, !isDesktop && { flexDirection: 'column', gap: 0 }]}>
+          {/* Total Floors Input */}
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>Total Floors</Text>
+            <Animated.View style={[
+              styles.inputWrapper,
+              { transform: [{ translateX: shakeFloors }] }
+            ]}>
+              <TextInput
+                style={[
+                  styles.inputWithIconRight,
+                  showErrors && (!totalFloors || parseInt(totalFloors, 10) < 1) ? { borderColor: '#e53935' } : null
+                ]}
+                placeholder="0"
+                placeholderTextColor="#bac9cc"
+                value={totalFloors}
+                onChangeText={(val) => { setTotalFloors(val.replace(/[^0-9]/g, '')); setShowErrors(false); setErrorMsg(''); }}
+                keyboardType="numeric"
+              />
+              <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIconRight} />
+            </Animated.View>
+          </View>
+
+          {/* Global Units Per Floor Input */}
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>Global Units/Floor</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.inputWithIconRight}
+                placeholder="Optional"
+                placeholderTextColor="#bac9cc"
+                value={globalUnitsPerFloor}
+                onChangeText={(val) => setGlobalUnitsPerFloor(val.replace(/[^0-9]/g, ''))}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0 ? (
+            <View style={[styles.inputGroup, { flex: 1.2 }]}>
+              <Text style={styles.label}>Global Unit Type</Text>
+              <GlassDropdown
+                ref={unitTypeDropdownRef}
+                options={UNIT_TYPE_OPTIONS}
+                value={globalUnitType}
+                onChange={setGlobalUnitType}
+                placeholder="Select Unit Type"
+                icon="home"
+              />
+            </View>
+          ) : null}
         </View>
 
         {/* Action Button - mobile only */}
@@ -531,6 +595,11 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   formContainer: {
+    width: '100%',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 16,
     width: '100%',
   },
   inputGroup: {

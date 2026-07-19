@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -17,7 +17,23 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
 import { signup } from '@/src/features/auth/api/auth.api';
 
+const ValidationIndicator = ({ label, isValid }) => (
+  <View style={styles.requirementRow}>
+    <MaterialIcons 
+      name={isValid ? "check-circle" : "radio-button-unchecked"} 
+      size={14} 
+      color={isValid ? Theme.Colors.primary : Theme.Colors.outlineVariant} 
+    />
+    <Text style={[styles.requirementText, isValid && styles.requirementTextValid]}>
+      {label}
+    </Text>
+  </View>
+);
+
 export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) {
+  const emailInputRef = useRef(null);
+  const phoneInputRef = useRef(null);
+  const passwordInputRef = useRef(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -30,6 +46,13 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
     if (!fullName || !email || !password) {
       setErrorMsg('Please fill in all required fields (Name, Email, Password).');
       return;
+    }
+
+    if (phoneNumber && phoneNumber.trim() !== '') {
+      if (phoneNumber.length !== 10) {
+        setErrorMsg('Mobile number must be exactly 10 digits.');
+        return;
+      }
     }
     
     setLoading(true);
@@ -95,13 +118,24 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="person-outline" size={20} color={Theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { paddingRight: 44 }]}
                     placeholder="Ada Tenant"
                     placeholderTextColor={Theme.Colors.outlineVariant}
                     value={fullName}
                     onChangeText={setFullName}
                     autoCapitalize="words"
+                    returnKeyType="next"
+                    onSubmitEditing={() => emailInputRef.current?.focus()}
+                    blurOnSubmit={false}
                   />
+                  {fullName ? (
+                    <TouchableOpacity 
+                      style={styles.clearIcon}
+                      onPress={() => setFullName('')}
+                    >
+                      <MaterialIcons name="cancel" size={20} color={Theme.Colors.outlineVariant} />
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
               </View>
 
@@ -111,14 +145,26 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="mail-outline" size={20} color={Theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    ref={emailInputRef}
+                    style={[styles.input, { paddingRight: 44 }]}
                     placeholder="super@admin.system"
                     placeholderTextColor={Theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
+                    returnKeyType="next"
+                    onSubmitEditing={() => phoneInputRef.current?.focus()}
+                    blurOnSubmit={false}
                   />
+                  {email ? (
+                    <TouchableOpacity 
+                      style={styles.clearIcon}
+                      onPress={() => setEmail('')}
+                    >
+                      <MaterialIcons name="cancel" size={20} color={Theme.Colors.outlineVariant} />
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
               </View>
 
@@ -128,13 +174,26 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="phone" size={20} color={Theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
-                    placeholder="+1 234 567 8900"
+                    ref={phoneInputRef}
+                    style={[styles.input, { paddingRight: 44 }]}
+                    placeholder="1234567890"
                     placeholderTextColor={Theme.Colors.outlineVariant}
                     value={phoneNumber}
-                    onChangeText={setPhoneNumber}
-                    keyboardType="phone-pad"
+                    onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ''))}
+                    keyboardType="number-pad"
+                    maxLength={10}
+                    returnKeyType="next"
+                    onSubmitEditing={() => passwordInputRef.current?.focus()}
+                    blurOnSubmit={false}
                   />
+                  {phoneNumber ? (
+                    <TouchableOpacity 
+                      style={styles.clearIcon}
+                      onPress={() => setPhoneNumber('')}
+                    >
+                      <MaterialIcons name="cancel" size={20} color={Theme.Colors.outlineVariant} />
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
               </View>
 
@@ -144,12 +203,15 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="lock-outline" size={20} color={Theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
-                    style={styles.input}
+                    ref={passwordInputRef}
+                    style={[styles.input, { paddingRight: 44 }]}
                     placeholder="••••••••"
                     placeholderTextColor={Theme.Colors.outlineVariant}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSignup}
                   />
                   <TouchableOpacity 
                     style={styles.passwordToggleIcon}
@@ -162,6 +224,16 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
                     />
                   </TouchableOpacity>
                 </View>
+
+                {/* Real-time Password Strength Requirements */}
+                {password.length > 0 && (
+                  <View style={styles.requirementsContainer}>
+                    <ValidationIndicator label="At least 8 characters" isValid={password.length >= 8} />
+                    <ValidationIndicator label="Uppercase & Lowercase letters" isValid={/[a-z]/.test(password) && /[A-Z]/.test(password)} />
+                    <ValidationIndicator label="At least one number" isValid={/\d/.test(password)} />
+                    <ValidationIndicator label="At least one special character" isValid={/[@$!%*?&#.\-_^+=~()[\]{}|\\:;"'<>,/]/.test(password)} />
+                  </View>
+                )}
               </View>
 
               {/* Action Button */}
@@ -294,6 +366,36 @@ const styles = StyleSheet.create({
     right: Theme.Spacing.stackMd,
     zIndex: 1,
     padding: 4,
+  },
+  clearIcon: {
+    position: 'absolute',
+    right: Theme.Spacing.stackMd,
+    zIndex: 1,
+    padding: 4,
+  },
+  requirementsContainer: {
+    marginTop: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: Theme.Rounded.default,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    width: '100%',
+  },
+  requirementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  requirementText: {
+    ...Theme.Typography.bodyMd,
+    color: Theme.Colors.onSurfaceVariant,
+    fontSize: 12,
+    marginLeft: 8,
+  },
+  requirementTextValid: {
+    color: Theme.Colors.primary,
+    fontWeight: '500',
   },
   input: {
     width: '100%',

@@ -21,9 +21,19 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { getProperty, updateProperty } from '@/src/features/properties/api/property.api';
+import { generateBatchUnits, getFloorSummaries } from '@/src/features/properties/api/unit.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useRouter, Href } from 'expo-router';
 import Building3DView from '@/src/features/properties/components/Building3DView';
+import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+
+const UNIT_TYPE_OPTIONS = [
+  { label: '1 BHK', value: 'ONE_BHK' },
+  { label: '2 BHK', value: 'TWO_BHK' },
+  { label: 'Studio Apartment', value: 'STUDIO' },
+  { label: 'Single Unit', value: 'SINGLE_UNIT' },
+  { label: 'Shared Unit', value: 'SHARED_UNIT' },
+];
 
 interface EditPropertyScreenProps {
   propertyId: string;
@@ -50,10 +60,28 @@ export default function EditPropertyScreen({
   const [city, setCity] = useState('');
   const [landmark, setLandmark] = useState('');
   const [totalFloors, setTotalFloors] = useState('');
+  const [globalUnitsPerFloor, setGlobalUnitsPerFloor] = useState('');
+  const [globalUnitType, setGlobalUnitType] = useState('SINGLE_UNIT');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resetRotationTrigger, setResetRotationTrigger] = useState(0);
+  const [hasConfiguredFloor, setHasConfiguredFloor] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const unitTypeDropdownRefDesktop = useRef<any>(null);
+  const unitTypeDropdownRefMobile = useRef<any>(null);
+
+  useEffect(() => {
+    if (globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
+      const timer = setTimeout(() => {
+        if (width >= 900) {
+          unitTypeDropdownRefDesktop.current?.open();
+        } else {
+          unitTypeDropdownRefMobile.current?.open();
+        }
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [globalUnitsPerFloor, width]);
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [40, 90],
@@ -79,6 +107,10 @@ export default function EditPropertyScreen({
       setCity(data.city);
       setLandmark(data.landmark || '');
       setTotalFloors(data.totalFloors?.toString() || '');
+      
+      const floorSummaries = await getFloorSummaries(propertyId, userToken);
+      const isAnyConfigured = floorSummaries.some(f => f.configured);
+      setHasConfiguredFloor(isAnyConfigured);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to fetch property details');
       onBack();
@@ -111,6 +143,18 @@ export default function EditPropertyScreen({
           totalFloors: parseInt(totalFloors, 10) 
         }
       });
+
+      if (!hasConfiguredFloor && globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
+        await generateBatchUnits(propertyId, {
+          totalFloors: parseInt(totalFloors, 10),
+          unitsPerFloor: parseInt(globalUnitsPerFloor, 10),
+          startingFloorNumber: 1,
+          prefix: '',
+          capacity: 1,
+          unitType: globalUnitType
+        }, userToken);
+      }
+
       Alert.alert('Success', 'Property updated successfully');
       onSave();
     } catch (error: any) {
@@ -164,18 +208,49 @@ export default function EditPropertyScreen({
         />
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>TOTAL FLOORS</Text>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.inputWithIcon}
-            placeholder="0"
-            value={totalFloors}
-            onChangeText={setTotalFloors}
-            keyboardType="numeric"
-          />
-          <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
+      <View style={[styles.row, !isDesktop && { flexDirection: 'column', gap: 0 }]}>
+        <View style={[styles.inputGroup, { flex: 1 }]}>
+          <Text style={styles.label}>TOTAL FLOORS</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.inputWithIcon}
+              placeholder="0"
+              value={totalFloors}
+              onChangeText={(val) => setTotalFloors(val.replace(/[^0-9]/g, ''))}
+              keyboardType="numeric"
+            />
+            <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
+          </View>
         </View>
+
+        <View style={[styles.inputGroup, { flex: 1 }]}>
+          <Text style={styles.label}>GLOBAL UNITS/FLOOR</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={[styles.inputWithIcon, hasConfiguredFloor && { opacity: 0.5, backgroundColor: 'rgba(230, 230, 230, 0.3)' }]}
+              placeholder={hasConfiguredFloor ? "Disabled (Units exist)" : "Optional"}
+              value={globalUnitsPerFloor}
+              onChangeText={(val) => setGlobalUnitsPerFloor(val.replace(/[^0-9]/g, ''))}
+              keyboardType="numeric"
+              editable={!hasConfiguredFloor}
+            />
+            <MaterialIcons name="grid-on" size={20} color="#bac9cc" style={styles.inputIcon} />
+          </View>
+        </View>
+
+        {globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0 && (
+          <View style={[styles.inputGroup, { flex: 1.2 }]}>
+            <Text style={styles.label}>GLOBAL UNIT TYPE</Text>
+            <GlassDropdown
+              ref={unitTypeDropdownRefDesktop}
+              options={UNIT_TYPE_OPTIONS}
+              value={globalUnitType}
+              onChange={setGlobalUnitType}
+              placeholder="Select Unit Type"
+              icon="home"
+            />
+          </View>
+        )}
       </View>
 
       {showSave && (
@@ -437,18 +512,49 @@ export default function EditPropertyScreen({
                 />
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>TOTAL FLOORS</Text>
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.inputWithIcon}
-                    placeholder="0"
-                    value={totalFloors}
-                    onChangeText={setTotalFloors}
-                    keyboardType="numeric"
-                  />
-                  <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
+              <View style={[styles.row, !isDesktop && { flexDirection: 'column', gap: 0 }]}>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.label}>TOTAL FLOORS</Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.inputWithIcon}
+                      placeholder="0"
+                      value={totalFloors}
+                      onChangeText={(val) => setTotalFloors(val.replace(/[^0-9]/g, ''))}
+                      keyboardType="numeric"
+                    />
+                    <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
+                  </View>
                 </View>
+
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.label}>GLOBAL UNITS/FLOOR</Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={[styles.inputWithIcon, hasConfiguredFloor && { opacity: 0.5, backgroundColor: 'rgba(230, 230, 230, 0.3)' }]}
+                      placeholder={hasConfiguredFloor ? "Disabled (Units exist)" : "Optional"}
+                      value={globalUnitsPerFloor}
+                      onChangeText={(val) => setGlobalUnitsPerFloor(val.replace(/[^0-9]/g, ''))}
+                      keyboardType="numeric"
+                      editable={!hasConfiguredFloor}
+                    />
+                    <MaterialIcons name="grid-on" size={20} color="#bac9cc" style={styles.inputIcon} />
+                  </View>
+                </View>
+
+                {globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0 && (
+                  <View style={[styles.inputGroup, { flex: 1.2 }]}>
+                    <Text style={styles.label}>GLOBAL UNIT TYPE</Text>
+                    <GlassDropdown
+                      ref={unitTypeDropdownRefMobile}
+                      options={UNIT_TYPE_OPTIONS}
+                      value={globalUnitType}
+                      onChange={setGlobalUnitType}
+                      placeholder="Select Unit Type"
+                      icon="home"
+                    />
+                  </View>
+                )}
               </View>
 
               <TouchableOpacity 
@@ -596,6 +702,11 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 24,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 16,
+    width: '100%',
   },
   label: {
     fontSize: 14,
