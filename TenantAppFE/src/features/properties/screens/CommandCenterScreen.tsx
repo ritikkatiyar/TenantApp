@@ -5,14 +5,9 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   ScrollView,
-  Platform,
   ActivityIndicator,
-  FlatList,
-  Alert,
   Animated,
-  useWindowDimensions,
-  Modal,
-  TextInput
+  useWindowDimensions
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,15 +17,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Href, useRouter } from 'expo-router';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-import { logger } from '@/src/utils/logger';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { PropertyResponse } from '@/src/types/property';
-import Building3DView from '@/src/features/properties/components/Building3DView';
-import { createAnnouncement } from '@/src/features/announcements/api/announcement.api';
 import { RoleToggle } from '@/src/components/RoleToggle';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import FloorLayoutViewerModal from '@/src/features/properties/components/FloorLayoutViewerModal';
+
+// Phase 4 modular hook & component imports
+import { useCommandCenter } from '@/src/features/properties/hooks/useCommandCenter';
+import { PropertyCard } from '@/src/features/properties/components/PropertyCard';
+import { BroadcastComposerModal } from '@/src/features/properties/components/BroadcastComposerModal';
+import { CommandCenterEmptyState } from '@/src/features/properties/components/CommandCenterEmptyState';
 
 const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
 
@@ -48,84 +46,37 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const { showToast } = useToast();
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  // 3D Model Reset Triggers State
-  const [resetTriggers, setResetTriggers] = useState<Record<string, number>>({});
-
-  const triggerReset = (propertyId: string) => {
-    setResetTriggers(prev => ({
-      ...prev,
-      [propertyId]: (prev[propertyId] || 0) + 1
-    }));
-  };
-
-  // Floor Layout Viewer State
-  const [layoutViewerPropertyId, setLayoutViewerPropertyId] = useState<string | null>(null);
-  const [layoutViewerFloorNumber, setLayoutViewerFloorNumber] = useState<number | null>(null);
-
-  const handleFloorClick = (propertyId: string, floorNum: number) => {
-    setLayoutViewerPropertyId(propertyId);
-    setLayoutViewerFloorNumber(floorNum);
-  };
-
-  // Notice Board Composer State
-  const [selectedPropertyForBroadcast, setSelectedPropertyForBroadcast] = useState<PropertyResponse | null>(null);
-  const [broadcastTitle, setBroadcastTitle] = useState('');
-  const [broadcastContent, setBroadcastContent] = useState('');
-  const [broadcastCategory, setBroadcastCategory] = useState<'GENERAL' | 'MAINTENANCE' | 'EMERGENCY' | 'BILLING' | 'EVENT'>('GENERAL');
-  const [broadcastSeverity, setBroadcastSeverity] = useState<'INFO' | 'WARNING' | 'CRITICAL'>('INFO');
-  const [broadcastTargetType, setBroadcastTargetType] = useState<'PROPERTY' | 'FLOOR' | 'UNIT'>('PROPERTY');
-  const [broadcastTargetValue, setBroadcastTargetValue] = useState('');
-  const [sendingBroadcast, setSendingBroadcast] = useState(false);
-
-  const handleSendBroadcast = async () => {
-    logger.debug('[Broadcast] handleSendBroadcast called');
-    logger.debug('[Broadcast] selectedProperty:', selectedPropertyForBroadcast?.id, 'hasToken:', !!accessToken);
-    
-    if (!selectedPropertyForBroadcast || !accessToken) {
-      logger.warn('[Broadcast] Early return: no property or token');
-      return;
-    }
-    
-    if (!broadcastTitle.trim() || !broadcastContent.trim()) {
-      logger.warn('[Broadcast] Early return: title or content missing');
-      Alert.alert('Validation', 'Title and Content are required.');
-      return;
-    }
-
-    logger.debug('[Broadcast] Validation passed, starting send...');
-    setSendingBroadcast(true);
-    try {
-      const payload = {
-        propertyId: selectedPropertyForBroadcast.id,
-        title: broadcastTitle,
-        content: broadcastContent,
-        category: broadcastCategory,
-        severity: broadcastSeverity,
-        targetType: broadcastTargetType,
-        targetValue: broadcastTargetType !== 'PROPERTY' ? broadcastTargetValue : undefined,
-      };
-      logger.debug('[Broadcast] Payload:', payload);
-      logger.debug('[Broadcast] Calling createAnnouncement...');
-      
-      await createAnnouncement(accessToken, payload);
-
-      logger.info('[Broadcast] Success!');
-      Alert.alert('Success', 'Announcement broadcasted successfully!');
-      
-      setBroadcastTitle('');
-      setBroadcastContent('');
-      setBroadcastCategory('GENERAL');
-      setBroadcastSeverity('INFO');
-      setBroadcastTargetType('PROPERTY');
-      setBroadcastTargetValue('');
-      setSelectedPropertyForBroadcast(null);
-    } catch (err: any) {
-      logger.error('[Broadcast] Error:', err);
-      Alert.alert('Error', err.message || 'Failed to send broadcast');
-    } finally {
-      setSendingBroadcast(false);
-    }
-  };
+  const {
+    resetTriggers,
+    triggerReset,
+    layoutViewerPropertyId,
+    layoutViewerFloorNumber,
+    setLayoutViewerPropertyId,
+    setLayoutViewerFloorNumber,
+    handleFloorClick,
+    selectedPropertyForBroadcast,
+    setSelectedPropertyForBroadcast,
+    broadcastTitle,
+    setBroadcastTitle,
+    broadcastContent,
+    setBroadcastContent,
+    broadcastCategory,
+    setBroadcastCategory,
+    broadcastSeverity,
+    setBroadcastSeverity,
+    broadcastTargetType,
+    setBroadcastTargetType,
+    broadcastTargetValue,
+    setBroadcastTargetValue,
+    sendingBroadcast,
+    handleSendBroadcast,
+    handleDeleteProperty,
+  } = useCommandCenter({
+    accessToken,
+    showToast,
+    deleteProperty,
+    togglePropertyActive
+  });
 
 
   const headerOpacity = scrollY.interpolate({
@@ -163,269 +114,20 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     </TouchableOpacity>
   );
 
-  const handleDeleteProperty = (propertyId: string, propertyName: string) => {
-    Alert.alert(
-      "Delete Property",
-      `Are you sure you want to delete ${propertyName}? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteProperty(propertyId);
-              showToast(`Property "${propertyName}" deleted successfully.`, "success");
-            } catch (error) {
-              showToast((error as Error).message, "error");
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  const renderPropertyCard = (item: PropertyResponse) => {
-    if (isDesktop) {
-      return (
-        <BlurView intensity={60} tint="light" style={[styles.propertyCard, styles.propertyCardDesktop]}>
-          <View style={styles.desktopCardRow}>
-            {/* Left Side: 3D Building Preview */}
-            <View style={styles.desktopCardLeft}>
-              <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerDesktop, item.isActive === false && { opacity: 0.65 }]}>
-                <View style={{ transform: [{ translateY: -45 }], width: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                  {accessToken && (
-                    <Building3DView 
-                      propertyId={item.id} 
-                      token={accessToken} 
-                      onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
-                      resetRotationTrigger={resetTriggers[item.id] || 0}
-                      maxContainerHeight={380}
-                    />
-                  )}
-                </View>
-                
-                <TouchableOpacity 
-                  style={styles.resetButtonOverlay}
-                  onPress={() => triggerReset(item.id)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  activeOpacity={0.7}
-                >
-                  <MaterialIcons name="3d-rotation" size={18} color="#006875" />
-                </TouchableOpacity>
-                
-                <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]}>
-                  <Text style={[styles.statusPillText, item.isActive === false && { color: '#ef4444' }]}>
-                    {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
-                  </Text>
-                </View>
-
-                <TouchableOpacity 
-                  style={styles.deleteButtonOverlay}
-                  onPress={() => handleDeleteProperty(item.id, item.name)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Right Side: Info, Metrics, Actions */}
-            <View style={styles.desktopCardRight}>
-              {/* Header: Name and Address */}
-              <View style={styles.propertyInfo}>
-                <Text style={styles.propertyName}>{item.name}</Text>
-                <View style={styles.addressContainer}>
-                  <MaterialIcons name="location-on" size={14} color="#6b7a7d" />
-                  <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
-                </View>
-              </View>
-
-              {/* Metrics stacked vertically: Status then Floors */}
-              <View style={styles.desktopMetricsContainer}>
-                <BlurView intensity={65} tint="light" style={styles.desktopMetricRow}>
-                  <Text style={styles.propertyMetricLabel}>STATUS</Text>
-                  <Text style={[styles.desktopMetricValue, styles.propertyMetricAccent]}>READY</Text>
-                </BlurView>
-                <BlurView intensity={65} tint="light" style={styles.desktopMetricRow}>
-                  <Text style={styles.propertyMetricLabel}>FLOORS</Text>
-                  <Text style={styles.desktopMetricValue}>{item.totalFloors ?? '-'}</Text>
-                </BlurView>
-                <BlurView intensity={65} tint="light" style={styles.desktopMetricRow}>
-                  <Text style={styles.propertyMetricLabel}>PROPERTY LIFE CYCLE</Text>
-                  <TouchableOpacity
-                    onPress={async () => {
-                      try {
-                        const nextState = item.isActive === false;
-                        await togglePropertyActive(item.id, nextState);
-                        showToast(nextState ? `Property "${item.name}" activated!` : `Property "${item.name}" deactivated!`, 'success');
-                      } catch (error: any) {
-                        showToast(error.message || 'Failed to toggle status', 'error');
-                      }
-                    }}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.desktopMetricValue, { color: item.isActive === false ? '#ef4444' : '#006875', fontWeight: '800' }]}>
-                      {item.isActive === false ? 'DEACTIVATED' : 'ACTIVE'}
-                    </Text>
-                    <MaterialIcons 
-                      name={item.isActive === false ? "toggle-off" : "toggle-on"} 
-                      size={32} 
-                      color={item.isActive === false ? "#8b9ea1" : "#006875"} 
-                    />
-                  </TouchableOpacity>
-                </BlurView>
-              </View>
-
-              {/* Actions: Manage & Broadcast stacked vertically */}
-              <View style={styles.desktopCardActions}>
-                <TouchableOpacity 
-                  activeOpacity={0.8} 
-                  style={[styles.manageButtonWrapper, styles.manageButtonWrapperDesktop]}
-                  onPress={() => router.push(`/properties/${item.id}`)}
-                >
-                  <LinearGradient
-                    colors={['#00d4ff', '#0072ff']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.manageButton}
-                  >
-                    <Text style={styles.manageButtonText}>MANAGE</Text>
-                    <MaterialIcons name="arrow-forward" size={16} color="#fff" />
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperDesktop]}
-                  onPress={() => {
-                    logger.debug('[Broadcast] Desktop broadcast button pressed for property:', item.id, item.name);
-                    setSelectedPropertyForBroadcast(item);
-                  }}
-                >
-                  <View style={styles.broadcastButton}>
-                    <MaterialIcons name="campaign" size={16} color="#006875" />
-                    <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </BlurView>
-      );
-    }
-
-    return (
-      <BlurView intensity={60} tint="light" style={[styles.propertyCard, item.isActive === false && { opacity: 0.85 }]}>
-        <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile, item.isActive === false && { opacity: 0.65 }]}>
-          {accessToken && (
-            <Building3DView 
-              propertyId={item.id} 
-              token={accessToken} 
-              onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
-              resetRotationTrigger={resetTriggers[item.id] || 0}
-              maxContainerHeight={280}
-            />
-          )}
-          
-          <TouchableOpacity 
-            style={styles.resetButtonOverlay}
-            onPress={() => triggerReset(item.id)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="3d-rotation" size={18} color="#006875" />
-          </TouchableOpacity>
-          
-          <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]}>
-            <Text style={[styles.statusPillText, item.isActive === false && { color: '#ef4444' }]}>
-              {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
-            </Text>
-          </View>
-
-          <TouchableOpacity 
-            style={[styles.deleteButtonOverlay, { right: 60 }]}
-            onPress={async () => {
-              try {
-                const nextState = item.isActive === false;
-                await togglePropertyActive(item.id, nextState);
-                showToast(nextState ? `Property "${item.name}" activated!` : `Property "${item.name}" deactivated!`, 'success');
-              } catch (error: any) {
-                showToast(error.message || 'Failed to toggle status', 'error');
-              }
-            }}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MaterialIcons 
-              name={item.isActive === false ? "toggle-off" : "toggle-on"} 
-              size={30} 
-              color={item.isActive === false ? "#8b9ea1" : "#006875"} 
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.deleteButtonOverlay}
-            onPress={() => handleDeleteProperty(item.id, item.name)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={[styles.propertyHeaderRow, styles.propertyHeaderRowMobile]}>
-          <View style={styles.propertyInfo}>
-            <Text style={styles.propertyName}>{item.name}</Text>
-            <View style={styles.addressContainer}>
-              <MaterialIcons name="location-on" size={14} color="#6b7a7d" />
-              <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.propertyMetrics, styles.propertyMetricsMobile]}>
-          <BlurView intensity={65} tint="light" style={styles.propertyMetric}>
-            <Text style={styles.propertyMetricLabel}>FLOORS</Text>
-            <Text style={styles.propertyMetricValue}>{item.totalFloors ?? '-'}</Text>
-          </BlurView>
-          <BlurView intensity={65} tint="light" style={styles.propertyMetric}>
-            <Text style={styles.propertyMetricLabel}>STATUS</Text>
-            <Text style={[styles.propertyMetricValue, styles.propertyMetricAccent]}>READY</Text>
-          </BlurView>
-        </View>
-        
-        <TouchableOpacity 
-          activeOpacity={0.8} 
-          style={[styles.manageButtonWrapper, styles.manageButtonWrapperMobile]}
-          onPress={() => router.push(`/properties/${item.id}`)}
-        >
-          <LinearGradient
-            colors={['#00d4ff', '#0072ff']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.manageButton}
-          >
-            <Text style={styles.manageButtonText}>Manage Property</Text>
-            <MaterialIcons name="arrow-forward" size={16} color="#fff" />
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperMobile]}
-          onPress={() => {
-            logger.debug('[Broadcast] Mobile broadcast button pressed for property:', item.id, item.name);
-            setSelectedPropertyForBroadcast(item);
-          }}
-        >
-          <View style={styles.broadcastButton}>
-            <MaterialIcons name="campaign" size={16} color="#006875" />
-            <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
-          </View>
-        </TouchableOpacity>
-      </BlurView>
-    );
-  };
+  const renderPropertyCard = (item: PropertyResponse) => (
+    <PropertyCard
+      item={item}
+      isDesktop={isDesktop}
+      accessToken={accessToken}
+      resetRotationTrigger={resetTriggers[item.id] || 0}
+      handleFloorClick={handleFloorClick}
+      triggerReset={triggerReset}
+      handleDeleteProperty={handleDeleteProperty}
+      togglePropertyActive={togglePropertyActive}
+      showToast={showToast}
+      setSelectedPropertyForBroadcast={setSelectedPropertyForBroadcast}
+    />
+  );
 
   const renderPropertyItem = ({ item }: { item: PropertyResponse }) => renderPropertyCard(item);
 
@@ -477,36 +179,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   );
 
   const ListEmptyComponent = () => (
-    <BlurView intensity={40} tint="light" style={styles.emptyCard}>
-      <View style={styles.emptyIconCircle}>
-        <MaterialIcons name="domain-disabled" size={36} color="#6b7a7d" />
-      </View>
-      <Text style={styles.emptyTitle}>No properties found.</Text>
-      <Text style={styles.emptySubtitle}>
-        Start building your portfolio by adding your first property to the command center.
-      </Text>
-      
-      <TouchableOpacity 
-        style={styles.createPropertyButton} 
-        onPress={onNavigateToCreateProperty}
-        activeOpacity={0.8}
-      >
-        <LinearGradient
-          colors={['#00d4ff', '#0072ff']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.createPropertyGradient}
-        >
-          <MaterialIcons name="add" size={24} color="#fff" />
-          <Text style={styles.createPropertyText}>CREATE PROPERTY</Text>
-        </LinearGradient>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.learnMoreContainer}>
-        <MaterialIcons name="help-outline" size={16} color="#006875" />
-        <Text style={styles.learnMoreText}>LEARN ABOUT PROPERTY MANAGEMENT</Text>
-      </TouchableOpacity>
-    </BlurView>
+    <CommandCenterEmptyState onNavigateToCreateProperty={onNavigateToCreateProperty} />
   );
 
   const ListFooter = () => (
@@ -608,139 +281,25 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
       )}
 
       {/* Broadcast Notice Composer Modal */}
-      <Modal
-        transparent
+      <BroadcastComposerModal
         visible={!!selectedPropertyForBroadcast}
-        animationType="slide"
-        onRequestClose={() => {
-          logger.debug('[Broadcast] Modal close requested');
-          setSelectedPropertyForBroadcast(null);
-        }}
-      >
-        <View style={styles.composerOverlay}>
-          <View style={styles.composerSheet}>
-            {/* Header */}
-            <View style={styles.composerHeader}>
-              <View>
-                <Text style={styles.composerTitle}>Broadcast Notice</Text>
-                <Text style={styles.composerSubtitle}>{selectedPropertyForBroadcast?.name}</Text>
-              </View>
-              <TouchableOpacity onPress={() => setSelectedPropertyForBroadcast(null)}>
-                <MaterialIcons name="close" size={24} color="#163235" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.composerScroll}>
-              {/* Title */}
-              <Text style={styles.composerLabel}>TITLE</Text>
-              <TextInput
-                style={styles.composerInput}
-                placeholder="e.g. Water supply shut-off notice"
-                value={broadcastTitle}
-                onChangeText={setBroadcastTitle}
-                maxLength={255}
-              />
-
-              {/* Content */}
-              <Text style={styles.composerLabel}>CONTENT</Text>
-              <TextInput
-                style={[styles.composerInput, styles.composerTextarea]}
-                placeholder="Describe the notice in detail..."
-                value={broadcastContent}
-                onChangeText={setBroadcastContent}
-                multiline
-                numberOfLines={5}
-                textAlignVertical="top"
-              />
-
-              {/* Category row */}
-              <Text style={styles.composerLabel}>CATEGORY</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-                {(['GENERAL', 'MAINTENANCE', 'EMERGENCY', 'BILLING', 'EVENT'] as const).map(cat => (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[styles.chip, broadcastCategory === cat && styles.chipActive]}
-                    onPress={() => setBroadcastCategory(cat)}
-                  >
-                    <Text style={[styles.chipText, broadcastCategory === cat && styles.chipTextActive]}>{cat}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Severity row */}
-              <Text style={styles.composerLabel}>SEVERITY</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-                {([
-                  { val: 'INFO' as const, color: '#006875' },
-                  { val: 'WARNING' as const, color: '#e28743' },
-                  { val: 'CRITICAL' as const, color: '#ba1a1a' },
-                ]).map(({ val, color }) => (
-                  <TouchableOpacity
-                    key={val}
-                    style={[styles.chip, broadcastSeverity === val && { ...styles.chipActive, backgroundColor: color, borderColor: color }]}
-                    onPress={() => setBroadcastSeverity(val)}
-                  >
-                    <Text style={[styles.chipText, broadcastSeverity === val && styles.chipTextActive]}>{val}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Target scope row */}
-              <Text style={styles.composerLabel}>TARGET SCOPE</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-                {(['PROPERTY', 'FLOOR', 'UNIT'] as const).map(t => (
-                  <TouchableOpacity
-                    key={t}
-                    style={[styles.chip, broadcastTargetType === t && styles.chipActive]}
-                    onPress={() => setBroadcastTargetType(t)}
-                  >
-                    <Text style={[styles.chipText, broadcastTargetType === t && styles.chipTextActive]}>{t}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {broadcastTargetType !== 'PROPERTY' && (
-                <>
-                  <Text style={styles.composerLabel}>
-                    {broadcastTargetType === 'FLOOR' ? 'FLOOR NUMBER' : 'UNIT ID'}
-                  </Text>
-                  <TextInput
-                    style={styles.composerInput}
-                    placeholder={broadcastTargetType === 'FLOOR' ? 'e.g. 3' : 'e.g. uuid of unit'}
-                    value={broadcastTargetValue}
-                    onChangeText={setBroadcastTargetValue}
-                    keyboardType={broadcastTargetType === 'FLOOR' ? 'numeric' : 'default'}
-                  />
-                </>
-              )}
-            </ScrollView>
-
-            {/* Send button */}
-            <TouchableOpacity
-              style={styles.composerSendBtn}
-              onPress={handleSendBroadcast}
-              disabled={sendingBroadcast}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={broadcastSeverity === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : ['#006875', '#00bcd4']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.composerSendGradient}
-              >
-                {sendingBroadcast ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <>
-                    <MaterialIcons name="send" size={18} color="#fff" />
-                    <Text style={styles.composerSendText}>BROADCAST NOW</Text>
-                  </>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        selectedPropertyForBroadcast={selectedPropertyForBroadcast}
+        broadcastTitle={broadcastTitle}
+        setBroadcastTitle={setBroadcastTitle}
+        broadcastContent={broadcastContent}
+        setBroadcastContent={setBroadcastContent}
+        broadcastCategory={broadcastCategory}
+        setBroadcastCategory={setBroadcastCategory}
+        broadcastSeverity={broadcastSeverity}
+        setBroadcastSeverity={setBroadcastSeverity}
+        broadcastTargetType={broadcastTargetType}
+        setBroadcastTargetType={setBroadcastTargetType}
+        broadcastTargetValue={broadcastTargetValue}
+        setBroadcastTargetValue={setBroadcastTargetValue}
+        sendingBroadcast={sendingBroadcast}
+        handleSendBroadcast={handleSendBroadcast}
+        onClose={() => setSelectedPropertyForBroadcast(null)}
+      />
 
       {/* Floor Layout Viewer Modal */}
       {layoutViewerPropertyId !== null && layoutViewerFloorNumber !== null && (

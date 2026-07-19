@@ -1,0 +1,174 @@
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+
+interface MeterReadingSummaryProps {
+  totalUnits: number;
+  readingsEntered: number;
+  selectedConfigName: string | undefined;
+  unitType: string | undefined;
+  baseRate: number;
+  billingMonthName: string;
+  billingYear: number;
+  totalConsumption: number;
+  totalEstimatedCost: number;
+}
+
+export function MeterReadingSummary({
+  totalUnits,
+  readingsEntered,
+  selectedConfigName,
+  unitType,
+  baseRate,
+  billingMonthName,
+  billingYear,
+  totalConsumption,
+  totalEstimatedCost,
+}: MeterReadingSummaryProps) {
+  return (
+    <BlurView intensity={80} tint="light" style={styles.summaryCard}>
+      <Text style={styles.summaryCardTitle}>WORKSHEET SUMMARY</Text>
+      
+      <View style={styles.summaryMetricsGrid}>
+        <View style={styles.summaryMetricItem}>
+          <Text style={styles.summaryMetricLabel}>TOTAL UNITS</Text>
+          <Text style={styles.summaryMetricValue}>{totalUnits}</Text>
+        </View>
+        <View style={styles.summaryMetricItem}>
+          <Text style={styles.summaryMetricLabel}>READINGS ENTERED</Text>
+          <Text style={styles.summaryMetricValue}>{readingsEntered} / {totalUnits}</Text>
+        </View>
+      </View>
+
+      <View style={styles.previewDivider} />
+
+      <View style={styles.summaryRow}>
+        <Text style={styles.summaryLabel}>Utility Charge</Text>
+        <Text style={styles.summaryValue}>{selectedConfigName || 'N/A'}</Text>
+      </View>
+      
+      <View style={styles.summaryRow}>
+        <Text style={styles.summaryLabel}>Rate</Text>
+        <Text style={styles.summaryValue}>₹{baseRate} / {unitType || 'unit'}</Text>
+      </View>
+      
+      <View style={styles.summaryRow}>
+        <Text style={styles.summaryLabel}>Billing Period</Text>
+        <Text style={styles.summaryValue}>{billingMonthName} {billingYear}</Text>
+      </View>
+
+      <View style={styles.previewDivider} />
+
+      <View style={styles.summaryRow}>
+        <Text style={styles.summaryLabel}>Total Consumption</Text>
+        <Text style={[styles.summaryValue, { color: '#006875', fontSize: 16 }]}>
+          {totalConsumption.toFixed(2)} {unitType || 'Units'}
+        </Text>
+      </View>
+
+      <View style={styles.summaryRow}>
+        <Text style={styles.summaryLabel}>Estimated Billing</Text>
+        <Text style={[styles.summaryValue, { color: '#2e7d32', fontSize: 20, fontWeight: '800' }]}>
+          ₹{totalEstimatedCost.toFixed(2)}
+        </Text>
+      </View>
+
+      {readingsEntered < totalUnits && (
+        <View style={styles.warningAlertBox}>
+          <MaterialIcons name="info-outline" size={18} color="#765a00" />
+          <Text style={styles.warningAlertText}>
+            {totalUnits - readingsEntered} unit(s) are missing current month readings.
+          </Text>
+        </View>
+      )}
+    </BlurView>
+  );
+}
+
+const styles = StyleSheet.create({
+  summaryCard: {
+    padding: 24,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.75)',
+    overflow: 'hidden',
+  },
+  summaryCardTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#006875',
+    letterSpacing: 1.5,
+    marginBottom: 20,
+    fontFamily: 'Inter',
+  },
+  summaryMetricsGrid: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  summaryMetricItem: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  summaryMetricLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#6b7a7d',
+    letterSpacing: 0.5,
+    fontFamily: 'Inter',
+  },
+  summaryMetricValue: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#163235',
+    marginTop: 6,
+    fontFamily: 'Inter',
+  },
+  previewDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    marginVertical: 18,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  summaryLabel: {
+    fontSize: 13,
+    color: '#6b7a7d',
+    fontWeight: '500',
+    fontFamily: 'Inter',
+  },
+  summaryValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#163235',
+    fontFamily: 'Inter',
+  },
+  warningAlertBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(239, 108, 0, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 108, 0, 0.15)',
+    padding: 14,
+    borderRadius: 14,
+    marginTop: 20,
+  },
+  warningAlertText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#765a00',
+    lineHeight: 16,
+    fontFamily: 'Inter',
+  },
+});

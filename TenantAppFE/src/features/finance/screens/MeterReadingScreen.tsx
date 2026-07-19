@@ -1,18 +1,21 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { 
   View, Text, StyleSheet, Animated, TouchableOpacity,
-  ScrollView, TextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator
+  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
-import { getActiveChargesForProperty, ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
-import { getWorksheet, batchSaveReadings, MeterReadingResponse } from '@/src/features/finance/api/meterReading.api';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useResponsive } from '@/hooks/useResponsive';
+
+// Phase 4 modular hook & component imports
+import { useMeterReading } from '@/src/features/finance/hooks/useMeterReading';
+import { MeterReadingSummary } from '@/src/features/finance/components/MeterReadingSummary';
+import { MeterReadingFloorCard } from '@/src/features/finance/components/MeterReadingFloorCard';
 
 export default function MeterReadingScreen({ token }: { token: string | null }) {
   const router = useRouter();
@@ -20,152 +23,35 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   const { isDesktop } = useResponsive();
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  const [configs, setConfigs] = useState<ChargeConfigResponse[]>([]);
-  const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null);
-  
-  // Date context
-  const currentDate = new Date();
-  const [month, setMonth] = useState(currentDate.getMonth() + 1);
-  const [year, setYear] = useState(currentDate.getFullYear());
-
-  const [worksheet, setWorksheet] = useState<MeterReadingResponse[]>([]);
-  
-  // Local inputs state: unitId -> string value
-  const [inputs, setInputs] = useState<Record<string, string>>({});
-  const [prevInputs, setPrevInputs] = useState<Record<string, string>>({});
-  const inputRefs = useRef<Record<string, TextInput | null>>({});
-
-  const [expandedFloors, setExpandedFloors] = useState<Record<number, boolean>>({});
-  const [floorPages, setFloorPages] = useState<Record<number, number>>({});
-  const [floorPage, setFloorPage] = useState(1);
-
-  const toggleFloor = (floor: number) => {
-    setExpandedFloors(prev => ({ ...prev, [floor]: !prev[floor] }));
-  };
-
-  useEffect(() => {
-    if (token && propertyId) {
-      loadConfigs();
-    }
-  }, [token, propertyId]);
-
-  useEffect(() => {
-    if (selectedConfigId && token && propertyId) {
-      loadWorksheet();
-      setFloorPages({});
-      setFloorPage(1);
-    }
-  }, [selectedConfigId, month, year, token, propertyId]);
-
-  useEffect(() => {
-    if (worksheet.length > 0) {
-      // Keep all closed by default!
-      setExpandedFloors({});
-      setFloorPages({});
-      setFloorPage(1);
-    }
-  }, [worksheet]);
-
-  const loadConfigs = async () => {
-    try {
-      setIsLoading(true);
-      const allCharges = await getActiveChargesForProperty(propertyId as string, token as string);
-      const meteredCharges = allCharges.filter(c => c.calculationStrategy === 'METERED');
-      setConfigs(meteredCharges);
-      if (meteredCharges.length > 0) {
-        setSelectedConfigId(meteredCharges[0].id);
-      }
-    } catch (e: any) {
-      Alert.alert("Error", "Failed to load utility configurations.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadWorksheet = async () => {
-    if (!selectedConfigId || !token || !propertyId) return;
-    try {
-      setIsLoading(true);
-      const data = await getWorksheet(propertyId as string, selectedConfigId, month, year, token);
-      setWorksheet(data);
-      
-      const newInputs: Record<string, string> = {};
-      const newPrevInputs: Record<string, string> = {};
-      data.forEach(item => {
-        newInputs[item.unitId] = item.currentReading ? item.currentReading.toString() : '';
-        newPrevInputs[item.unitId] = item.previousReading != null ? item.previousReading.toString() : '0';
-      });
-      setInputs(newInputs);
-      setPrevInputs(newPrevInputs);
-    } catch (e: any) {
-      Alert.alert("Error", "Failed to load worksheet.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!selectedConfigId || !token || !propertyId) return;
-    
-    let hasErrors = false;
-    
-    worksheet.forEach(row => {
-      const valStr = inputs[row.unitId];
-      const prevValStr = prevInputs[row.unitId];
-      const prevVal = prevValStr ? parseFloat(prevValStr) : 0;
-      if (valStr) {
-        const val = parseFloat(valStr);
-        if (val < prevVal) {
-          hasErrors = true;
-        }
-      }
-    });
-
-    if (hasErrors) {
-      Alert.alert("Validation Error", "One or more entries are less than the previous reading. Please correct them before saving.");
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      const readingsToSave = worksheet.map(row => ({
-        unitId: row.unitId,
-        previousReading: prevInputs[row.unitId] ? parseFloat(prevInputs[row.unitId]) : row.previousReading,
-        currentReading: inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null
-      }));
-
-      await batchSaveReadings({
-        propertyId: propertyId as string,
-        chargeConfigId: selectedConfigId,
-        billingMonth: month,
-        billingYear: year,
-        readings: readingsToSave
-      }, token);
-
-      Alert.alert("Success", "Readings saved successfully!");
-    } catch (e: any) {
-      Alert.alert("Error", "Failed to save readings.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const {
+    isLoading,
+    isSaving,
+    configs,
+    selectedConfigId,
+    setSelectedConfigId,
+    month,
+    year,
+    worksheet,
+    inputs,
+    setInputs,
+    prevInputs,
+    setPrevInputs,
+    inputRefs,
+    expandedFloors,
+    setExpandedFloors,
+    floorPages,
+    setFloorPages,
+    floorPage,
+    setFloorPage,
+    toggleFloor,
+    handleSave,
+    changeMonth,
+  } = useMeterReading({ token, propertyId: propertyId as string });
 
   const getMonthName = (m: number) => {
     const date = new Date();
     date.setMonth(m - 1);
     return date.toLocaleString('default', { month: 'long' });
-  };
-  
-  const changeMonth = (delta: number) => {
-    let newM = month + delta;
-    let newY = year;
-    if (newM > 12) { newM = 1; newY++; }
-    if (newM < 1) { newM = 12; newY--; }
-    setMonth(newM);
-    setYear(newY);
   };
 
   const selectedConfig = configs.find(c => c.id === selectedConfigId);
@@ -317,134 +203,22 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                   {paginatedFloors.map(floor => {
                     const isExpanded = expandedFloors[floor];
                     return (
-                      <BlurView intensity={60} tint="light" key={`floor-${floor}`} style={styles.floorCard}>
-                        <TouchableOpacity 
-                          style={styles.floorHeader}
-                          onPress={() => toggleFloor(floor)}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={styles.floorHeaderText}>
-                            {floor === 0 ? 'Ground Floor' : `Floor ${floor}`}
-                          </Text>
-                          <MaterialIcons 
-                            name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                            size={24} 
-                            color="#006875" 
-                          />
-                        </TouchableOpacity>
-                        
-                        {(() => {
-                          if (!isExpanded) return null;
-                          const unitsPerFloorPage = 4;
-                          const floorUnits = groupedWorksheet[floor] || [];
-                          const totalFloorPagesUnits = Math.ceil(floorUnits.length / unitsPerFloorPage);
-                          const currentPage = floorPages[floor] || 1;
-                          const startIndex = (currentPage - 1) * unitsPerFloorPage;
-                          const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
-
-                          return (
-                            <>
-                              {paginatedUnits.map((row, index) => {
-                                const currentVal = inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null;
-                                const consumed = currentVal !== null ? currentVal - row.previousReading : 0;
-                                const isError = currentVal !== null && currentVal < row.previousReading;
-                                const estCost = consumed > 0 ? consumed * baseRate : 0;
-                                const isLast = index === paginatedUnits.length - 1;
-                                
-                                return (
-                                  <View key={row.id} style={[styles.rowCard, isError && styles.rowError, isLast && { borderBottomWidth: 0 }]}>
-                                    <View style={styles.rowLeft}>
-                                      <Text style={styles.unitName}>{row.unitName}</Text>
-                                      <Text style={styles.tenantName}>{row.tenantName}</Text>
-                                      {!row.isBilled ? (
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                                          <Text style={[styles.prevReading, { marginRight: 4 }]}>Prev:</Text>
-                                          <TextInput
-                                            style={{
-                                              borderWidth: 1,
-                                              borderColor: 'rgba(0, 104, 117, 0.2)',
-                                              backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                                              borderRadius: 6,
-                                              paddingHorizontal: 6,
-                                              paddingVertical: 2,
-                                              fontSize: 12,
-                                              width: 70,
-                                              color: '#163235',
-                                              fontWeight: '600',
-                                            }}
-                                            keyboardType="decimal-pad"
-                                            value={prevInputs[row.unitId]}
-                                            onChangeText={(val) => setPrevInputs(prev => ({ ...prev, [row.unitId]: val }))}
-                                          />
-                                        </View>
-                                      ) : (
-                                        <Text style={styles.prevReading}>Prev: {row.previousReading}</Text>
-                                      )}
-                                    </View>
-                                    
-                                    <View style={styles.rowMiddle}>
-                                      {currentVal !== null && (
-                                        <>
-                                          <Text style={[styles.consumedText, isError && { color: '#ef4444' }]}>
-                                            {consumed > 0 ? '+' : ''}{consumed} {selectedConfig?.unitType || 'Units'}
-                                          </Text>
-                                          {!isError && <Text style={styles.costText}>Est: ₹{estCost.toFixed(2)}</Text>}
-                                        </>
-                                      )}
-                                    </View>
-                                    
-                                    <View style={styles.rowRight}>
-                                      <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-                                        <TextInput
-                                          ref={(ref) => { inputRefs.current[row.unitId] = ref; }}
-                                          style={[styles.input, isError && styles.inputError, { flex: 1 }]}
-                                          keyboardType="decimal-pad"
-                                          placeholder="0.00"
-                                          placeholderTextColor="#a0aab2"
-                                          value={inputs[row.unitId]}
-                                          onChangeText={(val) => setInputs(prev => ({ ...prev, [row.unitId]: val }))}
-                                          returnKeyType="next"
-                                          editable={!row.isBilled}
-                                        />
-                                        <Text style={{ marginLeft: 6, fontSize: 13, color: '#5b6b6d', fontWeight: '600' }}>
-                                          {selectedConfig?.unitType || 'Units'}
-                                        </Text>
-                                      </View>
-                                      {isError && <Text style={styles.errorText}>Invalid</Text>}
-                                    </View>
-                                  </View>
-                                );
-                              })}
-
-                              {totalFloorPagesUnits > 1 && (
-                                <View style={styles.paginationRow}>
-                                  <TouchableOpacity 
-                                    style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
-                                    disabled={currentPage === 1}
-                                    onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
-                                  >
-                                    <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : '#006875'} />
-                                    <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
-                                  </TouchableOpacity>
-                                  
-                                  <Text style={styles.pageInfoText}>
-                                    Page {currentPage} of {totalFloorPagesUnits}
-                                  </Text>
-                                  
-                                  <TouchableOpacity 
-                                    style={[styles.pageButton, currentPage === totalFloorPagesUnits && styles.pageButtonDisabled]}
-                                    disabled={currentPage === totalFloorPagesUnits}
-                                    onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
-                                  >
-                                    <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
-                                    <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : '#006875'} />
-                                  </TouchableOpacity>
-                                </View>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </BlurView>
+                      <MeterReadingFloorCard
+                        key={`floor-${floor}`}
+                        floor={floor}
+                        isExpanded={isExpanded}
+                        toggleFloor={() => toggleFloor(floor)}
+                        floorUnits={groupedWorksheet[floor] || []}
+                        currentPage={floorPages[floor] || 1}
+                        setPage={(p) => setFloorPages(prev => ({ ...prev, [floor]: p }))}
+                        inputs={inputs}
+                        setInputs={setInputs}
+                        prevInputs={prevInputs}
+                        setPrevInputs={setPrevInputs}
+                        inputRefs={inputRefs}
+                        baseRate={baseRate}
+                        unitType={selectedConfig?.unitType}
+                      />
                     );
                   })}
 
@@ -477,62 +251,17 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
                 {/* Right Column: Dashboard Summary Panel */}
                 <View style={styles.desktopRightColumn}>
-                  <BlurView intensity={80} tint="light" style={styles.summaryCard}>
-                    <Text style={styles.summaryCardTitle}>WORKSHEET SUMMARY</Text>
-                    
-                    <View style={styles.summaryMetricsGrid}>
-                      <View style={styles.summaryMetricItem}>
-                        <Text style={styles.summaryMetricLabel}>TOTAL UNITS</Text>
-                        <Text style={styles.summaryMetricValue}>{totalUnits}</Text>
-                      </View>
-                      <View style={styles.summaryMetricItem}>
-                        <Text style={styles.summaryMetricLabel}>READINGS ENTERED</Text>
-                        <Text style={styles.summaryMetricValue}>{readingsEntered} / {totalUnits}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.previewDivider} />
-
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Utility Charge</Text>
-                      <Text style={styles.summaryValue}>{selectedConfig?.chargeName || 'N/A'}</Text>
-                    </View>
-                    
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Rate</Text>
-                      <Text style={styles.summaryValue}>₹{baseRate} / {selectedConfig?.unitType || 'unit'}</Text>
-                    </View>
-                    
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Billing Period</Text>
-                      <Text style={styles.summaryValue}>{getMonthName(month)} {year}</Text>
-                    </View>
-
-                    <View style={styles.previewDivider} />
-
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Total Consumption</Text>
-                      <Text style={[styles.summaryValue, { color: '#006875', fontSize: 16 }]}>
-                        {totalConsumption.toFixed(2)} {selectedConfig?.unitType || 'Units'}
-                      </Text>
-                    </View>
-
-                    <View style={styles.summaryRow}>
-                      <Text style={styles.summaryLabel}>Estimated Billing</Text>
-                      <Text style={[styles.summaryValue, { color: '#2e7d32', fontSize: 20, fontWeight: '800' }]}>
-                        ₹{totalEstimatedCost.toFixed(2)}
-                      </Text>
-                    </View>
-
-                    {readingsEntered < totalUnits && (
-                      <View style={styles.warningAlertBox}>
-                        <MaterialIcons name="info-outline" size={18} color="#765a00" />
-                        <Text style={styles.warningAlertText}>
-                          {totalUnits - readingsEntered} unit(s) are missing current month readings.
-                        </Text>
-                      </View>
-                    )}
-                  </BlurView>
+                  <MeterReadingSummary
+                    totalUnits={totalUnits}
+                    readingsEntered={readingsEntered}
+                    selectedConfigName={selectedConfig?.chargeName}
+                    unitType={selectedConfig?.unitType}
+                    baseRate={baseRate}
+                    billingMonthName={getMonthName(month)}
+                    billingYear={year}
+                    totalConsumption={totalConsumption}
+                    totalEstimatedCost={totalEstimatedCost}
+                  />
                 </View>
               </View>
             )}
@@ -621,111 +350,22 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               {paginatedFloors.map(floor => {
                 const isExpanded = expandedFloors[floor];
                 return (
-                  <BlurView intensity={60} tint="light" key={`floor-${floor}`} style={styles.floorCard}>
-                    <TouchableOpacity 
-                      style={styles.floorHeader}
-                      onPress={() => toggleFloor(floor)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.floorHeaderText}>
-                        {floor === 0 ? 'Ground Floor' : `Floor ${floor}`}
-                      </Text>
-                      <MaterialIcons 
-                        name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                        size={24} 
-                        color="#006875" 
-                      />
-                    </TouchableOpacity>
-                    
-                    {(() => {
-                      if (!isExpanded) return null;
-                      const unitsPerFloorPage = 4;
-                      const floorUnits = groupedWorksheet[floor] || [];
-                      const totalFloorPagesUnits = Math.ceil(floorUnits.length / unitsPerFloorPage);
-                      const currentPage = floorPages[floor] || 1;
-                      const startIndex = (currentPage - 1) * unitsPerFloorPage;
-                      const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
-
-                      return (
-                        <>
-                          {paginatedUnits.map((row, index) => {
-                            const currentVal = inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null;
-                            const consumed = currentVal !== null ? currentVal - row.previousReading : 0;
-                            const isError = currentVal !== null && currentVal < row.previousReading;
-                            const estCost = consumed > 0 ? consumed * baseRate : 0;
-                            const isLast = index === paginatedUnits.length - 1;
-                            
-                            return (
-                              <View key={row.id} style={[styles.rowCard, isError && styles.rowError, isLast && { borderBottomWidth: 0 }]}>
-                                <View style={styles.rowLeft}>
-                                  <Text style={styles.unitName}>{row.unitName}</Text>
-                                  <Text style={styles.tenantName}>{row.tenantName}</Text>
-                                  <Text style={styles.prevReading}>Prev: {row.previousReading}</Text>
-                                </View>
-                                
-                                <View style={styles.rowMiddle}>
-                                  {currentVal !== null && (
-                                    <>
-                                      <Text style={[styles.consumedText, isError && { color: '#ef4444' }]}>
-                                        {consumed > 0 ? '+' : ''}{consumed} {selectedConfig?.unitType || 'Units'}
-                                      </Text>
-                                      {!isError && <Text style={styles.costText}>Est: ₹{estCost.toFixed(2)}</Text>}
-                                    </>
-                                  )}
-                                </View>
-                                
-                                <View style={styles.rowRight}>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-                                    <TextInput
-                                      ref={(ref) => { inputRefs.current[row.unitId] = ref; }}
-                                      style={[styles.input, isError && styles.inputError, { flex: 1 }]}
-                                      keyboardType="decimal-pad"
-                                      placeholder="0.00"
-                                      placeholderTextColor="#a0aab2"
-                                      value={inputs[row.unitId]}
-                                      onChangeText={(val) => setInputs(prev => ({ ...prev, [row.unitId]: val }))}
-                                      returnKeyType="next"
-                                      editable={!row.isBilled}
-                                    />
-                                    <Text style={{ marginLeft: 6, fontSize: 13, color: '#5b6b6d', fontWeight: '600' }}>
-                                      {selectedConfig?.unitType || 'Units'}
-                                    </Text>
-                                  </View>
-                                  {isError && <Text style={styles.errorText}>Invalid</Text>}
-                                </View>
-                              </View>
-                            );
-                          })}
-
-                          {totalFloorPagesUnits > 1 && (
-                            <View style={styles.paginationRow}>
-                              <TouchableOpacity 
-                                style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
-                                disabled={currentPage === 1}
-                                onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
-                              >
-                                <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : '#006875'} />
-                                <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
-                              </TouchableOpacity>
-                              
-                              <Text style={styles.pageInfoText}>
-                                Page {currentPage} of {totalFloorPagesUnits}
-                              </Text>
-                              
-                              <TouchableOpacity 
-                                style={[styles.pageButton, currentPage === totalFloorPagesUnits && styles.pageButtonDisabled]}
-                                disabled={currentPage === totalFloorPagesUnits}
-                                onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
-                              >
-                                <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
-                                <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : '#006875'} />
-                              </TouchableOpacity>
-                            </View>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </BlurView>
+                  <MeterReadingFloorCard
+                    key={`floor-${floor}`}
+                    floor={floor}
+                    isExpanded={isExpanded}
+                    toggleFloor={() => toggleFloor(floor)}
+                    floorUnits={groupedWorksheet[floor] || []}
+                    currentPage={floorPages[floor] || 1}
+                    setPage={(p) => setFloorPages(prev => ({ ...prev, [floor]: p }))}
+                    inputs={inputs}
+                    setInputs={setInputs}
+                    prevInputs={prevInputs}
+                    setPrevInputs={setPrevInputs}
+                    inputRefs={inputRefs}
+                    baseRate={baseRate}
+                    unitType={selectedConfig?.unitType}
+                  />
                 );
               })}
 
