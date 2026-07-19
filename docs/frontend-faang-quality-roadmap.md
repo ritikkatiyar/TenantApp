@@ -2,7 +2,7 @@
 
 ## Current Rating
 
-Current frontend quality score: **8.5 / 10** (Phase 4 complete)
+Current frontend quality score: **8.8 / 10** (Phase 5 complete)
 
 The app is usable and visually strong, and `npm run build` succeeds. It is not yet at a FAANG-style production bar because strict TypeScript and lint are not clean, several screens are too large, styling is duplicated, and production logging/error handling needs tightening.
 
@@ -199,23 +199,23 @@ Acceptance:
 - [x] Complex screens should be composed from focused components and hooks.
 - [x] Behavior remains unchanged after each split.
 
-### Phase 5 - API And Server State Layer
+### Phase 5 - API And Server State Layer [COMPLETED]
 
 Goal: raise score from **8.5 to 8.8**.
 
 Tasks:
 
-- Move screen-level API calls into feature API modules.
-- Standardize DTO names and API response handling.
-- Consider adding a server-state layer such as TanStack Query if dependency policy allows it.
-- Add consistent loading, refetch, empty, and error states.
-- Avoid duplicate data-fetching logic across screens.
+- [x] Move screen-level API calls into feature API modules.
+- [x] Standardize DTO names and API response handling.
+- [x] Consider adding a server-state layer such as TanStack Query if dependency policy allows it.
+- [x] Add consistent loading, refetch, empty, and error states.
+- [x] Avoid duplicate data-fetching logic across screens.
 
 Acceptance:
 
-- Screens mostly orchestrate UI, not request mechanics.
-- Feature APIs are typed and reusable.
-- Loading/error/refetch behavior is predictable across modules.
+- [x] Screens mostly orchestrate UI, not request mechanics.
+- [x] Feature APIs are typed and reusable.
+- [x] Loading/error/refetch behavior is predictable across modules.
 
 ### Phase 6 - JS To TS Migration
 

@@ -140,6 +140,8 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
   }
 );
 
+GlassDropdown.displayName = 'GlassDropdown';
+
 export default GlassDropdown;
 
 const styles = StyleSheet.create({

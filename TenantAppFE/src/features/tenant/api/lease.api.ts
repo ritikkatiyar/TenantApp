@@ -30,3 +30,10 @@ export function createLease(payload: CreateLeaseRequest, token: string): Promise
     body: JSON.stringify(payload),
   });
 }
+
+export function terminateLease(leaseId: string, token: string): Promise<void> {
+  return apiRequest<void>(`/api/v1/finance/leases/${leaseId}`, {
+    method: 'DELETE',
+    token,
+  });
+}

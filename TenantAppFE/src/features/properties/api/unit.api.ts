@@ -73,3 +73,17 @@ export function generateBatchUnits(propertyId: string, request: BatchUnitRequest
     body: JSON.stringify(request),
   });
 }
+
+export function saveFloorLayout(
+  propertyId: string,
+  floorNumber: number,
+  token: string,
+  layout: any[]
+): Promise<UnitResponse[]> {
+  const path = `/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`;
+  return apiRequest<UnitResponse[]>(path, {
+    method: 'PUT',
+    token,
+    body: JSON.stringify(layout),
+  });
+}

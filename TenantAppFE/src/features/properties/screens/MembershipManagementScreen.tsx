@@ -4,7 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 import { getMemberships, assignRole, removeRole, transferOwnership, MembershipResponse } from '@/src/features/properties/api/membership.api';
-import { apiRequest } from '@/src/api/client';
+import { searchUserByPhone } from '@/src/features/auth/api/user.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { Theme } from '@/src/theme/Theme';
 import { formatErrorMessage } from '@/src/utils/errors';
@@ -71,11 +71,14 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
     if (!accessToken || !searchPhone.trim()) return;
     try {
       setSearching(true);
-      const data = await apiRequest<UserSearchResponse[]>(`/api/v1/user/search?phone=${encodeURIComponent(searchPhone)}`, {
-        method: 'GET',
-        token: accessToken
-      });
-      setSearchResults(data);
+      const data = await searchUserByPhone(searchPhone, accessToken);
+      const mappedData: UserSearchResponse[] = (data || []).map(item => ({
+        id: item.id,
+        fullName: item.fullName,
+        phoneNumber: item.phoneNumber || '',
+        authUid: ''
+      }));
+      setSearchResults(mappedData);
     } catch (err: any) {
       Alert.alert('Error', formatErrorMessage(err));
     } finally {

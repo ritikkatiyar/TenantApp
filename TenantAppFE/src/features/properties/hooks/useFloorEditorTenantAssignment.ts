@@ -4,8 +4,7 @@ import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
 import { createLease } from '@/src/features/tenant/api/lease.api';
-import { apiRequest } from '@/src/api/client';
-import { UnitResponse } from '@/src/features/properties/api/unit.api';
+import { UnitResponse, saveFloorLayout } from '@/src/features/properties/api/unit.api';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -178,11 +177,7 @@ export function useFloorEditorTenantAssignment({
         facing: 'NORTH'
       }));
 
-      const savedUnits = await apiRequest<UnitResponse[]>(`/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`, {
-        method: 'PUT',
-        token: userToken,
-        body: JSON.stringify(savePayload)
-      });
+      const savedUnits = await saveFloorLayout(propertyId, floorNumber, userToken, savePayload);
 
       const savedUnit = savedUnits.find(u => 
         (u.gridX === selectedBlock.gridX && u.gridY === selectedBlock.gridY) ||

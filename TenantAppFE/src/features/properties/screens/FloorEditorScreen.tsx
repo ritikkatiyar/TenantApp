@@ -28,7 +28,6 @@ import { GestureHandlerRootView, GestureDetector } from 'react-native-gesture-ha
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
-import { apiRequest } from '@/src/api/client';
 import { getFloorLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { Theme } from '@/src/theme/Theme';

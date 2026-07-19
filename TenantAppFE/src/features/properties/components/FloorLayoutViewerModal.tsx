@@ -26,9 +26,8 @@ import Animated, {
   FadeOutDown
 } from 'react-native-reanimated';
 import { getFloorLayout, UnitResponse, ActiveLeaseSummary } from '@/src/features/properties/api/unit.api';
-import { createLease } from '@/src/features/tenant/api/lease.api';
+import { createLease, terminateLease } from '@/src/features/tenant/api/lease.api';
 import { searchUserByPhone, quickCreateTenant, UserSearchResponse } from '@/src/features/auth/api/user.api';
-import { apiRequest } from '@/src/api/client';
 import { Theme } from '@/src/theme/Theme';
 import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
@@ -370,10 +369,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
           onPress: async () => {
             try {
               setLoading(true);
-              await apiRequest(`/api/v1/finance/leases/${leaseId}`, {
-                method: 'DELETE',
-                token: token,
-              });
+              await terminateLease(leaseId, token);
 
               const remainingLeases = (selectedBlock.activeLeases || []).filter(l => l.leaseId !== leaseId);
               const remainingTenants = (selectedBlock.tenants || []).filter(name => name !== tenantName);

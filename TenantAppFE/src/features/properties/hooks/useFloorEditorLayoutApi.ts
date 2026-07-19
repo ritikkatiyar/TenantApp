@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { getFloorLayout } from '@/src/features/properties/api/unit.api';
-import { apiRequest } from '@/src/api/client';
+import { getFloorLayout, saveFloorLayout } from '@/src/features/properties/api/unit.api';
+import { terminateLease } from '@/src/features/tenant/api/lease.api';
 import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
 
@@ -126,11 +126,7 @@ export function useFloorEditorLayoutApi({
         facing: 'NORTH'
       }));
 
-      await apiRequest(`/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`, {
-        method: 'PUT',
-        token: userToken,
-        body: JSON.stringify(payload)
-      });
+      await saveFloorLayout(propertyId, floorNumber, userToken, payload);
 
       onSave();
     } catch (error: any) {
@@ -154,10 +150,7 @@ export function useFloorEditorLayoutApi({
           onPress: async () => {
             try {
               setLoading(true);
-              await apiRequest(`/api/v1/finance/leases/${leaseId}`, {
-                method: 'DELETE',
-                token: userToken,
-              });
+              await terminateLease(leaseId, userToken);
 
               const remainingLeases = (selectedBlock.activeLeases || []).filter(l => l.leaseId !== leaseId);
               const remainingTenants = (selectedBlock.tenants || []).filter(name => name !== tenantName);
