@@ -2,7 +2,7 @@
 
 ## Current Rating
 
-Current frontend quality score: **8.8 / 10** (Phase 5 complete)
+Current frontend quality score: **9.0 / 10** (Phase 6 complete)
 
 The app is usable and visually strong, and `npm run build` succeeds. It is not yet at a FAANG-style production bar because strict TypeScript and lint are not clean, several screens are too large, styling is duplicated, and production logging/error handling needs tightening.
 
@@ -217,22 +217,22 @@ Acceptance:
 - [x] Feature APIs are typed and reusable.
 - [x] Loading/error/refetch behavior is predictable across modules.
 
-### Phase 6 - JS To TS Migration
+### Phase 6 - JS To TS Migration [COMPLETED]
 
 Goal: raise score from **8.8 to 9.0**.
 
 Tasks:
 
-- Convert remaining `.js` screens to `.tsx`.
-- Convert `Theme.js` to `Theme.ts`.
-- Remove unsafe route/icon/style casts where practical.
-- Add shared types for common navigation and design tokens.
+- [x] Convert remaining `.js` screens to `.tsx`.
+- [x] Convert `Theme.js` to `Theme.ts`.
+- [x] Remove unsafe route/icon/style casts where practical.
+- [x] Add shared types for common navigation and design tokens.
 
 Acceptance:
 
-- No production app screen remains in JavaScript.
-- Strict TypeScript remains clean.
-- Theme typing prevents invalid token usage.
+- [x] No production app screen remains in JavaScript.
+- [x] Strict TypeScript remains clean.
+- [x] Theme typing prevents invalid token usage.
 
 ### Phase 7 - Frontend Testing Strategy
 

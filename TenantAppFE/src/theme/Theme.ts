@@ -1,3 +1,5 @@
+import { TextStyle } from 'react-native';
+
 export const Colors = {
   surfaceContainerLow: "#edf5f7",
   onPrimaryFixed: "#001f24",
@@ -50,10 +52,28 @@ export const Colors = {
   glassStroke: 'rgba(255, 255, 255, 0.8)',
   accentGradientStart: "#00e0ff",
   accentGradientEnd: "#0070ea",
-  backgroundGradient: ["#d4f5f9", "#e8f8fb", "#e2e0fb"],
+  backgroundGradient: ["#d4f5f9", "#e8f8fb", "#e2e0fb"] as string[],
 };
 
-export const Typography = {
+export interface TypographyStyle extends Omit<TextStyle, 'fontWeight'> {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: "normal" | "bold" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
+  lineHeight: number;
+  letterSpacing?: number;
+}
+
+export const Typography: {
+  displayMetrics: TypographyStyle;
+  headlineXl: TypographyStyle;
+  headlineLg: TypographyStyle;
+  headlineMd: TypographyStyle;
+  bodyLg: TypographyStyle;
+  bodyMd: TypographyStyle;
+  labelCaps: TypographyStyle;
+  buttonText: TypographyStyle;
+  labelMuted: TypographyStyle;
+} = {
   displayMetrics: {
     fontFamily: 'Inter',
     fontSize: 48,

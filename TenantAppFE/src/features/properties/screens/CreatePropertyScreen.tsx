@@ -32,7 +32,14 @@ const UNIT_TYPE_OPTIONS = [
   { label: 'Shared Unit', value: 'SHARED_UNIT' },
 ];
 
-export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userToken, ownerId }) {
+interface CreatePropertyScreenProps {
+  onBack?: () => void;
+  onSaveAndConfigure?: (propertyId: string, totalFloors?: number) => void;
+  userToken: string;
+  ownerId?: string | null;
+}
+
+export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userToken, ownerId }: CreatePropertyScreenProps) {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const router = useRouter();
@@ -48,9 +55,9 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const scrollY = useRef(new Animated.Value(0)).current;
-  const scrollViewRef = useRef(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const [showErrors, setShowErrors] = useState(false);
-  const unitTypeDropdownRef = useRef(null);
+  const unitTypeDropdownRef = useRef<any>(null);
 
   useEffect(() => {
     if (globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
@@ -66,7 +73,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   const shakeCity = useRef(new Animated.Value(0)).current;
   const shakeFloors = useRef(new Animated.Value(0)).current;
 
-  const triggerShake = (anim) => {
+  const triggerShake = (anim: Animated.Value) => {
     anim.setValue(0);
     Animated.sequence([
       Animated.timing(anim, { toValue: 15, duration: 60, useNativeDriver: true }),
@@ -144,7 +151,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
       if (onSaveAndConfigure) {
         onSaveAndConfigure(property.id, parseInt(totalFloors, 10));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create Property Error:', error);
       setErrorMsg(error.message || 'Cannot connect to server. Ensure backend is running.');
     } finally {
@@ -152,10 +159,10 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     }
   };
 
-  const renderSidebarLink = (icon, label, active = false, route) => (
+  const renderSidebarLink = (icon: any, label: string, active: boolean = false, route?: string) => (
     <TouchableOpacity
       style={[styles.sidebarLink, active && styles.sidebarLinkActive]}
-      onPress={route ? () => (route === '/command-center' ? onBack() : router.push(route)) : undefined}
+      onPress={route ? () => (route === '/command-center' ? onBack?.() : router.push(route as any)) : undefined}
       activeOpacity={route ? 0.75 : 1}
     >
       <MaterialIcons name={icon} size={22} color={active ? Theme.Colors.primary : Theme.Colors.onSurfaceVariant} />

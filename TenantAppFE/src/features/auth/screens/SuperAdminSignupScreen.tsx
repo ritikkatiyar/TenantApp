@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
 import { signup } from '@/src/features/auth/api/auth.api';
 
-const ValidationIndicator = ({ label, isValid }) => (
+const ValidationIndicator = ({ label, isValid }: { label: string; isValid: boolean }) => (
   <View style={styles.requirementRow}>
     <MaterialIcons 
       name={isValid ? "check-circle" : "radio-button-unchecked"} 
@@ -30,10 +30,15 @@ const ValidationIndicator = ({ label, isValid }) => (
   </View>
 );
 
-export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) {
-  const emailInputRef = useRef(null);
-  const phoneInputRef = useRef(null);
-  const passwordInputRef = useRef(null);
+interface SuperAdminSignupScreenProps {
+  onSignup?: (data: any) => void;
+  onNavigateToLogin?: () => void;
+}
+
+export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: SuperAdminSignupScreenProps) {
+  const emailInputRef = useRef<TextInput>(null);
+  const phoneInputRef = useRef<TextInput>(null);
+  const passwordInputRef = useRef<TextInput>(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -65,7 +70,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }) 
       if (onSignup) {
         onSignup(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup Request Error:', error);
       setErrorMsg(error.message || 'Cannot connect to server. Ensure backend is running.');
     } finally {
@@ -293,7 +298,7 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     backgroundColor: Theme.Colors.primaryFixed,
-    filter: 'blur(80px)',
+    filter: 'blur(80px)' as any,
   },
   orb2: {
     bottom: '5%',
@@ -301,7 +306,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     backgroundColor: Theme.Colors.secondaryFixed,
-    filter: 'blur(100px)',
+    filter: 'blur(100px)' as any,
   },
   cardContainer: {
     width: '100%',
@@ -433,7 +438,7 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.Colors.errorContainer, // #ffdad6
+    backgroundColor: Theme.Colors.errorContainer,
     padding: 12,
     borderRadius: Theme.Rounded.default,
     marginBottom: 20,

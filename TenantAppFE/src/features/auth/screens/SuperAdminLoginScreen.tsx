@@ -18,8 +18,13 @@ import * as Haptics from 'expo-haptics';
 import { Theme } from '@/src/theme/Theme';
 import { login } from '@/src/features/auth/api/auth.api';
 
-export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }) {
-  const passwordInputRef = useRef(null);
+interface SuperAdminLoginScreenProps {
+  onLogin?: (data: any) => void;
+  onNavigateToSignup?: () => void;
+}
+
+export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: SuperAdminLoginScreenProps) {
+  const passwordInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +49,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }) {
       if (onLogin) {
         onLogin(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login Request Error:', error);
       setErrorMsg(error.message || 'Cannot connect to server. Ensure backend is running.');
     } finally {
@@ -69,7 +74,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }) {
           {/* Ambient Background Orbs */}
           <View style={[styles.orb, styles.orb1]} />
           <View style={[styles.orb, styles.orb2]} />
-
+          
           {/* Main Content Area */}
           <BlurView intensity={60} tint="light" style={styles.cardContainer}>
             {/* Branding */}
@@ -206,7 +211,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     backgroundColor: Theme.Colors.primaryFixed,
-    filter: 'blur(100px)',
+    filter: 'blur(100px)' as any,
   },
   orb2: {
     bottom: '15%',
@@ -214,14 +219,14 @@ const styles = StyleSheet.create({
     width: 350,
     height: 350,
     backgroundColor: Theme.Colors.secondaryFixed,
-    filter: 'blur(120px)',
+    filter: 'blur(120px)' as any,
   },
   cardContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // lower opacity for better glass effect
-    borderRadius: Theme.Rounded.lg, // 16px usually
-    paddingHorizontal: Theme.Spacing.stackLg, // 32
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: Theme.Rounded.lg,
+    paddingHorizontal: Theme.Spacing.stackLg,
     paddingTop: 48,
     paddingBottom: Theme.Spacing.stackLg,
     borderWidth: 1,
@@ -250,12 +255,12 @@ const styles = StyleSheet.create({
   },
   brandingText: {
     ...Theme.Typography.labelCaps,
-    color: Theme.Colors.outline, // #6b7a7d
+    color: Theme.Colors.outline,
     marginTop: 8,
   },
   title: {
-    ...Theme.Typography.headlineMd, // 24px bold
-    color: Theme.Colors.onSurface, // #151d1e
+    ...Theme.Typography.headlineMd,
+    color: Theme.Colors.onSurface,
     marginBottom: 40,
     textAlign: 'center',
   },
@@ -267,7 +272,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...Theme.Typography.labelCaps,
-    color: Theme.Colors.onSurfaceVariant, // #3b494c
+    color: Theme.Colors.onSurfaceVariant,
     marginLeft: 4,
     marginBottom: 8,
   },
@@ -284,7 +289,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: Theme.Spacing.stackMd,
     zIndex: 1,
-    padding: 4, // easier to tap
+    padding: 4,
   },
   clearIcon: {
     position: 'absolute',
@@ -297,7 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 1)',
-    borderRadius: Theme.Rounded.default, // 8px
+    borderRadius: Theme.Rounded.default,
     paddingLeft: 44,
     paddingRight: Theme.Spacing.stackMd,
     paddingVertical: 14,
@@ -307,7 +312,7 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 8,
     width: '100%',
-    backgroundColor: Theme.Colors.primaryContainer, // #00e5ff
+    backgroundColor: Theme.Colors.primaryContainer,
     paddingVertical: 16,
     paddingHorizontal: Theme.Spacing.stackMd,
     borderRadius: Theme.Rounded.default,
@@ -323,12 +328,12 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     ...Theme.Typography.labelCaps,
-    color: Theme.Colors.onPrimaryContainer, // #00626e
+    color: Theme.Colors.onPrimaryContainer,
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.Colors.errorContainer, // #ffdad6
+    backgroundColor: Theme.Colors.errorContainer,
     padding: 12,
     borderRadius: Theme.Rounded.default,
     marginBottom: 20,
@@ -354,7 +359,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     ...Theme.Typography.bodyMd,
-    color: Theme.Colors.surfaceTint, // #006875
+    color: Theme.Colors.surfaceTint,
     fontWeight: 'bold',
   },
 });
