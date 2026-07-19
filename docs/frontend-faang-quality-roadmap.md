@@ -2,7 +2,7 @@
 
 ## Current Rating
 
-Current frontend quality score: **8.0 / 10** (Phase 3 complete)
+Current frontend quality score: **8.5 / 10** (Phase 4 complete)
 
 The app is usable and visually strong, and `npm run build` succeeds. It is not yet at a FAANG-style production bar because strict TypeScript and lint are not clean, several screens are too large, styling is duplicated, and production logging/error handling needs tightening.
 
@@ -173,21 +173,21 @@ Acceptance:
 - [x] At least finance, inventory, and announcements share core primitives.
 - [x] Visual consistency improves without changing core workflows.
 
-### Phase 4 - Split Oversized Screens
+### Phase 4 - Split Oversized Screens [COMPLETED]
 
 Goal: raise score from **8.0 to 8.5**.
 
 Tasks:
 
-- Refactor `FloorEditorScreen.tsx` first because it is the largest and highest-risk screen.
-- Extract:
+- [x] Refactor `FloorEditorScreen.tsx` first because it is the largest and highest-risk screen.
+- [x] Extract:
   - gesture/canvas logic into hooks
   - tenant assignment logic into hooks
   - desktop toolbar component
   - mobile detail sheet component
   - unit card/block components
   - API orchestration helpers
-- Then refactor:
+- [x] Then refactor:
   - `CommandCenterScreen.tsx`
   - `MeterReadingScreen.tsx`
   - `AnnouncementAdminScreen.tsx`
@@ -195,9 +195,9 @@ Tasks:
 
 Acceptance:
 
-- No normal screen file should exceed about 20 KB unless there is a strong reason.
-- Complex screens should be composed from focused components and hooks.
-- Behavior remains unchanged after each split.
+- [x] No normal screen file should exceed about 20 KB unless there is a strong reason.
+- [x] Complex screens should be composed from focused components and hooks.
+- [x] Behavior remains unchanged after each split.
 
 ### Phase 5 - API And Server State Layer
 
