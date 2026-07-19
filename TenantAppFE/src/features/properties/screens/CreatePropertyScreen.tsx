@@ -316,6 +316,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
         {/* Action Button - mobile only */}
         {showSubmit && (
           <TouchableOpacity
+            testID="save-button"
             activeOpacity={0.85}
             onPress={handleSave}
             disabled={loading}

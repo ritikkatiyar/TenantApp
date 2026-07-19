@@ -157,6 +157,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
 
               {/* Action Button */}
               <TouchableOpacity 
+                testID="login-button"
                 style={[styles.submitButton, loading && styles.submitButtonDisabled]} 
                 activeOpacity={0.8} 
                 onPress={handleLogin}

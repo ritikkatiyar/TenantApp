@@ -2,7 +2,7 @@
 
 ## Current Rating
 
-Current frontend quality score: **9.0 / 10** (Phase 6 complete)
+Current frontend quality score: **9.3 / 10** (Phase 7 complete)
 
 The app is usable and visually strong, and `npm run build` succeeds. It is not yet at a FAANG-style production bar because strict TypeScript and lint are not clean, several screens are too large, styling is duplicated, and production logging/error handling needs tightening.
 
@@ -234,26 +234,26 @@ Acceptance:
 - [x] Strict TypeScript remains clean.
 - [x] Theme typing prevents invalid token usage.
 
-### Phase 7 - Frontend Testing Strategy
+### Phase 7 - Frontend Testing Strategy [COMPLETED]
 
 Goal: raise score from **9.0 to 9.3**.
 
 Tasks:
 
-- Add component tests for shared UI primitives.
-- Add interaction tests for high-risk flows:
-  - login/onboarding
-  - property creation
-  - floor editor basics
-  - billing worksheet
-  - inventory move-in/out mock flows
-- Add smoke tests for critical routes.
-- Add a CI quality command that runs lint, typecheck, tests, and build.
+- [x] Add component tests for shared UI primitives.
+- [x] Add interaction tests for high-risk flows:
+  - [x] login/onboarding
+  - [x] property creation
+  - [x] floor editor basics
+  - [x] billing worksheet
+  - [x] inventory move-in/out mock flows
+- [x] Add smoke tests for critical routes.
+- [x] Add a CI quality command that runs lint, typecheck, tests, and build.
 
 Acceptance:
 
-- Critical UI flows have regression coverage.
-- CI catches broken routes, type regressions, and key interaction failures.
+- [x] Critical UI flows have regression coverage.
+- [x] CI catches broken routes, type regressions, and key interaction failures.
 
 ## Execution Order
 
