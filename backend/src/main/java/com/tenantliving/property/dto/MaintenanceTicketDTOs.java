@@ -4,7 +4,7 @@ import com.tenantliving.property.domain.MaintenanceTicketTbl;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class MaintenanceTicketDTOs {
@@ -32,8 +32,8 @@ public class MaintenanceTicketDTOs {
             String priority,
             String status,
             String assignedTechnicianName,
-            Instant createdAt,
-            Instant updatedAt
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
     ) {
         public static MaintenanceTicketResponse from(MaintenanceTicketTbl entity) {
             return new MaintenanceTicketResponse(
