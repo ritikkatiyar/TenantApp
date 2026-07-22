@@ -21,6 +21,7 @@ export interface LeaseResponse {
   moveInDate: string;
   moveOutDate?: string | null;
   status: string;
+  propertyName?: string;
 }
 
 export function createLease(payload: CreateLeaseRequest, token: string): Promise<LeaseResponse> {
@@ -34,6 +35,13 @@ export function createLease(payload: CreateLeaseRequest, token: string): Promise
 export function terminateLease(leaseId: string, token: string): Promise<void> {
   return apiRequest<void>(`/api/v1/finance/leases/${leaseId}`, {
     method: 'DELETE',
+    token,
+  });
+}
+
+export function getActiveLease(token: string): Promise<LeaseResponse | null> {
+  return apiRequest<LeaseResponse | null>('/api/v1/finance/leases/tenant/active', {
+    method: 'GET',
     token,
   });
 }

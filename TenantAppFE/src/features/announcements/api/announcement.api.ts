@@ -21,9 +21,13 @@ export interface Announcement {
 
 export function getAnnouncements(token: string, propertyId?: string): Promise<Announcement[]> {
   const query = propertyId ? `?propertyId=${propertyId}` : '';
-  return apiRequest<Announcement[]>(`/api/v1/announcements${query}`, {
+  return apiRequest<any>(`/api/v1/announcements${query}`, {
     method: 'GET',
     token,
+  }).then((res) => {
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res.content)) return res.content;
+    return [];
   });
 }
 

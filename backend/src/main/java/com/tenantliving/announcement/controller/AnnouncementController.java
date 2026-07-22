@@ -67,11 +67,7 @@ public class AnnouncementController {
             return ResponseEntity.ok(ApiResponse.success(announcementService.getAnnouncementsForProperty(propertyId, userId, pageable)));
         }
 
-        if (propertyId == null || authorizationService.hasRole(propertyId, "PROPERTY_TENANT")) {
-            return ResponseEntity.ok(ApiResponse.success(announcementService.getNoticesForTenant(userId, pageable)));
-        }
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
+        return ResponseEntity.ok(ApiResponse.success(announcementService.getNoticesForTenant(userId, pageable)));
     }
 
     @PostMapping("/{id}/read")

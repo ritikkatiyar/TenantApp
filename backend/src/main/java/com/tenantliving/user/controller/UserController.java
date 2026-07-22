@@ -91,4 +91,35 @@ public class UserController {
 
         return ResponseEntity.ok(ApiResponse.success(context));
     }
+
+    @GetMapping("/tenant/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<UserDTOs.TenantProfileResponse>> getTenantProfile(
+            @AuthenticationPrincipal UserDetailsImpl currentUser
+    ) {
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        UUID userId = UUID.fromString(currentUser.getId());
+        UserTbl user = userQueryService.getUserById(userId);
+        return ResponseEntity.ok(ApiResponse.success(UserDTOs.TenantProfileResponse.from(user)));
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/tenant/profile")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<UserDTOs.TenantProfileResponse>> updateTenantProfile(
+            @AuthenticationPrincipal UserDetailsImpl currentUser,
+            @RequestBody UserDTOs.UpdateTenantProfileRequest request
+    ) {
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+        UUID userId = UUID.fromString(currentUser.getId());
+        UserTbl user = userQueryService.getUserById(userId);
+        if (request.phone() != null && !request.phone().isBlank()) {
+            user.setPhoneNumber(request.phone());
+            userService.createUser(user);
+        }
+        return ResponseEntity.ok(ApiResponse.success(UserDTOs.TenantProfileResponse.from(user)));
+    }
 }

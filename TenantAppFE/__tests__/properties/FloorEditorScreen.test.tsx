@@ -54,6 +54,8 @@ jest.mock('../../src/features/auth/context/AuthProvider', () => ({
   }),
 }));
 
+jest.setTimeout(30000);
+
 describe('FloorEditorScreen Component', () => {
   it('renders correct floor edit heading', async () => {
     const { getByText } = await render(

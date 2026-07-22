@@ -27,6 +27,10 @@
       },
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://tenantappbackend.onrender.com",
+        "EXPO_PUBLIC_AI_API_URL": "https://ai-service-ws9z.onrender.com"
       }
     }
   },

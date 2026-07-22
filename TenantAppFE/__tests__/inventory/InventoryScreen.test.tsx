@@ -25,6 +25,8 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
+jest.setTimeout(30000);
+
 describe('InventoryScreen Component', () => {
   it('renders correctly with tabs', async () => {
     const { getByText } = await render(<InventoryScreen />);

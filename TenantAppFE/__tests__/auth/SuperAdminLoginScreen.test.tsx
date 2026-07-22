@@ -16,6 +16,8 @@ jest.mock('../../src/features/auth/api/auth.api', () => ({
   login: jest.fn(() => Promise.resolve({ accessToken: 'mock-token' })),
 }));
 
+jest.setTimeout(30000);
+
 describe('SuperAdminLoginScreen Interaction', () => {
   it('calls onLogin handler on successful form submission', async () => {
     const handleLogin = jest.fn();

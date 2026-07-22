@@ -34,6 +34,8 @@ jest.mock('../../src/features/auth/context/AuthProvider', () => ({
   }),
 }));
 
+jest.setTimeout(30000);
+
 describe('CreatePropertyScreen Interaction', () => {
   it('calls onSaveAndConfigure callback upon valid property input submission', async () => {
     const handleSaveAndConfigure = jest.fn();

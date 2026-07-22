@@ -36,4 +36,24 @@ public class UserDTOs {
             @jakarta.validation.constraints.NotBlank
             String phoneNumber
     ) {}
+
+    public record TenantProfileResponse(
+            UUID userId,
+            String fullName,
+            String email,
+            String phone
+    ) {
+        public static TenantProfileResponse from(UserTbl user) {
+            return new TenantProfileResponse(
+                    user.getId(),
+                    user.getFullName(),
+                    user.getAuthUid(),
+                    user.getPhoneNumber()
+            );
+        }
+    }
+
+    public record UpdateTenantProfileRequest(
+            String phone
+    ) {}
 }

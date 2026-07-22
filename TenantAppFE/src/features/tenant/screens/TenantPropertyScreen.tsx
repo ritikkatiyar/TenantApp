@@ -1,60 +1,61 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { RoleToggle } from '@/src/components/RoleToggle';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+
 import { useResponsive } from '@/hooks/useResponsive';
+import { getActiveLease, LeaseResponse } from '@/src/features/tenant/api/lease.api';
+import { Theme } from '@/src/theme/Theme';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
 interface TenantPropertyScreenProps {
   token: string;
   onLogout: () => void;
 }
 
-const colors = {
-  primary: '#004c5a',
-  primaryContainer: '#006677',
-  onPrimaryContainer: '#96e1f5',
-  secondaryContainer: '#d2e4fb',
-  background: '#f8f9ff',
-  surfaceLowest: '#ffffff',
-  surfaceLow: '#eff4ff',
-  surfaceBright: '#f8f9ff',
-  inverseSurface: '#213145',
-  inverseOnSurface: '#eaf1ff',
-  onBackground: '#0b1c30',
-  onSurfaceVariant: '#3f484b',
-  outlineVariant: '#bec8cb',
-  outline: '#6f797c',
-  primaryFixed: '#aaedff',
-  onPrimary: '#ffffff'
-};
-
 export default function TenantPropertyScreen({ token, onLogout }: TenantPropertyScreenProps) {
   const { isDesktop } = useResponsive();
+  const [lease, setLease] = useState<LeaseResponse | null>(null);
+  const [showLeaseModal, setShowLeaseModal] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    getActiveLease(token)
+      .then((data) => {
+        if (isMounted && data) setLease(data);
+      })
+      .catch((err) => console.error('[TenantProperty]', err));
+    return () => { isMounted = false; };
+  }, [token]);
 
   return (
-    <View style={styles.root}>
+    <LinearGradient
+      colors={Theme.Colors.backgroundGradient as [string, string, string]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.root}
+    >
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop && (
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.kicker}>MY PROPERTY</Text>
-              <Text style={styles.title}>My Home</Text>
-            </View>
-            <RoleToggle />
-          </View>
-        )}
+        {isDesktop && <DesktopNavBar title="My Unit & Property Lease" />}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 88 }]}>
-          
-          <View style={styles.mainCard}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
+        >
+          {/* Main Unit Card */}
+          <BlurView intensity={70} tint="light" style={styles.glassCard}>
             <View style={styles.mainCardHeaderRow}>
               <View style={styles.iconBox}>
-                <MaterialIcons name="apartment" size={32} color={colors.onPrimaryContainer} />
+                <MaterialIcons name="apartment" size={30} color={Theme.Colors.primary} />
               </View>
-              <View>
-                <Text style={styles.propertyName}>Libsys Residential</Text>
-                <Text style={styles.unitInfo}>Unit 101, Floor 4 • Premium Garden View</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.propertyName}>{lease?.propertyName || 'Assigned Residence'}</Text>
+                <Text style={styles.unitInfo}>{lease?.unitId ? `Unit ID: ${lease.unitId.substring(0, 8)}` : 'Unit Lease Linked'} • Active</Text>
+              </View>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusBadgeText}>{lease?.status || 'ACTIVE'}</Text>
               </View>
             </View>
 
@@ -62,144 +63,214 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Monthly Rent</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                  <Text style={styles.statValue}>₹10,000</Text>
-                  <Text style={styles.statLabel}> / month</Text>
+                  <Text style={styles.statValue}>{lease?.rentAmount ? `₹${lease.rentAmount.toLocaleString()}` : 'N/A'}</Text>
+                  <Text style={styles.statSubLabel}> / month</Text>
                 </View>
               </View>
-              <View style={styles.statusBox}>
-                <Text style={styles.statLabel}>Status</Text>
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusBadgeText}>ACTIVE</Text>
+              <View style={styles.statBox}>
+                <Text style={styles.statLabel}>Security Deposit</Text>
+                <Text style={[styles.statValue, { color: Theme.Colors.primary }]}>{lease?.securityDeposit ? `₹${lease.securityDeposit.toLocaleString()}` : 'N/A'}</Text>
+              </View>
+            </View>
+          </BlurView>
+
+          {/* Lease Contract Card */}
+          <BlurView intensity={70} tint="light" style={styles.darkLeaseCard}>
+            <View style={styles.leaseHeaderRow}>
+              <Text style={styles.leaseTitle}>Lease Agreement Details</Text>
+              <MaterialIcons name="gavel" size={24} color={Theme.Colors.primaryContainer} />
+            </View>
+            
+            <View style={styles.leaseGrid}>
+              <View style={styles.leaseRow}>
+                <MaterialIcons name="calendar-today" size={22} color={Theme.Colors.primaryFixed} />
+                <View style={{ marginLeft: 14 }}>
+                  <Text style={styles.leaseLabel}>Move-In Date</Text>
+                  <Text style={styles.leaseValue}>{lease?.moveInDate || 'On File'}</Text>
+                </View>
+              </View>
+              
+              <View style={styles.leaseRow}>
+                <MaterialIcons name="event-busy" size={22} color={Theme.Colors.primaryFixed} />
+                <View style={{ marginLeft: 14 }}>
+                  <Text style={styles.leaseLabel}>Move-Out Date</Text>
+                  <Text style={styles.leaseValue}>{lease?.moveOutDate || 'On File'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.leaseRow}>
+                <MaterialIcons name="verified-user" size={22} color={Theme.Colors.primaryFixed} />
+                <View style={{ marginLeft: 14 }}>
+                  <Text style={styles.leaseLabel}>Escrow Protection</Text>
+                  <Text style={styles.leaseValue}>Verified & Locked</Text>
                 </View>
               </View>
             </View>
-          </View>
 
-          <View style={styles.leaseDetailsCard}>
-            <Text style={styles.leaseTitle}>Lease Details</Text>
-            
-            <View style={styles.leaseRow}>
-              <MaterialIcons name="calendar-today" size={24} color={colors.primaryFixed} />
-              <View style={{ marginLeft: 16 }}>
-                <Text style={styles.leaseLabel}>Start Date</Text>
-                <Text style={styles.leaseValue}>Jan 01, 2024</Text>
-              </View>
-            </View>
-            
-            <View style={styles.leaseRow}>
-              <MaterialIcons name="event-busy" size={24} color={colors.primaryFixed} />
-              <View style={{ marginLeft: 16 }}>
-                <Text style={styles.leaseLabel}>End Date</Text>
-                <Text style={styles.leaseValue}>Dec 31, 2024</Text>
-              </View>
-            </View>
-
-            <View style={styles.leaseRow}>
-              <MaterialIcons name="verified-user" size={24} color={colors.primaryFixed} />
-              <View style={{ marginLeft: 16 }}>
-                <Text style={styles.leaseLabel}>Security Deposit</Text>
-                <Text style={styles.leaseValue}>₹30,000 (Locked)</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity style={styles.leaseBtn}>
-              <MaterialIcons name="description" size={20} color="#fff" />
-              <Text style={styles.leaseBtnText}>Digital Lease Agreement</Text>
+            <TouchableOpacity 
+              onPress={() => setShowLeaseModal(true)}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#00e0ff', '#0070ea']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.leaseBtn}
+              >
+                <MaterialIcons name="description" size={20} color="#fff" />
+                <Text style={styles.leaseBtnText}>View Digital Lease Contract</Text>
+              </LinearGradient>
             </TouchableOpacity>
-            <Text style={styles.leaseSignedText}>Signed on Dec 15, 2023</Text>
-          </View>
+            <Text style={styles.leaseSignedText}>Digitally Signed & Timestamped on Record</Text>
+          </BlurView>
 
+          {/* Property Amenities Grid */}
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Property Amenities</Text>
+            <Text style={styles.sectionTitle}>Included Property Amenities</Text>
+            <Text style={styles.sectionSub}>Available 24/7 for all building occupants</Text>
           </View>
           
           <View style={styles.amenitiesGrid}>
-            <View style={styles.amenityCard}>
+            <BlurView intensity={60} tint="light" style={styles.amenityCard}>
               <View style={styles.amenityIconBox}>
-                <MaterialIcons name="wifi" size={24} color={colors.primary} />
+                <MaterialIcons name="wifi" size={24} color={Theme.Colors.primary} />
               </View>
-              <Text style={styles.amenityText}>High-speed Wi-Fi</Text>
-            </View>
-            <View style={styles.amenityCard}>
-              <View style={styles.amenityIconBox}>
-                <MaterialIcons name="pool" size={24} color={colors.primary} />
-              </View>
-              <Text style={styles.amenityText}>Pool Access</Text>
-            </View>
-            <View style={styles.amenityCard}>
-              <View style={styles.amenityIconBox}>
-                <MaterialIcons name="local-parking" size={24} color={colors.primary} />
-              </View>
-              <Text style={styles.amenityText}>Reserved Parking</Text>
-            </View>
-            <View style={styles.amenityCard}>
-              <View style={styles.amenityIconBox}>
-                <MaterialIcons name="fitness-center" size={24} color={colors.primary} />
-              </View>
-              <Text style={styles.amenityText}>24/7 Gym</Text>
-            </View>
-          </View>
+              <Text style={styles.amenityTitle}>High-speed Fiber Wi-Fi</Text>
+              <Text style={styles.amenitySub}>1 Gbps Unlimited</Text>
+            </BlurView>
 
+            <BlurView intensity={60} tint="light" style={styles.amenityCard}>
+              <View style={styles.amenityIconBox}>
+                <MaterialIcons name="pool" size={24} color={Theme.Colors.primary} />
+              </View>
+              <Text style={styles.amenityTitle}>Rooftop Pool</Text>
+              <Text style={styles.amenitySub}>Temperature Controlled</Text>
+            </BlurView>
+
+            <BlurView intensity={60} tint="light" style={styles.amenityCard}>
+              <View style={styles.amenityIconBox}>
+                <MaterialIcons name="local-parking" size={24} color={Theme.Colors.primary} />
+              </View>
+              <Text style={styles.amenityTitle}>Covered Parking</Text>
+              <Text style={styles.amenitySub}>Assigned Slot #B2</Text>
+            </BlurView>
+
+            <BlurView intensity={60} tint="light" style={styles.amenityCard}>
+              <View style={styles.amenityIconBox}>
+                <MaterialIcons name="fitness-center" size={24} color={Theme.Colors.primary} />
+              </View>
+              <Text style={styles.amenityTitle}>24/7 Fitness Center</Text>
+              <Text style={styles.amenitySub}>Cardio & Free Weights</Text>
+            </BlurView>
+          </View>
         </ScrollView>
+
+        {/* Digital Lease Contract Modal */}
+        {showLeaseModal && (
+          <Modal transparent visible={true} animationType="slide" onRequestClose={() => setShowLeaseModal(false)}>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Digital Lease Contract</Text>
+                  <TouchableOpacity onPress={() => setShowLeaseModal(false)}>
+                    <MaterialIcons name="close" size={24} color={Theme.Colors.onBackground} />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView style={{ maxHeight: 320 }}>
+                  <Text style={styles.modalContractTitle}>RESIDENTIAL TENANCY LEASE AGREEMENT</Text>
+                  <Text style={styles.modalContractText}>
+                    This Residential Lease Agreement (&quot;Agreement&quot;) is executed between Property Owner and Tenant for Unit {lease?.unitId?.substring(0, 8) || '101'}.
+                    {"\n\n"}
+                    1. RENT & FEES: The monthly rent of ₹{lease?.rentAmount?.toLocaleString() || '10,000'} is due on or before the 5th of each calendar month.
+                    {"\n\n"}
+                    2. SECURITY DEPOSIT: The security deposit of ₹{lease?.securityDeposit?.toLocaleString() || '30,000'} is held securely and refundable upon lease expiration subject to unit inspection.
+                    {"\n\n"}
+                    3. MAINTENANCE: Tenant agrees to report all maintenance or structural defects promptly via the Tenant Portal.
+                  </Text>
+                </ScrollView>
+                <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowLeaseModal(false)}>
+                  <Text style={styles.modalCloseBtnText}>Close Agreement Viewer</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        )}
       </SafeAreaView>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
-  safeArea: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
-  header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  kicker: { color: colors.primary, fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 4 },
-  title: { color: colors.onBackground, fontSize: 32, fontWeight: '800' },
-  scrollContent: { paddingBottom: 30, gap: 24 },
+  root: { flex: 1 },
+  safeArea: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 20 },
+  scrollContentDesktop: { paddingTop: 20 },
   
-  mainCard: {
-    backgroundColor: colors.surfaceLowest,
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: colors.primaryContainer,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+  glassCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderRadius: 24,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    shadowColor: Theme.Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
     shadowRadius: 20,
-    elevation: 3,
+    elevation: 4,
+    overflow: 'hidden'
   },
-  mainCardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 },
-  iconBox: { width: 56, height: 56, borderRadius: 12, backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center' },
-  propertyName: { fontSize: 22, fontWeight: '700', color: colors.onBackground },
-  unitInfo: { fontSize: 14, color: colors.onSurfaceVariant, marginTop: 4 },
+  mainCardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
+  iconBox: { width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
+  propertyName: { fontSize: 22, fontWeight: '800', color: Theme.Colors.onBackground },
+  unitInfo: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+  statusBadge: { backgroundColor: 'rgba(0, 104, 117, 0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  statusBadgeText: { color: Theme.Colors.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.8 },
   
-  statsGrid: { flexDirection: 'row', gap: 16 },
-  statBox: { flex: 1, backgroundColor: colors.surfaceLow, borderRadius: 12, padding: 16 },
-  statusBox: { flex: 1, backgroundColor: 'rgba(0,102,119,0.05)', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: 'rgba(0,76,90,0.1)' },
-  statLabel: { fontSize: 12, fontWeight: '600', color: colors.onSurfaceVariant, marginBottom: 8 },
-  statValue: { fontSize: 24, fontWeight: '700', color: colors.primary },
-  statusBadge: { alignSelf: 'flex-start', backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-  statusBadgeText: { color: colors.onPrimary, fontSize: 12, fontWeight: '600', letterSpacing: 1 },
+  statsGrid: { flexDirection: 'row', gap: 14 },
+  statBox: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.9)' },
+  statLabel: { fontSize: 12, fontWeight: '700', color: Theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  statSubLabel: { fontSize: 12, color: Theme.Colors.onSurfaceVariant },
+  statValue: { fontSize: 22, fontWeight: '800', color: Theme.Colors.onBackground },
 
-  leaseDetailsCard: {
-    backgroundColor: colors.inverseSurface,
-    borderRadius: 16,
+  darkLeaseCard: {
+    backgroundColor: Theme.Colors.inverseSurface,
+    borderRadius: 24,
     padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
     shadowRadius: 24,
     elevation: 6,
+    overflow: 'hidden'
   },
-  leaseTitle: { color: colors.inverseOnSurface, fontSize: 22, fontWeight: '700', marginBottom: 20 },
-  leaseRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 20 },
-  leaseLabel: { color: colors.outlineVariant, fontSize: 12, fontWeight: '600', marginBottom: 2 },
-  leaseValue: { color: '#ffffff', fontSize: 16, fontWeight: '400' },
-  leaseBtn: { backgroundColor: colors.primaryContainer, paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 8 },
-  leaseBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
-  leaseSignedText: { color: colors.outlineVariant, fontSize: 12, textAlign: 'center', marginTop: 12 },
+  leaseHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  leaseTitle: { color: '#ffffff', fontSize: 20, fontWeight: '800' },
+  leaseGrid: { gap: 16, marginBottom: 20 },
+  leaseRow: { flexDirection: 'row', alignItems: 'center' },
+  leaseLabel: { color: Theme.Colors.outlineVariant, fontSize: 12, fontWeight: '600', marginBottom: 2 },
+  leaseValue: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
+  leaseBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
+  leaseBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '700' },
+  leaseSignedText: { color: Theme.Colors.outlineVariant, fontSize: 12, textAlign: 'center', marginTop: 12 },
 
-  sectionHeader: { marginTop: 8 },
-  sectionTitle: { fontSize: 22, fontWeight: '700', color: colors.onBackground },
+  sectionHeader: { marginTop: 4 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: Theme.Colors.onBackground },
+  sectionSub: { fontSize: 13, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
   
-  amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  amenityCard: { width: '47%', backgroundColor: colors.surfaceLowest, borderRadius: 16, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(190, 200, 203, 0.3)' },
-  amenityIconBox: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.secondaryContainer, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  amenityText: { fontSize: 14, fontWeight: '600', color: colors.onBackground, textAlign: 'center' }
+  amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  amenityCard: { width: '47.8%', backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
+  amenityIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  amenityTitle: { fontSize: 14, fontWeight: '800', color: Theme.Colors.onBackground },
+  amenitySub: { fontSize: 12, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.6)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  modalTitle: { fontSize: 22, fontWeight: '800', color: Theme.Colors.onBackground },
+  modalContractTitle: { fontSize: 15, fontWeight: '800', color: Theme.Colors.primary, marginBottom: 12 },
+  modalContractText: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, lineHeight: 22 },
+  modalCloseBtn: { backgroundColor: Theme.Colors.primary, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  modalCloseBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' }
 });
+
+

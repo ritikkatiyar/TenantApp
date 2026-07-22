@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.tenantliving.common.domain.LeaseStatus;
+
 import java.util.UUID;
 
 @RestController
@@ -23,6 +25,20 @@ public class LeaseController {
 
     private final LeaseService leaseService;
     private final LeaseQueryService leaseQueryService;
+
+    @GetMapping("/tenant/active")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> getActiveTenantLease(
+            @AuthenticationPrincipal UserDetailsImpl currentUser
+    ) {
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UUID userId = UUID.fromString(currentUser.getId());
+        return leaseQueryService.findByUserIdAndStatus(userId, LeaseStatus.ACTIVE)
+                .map(lease -> ResponseEntity.ok(ApiResponse.success(LeaseMapper.toResponse(lease))))
+                .orElseGet(() -> ResponseEntity.ok(ApiResponse.success(null)));
+    }
 
     @PostMapping
     @PreAuthorize("@authorizationService.hasPermissionByUnitId(#request.unitId, 'LEASE_CREATE')")
