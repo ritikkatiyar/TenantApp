@@ -1,17 +1,24 @@
 # Google Play Console Publishing Status
 
-This document tracks the steps completed and remaining in the Google Play Console for releasing our application.
+This document tracks the steps completed and remaining in the Google Play Console for releasing both our Landlord and Tenant applications.
 
 ---
 
-## 1. Steps Completed
+## 1. Landlord App (`TenantAppFE`) Status
 * **App Setup & Configuration**:
-  - App created in the Google Play Console.
-  - Package identity set up for the resident portal bundle.
+  - App entry created in the Google Play Console.
 * **Internal Testing Release**:
   - Generated and uploaded the signed App Bundle (`.aab`) to the **Internal testing** track.
-  - Release submitted successfully.
-  - Build is live/pending automatically for the designated internal testers list.
+  - Release submitted successfully (currently live/pending for internal testers).
+
+---
+
+## 2. Tenant App (`TenantAppTenantFE`) Status
+* **App Setup & Configuration**:
+  - **Not yet created** in the Google Play Console.
+  - **Next step**: Create a new App in Play Console for the Resident app with package ID `com.tenantliving.resident`.
+* **Internal Testing Release**:
+  - Build has not yet been generated or uploaded to Play Console.
 
 ---
 
