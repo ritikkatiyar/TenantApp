@@ -145,6 +145,11 @@ Avoid:
 * Keep methods small and readable
 * Use constructor injection only
 * **Clean Import Styling**: Never use fully-qualified inline declarations for standard utility and time packages (e.g., `java.util.List`, `java.util.Map`, `java.time.LocalDate`). Always declare standard `import` statements at the top of the file and use simple class names in the code body.
+* **Service-DTO Decoupling & Mapper Conventions**: To maintain pure business logic in service implementations, DTO-to-entity and entity-to-DTO conversion must be decoupled from the service layer and delegated to dedicated, stateless mapper utility classes.
+  * Mappers must follow the naming pattern `<DomainName>Mapper` (e.g., `LeaseMapper`) and define a `private` constructor to prevent instantiation.
+  * DTO-to-Entity mapping methods must be named `toEntity(...)` (accepting custom type-safe arguments for contextual domain dependencies like unit/property entities).
+  * Entity-to-DTO mapping methods must be named `toResponse(...)`.
+  * Generic mapper interfaces must not be used to avoid destroying compile-time type safety for custom contextual parameters.
 
 ---
 

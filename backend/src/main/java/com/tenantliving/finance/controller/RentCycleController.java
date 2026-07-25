@@ -42,7 +42,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-generate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#request.propertyId, 'PROPERTY_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_UPDATE')")
     public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchGenerate(
             @Valid @RequestBody RentCycleDTOs.BatchGenerateRentCycleRequest request
     ) {
@@ -51,7 +51,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-publish")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_UPDATE')")
     public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchPublish(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth
@@ -60,7 +60,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-unpublish")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_UPDATE')")
     public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchUnpublish(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth
@@ -69,7 +69,7 @@ public class RentCycleController {
     }
 
     @GetMapping("/pre-flight")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.PreFlightChecklistResponse>> getPreFlightChecklist(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth

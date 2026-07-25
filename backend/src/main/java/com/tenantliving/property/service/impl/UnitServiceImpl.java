@@ -6,6 +6,7 @@ import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.dto.UnitDTOs;
+import com.tenantliving.property.mapper.UnitMapper;
 import com.tenantliving.property.repository.UnitRepository;
 import com.tenantliving.property.service.interfaces.UnitCrudService;
 import com.tenantliving.property.service.interfaces.UnitService;
@@ -81,13 +82,7 @@ public class UnitServiceImpl implements UnitService {
         for (UnitDTOs.FloorLayoutUnitRequest item : items) {
             UnitTbl entity = existingOnFloorByNumber.get(item.unitNumber());
             if (entity != null) {
-                entity.setGridX(item.gridX());
-                entity.setGridY(item.gridY());
-                entity.setGridWidth(item.gridWidth() != null ? item.gridWidth() : 1);
-                entity.setGridHeight(item.gridHeight() != null ? item.gridHeight() : 1);
-                entity.setType(item.type());
-                entity.setCapacity(item.capacity());
-                entity.setFacing(item.facing() != null ? item.facing() : FacingDirection.UNKNOWN);
+                UnitMapper.updateEntity(item, entity);
                 toSave.add(entity);
             } else {
                 // Optimized: check in-memory cached Set instead of querying database in loop
@@ -96,19 +91,7 @@ public class UnitServiceImpl implements UnitService {
                             "Unit number \"" + item.unitNumber() + "\" already exists on another floor for this property"
                     );
                 }
-                FacingDirection facing = item.facing() != null ? item.facing() : FacingDirection.UNKNOWN;
-                UnitTbl created = UnitTbl.builder()
-                        .property(property)
-                        .unitNumber(item.unitNumber())
-                        .floor(floorNumber)
-                        .gridX(item.gridX())
-                        .gridY(item.gridY())
-                        .gridWidth(item.gridWidth() != null ? item.gridWidth() : 1)
-                        .gridHeight(item.gridHeight() != null ? item.gridHeight() : 1)
-                        .type(item.type())
-                        .capacity(item.capacity())
-                        .facing(facing)
-                        .build();
+                UnitTbl created = UnitMapper.toEntity(item, property, floorNumber);
                 toSave.add(created);
             }
         }
@@ -170,18 +153,7 @@ public class UnitServiceImpl implements UnitService {
                     String prefix = request.prefix() != null ? request.prefix() : "";
                     String unitNumber = prefix + currentFloor + String.format("%02d", unitGlobalIndex);
 
-                    UnitTbl unit = UnitTbl.builder()
-                            .property(property)
-                            .unitNumber(unitNumber)
-                            .floor(currentFloor)
-                            .gridX(currentX)
-                            .gridY(currentY)
-                            .gridWidth(unitWidth)
-                            .gridHeight(rowHeight)
-                            .type(request.unitType())
-                            .capacity(request.capacity())
-                            .facing(FacingDirection.UNKNOWN)
-                            .build();
+                    UnitTbl unit = UnitMapper.toEntity(request, property, currentFloor, currentX, currentY, unitWidth, rowHeight, unitNumber);
 
                     generatedUnits.add(unit);
                     currentX += unitWidth;

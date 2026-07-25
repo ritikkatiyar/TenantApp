@@ -17,6 +17,7 @@ import com.tenantliving.config.JwtProperties;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserService;
 import com.tenantliving.user.service.interfaces.UserQueryService;
+import com.tenantliving.auth.mapper.UserMapper;
 import com.tenantliving.auth.service.interfaces.AuthService;
 import com.tenantliving.auth.service.JwtService;
 import com.tenantliving.auth.service.TokenHasher;
@@ -66,13 +67,8 @@ public class AuthServiceImpl implements AuthService {
 
         String phone = normalizePhone(request.phoneNumber());
 
-        UserTbl user = UserTbl.builder()
-                .authUid(email)
-                .fullName(request.fullName().trim())
-                .phoneNumber(phone)
-                .passwordHash(passwordEncoder.encode(request.password()))
-                .globalRole(UserRole.USER)
-                .build();
+        String hashedPassword = passwordEncoder.encode(request.password());
+        UserTbl user = UserMapper.toEntity(request, email, phone, hashedPassword);
         userService.createUser(user);
         return issueTokensForUser(user);
     }

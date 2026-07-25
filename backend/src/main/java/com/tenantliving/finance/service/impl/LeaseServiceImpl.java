@@ -8,6 +8,7 @@ import com.tenantliving.finance.service.interfaces.LeaseService;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
+import com.tenantliving.finance.mapper.LeaseMapper;
 import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.auth.service.interfaces.MembershipService;
 
@@ -119,15 +120,7 @@ public class LeaseServiceImpl implements LeaseService {
         UserTbl tenant = userQueryService.getUserById(targetUserId);
         membershipService.ensureTenantRole(tenant.getId(), unit.getProperty().getId(), assignedByUserId);
 
-        LeaseTbl lease = LeaseTbl.builder()
-                .userId(targetUserId)
-                .unit(unit)
-                .securityDeposit(request.securityDeposit())
-                .splitStrategy(request.splitStrategy())
-                .moveInDate(request.moveInDate())
-                .moveOutDate(request.moveOutDate())
-                .status(request.status() != null ? request.status() : LeaseStatus.ACTIVE)
-                .build();
+        LeaseTbl lease = LeaseMapper.toEntity(request, unit, targetUserId);
         LeaseTbl saved = leaseCrudService.save(lease);
 
         // 3. Mark booking as converted

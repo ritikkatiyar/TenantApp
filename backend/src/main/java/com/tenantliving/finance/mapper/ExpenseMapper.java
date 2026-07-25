@@ -1,9 +1,11 @@
 package com.tenantliving.finance.mapper;
 
+import com.tenantliving.finance.domain.ExpenseGroupTbl;
 import com.tenantliving.finance.domain.ExpenseTbl;
 import com.tenantliving.finance.dto.ExpenseDTOs;
 
 public final class ExpenseMapper {
+
     private ExpenseMapper() {
     }
 
@@ -18,5 +20,16 @@ public final class ExpenseMapper {
                 expense.getBillingMonth(),
                 expense.getCreatedAt()
         );
+    }
+
+    public static ExpenseTbl toEntity(ExpenseDTOs.CreateExpenseRequest request, ExpenseGroupTbl group) {
+        return ExpenseTbl.builder()
+                .expenseGroup(group)
+                .createdBy(request.createdBy())
+                .totalAmount(request.totalAmount())
+                .expenseType(request.expenseType())
+                .description(request.description())
+                .billingMonth(request.billingMonth())
+                .build();
     }
 }

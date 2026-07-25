@@ -13,7 +13,9 @@ import com.tenantliving.property.service.interfaces.UnitAvailabilityService;
 import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserQueryService;
+import com.tenantliving.finance.mapper.UnitBookingMapper;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -47,19 +49,9 @@ public class UnitBookingServiceImpl implements UnitBookingService {
 
         UnitTbl unit = unitQueryService.getUnitById(request.unitId());
 
-        UnitBookingTbl booking = UnitBookingTbl.builder()
-                .unit(unit)
-                .prospectiveTenantUserId(request.prospectiveTenantUserId())
-                .prospectiveTenantName(request.prospectiveTenantName())
-                .prospectiveTenantPhone(request.prospectiveTenantPhone())
-                .prospectiveTenantEmail(request.prospectiveTenantEmail())
-                .tokenAmount(request.tokenAmount())
-                .expectedMoveInDate(request.expectedMoveInDate())
-                .status("BOOKED")
-                .build();
-
+        UnitBookingTbl booking = UnitBookingMapper.toEntity(request, unit);
         booking = unitBookingCrudService.save(booking);
-        return toResponse(booking);
+        return UnitBookingMapper.toResponse(booking);
     }
 
     @Override
@@ -73,7 +65,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
 
         booking.setStatus("FORFEITED");
         booking = unitBookingCrudService.save(booking);
-        return toResponse(booking);
+        return UnitBookingMapper.toResponse(booking);
     }
 
     @Override
@@ -87,7 +79,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
 
         booking.setStatus("REFUNDED");
         booking = unitBookingCrudService.save(booking);
-        return toResponse(booking);
+        return UnitBookingMapper.toResponse(booking);
     }
 
     @Override
@@ -162,30 +154,11 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         return payerUserId != null ? payerUserId : fallbackUserId;
     }
 
-    private UnitBookingDTOs.UnitBookingResponse toResponse(UnitBookingTbl booking) {
-        return new UnitBookingDTOs.UnitBookingResponse(
-                booking.getId(),
-                booking.getUnit().getId(),
-                booking.getUnit().getUnitNumber(),
-                booking.getProspectiveTenantUserId(),
-                booking.getProspectiveTenantName(),
-                booking.getProspectiveTenantPhone(),
-                booking.getProspectiveTenantEmail(),
-                booking.getTokenAmount(),
-                booking.getExpectedMoveInDate(),
-                booking.getStatus(),
-                booking.getPaymentTransaction() != null ? booking.getPaymentTransaction().getId() : null,
-                booking.getConvertedLeaseId(),
-                booking.getCreatedAt(),
-                booking.getUpdatedAt()
-        );
-    }
-
     @Override
     @Transactional(readOnly = true)
-    public java.util.List<UnitBookingDTOs.UnitBookingResponse> listBookings() {
+    public List<UnitBookingDTOs.UnitBookingResponse> listBookings() {
         return unitBookingCrudService.findAll().stream()
-                .map(this::toResponse)
+                .map(UnitBookingMapper::toResponse)
                 .collect(Collectors.toList());
     }
 }

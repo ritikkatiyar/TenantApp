@@ -4,6 +4,7 @@ import com.tenantliving.property.domain.PropertyTbl;
 import com.tenantliving.property.dto.PropertyDTOs;
 import com.tenantliving.property.service.interfaces.PropertyCrudService;
 import com.tenantliving.property.service.interfaces.PropertyService;
+import com.tenantliving.property.mapper.PropertyMapper;
 import com.tenantliving.user.domain.UserTbl;
 import com.tenantliving.user.service.interfaces.UserQueryService;
 import com.tenantliving.auth.service.interfaces.MembershipService;
@@ -37,13 +38,7 @@ public class PropertyServiceImpl implements PropertyService {
     public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID creatorId) {
         UserTbl creator = userQueryService.getUserById(creatorId);
 
-        PropertyTbl property = PropertyTbl.builder()
-                .name(request.name())
-                .address(request.address())
-                .city(request.city())
-                .landmark(request.landmark())
-                .totalFloors(request.totalFloors())
-                .build();
+        PropertyTbl property = PropertyMapper.toEntity(request);
         PropertyTbl savedProperty = propertyCrudService.save(property);
 
         // Assign OWNER role using MembershipService (no cross-module repo manipulation)
@@ -57,11 +52,7 @@ public class PropertyServiceImpl implements PropertyService {
     public PropertyTbl updateProperty(UUID propertyId, PropertyDTOs.UpdatePropertyRequest request) {
         PropertyTbl property = propertyCrudService.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
-        property.setName(request.name());
-        property.setAddress(request.address());
-        property.setCity(request.city());
-        property.setLandmark(request.landmark());
-        property.setTotalFloors(request.totalFloors());
+        PropertyMapper.updateEntity(request, property);
         return propertyCrudService.save(property);
     }
 

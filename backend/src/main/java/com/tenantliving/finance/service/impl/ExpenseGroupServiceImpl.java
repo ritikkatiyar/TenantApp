@@ -3,6 +3,7 @@ package com.tenantliving.finance.service.impl;
 import com.tenantliving.common.exception.BusinessException;
 import com.tenantliving.finance.domain.ExpenseGroupTbl;
 import com.tenantliving.finance.dto.ExpenseGroupDTOs;
+import com.tenantliving.finance.mapper.ExpenseGroupMapper;
 import com.tenantliving.finance.service.interfaces.ExpenseGroupCrudService;
 import com.tenantliving.finance.service.interfaces.ExpenseGroupService;
 import com.tenantliving.property.domain.UnitTbl;
@@ -30,11 +31,7 @@ public class ExpenseGroupServiceImpl implements ExpenseGroupService {
     public ExpenseGroupTbl create(ExpenseGroupDTOs.CreateExpenseGroupRequest request) {
         UnitTbl unit = unitQueryService.getUnitById(request.unitId());
         userQueryService.getUserById(request.createdBy());
-        ExpenseGroupTbl group = ExpenseGroupTbl.builder()
-                .unit(unit)
-                .createdBy(request.createdBy())
-                .name(request.name())
-                .build();
+        ExpenseGroupTbl group = ExpenseGroupMapper.toEntity(request, unit);
         ExpenseGroupTbl saved = expenseGroupCrudService.save(group);
         log.info("expense_group_created expenseGroupId={} unitId={} createdBy={}",
                 saved.getId(), saved.getUnit().getId(), saved.getCreatedBy());

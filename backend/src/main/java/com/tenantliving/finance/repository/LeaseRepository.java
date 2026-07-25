@@ -2,10 +2,12 @@ package com.tenantliving.finance.repository;
 
 import com.tenantliving.common.domain.LeaseStatus;
 import com.tenantliving.finance.domain.LeaseTbl;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,7 +17,7 @@ public interface LeaseRepository extends JpaRepository<LeaseTbl, UUID> {
 
     // 1. The Tenant "Hydration" Query: 
     // Finds where a specific user is currently living.
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"unit", "unit.property"})
+    @EntityGraph(attributePaths = {"unit", "unit.property"})
     Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status);
 
     // 2. The Move-In Safety Check: 
@@ -32,7 +34,7 @@ public interface LeaseRepository extends JpaRepository<LeaseTbl, UUID> {
     );
 
     boolean existsByUnit_Id(UUID unitId);
-    List<LeaseTbl> findByUnit_IdInAndStatus(java.util.Collection<UUID> unitIds, LeaseStatus status);
+    List<LeaseTbl> findByUnit_IdInAndStatus(Collection<UUID> unitIds, LeaseStatus status);
 
     @Query("SELECT COUNT(l) > 0 FROM LeaseTbl l JOIN l.unit u WHERE l.userId = :userId AND u.property.id = :propertyId AND l.status = :status")
     boolean existsByUserIdAndPropertyIdAndStatus(

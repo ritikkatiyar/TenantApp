@@ -12,6 +12,7 @@ import com.tenantliving.finance.service.ChargeConfigQueryService;
 import com.tenantliving.property.service.interfaces.UnitQueryService;
 import com.tenantliving.property.domain.UnitTbl;
 import com.tenantliving.finance.domain.LeaseTbl;
+import com.tenantliving.finance.dto.ChargeConfigDTOs;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasAnyPermission(UUID propertyId, String... permissionCodes) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
+        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
 
         UUID userId = UUID.fromString(currentUser.getId());
         Set<String> userPermissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
@@ -68,6 +70,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasRole(UUID propertyId, String roleCode) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
+        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
 
         UUID userId = UUID.fromString(currentUser.getId());
         boolean hasRole = membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode);
@@ -80,6 +83,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasAnyRole(UUID propertyId, String... roleCodes) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
+        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
 
         UUID userId = UUID.fromString(currentUser.getId());
         for (String roleCode : roleCodes) {
@@ -176,7 +180,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode) {
         if (chargeConfigId == null) return false;
         try {
-            com.tenantliving.finance.dto.ChargeConfigDTOs.ChargeConfigResponse c = chargeConfigQueryService.getChargeConfigById(chargeConfigId);
+            ChargeConfigDTOs.ChargeConfigResponse c = chargeConfigQueryService.getChargeConfigById(chargeConfigId);
             return checkPermission(c.getPropertyId(), permissionCode);
         } catch (Exception e) {
             return false;
@@ -187,6 +191,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) {
             return false;
+        }
+        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) {
+            return true;
         }
 
         UUID userId = UUID.fromString(currentUser.getId());
