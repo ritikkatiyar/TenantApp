@@ -48,11 +48,6 @@ public class LeaseServiceImpl implements LeaseService {
     private final FinanceLedgerCrudService financeLedgerCrudService;
 
     @Override
-    public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request) {
-        return createLease(request, null);
-    }
-
-    @Override
     public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId) {
         // 1. Dynamic unit availability safety check
         boolean available = unitAvailabilityService.isUnitAvailableOnDate(request.unitId(), request.moveInDate());

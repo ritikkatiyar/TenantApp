@@ -140,10 +140,11 @@ Avoid:
 ## CODE QUALITY RULES
 
 * No commented-out code
-* No dead code
+* No dead code (remove unused interface method overloads and implementation code immediately)
 * No duplicate logic
 * Keep methods small and readable
 * Use constructor injection only
+* **Code Reuse and Redundancy Check**: Always inspect the codebase to verify if a utility method, mapper, conversion helper, or business function already exists before writing new code. Reuse existing structures instead of writing redundant code.
 * **Clean Import Styling**: Never use fully-qualified inline declarations for standard utility and time packages (e.g., `java.util.List`, `java.util.Map`, `java.time.LocalDate`). Always declare standard `import` statements at the top of the file and use simple class names in the code body.
 * **Service-DTO Decoupling & Mapper Conventions**: To maintain pure business logic in service implementations, DTO-to-entity and entity-to-DTO conversion must be decoupled from the service layer and delegated to dedicated, stateless mapper utility classes.
   * Mappers must follow the naming pattern `<DomainName>Mapper` (e.g., `LeaseMapper`) and define a `private` constructor to prevent instantiation.
