@@ -20,7 +20,6 @@ import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { PropertyResponse } from '@/src/types/property';
-import { RoleToggle } from '@/src/components/RoleToggle';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import FloorLayoutViewerModal from '@/src/features/properties/components/FloorLayoutViewerModal';
 
@@ -210,7 +209,6 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                   <MaterialIcons name="search" size={22} color="#6b7a7d" />
                   <Text style={styles.searchPlaceholder}>Search portfolio...</Text>
                 </BlurView>
-                <RoleToggle />
                 <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
               </>
             }

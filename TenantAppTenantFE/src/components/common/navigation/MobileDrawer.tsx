@@ -30,7 +30,6 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { signOut, context, user } = useAuth();
-  const isTenantView = context?.isTenant && (!context?.isLandlord || pathname.startsWith('/tenant-'));
 
   const slideAnim = useRef(new Animated.Value(-actualWidth)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -170,27 +169,11 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.sectionTitle}>Menu</Text>
-            {!isTenantView ? (
-              <>
-                {renderDrawerLink('dashboard', 'Overview', '/analytics')}
-                {renderDrawerLink('business', 'Portfolio', '/command-center')}
-                {renderDrawerLink('assessment', 'Reports', '/reports')}
-                {renderDrawerLink('description', 'Leases', '/leases' as Href)}
-                {renderDrawerLink('inventory', 'Inventory', '/inventory' as Href)}
-                {renderDrawerLink('build', 'Escalations', '/escalations')}
-                {renderDrawerLink('campaign', 'Announcements', '/announcements')}
-                {renderDrawerLink('account-balance', 'Finance & Billing', '/expenses')}
-                {renderDrawerLink('settings', 'Settings', '/settings')}
-              </>
-            ) : (
-              <>
-                {renderDrawerLink('home', 'Home', '/tenant-home')}
-                {renderDrawerLink('domain', 'Property', '/tenant-property')}
-                {renderDrawerLink('inventory', 'Inventory', '/tenant-inventory' as Href)}
-                {renderDrawerLink('payments', 'Payments', '/tenant-payments')}
-                {renderDrawerLink('support-agent', 'Support & Tickets', '/tenant-maintenance')}
-              </>
-            )}
+            {renderDrawerLink('home', 'Home', '/tenant-home')}
+            {renderDrawerLink('domain', 'Property', '/tenant-property')}
+            {renderDrawerLink('inventory', 'Inventory', '/tenant-inventory' as Href)}
+            {renderDrawerLink('payments', 'Payments', '/tenant-payments')}
+            {renderDrawerLink('support-agent', 'Support & Tickets', '/tenant-maintenance')}
           </ScrollView>
 
           {/* Bottom Footer Section */}

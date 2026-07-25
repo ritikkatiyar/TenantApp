@@ -2,8 +2,10 @@ param(
     [Parameter(Position=0)]
     [string]$Command = "start",
     [int]$FrontendPort = 3000,
+    [int]$TenantFrontendPort = 3001,
     [int]$BackendPort = 8080,
     [int]$AiServicePort = 8081,
+    [string]$Mode = "both",
     [switch]$SkipDocker
 )
 
@@ -12,14 +14,17 @@ $ErrorActionPreference = "Stop"
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $RootDir "backend"
 $AiServiceDir = Join-Path $RootDir "ai-service"
-$FrontendDir = Join-Path $RootDir "TenantAppFE"
+$LandlordFrontendDir = Join-Path $RootDir "TenantAppFE"
+$TenantFrontendDir = Join-Path $RootDir "TenantAppTenantFE"
 $LogDir = Join-Path $RootDir "logs\dev"
 $BackendLog = Join-Path $LogDir "backend.log"
 $BackendErrLog = Join-Path $LogDir "backend.err.log"
 $AiServiceLog = Join-Path $LogDir "ai-service.log"
 $AiServiceErrLog = Join-Path $LogDir "ai-service.err.log"
-$FrontendLog = Join-Path $LogDir "frontend.log"
-$FrontendErrLog = Join-Path $LogDir "frontend.err.log"
+$LandlordFrontendLog = Join-Path $LogDir "landlord_frontend.log"
+$LandlordFrontendErrLog = Join-Path $LogDir "landlord_frontend.err.log"
+$TenantFrontendLog = Join-Path $LogDir "tenant_frontend.log"
+$TenantFrontendErrLog = Join-Path $LogDir "tenant_frontend.err.log"
 
 function Write-Step {
     param([string]$Message)
@@ -336,7 +341,12 @@ Ensure-MavenModuleCompiled -ModuleDir $BackendDir -RequiredClassRelativePaths @(
 )
 
 Assert-PortAvailable -Port $BackendPort -ServiceName "Backend"
-Assert-PortAvailable -Port $FrontendPort -ServiceName "Frontend"
+if ($Mode -ieq "both" -or $Mode -ieq "landlord") {
+    Assert-PortAvailable -Port $FrontendPort -ServiceName "Landlord Frontend"
+}
+if ($Mode -ieq "both" -or $Mode -ieq "tenant") {
+    Assert-PortAvailable -Port $TenantFrontendPort -ServiceName "Tenant Frontend"
+}
 
 Write-Step "Starting backend on http://localhost:$BackendPort"
 
@@ -358,23 +368,43 @@ $backendProcess = Start-Process `
 
 
 
-Write-Step "Starting frontend on http://localhost:$FrontendPort"
+$landlordFrontendProcess = $null
+if ($Mode -ieq "both" -or $Mode -ieq "landlord") {
+    Write-Step "Starting Landlord frontend on http://localhost:$FrontendPort"
+    $landlordFrontendProcess = Start-Process `
+        -FilePath "cmd.exe" `
+        -ArgumentList "/c", "npm run web -- --port $FrontendPort" `
+        -WorkingDirectory $LandlordFrontendDir `
+        -RedirectStandardOutput $LandlordFrontendLog `
+        -RedirectStandardError $LandlordFrontendErrLog `
+        -PassThru
+}
 
-$frontendProcess = Start-Process `
-    -FilePath "cmd.exe" `
-    -ArgumentList "/c", "npm run web -- --port $FrontendPort" `
-    -WorkingDirectory $FrontendDir `
-    -RedirectStandardOutput $FrontendLog `
-    -RedirectStandardError $FrontendErrLog `
-    -PassThru
+$tenantFrontendProcess = $null
+if ($Mode -ieq "both" -or $Mode -ieq "tenant") {
+    Write-Step "Starting Tenant frontend on http://localhost:$TenantFrontendPort"
+    $tenantFrontendProcess = Start-Process `
+        -FilePath "cmd.exe" `
+        -ArgumentList "/c", "npm run web -- --port $TenantFrontendPort" `
+        -WorkingDirectory $TenantFrontendDir `
+        -RedirectStandardOutput $TenantFrontendLog `
+        -RedirectStandardError $TenantFrontendErrLog `
+        -PassThru
+}
 
-Write-Step "Backend log:     $BackendLog"
-Write-Step "Frontend log:    $FrontendLog"
+Write-Step "Backend log:           $BackendLog"
+if ($landlordFrontendProcess) { Write-Step "Landlord Frontend log: $LandlordFrontendLog" }
+if ($tenantFrontendProcess) { Write-Step "Tenant Frontend log:   $TenantFrontendLog" }
 Write-Step "Press Ctrl+C to stop all services."
 
+$tailLogs = @($BackendLog, $BackendErrLog)
+if ($landlordFrontendProcess) { $tailLogs += @($LandlordFrontendLog, $LandlordFrontendErrLog) }
+if ($tenantFrontendProcess) { $tailLogs += @($TenantFrontendLog, $TenantFrontendErrLog) }
+
 try {
-    Get-Content $BackendLog, $BackendErrLog, $FrontendLog, $FrontendErrLog -Wait -Tail 0
+    Get-Content $tailLogs -Wait -Tail 0
 } finally {
     Stop-ChildProcess $backendProcess "backend"
-    Stop-ChildProcess $frontendProcess "frontend"
+    if ($landlordFrontendProcess) { Stop-ChildProcess $landlordFrontendProcess "landlord frontend" }
+    if ($tenantFrontendProcess) { Stop-ChildProcess $tenantFrontendProcess "tenant frontend" }
 }

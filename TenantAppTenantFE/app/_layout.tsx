@@ -19,15 +19,11 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
 
 const ROUTE_TITLES: Record<string, string> = {
-  '/command-center': 'Portfolio',
-  '/leases': 'Leases',
-  '/inventory': 'Items',
-  '/expenses': 'Finance',
-  '/reports': 'Reports',
-  '/ai': 'AI Desk',
-  '/escalations': 'Escalations',
-  '/announcements': 'Announcements',
-  '/analytics': 'Overview',
+  '/tenant-home': 'My Home',
+  '/tenant-property': 'Property',
+  '/tenant-inventory': 'Items',
+  '/tenant-payments': 'Payments',
+  '/tenant-maintenance': 'Support',
   '/settings': 'Settings',
 };
 
@@ -35,28 +31,15 @@ function getHeaderTitle(pathname: string): string {
   if (ROUTE_TITLES[pathname]) {
     return ROUTE_TITLES[pathname];
   }
-  if (pathname.startsWith('/properties/')) {
-    if (pathname.includes('/floors/')) {
-      return 'Floor View';
-    }
-    return 'Property Details';
-  }
-  if (pathname.startsWith('/expenses')) {
-    return 'Finance';
-  }
   return 'Livic';
 }
 
 const PRIMARY_ROUTES = [
-  '/command-center',
-  '/leases',
-  '/inventory',
-  '/expenses',
-  '/analytics',
-  '/reports',
-  '/ai',
-  '/announcements',
-  '/escalations',
+  '/tenant-home',
+  '/tenant-property',
+  '/tenant-inventory',
+  '/tenant-payments',
+  '/tenant-maintenance',
   '/settings'
 ];
 
@@ -89,8 +72,8 @@ export default function RootLayout() {
             <View style={{ flex: 1 }}>
               {!isDesktop && !hideHeader && (
                 <MobileHeader 
-                  title={getHeaderTitle(pathname)} 
-                  onMenuPress={() => setDrawerVisible(true)} 
+                   title={getHeaderTitle(pathname)} 
+                   onMenuPress={() => setDrawerVisible(true)} 
                 />
               )}
               <ScreenWrapper isAuth={hideNavigation}>
@@ -100,21 +83,11 @@ export default function RootLayout() {
                     <Stack.Screen name="login" />
                     <Stack.Screen name="signup" />
                     <Stack.Screen name="onboarding" />
-                    <Stack.Screen name="command-center" />
-                    <Stack.Screen name="ai" />
-                    <Stack.Screen name="admin" />
-                    <Stack.Screen name="analytics" />
-                    <Stack.Screen name="reports" />
-                    <Stack.Screen name="billing" />
-                    <Stack.Screen name="expenses" />
-                    <Stack.Screen name="leases" />
-                    <Stack.Screen name="inventory" />
-                    <Stack.Screen name="create-expense" />
-                    <Stack.Screen name="properties/create" />
-                    <Stack.Screen name="properties/[id]" />
-                    <Stack.Screen name="properties/[id]/meter-readings" />
-                    <Stack.Screen name="escalations" />
-                    <Stack.Screen name="announcements" />
+                    <Stack.Screen name="tenant-home" />
+                    <Stack.Screen name="tenant-property" />
+                    <Stack.Screen name="tenant-inventory" />
+                    <Stack.Screen name="tenant-maintenance" />
+                    <Stack.Screen name="tenant-payments" />
                     <Stack.Screen name="settings" />
                   </Stack>
                 </OnboardingGate>

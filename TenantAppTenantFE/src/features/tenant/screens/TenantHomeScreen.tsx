@@ -34,8 +34,8 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
 
   const loadAnnouncements = () => {
     getAnnouncements(token)
-      .then((data) => setAnnouncements(data))
-      .catch((err) => console.error('[Announcements]', err));
+      .then((data: Announcement[]) => setAnnouncements(data))
+      .catch((err: any) => console.error('[Announcements]', err));
   };
 
   useEffect(() => {
@@ -56,8 +56,8 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
 
   const handleMarkAsRead = (id: string) => {
     markAnnouncementRead(token, id).then(() => {
-      setAnnouncements(prev => prev.map(ann => ann.id === id ? { ...ann, read: true } : ann));
-      if (selectedNotice?.id === id) setSelectedNotice(prev => prev ? { ...prev, read: true } : null);
+      setAnnouncements((prev: Announcement[]) => prev.map(ann => ann.id === id ? { ...ann, read: true } : ann));
+      if (selectedNotice?.id === id) setSelectedNotice((prev: Announcement | null) => prev ? { ...prev, read: true } : null);
     });
   };
 

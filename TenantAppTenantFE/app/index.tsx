@@ -7,7 +7,7 @@ import { getMyContext } from '@/src/features/auth/api/me.api';
 
 export default function IndexScreen() {
   const { accessToken, isAuthenticated, isReady, setContext } = useAuth();
-  const [target, setTarget] = React.useState<'/command-center' | null>(null);
+  const [target, setTarget] = React.useState<'/tenant-home' | null>(null);
 
   React.useEffect(() => {
     if (!isReady || !isAuthenticated || !accessToken) {
@@ -19,12 +19,12 @@ export default function IndexScreen() {
       .then((context) => {
         if (isMounted) {
           setContext(context);
-          setTarget('/command-center');
+          setTarget('/tenant-home');
         }
       })
       .catch(() => {
         if (isMounted) {
-          setTarget('/command-center');
+          setTarget('/tenant-home');
         }
       });
 
