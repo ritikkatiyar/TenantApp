@@ -8,7 +8,7 @@ import com.tenantliving.billing.dto.PaymentIntentRequest;
 import com.tenantliving.billing.dto.PaymentIntentResponse;
 import com.tenantliving.billing.dto.SubscriptionRequest;
 import com.tenantliving.billing.dto.SubscriptionResponse;
-import com.tenantliving.billing.service.PaymentGatewayRouter;
+import com.tenantliving.payment.service.PaymentGatewayRouter;
 import com.tenantliving.billing.service.interfaces.BillingWalletService;
 import com.tenantliving.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;

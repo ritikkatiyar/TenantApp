@@ -102,3 +102,19 @@ export const batchUnpublishRentCycle = async (
     }
   );
 };
+
+export const recordCashPayment = async (
+  cycleId: string,
+  amount: number,
+  note: string,
+  token: string
+): Promise<any> => {
+  return await apiRequest<any>(
+    `/api/v1/finance/payments/rent-cycles/${cycleId}/cash`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ amount, note }),
+      token
+    }
+  );
+};

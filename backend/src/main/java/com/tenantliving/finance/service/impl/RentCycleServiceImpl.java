@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.tenantliving.payment.service.interfaces.PaymentTransactionService;
 import com.tenantliving.finance.strategy.ChargeCalculationService;
 import com.tenantliving.finance.strategy.CalculationResult;
 import com.tenantliving.user.service.interfaces.UserQueryService;
@@ -45,6 +47,7 @@ import com.tenantliving.finance.service.interfaces.RentCycleChargeCrudService;
 import com.tenantliving.finance.service.interfaces.BillingWorksheetCrudService;
 import com.tenantliving.finance.service.interfaces.FinanceLedgerCrudService;
 import com.tenantliving.finance.service.interfaces.ChargeConfigCrudService;
+import com.tenantliving.finance.service.interfaces.UnitBookingCrudService;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +64,9 @@ public class RentCycleServiceImpl implements RentCycleService {
     private final ChargeConfigCrudService chargeConfigCrudService;
     private final ChargeCalculationService chargeCalculationService;
     private final UserQueryService userQueryService;
+    private final PaymentTransactionService paymentTransactionService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final UnitBookingCrudService unitBookingCrudService;
 
     @Override
     @Transactional
@@ -210,6 +216,29 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
+        // First-cycle check for token bookings
+        List<RentCycleTbl> existingCycles = rentCycleCrudService.findByLease_Id(lease.getId());
+        final UUID currentCycleId = cycle.getId();
+        long priorCyclesCount = existingCycles.stream()
+                .filter(c -> !c.getId().equals(currentCycleId))
+                .count();
+
+        if (priorCyclesCount == 0) {
+            java.util.Optional<com.tenantliving.finance.domain.UnitBookingTbl> bookingOpt =
+                    unitBookingCrudService.findByStatusAndConvertedLeaseId("CONVERTED", lease.getId());
+            if (bookingOpt.isPresent()) {
+                com.tenantliving.finance.domain.UnitBookingTbl booking = bookingOpt.get();
+                RentCycleChargeTbl discountCharge = RentCycleChargeTbl.builder()
+                        .rentCycle(cycle)
+                        .chargeType(RentChargeType.DISCOUNT)
+                        .amount(booking.getTokenAmount())
+                        .description("Token amount adjustment from unit booking")
+                        .build();
+                rentCycleChargeCrudService.save(discountCharge);
+                totalAmount = totalAmount.subtract(booking.getTokenAmount());
+            }
+        }
+
         cycle.setTotalAmount(totalAmount);
         RentCycleTbl savedCycle = rentCycleCrudService.save(cycle);
 
@@ -266,26 +295,32 @@ public class RentCycleServiceImpl implements RentCycleService {
         if (cycle.getStatus() == RentCycleStatus.PAID) {
             return toResponse(cycle);
         }
-        
-        cycle.setStatus(RentCycleStatus.PAID);
-        cycle.setPaidAt(LocalDateTime.now());
-        RentCycleTbl saved = rentCycleCrudService.save(cycle);
-        
-        // Add payment to ledger
-        FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-            .unit(cycle.getLease().getUnit())
-            .lease(cycle.getLease())
-            .transactionType(LedgerTransactionType.PAYMENT_RECEIVED)
-            .amount(cycle.getTotalAmount().negate())
-            .balance(cycle.getTotalAmount().negate()) 
-            .referenceId(saved.getId())
-            .description("Payment received for invoice " + cycle.getBillingMonth())
-            .build();
-        financeLedgerCrudService.save(ledgerEntry);
-        
+
+        UUID confirmedBy = null;
+        org.springframework.security.core.context.SecurityContext context = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        if (context != null && context.getAuthentication() != null && context.getAuthentication().getPrincipal() instanceof com.tenantliving.auth.principal.UserDetailsImpl) {
+            confirmedBy = UUID.fromString(((com.tenantliving.auth.principal.UserDetailsImpl) context.getAuthentication().getPrincipal()).getId());
+        }
+        if (confirmedBy == null) {
+            confirmedBy = cycle.getLease().getUserId();
+        }
+
+        BigDecimal amountPaid = cycle.getAmountPaid() != null ? cycle.getAmountPaid() : BigDecimal.ZERO;
+        BigDecimal remainingAmount = cycle.getTotalAmount().subtract(amountPaid);
+
+        paymentTransactionService.recordCashPayment(
+                cycle.getLease().getUserId(),
+                "RENT_CYCLE",
+                cycle.getId(),
+                remainingAmount,
+                confirmedBy,
+                "Recorded via legacy markPaid"
+        );
+
+        RentCycleTbl updated = rentCycleCrudService.findById(id).orElse(cycle);
         log.info("rent_cycle_marked_paid rentCycleId={} leaseId={} paidAt={}",
-                saved.getId(), saved.getLease().getId(), saved.getPaidAt());
-        return toResponse(saved);
+                updated.getId(), updated.getLease().getId(), updated.getPaidAt());
+        return toResponse(updated);
     }
 
     @Override
@@ -349,6 +384,16 @@ public class RentCycleServiceImpl implements RentCycleService {
         // Optimized: batch saves outside the loop
         if (!cyclesToSave.isEmpty()) {
             rentCycleCrudService.saveAll(cyclesToSave);
+            for (RentCycleTbl c : cyclesToSave) {
+                eventPublisher.publishEvent(new com.tenantliving.common.event.RentPublishedEvent(
+                        this,
+                        c.getId(),
+                        c.getLease().getUserId(),
+                        c.getBillingMonth(),
+                        c.getTotalAmount(),
+                        c.getDueDate()
+                ));
+            }
         }
         if (!worksheetsToSave.isEmpty()) {
             billingWorksheetCrudService.saveAll(worksheetsToSave);

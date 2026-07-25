@@ -61,3 +61,9 @@ app:
     allowed-methods: ${APP_CORS_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
     allowed-headers: ${APP_CORS_ALLOWED_HEADERS:Authorization,Content-Type,Accept,Origin,X-Correlation-Id}
     allow-credentials: ${APP_CORS_ALLOW_CREDENTIALS:true}
+
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID:mock-key-id}
+  key-secret: ${RAZORPAY_KEY_SECRET:mock-key-secret}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:mock-webhook-secret}
+

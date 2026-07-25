@@ -40,4 +40,13 @@ public class RentCycleTbl extends BaseEntity {
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
+
+    @Column(name = "amount_paid", nullable = false, precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal amountPaid = BigDecimal.ZERO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_transaction_id")
+    @ToString.Exclude
+    private com.tenantliving.payment.domain.PaymentTransactionTbl paymentTransaction;
 }

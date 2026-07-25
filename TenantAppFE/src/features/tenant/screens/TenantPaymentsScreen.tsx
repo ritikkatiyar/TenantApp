@@ -6,9 +6,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
 import { useResponsive } from '@/hooks/useResponsive';
-import { getTenantRentCycles, markRentCyclePaid, RentCycle } from '@/src/features/tenant/api/payments.api';
+import { getTenantRentCycles, markRentCyclePaid, RentCycle, getStatementUrl } from '@/src/features/tenant/api/payments.api';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import * as WebBrowser from 'expo-web-browser';
 
 interface TenantPaymentsScreenProps {
   token: string;
@@ -47,6 +48,15 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
         markRentCyclePaid(token, activeCycle.id).catch(() => {});
       }
     }, 1500);
+  };
+
+  const handleDownloadStatement = async (cycleId: string) => {
+    try {
+      const url = getStatementUrl(cycleId, token);
+      await WebBrowser.openBrowserAsync(url);
+    } catch (err: any) {
+      console.warn('[Statement] Error opening statement:', err.message);
+    }
   };
 
   return (
@@ -108,9 +118,14 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.invoiceBtn} activeOpacity={0.8}>
+              <TouchableOpacity 
+                style={styles.invoiceBtn} 
+                activeOpacity={0.8}
+                onPress={() => activeCycle && handleDownloadStatement(activeCycle.id)}
+                disabled={!activeCycle}
+              >
                 <MaterialIcons name="download" size={20} color={Theme.Colors.primary} />
-                <Text style={styles.invoiceBtnText}>Statement PDF</Text>
+                <Text style={styles.invoiceBtnText}>Payment Statement</Text>
               </TouchableOpacity>
             </View>
           </BlurView>
@@ -163,13 +178,18 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                       </View>
                     </View>
                     <View style={styles.historyRight}>
-                      <Text style={styles.historyAmount}>₹{cycle.totalAmount?.toLocaleString() || '0'}</Text>
-                      <View style={[styles.statusSuccess, cycle.status === 'PAID' ? { backgroundColor: '#dcfce7' } : { backgroundColor: '#fef3c7' }]}>
-                        <Text style={[styles.statusSuccessText, cycle.status === 'PAID' ? { color: '#15803d' } : { color: '#b45309' }]}>
-                          {cycle.status}
-                        </Text>
-                      </View>
-                    </View>
+                       <Text style={styles.historyAmount}>₹{cycle.totalAmount?.toLocaleString() || '0'}</Text>
+                       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                         <View style={[styles.statusSuccess, cycle.status === 'PAID' ? { backgroundColor: '#dcfce7', marginRight: 8 } : { backgroundColor: '#fef3c7', marginRight: 8 }]}>
+                           <Text style={[styles.statusSuccessText, cycle.status === 'PAID' ? { color: '#15803d' } : { color: '#b45309' }]}>
+                             {cycle.status}
+                           </Text>
+                         </View>
+                         <TouchableOpacity onPress={() => handleDownloadStatement(cycle.id)}>
+                           <MaterialIcons name="download" size={18} color={Theme.Colors.primary} />
+                         </TouchableOpacity>
+                       </View>
+                     </View>
                   </View>
                 ))
               ) : paySuccess ? (

@@ -42,4 +42,8 @@ public class PropertyTbl extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
+
+    @Column(name = "allow_partial_payment", nullable = false)
+    @Builder.Default
+    private boolean allowPartialPayment = false;
 }

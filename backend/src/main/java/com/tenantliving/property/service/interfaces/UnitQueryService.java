@@ -11,4 +11,5 @@ public interface UnitQueryService {
     List<UnitDTOs.FloorSummaryResponse> getFloorSummaries(UUID propertyId, Integer throughFloor);
     List<UnitTbl> getUnitsByFloor(UUID propertyId, int floorNumber);
     List<UnitTbl> getUnitsByProperty(UUID propertyId);
+    List<UnitTbl> getVacatingUnits(UUID propertyId);
 }

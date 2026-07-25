@@ -69,4 +69,12 @@ public class UnitController {
         List<UnitTbl> units = unitService.generateBatchUnits(propertyId, request);
         return ResponseEntity.ok(ApiResponse.success(unitLayoutFacade.getFloorLayout(propertyId, request.startingFloorNumber())));
     }
+
+    @GetMapping("/units/vacating")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> getVacatingUnits(
+            @PathVariable UUID propertyId) {
+        List<UnitDTOs.UnitResponse> units = unitLayoutFacade.getVacatingUnits(propertyId);
+        return ResponseEntity.ok(ApiResponse.success(units));
+    }
 }

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public class UnitDTOs {
@@ -56,7 +57,7 @@ public class UnitDTOs {
             UnitType type,
             int capacity,
             FacingDirection facing,
-            java.util.List<ActiveLeaseSummary> activeLeases
+            List<ActiveLeaseSummary> activeLeases
     ) {}
 
     public record ActiveLeaseSummary(

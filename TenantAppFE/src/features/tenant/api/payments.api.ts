@@ -1,4 +1,5 @@
 import { apiRequest } from '@/src/api/client';
+import { apiUrl } from '@/src/config/api';
 
 export interface RentCycle {
   id: string;
@@ -32,4 +33,8 @@ export function markRentCyclePaid(token: string, cycleId: string): Promise<RentC
     method: 'POST',
     token,
   });
+}
+
+export function getStatementUrl(cycleId: string, token: string): string {
+  return apiUrl(`/api/v1/finance/payments/rent-cycles/${cycleId}/invoice?token=${token}`);
 }

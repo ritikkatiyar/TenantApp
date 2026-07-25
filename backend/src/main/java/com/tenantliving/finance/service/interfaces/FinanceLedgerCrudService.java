@@ -16,4 +16,5 @@ public interface FinanceLedgerCrudService extends CrudService<FinanceLedgerTbl, 
     Page<FinanceLedgerTbl> findAll(Specification<FinanceLedgerTbl> spec, Pageable pageable);
     BigDecimal getRunningBalanceForLeaseAtEntry(UUID leaseId, LocalDateTime createdAt, UUID id);
     List<Object[]> getRunningBalancesForEntries(Collection<UUID> ids);
+    BigDecimal sumAmountByLeaseId(UUID leaseId);
 }

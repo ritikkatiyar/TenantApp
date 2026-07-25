@@ -1,26 +1,30 @@
 import { apiRequest } from '@/src/api/client';
 
 export interface CreateLeaseRequest {
-  userId: string;
+  userId?: string | null;
   unitId: string;
-  rentAmount: number;
+  rentAmount?: number;
   securityDeposit: number;
   splitStrategy: 'FULL_UNIT' | 'PER_OCCUPANT' | 'CUSTOM';
   moveInDate: string;
   moveOutDate?: string | null;
   status?: 'ACTIVE' | 'ENDED';
+  bookingId?: string | null;
 }
 
 export interface LeaseResponse {
   id: string;
   userId: string;
   unitId: string;
+  unitNumber: string;
   rentAmount: number;
   securityDeposit: number;
   splitStrategy: string;
   moveInDate: string;
   moveOutDate?: string | null;
   status: string;
+  tenantName?: string;
+  tenantPhone?: string;
   propertyName?: string;
 }
 
@@ -45,3 +49,14 @@ export function getActiveLease(token: string): Promise<LeaseResponse | null> {
     token,
   });
 }
+
+export function listActiveLeasesByProperty(propertyId: string, token: string): Promise<LeaseResponse[]> {
+  return apiRequest<LeaseResponse[]>(`/api/v1/finance/leases?propertyId=${propertyId}`, {
+    method: 'GET',
+    token,
+  }).catch((err) => {
+    console.warn('[Lease API] Failed to list active leases:', err.message);
+    return [];
+  });
+}
+

@@ -1,6 +1,7 @@
 package com.tenantliving.notification.service;
 
 import com.tenantliving.notification.domain.NotificationChannel;
+import java.util.List;
 
 /**
  * Service interface for dispatching notifications through any available channel.
@@ -30,5 +31,5 @@ public interface NotificationService {
      * @param title            The notification title.
      * @param body             The notification body.
      */
-    void sendBulk(java.util.List<String> recipientUserIds, NotificationChannel channel, String title, String body);
+    void sendBulk(List<String> recipientUserIds, NotificationChannel channel, String title, String body);
 }

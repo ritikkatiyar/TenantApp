@@ -36,4 +36,9 @@ public class FinanceLedgerCrudServiceImpl extends AbstractCrudService<FinanceLed
     public List<Object[]> getRunningBalancesForEntries(Collection<UUID> ids) {
         return repository.getRunningBalancesForEntries(ids);
     }
+
+    @Override
+    public BigDecimal sumAmountByLeaseId(UUID leaseId) {
+        return repository.sumAmountByLeaseId(leaseId);
+    }
 }

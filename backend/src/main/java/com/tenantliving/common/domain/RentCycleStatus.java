@@ -4,5 +4,6 @@ public enum RentCycleStatus {
     PENDING,
     PUBLISHED,
     PAID,
-    OVERDUE
+    OVERDUE,
+    PARTIALLY_PAID
 }

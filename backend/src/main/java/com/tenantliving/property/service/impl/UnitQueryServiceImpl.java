@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.tenantliving.finance.repository.LeaseRepository;
+import com.tenantliving.common.domain.LeaseStatus;
+import com.tenantliving.finance.domain.LeaseTbl;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,7 @@ public class UnitQueryServiceImpl implements UnitQueryService {
 
     private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
+    private final LeaseRepository leaseRepository;
 
     @Override
     public UnitTbl getUnitById(UUID id) {
@@ -77,5 +81,18 @@ public class UnitQueryServiceImpl implements UnitQueryService {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
         }
         return unitCrudService.findByPropertyId(propertyId);
+    }
+
+    @Override
+    public List<UnitTbl> getVacatingUnits(UUID propertyId) {
+        if (!propertyQueryService.existsById(propertyId)) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
+        }
+        List<LeaseTbl> leases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+        return leases.stream()
+                .filter(lease -> lease.getMoveOutDate() != null)
+                .map(LeaseTbl::getUnit)
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

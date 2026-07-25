@@ -20,4 +20,7 @@ public interface FinanceLedgerRepository extends JpaRepository<FinanceLedgerTbl,
 
     @Query("SELECT l.id, COALESCE((SELECT SUM(l2.amount) FROM FinanceLedgerTbl l2 WHERE l2.lease.id = l.lease.id AND (l2.createdAt < l.createdAt OR (l2.createdAt = l.createdAt AND l2.id <= l.id))), 0) FROM FinanceLedgerTbl l WHERE l.id IN :ids")
     List<Object[]> getRunningBalancesForEntries(@Param("ids") java.util.Collection<UUID> ids);
+
+    @Query("SELECT COALESCE(SUM(l.amount), 0) FROM FinanceLedgerTbl l WHERE l.lease.id = :leaseId")
+    BigDecimal sumAmountByLeaseId(@Param("leaseId") UUID leaseId);
 }

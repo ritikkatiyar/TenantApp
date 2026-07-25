@@ -13,13 +13,14 @@ import java.util.UUID;
 public class LeaseDTOs {
 
     public record CreateLeaseRequest(
-            @NotNull UUID userId,
+            UUID userId,
             @NotNull UUID unitId,
             @NotNull @PositiveOrZero BigDecimal securityDeposit,
             @NotNull LeaseSplitStrategy splitStrategy,
             @NotNull LocalDate moveInDate,
             LocalDate moveOutDate,
-            LeaseStatus status
+            LeaseStatus status,
+            UUID bookingId
     ) {}
 
     public record LeaseResponse(
@@ -28,6 +29,8 @@ public class LeaseDTOs {
             UUID unitId,
             String unitNumber,
             String propertyName,
+            String tenantName,
+            String tenantPhone,
             BigDecimal rentAmount,
             BigDecimal securityDeposit,
             LeaseSplitStrategy splitStrategy,

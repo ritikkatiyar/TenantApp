@@ -25,7 +25,7 @@ public interface LeaseRepository extends JpaRepository<LeaseTbl, UUID> {
     // 3. The Landlord Dashboard Query: 
     // Fetches all active occupancies for a whole building to calculate revenue/lease rates.
     // Uses a custom @Query to prevent N+1 issues by joining the Unit table.
-    @Query("SELECT o FROM LeaseTbl o JOIN FETCH o.unit r WHERE r.property.id = :propertyId AND o.status = :status")
+    @Query("SELECT o FROM LeaseTbl o JOIN FETCH o.unit r JOIN FETCH r.property WHERE r.property.id = :propertyId AND o.status = :status")
     List<LeaseTbl> findActiveOccupanciesByProperty(
             @Param("propertyId") UUID propertyId,
             @Param("status") LeaseStatus status

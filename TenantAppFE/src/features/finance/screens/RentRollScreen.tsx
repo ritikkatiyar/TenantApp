@@ -4,9 +4,12 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  ActivityIndicator
+  ActivityIndicator,
+  Modal,
+  TextInput
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -18,6 +21,7 @@ import {
   getPreFlightChecklist, 
   batchPublishRentCycle,
   batchUnpublishRentCycle,
+  recordCashPayment,
   RentCycleResponse, 
   PreFlightChecklistResponse 
 } from '@/src/features/finance/api/rentCycle.api';
@@ -81,6 +85,41 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [checklist, setChecklist] = useState<PreFlightChecklistResponse | null>(null);
 
+  const [selectedInvoice, setSelectedInvoice] = useState<RentCycleResponse | null>(null);
+  const [cashAmount, setCashAmount] = useState<string>('');
+  const [cashNote, setCashNote] = useState<string>('');
+  const [showCashModal, setShowCashModal] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [receiptSuccess, setReceiptSuccess] = useState(false);
+
+  const handleOpenCashModal = (invoice: RentCycleResponse) => {
+    setSelectedInvoice(invoice);
+    setCashAmount(invoice.totalAmount.toString());
+    setCashNote('Cash received by property manager');
+    setShowCashModal(true);
+    setReceiptSuccess(false);
+  };
+
+  const handleConfirmCashPayment = async () => {
+    if (!token || !selectedInvoice) return;
+    const amountNum = parseFloat(cashAmount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      showToast("Please enter a valid cash amount.", "error");
+      return;
+    }
+    try {
+      setIsRecording(true);
+      await recordCashPayment(selectedInvoice.id, amountNum, cashNote, token);
+      setReceiptSuccess(true);
+      showToast("Cash payment recorded successfully!", "success");
+      checkExistingInvoices();
+    } catch (e: any) {
+      showToast(e.message || "Failed to record cash payment.", "error");
+    } finally {
+      setIsRecording(false);
+    }
+  };
+
   useEffect(() => {
     if (token && propertyId) {
       checkExistingInvoices();
@@ -102,7 +141,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
         setChecklist(flightData);
       }
     } catch (e) {
-      // Handled silently since checking can fail initially
+      // Handled silently
     } finally {
       setIsLoading(false);
     }
@@ -152,159 +191,270 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   };
 
   const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
-  const publishedCount = invoices.filter(inv => inv.status === 'PUBLISHED').length;
+  const publishedCount = invoices.filter(inv => inv.status === 'PUBLISHED' || inv.status === 'PAID' || inv.status === 'OVERDUE').length;
   const pendingCount = invoices.filter(inv => inv.status === 'PENDING').length;
 
-  const renderMonthSelector = () => (
-    <View style={styles.selectorContainer}>
-      <TouchableOpacity onPress={handlePrevMonth} style={styles.arrowBadge}>
-        <MaterialIcons name="chevron-left" size={20} color={Theme.Colors.primary} />
-      </TouchableOpacity>
-      
-      <View style={styles.monthBadge}>
-        <MaterialIcons name="calendar-today" size={16} color={Theme.Colors.primary} />
-        <Text style={styles.monthBadgeText}>{billingMonth}</Text>
-      </View>
-      
-      <TouchableOpacity onPress={handleNextMonth} style={styles.arrowBadge}>
-        <MaterialIcons name="chevron-right" size={20} color={Theme.Colors.primary} />
-      </TouchableOpacity>
-    </View>
-  );
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', padding: 40 }}>
+          <ActivityIndicator size="large" color={Theme.Colors.primary} />
+        </View>
+      );
+    }
 
-  const renderContent = () => (
-    <View style={styles.inner}>
-      <SectionHeader
-        title={isDesktop ? "Generate Rent Cycle" : ""}
-        rightAction={renderMonthSelector()}
-      />
-
-      {isLoading ? (
-        <ActivityIndicator size="large" color={Theme.Colors.primary} style={{ marginTop: 50 }} />
-      ) : !hasGenerated ? (
-        <GlassCard style={styles.card}>
-          <MaterialIcons name="fact-check" size={48} color={Theme.Colors.primary} style={{ marginBottom: 16 }} />
-          <Text style={styles.cardTitle}>Pre-flight Checklist</Text>
-          <Text style={styles.cardText}>Ensure all meter readings and custom billing worksheets for {billingMonth} have been completed before generating.</Text>
-          
-          {checklist && (
-            <View style={styles.checklistGrid}>
-              <View style={styles.checklistItem}>
-                <Text style={styles.checklistLabel}>Active Leases</Text>
-                <Text style={styles.checklistValue}>{checklist.activeLeases} / {checklist.totalUnits}</Text>
-              </View>
-              <View style={styles.checklistItem}>
-                <Text style={styles.checklistLabel}>Meter Readings</Text>
-                <Text style={styles.checklistValue}>
-                  {checklist.meterReadingsEntered >= checklist.meterReadingsExpected ? '✅ ' : '⚠️ '} 
-                  {checklist.meterReadingsEntered} / {checklist.meterReadingsExpected}
+    return (
+      <View style={styles.inner}>
+        <SectionHeader 
+          title="Lease & Rent Cycles" 
+          subtitle="Generate, publish, and settle rent cycles"
+          rightAction={
+            <View style={styles.selectorContainer}>
+              <TouchableOpacity onPress={handlePrevMonth} style={styles.arrowBadge}>
+                <MaterialIcons name="chevron-left" size={20} color={Theme.Colors.primary} />
+              </TouchableOpacity>
+              <View style={styles.monthBadge}>
+                <MaterialIcons name="calendar-today" size={16} color={Theme.Colors.primary} />
+                <Text style={styles.monthBadgeText}>
+                  {new Date(billingMonth + "-02").toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
                 </Text>
               </View>
+              <TouchableOpacity onPress={handleNextMonth} style={styles.arrowBadge}>
+                <MaterialIcons name="chevron-right" size={20} color={Theme.Colors.primary} />
+              </TouchableOpacity>
             </View>
-          )}
+          }
+        />
 
-          <View style={[styles.statusBox, checklist && !checklist.isReady && { backgroundColor: '#fee2e2' }]}>
-            <MaterialIcons 
-              name={checklist && !checklist.isReady ? "warning" : "info-outline"} 
-              size={20} 
-              color={checklist && !checklist.isReady ? "#b91c1c" : Theme.Colors.primary} 
-            />
-            <Text style={[styles.statusText, checklist && !checklist.isReady && { color: '#b91c1c' }]}>
-              {checklist && !checklist.isReady ? "Please complete required readings before generating." : `Ready to compile invoices for ${billingMonth}`}
+        {!hasGenerated ? (
+          <GlassCard style={styles.card}>
+            <Text style={styles.cardTitle}>Draft Billing Worksheet</Text>
+            <Text style={styles.cardText}>
+              Rent cycles have not been compiled yet for this billing month. Verify your readings and configuration checklist below.
             </Text>
-          </View>
 
-          <ActionButton
-            title="GENERATE INVOICES"
-            onPress={handleGenerate}
-            loading={isGenerating}
-            disabled={isGenerating || !!(checklist && !checklist.isReady)}
-            style={styles.generateBtn}
-          />
-        </GlassCard>
-      ) : (
-        <View style={styles.resultsContainer}>
-          <GlassCard style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Total Expected Revenue</Text>
-            <Text style={styles.summaryAmount}>₹ {totalRevenue.toFixed(2)}</Text>
-            
-            <View style={styles.summaryStatusRow}>
-              <StatCard
-                label="Published"
-                value={publishedCount}
-                trend="Tenant App notified"
-                trendType="positive"
-                iconName="check-circle"
-                style={styles.miniStat}
-              />
-              <StatCard
-                label="Pending Drafts"
-                value={pendingCount}
-                trend="Awaiting publish"
-                trendType="neutral"
-                iconName="hourglass-empty"
-                style={styles.miniStat}
-              />
-            </View>
-
-            {pendingCount > 0 && (
-              <View style={styles.actionGroup}>
-                <ActionButton
-                  title={publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
-                  onPress={handlePublish}
-                  loading={isPublishing}
-                  style={styles.publishBtn}
-                />
-
-                <ActionButton
-                  title="RE-GENERATE DRAFT INVOICES"
-                  onPress={handleGenerate}
-                  loading={isGenerating}
-                  variant="outline"
-                  style={styles.reGenerateBtn}
-                />
+            {checklist && (
+              <View style={styles.checklistGrid}>
+                <View style={styles.checklistItem}>
+                  <Text style={styles.checklistLabel}>Active Leases</Text>
+                  <Text style={styles.checklistValue}>{checklist.activeLeases} / {checklist.totalUnits}</Text>
+                </View>
+                <View style={styles.checklistItem}>
+                  <Text style={styles.checklistLabel}>Utility Readings</Text>
+                  <Text style={styles.checklistValue}>
+                    {checklist.meterReadingsEntered} / {checklist.meterReadingsExpected}
+                  </Text>
+                </View>
               </View>
             )}
 
-            {publishedCount > 0 && (
-              <ActionButton
-                title="REVERT TO DRAFT (UNPUBLISH)"
-                onPress={handleUnpublish}
-                loading={isUnpublishing}
-                variant="danger"
-                style={[styles.publishBtn, { marginTop: pendingCount > 0 ? 12 : 0 }]}
+            <View style={[styles.statusBox, checklist && !checklist.isReady && { backgroundColor: '#fee2e2' }]}>
+              <MaterialIcons 
+                name={checklist && !checklist.isReady ? "warning" : "info-outline"} 
+                size={20} 
+                color={checklist && !checklist.isReady ? "#b91c1c" : Theme.Colors.primary} 
               />
-            )}
-          </GlassCard>
+              <Text style={[styles.statusText, checklist && !checklist.isReady && { color: '#b91c1c' }]}>
+                {checklist && !checklist.isReady ? "Please complete required readings before generating." : `Ready to compile invoices for ${billingMonth}`}
+              </Text>
+            </View>
 
-          <View style={styles.invoiceList}>
-            {invoices.map((invoice, idx) => (
-              <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
-                <View style={styles.invoiceHeader}>
-                  <View>
-                    <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
-                    <Text style={{ fontSize: 12, color: Theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
-                  </View>
-                  <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
+            <ActionButton
+              title="GENERATE INVOICES"
+              onPress={handleGenerate}
+              loading={isGenerating}
+              disabled={isGenerating || !!(checklist && !checklist.isReady)}
+              style={styles.generateBtn}
+            />
+          </GlassCard>
+        ) : (
+          <View style={styles.resultsContainer}>
+            <GlassCard style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Total Expected Revenue</Text>
+              <Text style={styles.summaryAmount}>₹ {totalRevenue.toFixed(2)}</Text>
+              
+              <View style={styles.summaryStatusRow}>
+                <StatCard
+                  label="Published"
+                  value={publishedCount}
+                  trend="Tenant App notified"
+                  trendType="positive"
+                  iconName="check-circle"
+                  style={styles.miniStat}
+                />
+                <StatCard
+                  label="Pending Drafts"
+                  value={pendingCount}
+                  trend="Awaiting publish"
+                  trendType="neutral"
+                  iconName="hourglass-empty"
+                  style={styles.miniStat}
+                />
+              </View>
+
+              {pendingCount > 0 && (
+                <View style={styles.actionGroup}>
+                  <ActionButton
+                    title={publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
+                    onPress={handlePublish}
+                    loading={isPublishing}
+                    style={styles.publishBtn}
+                  />
+
+                  <ActionButton
+                    title="RE-GENERATE DRAFT INVOICES"
+                    onPress={handleGenerate}
+                    loading={isGenerating}
+                    variant="outline"
+                    style={styles.reGenerateBtn}
+                  />
                 </View>
-                
-                <View style={styles.chargesList}>
-                  {invoice.charges?.map((charge, i) => (
-                    <View key={i} style={styles.chargeRow}>
-                      <Text style={styles.chargeDesc}>{charge.description || charge.chargeType}</Text>
-                      <Text style={styles.chargeAmt}>₹ {charge.amount?.toFixed(2)}</Text>
+              )}
+
+              {publishedCount > 0 && (
+                <ActionButton
+                  title="REVERT TO DRAFT (UNPUBLISH)"
+                  onPress={handleUnpublish}
+                  loading={isUnpublishing}
+                  variant="danger"
+                  style={[styles.publishBtn, { marginTop: pendingCount > 0 ? 12 : 0 }]}
+                />
+              )}
+            </GlassCard>
+
+            <View style={styles.invoiceList}>
+              {invoices.map((invoice, idx) => (
+                <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
+                  <View style={styles.invoiceHeader}>
+                    <View>
+                      <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
+                      <Text style={{ fontSize: 12, color: Theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
                     </View>
-                  ))}
-                </View>
-                
-                <StatusPill status={invoice.status} />
-              </GlassCard>
-            ))}
+                    <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
+                  </View>
+                  
+                  <View style={styles.chargesList}>
+                    {invoice.charges?.map((charge, i) => (
+                      <View key={i} style={styles.chargeRow}>
+                        <Text style={styles.chargeDesc}>{charge.description || charge.chargeType}</Text>
+                        <Text style={styles.chargeAmt}>₹ {charge.amount?.toFixed(2)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                    <StatusPill status={invoice.status} />
+                    {invoice.status !== 'PAID' && (
+                      <TouchableOpacity 
+                        style={styles.recordCashBtn} 
+                        onPress={() => handleOpenCashModal(invoice)}
+                      >
+                        <MaterialIcons name="payments" size={16} color={Theme.Colors.primary} />
+                        <Text style={styles.recordCashBtnText}>Record Cash</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </GlassCard>
+              ))}
+            </View>
           </View>
-        </View>
-      )}
-    </View>
-  );
+        )}
+
+        {/* Record Cash Modal */}
+        <Modal
+          visible={showCashModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowCashModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <BlurView intensity={90} tint="dark" style={styles.modalBlur}>
+              <View style={styles.modalContent}>
+                {!receiptSuccess ? (
+                  <>
+                    <View style={styles.modalHeader}>
+                      <Text style={styles.modalTitle}>Confirm Cash Settlement</Text>
+                      <TouchableOpacity onPress={() => setShowCashModal(false)}>
+                        <MaterialIcons name="close" size={24} color={Theme.Colors.onBackground} />
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={styles.modalSubtitle}>
+                      Record a direct cash settlement for Apt {selectedInvoice?.unitNumber} ({selectedInvoice?.tenantName})
+                    </Text>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Cash Amount Received (₹)</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={cashAmount}
+                        onChangeText={setCashAmount}
+                        keyboardType="decimal-pad"
+                        placeholder="0.00"
+                      />
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Settlement Note</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={cashNote}
+                        onChangeText={setCashNote}
+                        placeholder="Add a payment note"
+                      />
+                    </View>
+
+                    <ActionButton
+                      title="CONFIRM CASH COLLECTION"
+                      onPress={handleConfirmCashPayment}
+                      loading={isRecording}
+                      style={{ marginTop: 16 }}
+                    />
+                  </>
+                ) : (
+                  <View style={styles.successContainer}>
+                    <View style={styles.successIconCircle}>
+                      <MaterialIcons name="check-circle" size={48} color="#16a34a" />
+                    </View>
+                    <Text style={styles.successTitle}>Payment Confirmed!</Text>
+                    <Text style={styles.successSubtitle}>
+                      Direct cash transaction successfully completed and reconciled.
+                    </Text>
+
+                    <View style={styles.checklistReceipt}>
+                      <View style={styles.checkItem}>
+                        <MaterialIcons name="check" size={16} color="#16a34a" />
+                        <Text style={styles.checkText}>Signature transaction generated</Text>
+                      </View>
+                      <View style={styles.checkItem}>
+                        <MaterialIcons name="check" size={16} color="#16a34a" />
+                        <Text style={styles.checkText}>Ledger accounts balanced & updated</Text>
+                      </View>
+                      <View style={styles.checkItem}>
+                        <MaterialIcons name="check" size={16} color="#16a34a" />
+                        <Text style={styles.checkText}>Receipt notification dispatched</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.receiptMeta}>
+                      <Text style={styles.metaLabel}>Settled Amount:</Text>
+                      <Text style={styles.metaValue}>₹ {parseFloat(cashAmount).toFixed(2)}</Text>
+                    </View>
+
+                    <ActionButton
+                      title="CLOSE"
+                      onPress={() => setShowCashModal(false)}
+                      style={{ marginTop: 24, width: '100%' }}
+                    />
+                  </View>
+                )}
+              </View>
+            </BlurView>
+          </View>
+        </Modal>
+      </View>
+    );
+  };
 
   return (
     <PageShell scrollable edges={isDesktop ? ['top'] : []} contentContainerStyle={isDesktop ? styles.desktopScroll : styles.mobileScroll}>
@@ -385,4 +535,137 @@ const styles = StyleSheet.create({
   chargeRow: { flexDirection: 'row', justifyContent: 'space-between' },
   chargeDesc: { fontSize: 14, color: Theme.Colors.outline, fontWeight: '500' },
   chargeAmt: { fontSize: 14, color: Theme.Colors.onBackground, fontWeight: '600' },
+  
+  recordCashBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: Theme.Colors.primary,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#fff',
+  },
+  recordCashBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Theme.Colors.primary,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalBlur: {
+    width: '90%',
+    maxWidth: 480,
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  modalContent: {
+    padding: 24,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Theme.Colors.onBackground,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: Theme.Colors.outline,
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Theme.Colors.outline,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  textInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: Theme.Colors.onBackground,
+  },
+  successContainer: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  successIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Theme.Colors.onBackground,
+    marginBottom: 8,
+  },
+  successSubtitle: {
+    fontSize: 14,
+    color: Theme.Colors.outline,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  checklistReceipt: {
+    width: '100%',
+    backgroundColor: 'rgba(0,0,0,0.02)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  checkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  checkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Theme.Colors.onSurfaceVariant,
+  },
+  receiptMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  metaLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Theme.Colors.outline,
+  },
+  metaValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#16a34a',
+  },
 });

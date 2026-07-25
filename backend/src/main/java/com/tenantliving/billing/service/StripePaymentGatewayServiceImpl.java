@@ -5,10 +5,11 @@ import com.tenantliving.billing.dto.PaymentIntentRequest;
 import com.tenantliving.billing.dto.PaymentIntentResponse;
 import com.tenantliving.billing.dto.SubscriptionRequest;
 import com.tenantliving.billing.dto.SubscriptionResponse;
-import com.tenantliving.billing.domain.PaymentTransactionTbl;
+import com.tenantliving.payment.domain.PaymentTransactionTbl;
 import com.tenantliving.billing.domain.SaasSubscriptionTbl;
-import com.tenantliving.billing.repository.PaymentTransactionRepository;
+import com.tenantliving.payment.repository.PaymentTransactionRepository;
 import com.tenantliving.billing.repository.SaasSubscriptionRepository;
+import com.tenantliving.payment.service.PaymentGatewayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,13 +38,16 @@ public class StripePaymentGatewayServiceImpl implements PaymentGatewayService {
         String gatewayTxId = "ch_mock_" + UUID.randomUUID().toString().substring(0, 8);
         String clientSecret = "seti_mock_" + UUID.randomUUID();
 
-        // 1. Create a PaymentTransaction record in PENDING state
+        // 1. Create a PaymentTransaction record in INITIATED state
         PaymentTransactionTbl paymentTx = PaymentTransactionTbl.builder()
-                .userId(UUID.fromString(request.userId()))
+                .payerUserId(UUID.fromString(request.userId()))
+                .paymentMethod("ONLINE")
+                .referenceType("WALLET_TOPUP")
+                .referenceId(UUID.randomUUID())
                 .gatewayName("STRIPE")
                 .gatewayTransactionId(gatewayTxId)
                 .amount(BigDecimal.valueOf(request.amount()))
-                .status("PENDING")
+                .status("INITIATED")
                 .build();
         paymentTx = paymentTransactionRepository.save(paymentTx);
 
@@ -80,8 +84,10 @@ public class StripePaymentGatewayServiceImpl implements PaymentGatewayService {
 
         // 2. Also log a Payment Transaction
         PaymentTransactionTbl paymentTx = PaymentTransactionTbl.builder()
-                .userId(UUID.fromString(request.userId()))
-                .subscriptionId(sub.getId())
+                .payerUserId(UUID.fromString(request.userId()))
+                .paymentMethod("ONLINE")
+                .referenceType("SUBSCRIPTION")
+                .referenceId(sub.getId())
                 .gatewayName("STRIPE")
                 .gatewayTransactionId("tx_mock_" + UUID.randomUUID().toString().substring(0, 8))
                 .amount(BigDecimal.valueOf(request.amount()))

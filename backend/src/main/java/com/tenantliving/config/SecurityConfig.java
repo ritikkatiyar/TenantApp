@@ -62,7 +62,9 @@ public class SecurityConfig {
                                 "/health",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/api/v1/payments/webhooks/**",
+                                "/api/v1/payments/rent-cycles/*/invoice"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
