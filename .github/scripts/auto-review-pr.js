@@ -120,7 +120,7 @@ async function run() {
   if (allComments.length === 0) {
     reviewPayload = {
       commit_id: headSha,
-      event: 'APPROVE',
+      event: 'COMMENT',
       body: '🤖 **TenantApp PR Review Agent** has reviewed your changes. No violations of backend engineering or frontend quality standards were detected. Great job!'
     };
   } else {
