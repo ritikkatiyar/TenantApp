@@ -11,11 +11,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.tenantliving</groupId>
-    <artifactId>tenant-living-ai-service</artifactId>
+    <groupId>com.livic</groupId>
+    <artifactId>livic-ai-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>tenant-living-ai-service</name>
-    <description>Standalone AI service for Tenant Living</description>
+    <name>livic-ai-service</name>
+    <description>Standalone AI service for Livic</description>
     <packaging>jar</packaging>
 
     <properties>

@@ -29,7 +29,7 @@ server:
 
 logging:
   level:
-    com.tenantliving: INFO
+    com.livic: INFO
     org.springframework.security: WARN
 
 app:

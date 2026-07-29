@@ -11,11 +11,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.tenantliving</groupId>
-    <artifactId>tenant-living-backend</artifactId>
+    <groupId>com.livic</groupId>
+    <artifactId>livic-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>tenant-living-backend</name>
-    <description>Tenant Living backend service</description>
+    <name>livic-backend</name>
+    <description>Livic backend service</description>
     <packaging>jar</packaging>
 
     <properties>
@@ -145,7 +145,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.tenantliving.TenantLivingApplication</mainClass>
+                    <mainClass>com.livic.LivicApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

@@ -4,7 +4,7 @@ This document tracks the steps completed and remaining in the Google Play Consol
 
 ---
 
-## 1. Landlord App (`TenantAppFE`) Status
+## 1. Landlord App (`livic-landlord-fe`) Status
 * **App Setup & Configuration**:
   - App entry created in the Google Play Console.
 * **Internal Testing Release**:
@@ -13,10 +13,10 @@ This document tracks the steps completed and remaining in the Google Play Consol
 
 ---
 
-## 2. Tenant App (`TenantAppTenantFE`) Status
+## 2. Tenant App (`livic-tenant-fe`) Status
 * **App Setup & Configuration**:
   - **Not yet created** in the Google Play Console.
-  - **Next step**: Create a new App in Play Console for the Resident app with package ID `com.tenantliving.resident`.
+  - **Next step**: Create a new App in Play Console for the Resident app with package ID `com.livic.resident`.
 * **Internal Testing Release**:
   - Build has not yet been generated or uploaded to Play Console.
 

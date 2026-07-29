@@ -38,7 +38,7 @@
     </root>
 
     <!-- Project specific logging levels -->
-    <logger name="com.tenantliving" level="DEBUG"/>
+    <logger name="com.livic" level="DEBUG"/>
     <logger name="org.springframework.web" level="INFO"/>
     <logger name="org.hibernate.SQL" level="DEBUG"/>
 </configuration>
