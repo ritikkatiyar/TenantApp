@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: tenant-living-ai-service
+    name: livic-ai-service
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
@@ -67,4 +67,4 @@ management:
 logging:
   level:
     root: INFO
-    com.tenantliving: DEBUG
+    com.livic: DEBUG

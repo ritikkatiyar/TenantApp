@@ -14,8 +14,8 @@ $ErrorActionPreference = "Stop"
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $RootDir "backend"
 $AiServiceDir = Join-Path $RootDir "ai-service"
-$LandlordFrontendDir = Join-Path $RootDir "TenantAppFE"
-$TenantFrontendDir = Join-Path $RootDir "TenantAppTenantFE"
+$LandlordFrontendDir = Join-Path $RootDir "livic-landlord-fe"
+$TenantFrontendDir = Join-Path $RootDir "livic-tenant-fe"
 $LogDir = Join-Path $RootDir "logs\dev"
 $BackendLog = Join-Path $LogDir "backend.log"
 $BackendErrLog = Join-Path $LogDir "backend.err.log"
@@ -174,7 +174,7 @@ function Wait-ForMysql {
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     do {
-        $status = Get-DockerHealthOrStatus "tenant-living-mysql"
+        $status = Get-DockerHealthOrStatus "livic-mysql"
         if ($status -eq "healthy") {
             return
         }
@@ -211,7 +211,7 @@ function Get-DockerHealthOrStatus {
 }
 
 function Get-MysqlHostPort {
-    $portLine = docker port tenant-living-mysql 3306/tcp | Select-Object -First 1
+    $portLine = docker port livic-mysql 3306/tcp | Select-Object -First 1
     if (-not $portLine) {
         return 3307
     }
@@ -320,7 +320,7 @@ if (-not $SkipDocker) {
     Write-Step "Starting MySQL with Docker Compose..."
     Push-Location $RootDir
     try {
-        Remove-StaleDockerContainerIfExists "tenant-living-mysql"
+        Remove-StaleDockerContainerIfExists "livic-mysql"
         docker compose up -d mysql
         if ($LASTEXITCODE -ne 0) {
             throw "Docker Compose failed to start MySQL."
@@ -332,12 +332,12 @@ if (-not $SkipDocker) {
 }
 
 $mysqlPort = if ($SkipDocker) { 3307 } else { Get-MysqlHostPort }
-$dbUrl = "jdbc:mysql://localhost:$mysqlPort/tenant_living?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+$dbUrl = "jdbc:mysql://localhost:$mysqlPort/livic?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
 Write-Step "Using DB_URL=$dbUrl"
 Ensure-MavenModuleCompiled -ModuleDir $BackendDir -RequiredClassRelativePaths @(
-    "com\tenantliving\TenantLivingApplication.class",
-    "com\tenantliving\user\service\impl\UserServiceImpl.class"
+    "com\livic\LivicApplication.class",
+    "com\livic\user\service\impl\UserServiceImpl.class"
 )
 
 Assert-PortAvailable -Port $BackendPort -ServiceName "Backend"
@@ -352,8 +352,8 @@ Write-Step "Starting backend on http://localhost:$BackendPort"
 
 $backendCommand = @"
 `$env:DB_URL='$dbUrl'
-`$env:DB_USERNAME='tenant_living'
-`$env:DB_PASSWORD='tenant_living'
+`$env:DB_USERNAME='livic'
+`$env:DB_PASSWORD='livic'
 `$env:SERVER_PORT='$BackendPort'
 mvn -DskipTests compile spring-boot:run
 "@

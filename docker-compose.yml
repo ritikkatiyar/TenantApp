@@ -1,19 +1,19 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: tenant-living-mysql
+    container_name: livic-mysql
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-tenant_living}
-      MYSQL_USER: ${MYSQL_USER:-tenant_living}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-tenant_living}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-livic}
+      MYSQL_USER: ${MYSQL_USER:-livic}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-livic}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
     ports:
       - "3307:3306"
     volumes:
-      - tenant_living_mysql_data:/var/lib/mysql
+      - livic_mysql_data:/var/lib/mysql
     networks:
-      - tenant-network
+      - livic-network
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
       interval: 10s
@@ -25,26 +25,26 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: tenant-living-backend
+    container_name: livic-backend
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-tenant_living}?useSSL=false&allowPublicKeyRetrieval=true
-      - DB_USERNAME=${MYSQL_USER:-tenant_living}
-      - DB_PASSWORD=${MYSQL_PASSWORD:-tenant_living}
+      - DB_URL=jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-livic}?useSSL=false&allowPublicKeyRetrieval=true
+      - DB_USERNAME=${MYSQL_USER:-livic}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-livic}
       - APP_JWT_SECRET=${APP_JWT_SECRET:-dev-only-change-this-to-a-long-random-secret-32b-min}
       - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173,http://localhost:8081}
     depends_on:
       mysql:
         condition: service_healthy
     networks:
-      - tenant-network
+      - livic-network
 
 networks:
-  tenant-network:
+  livic-network:
     driver: bridge
 
 volumes:
-  tenant_living_mysql_data:
+  livic_mysql_data:

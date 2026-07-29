@@ -40,5 +40,5 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t tenant-backend ./backend
+          docker build -t livic-backend ./backend
           docker images
