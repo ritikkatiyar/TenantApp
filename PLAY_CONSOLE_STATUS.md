@@ -13,7 +13,7 @@ This document tracks the steps completed and remaining in the Google Play Consol
 
 ---
 
-## 2. Tenant App (`livic-tenant-fe`) Status
+## 2. Tenant App (`livic-resident-fe`) Status
 * **App Setup & Configuration**:
   - **Not yet created** in the Google Play Console.
   - **Next step**: Create a new App in Play Console for the Resident app with package ID `com.livic.resident`.
