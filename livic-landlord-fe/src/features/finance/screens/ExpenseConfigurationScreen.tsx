@@ -197,9 +197,11 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
         {/* Pinned header */}
         {isDesktop ? (
           <DesktopNavBar 
-            activeTab="Properties" 
-            onBack={() => router.back()} 
-            backText="Back to Property" 
+            onBack={() => router.push('/expenses')} 
+            backText="Back to Finance & Billing" 
+            properties={properties || []}
+            selectedPropertyId={propertyId}
+            onPropertyChange={(id) => router.replace(`/expenses/charge-config?propertyId=${id}`)}
           />
         ) : (
           <View style={styles.headerContainer}>
@@ -256,6 +258,32 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
 
             {isLoading ? (
               <ActivityIndicator size="large" color="#006875" style={{ marginTop: 40 }} />
+            ) : (!properties || properties.length === 0) ? (
+              <BlurView intensity={60} tint="light" style={styles.emptyCard}>
+                <View style={styles.emptyIconCircle}>
+                  <MaterialIcons name="business" size={36} color="#006875" />
+                </View>
+                <Text style={styles.emptyTitle}>No Property Created Yet</Text>
+                <Text style={styles.emptySubtitle}>
+                  Finance & billing setup requires an active property. Create your first property to start configuring charges and rent cycles.
+                </Text>
+                
+                <TouchableOpacity 
+                  style={styles.createPropertyButton} 
+                  activeOpacity={0.8}
+                  onPress={() => router.push('/properties/create')}
+                >
+                  <LinearGradient
+                    colors={['#00d4ff', '#0072ff']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.createPropertyGradient}
+                  >
+                    <MaterialIcons name="add" size={24} color="#fff" />
+                    <Text style={styles.createPropertyText}>CREATE FIRST PROPERTY</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </BlurView>
             ) : (charges || []).length === 0 ? (
               <BlurView intensity={60} tint="light" style={styles.emptyCard}>
                 <View style={styles.emptyIconCircle}>
@@ -534,13 +562,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#151d1e',
   },
+  desktopInner: {
+    width: '100%',
+    maxWidth: 1080,
+    alignSelf: 'center',
+  },
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 120,
   },
   titleContainer: {
-    marginBottom: 40,
+    marginBottom: 32,
   },
   titleLine: {
     fontSize: 48,
@@ -554,6 +587,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#151d1e',
     lineHeight: 38,
+    letterSpacing: -0.5,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -764,12 +798,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     flex: 1,
-  },
-  desktopInner: {
-    width: '100%',
-    maxWidth: 1200,
-    alignSelf: 'center',
-    paddingHorizontal: 16,
   },
   gridContainer: {
     flexDirection: 'row',

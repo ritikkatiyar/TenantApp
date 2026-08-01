@@ -50,7 +50,6 @@ public class AnnouncementController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
         /**
      * Get announcements
      * For tenants, returns scoped notices for their active lease. For landlords/staff, returns all notices for the specified property.
@@ -71,7 +70,6 @@ public class AnnouncementController {
     }
 
     @PostMapping("/{id}/read")
-    @PreAuthorize("isAuthenticated()")
         /**
      * Mark announcement as read
      * Logs a read receipt for the current tenant user.

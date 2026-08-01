@@ -36,5 +36,5 @@ export function markRentCyclePaid(token: string, cycleId: string): Promise<RentC
 }
 
 export function getStatementUrl(cycleId: string, token: string): string {
-  return apiUrl(`/api/v1/finance/payments/rent-cycles/${cycleId}/invoice?token=${token}`);
+  return apiUrl(`/api/v1/finance/rent-cycles/${cycleId}/invoice?token=${token}`);
 }

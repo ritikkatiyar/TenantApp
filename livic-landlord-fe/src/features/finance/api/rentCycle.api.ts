@@ -110,7 +110,7 @@ export const recordCashPayment = async (
   token: string
 ): Promise<any> => {
   return await apiRequest<any>(
-    `/api/v1/finance/payments/rent-cycles/${cycleId}/cash`,
+    `/api/v1/finance/rent-cycles/${cycleId}/cash`,
     {
       method: 'POST',
       body: JSON.stringify({ amount, note }),

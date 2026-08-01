@@ -12,9 +12,9 @@ import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
 import { useProperties } from '@/src/hooks/useProperties';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
-
 
 const ALL_PERMISSIONS = [
   { code: 'PROPERTY_VIEW', name: 'View Property', description: 'Can view property details and announcements', category: 'Property' },
@@ -36,6 +36,7 @@ export default function SystemPreferencesRoute() {
   const { properties } = useProperties();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   const { accessToken, context } = useAuth();
+  const { showToast } = useToast();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
 
@@ -69,10 +70,16 @@ export default function SystemPreferencesRoute() {
   const [generatingInvite, setGeneratingInvite] = useState(false);
 
   useEffect(() => {
+    if (!properties || properties.length === 0) {
+      setLoading(false);
+      return;
+    }
     if (propertyId && accessToken) {
       loadData();
+    } else {
+      setLoading(false);
     }
-  }, [propertyId, accessToken]);
+  }, [propertyId, accessToken, properties]);
 
   const loadData = async () => {
     try {
@@ -339,90 +346,208 @@ export default function SystemPreferencesRoute() {
       {/* Header */}
       {isDesktop && (
         <DesktopNavBar 
-          onBack={() => router.back()} 
-          backText="Back to Portfolio" 
-          title="System Preferences" 
+          properties={properties || []}
+          selectedPropertyId={propertyId}
+          onPropertyChange={(id) => router.replace(`/settings?propertyId=${id}`)}
         />
       )}
 
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingTop: isDesktop ? 24 : 12, paddingBottom: 100 }}>
+          <View style={isDesktop ? { maxWidth: 1080, alignSelf: 'center', width: '100%' } : { width: '100%' }}>
+            
+            {/* Title Header */}
+            {isDesktop && (
+              <View style={{ marginBottom: 32 }}>
+                <Text style={{ fontSize: 32, fontWeight: '800', color: '#151d1e', lineHeight: 38, letterSpacing: -0.5 }}>
+                  System & Team Settings
+                </Text>
+                <Text style={{ fontSize: 14, color: '#6b7a7d', marginTop: 4, fontWeight: '500', lineHeight: 20 }}>
+                  Manage property roles, staff invite permissions, system parameters & subscription billing
+                </Text>
+              </View>
+            )}
 
-      {/* Tabs */}
-      <View style={[styles.tabContainer, !isDesktop && { marginTop: 88 }]}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'roles' && styles.tabActive]}
-          onPress={() => setActiveTab('roles')}
-        >
-          <Text style={[styles.tabText, activeTab === 'roles' && styles.tabTextActive]}>Roles & Permissions</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'invites' && styles.tabActive]}
-          onPress={() => setActiveTab('invites')}
-        >
-          <Text style={[styles.tabText, activeTab === 'invites' && styles.tabTextActive]}>Staff Join Codes</Text>
-        </TouchableOpacity>
-      </View>
+            {/* Zero Property Warning Banner */}
+            {properties.length === 0 && (
+              <BlurView intensity={60} tint="light" style={{ padding: 24, borderRadius: 20, marginBottom: 24, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.7)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                  <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                    <MaterialIcons name="business" size={26} color="#006875" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 2 }}>No Property Created Yet</Text>
+                    <Text style={{ fontSize: 13, color: '#6b7a7d', lineHeight: 18 }}>Property roles and team permissions require an active property context. Create your first property to start configuring staff roles.</Text>
+                  </View>
+                </View>
+                <TouchableOpacity 
+                  style={{ borderRadius: 100, overflow: 'hidden' }}
+                  onPress={() => router.push('/properties/create')}
+                >
+                  <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 20, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <MaterialIcons name="add" size={18} color="#fff" />
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>CREATE PROPERTY</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </BlurView>
+            )}
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#006875" />
-        </View>
-      ) : (
-        <View style={{ flex: 1 }}>
-          {activeTab === 'roles' ? (
-            <View style={{ flex: 1 }}>
-              <FlatList
-                data={roles}
-                renderItem={renderRoleCard}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.list}
-                ListHeaderComponent={
-                  currentUserRole?.code === 'PROPERTY_OWNER' ? (
-                    <TouchableOpacity style={styles.createRoleBtn} onPress={() => {
-                      setNewRolePerms([...currentUserRole.permissionCodes]); // default custom role to creator's permissions
-                      setCustomRoleModalVisible(true);
-                    }}>
-                      <LinearGradient
-                        colors={['#00d4ff', '#0072ff']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.btnGradient}
-                      >
-                        <MaterialIcons name="add" size={20} color="#fff" />
-                        <Text style={styles.createRoleBtnText}>CREATE CUSTOM ROLE</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  ) : null
-                }
-              />
+            {/* Hub Menu Grid */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (properties.length === 0) {
+                    showToast('Please create a property first to configure team roles.', 'error');
+                    router.push('/properties/create');
+                    return;
+                  }
+                  setActiveTab('roles');
+                }}
+                style={{ flex: 1, minWidth: isDesktop ? 220 : '100%', opacity: properties.length === 0 ? 0.6 : 1 }}
+              >
+                <BlurView intensity={60} tint="light" style={{ padding: 20, borderRadius: 20, borderWidth: 1.5, borderColor: activeTab === 'roles' && properties.length > 0 ? '#006875' : 'rgba(255,255,255,0.7)', backgroundColor: activeTab === 'roles' && properties.length > 0 ? 'rgba(0,104,117,0.06)' : 'rgba(255,255,255,0.5)' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(8, 145, 178, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                      <MaterialIcons name="admin-panel-settings" size={24} color="#0891b2" />
+                    </View>
+                    <View style={{ backgroundColor: 'rgba(8, 145, 178, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#0891b2' }}>{roles.length} Roles</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 4 }}>Team Roles & Permissions</Text>
+                  <Text style={{ fontSize: 12, color: '#6b7a7d', lineHeight: 17 }}>Define custom staff roles & fine-grained permission matrices.</Text>
+                </BlurView>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (properties.length === 0) {
+                    showToast('Please create a property first to generate invite codes.', 'error');
+                    router.push('/properties/create');
+                    return;
+                  }
+                  setActiveTab('invites');
+                }}
+                style={{ flex: 1, minWidth: isDesktop ? 220 : '100%', opacity: properties.length === 0 ? 0.6 : 1 }}
+              >
+                <BlurView intensity={60} tint="light" style={{ padding: 20, borderRadius: 20, borderWidth: 1.5, borderColor: activeTab === 'invites' && properties.length > 0 ? '#006875' : 'rgba(255,255,255,0.7)', backgroundColor: activeTab === 'invites' && properties.length > 0 ? 'rgba(0,104,117,0.06)' : 'rgba(255,255,255,0.5)' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(0, 212, 255, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                      <MaterialIcons name="vpn-key" size={24} color="#0072ff" />
+                    </View>
+                    <View style={{ backgroundColor: 'rgba(0, 212, 255, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#0072ff' }}>{invites.length} Codes</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 4 }}>Staff Join Codes</Text>
+                  <Text style={{ fontSize: 12, color: '#6b7a7d', lineHeight: 17 }}>Generate single-use invite keys to onboard managers & staff.</Text>
+                </BlurView>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (properties.length === 0) {
+                    showToast('Please create a property first to configure system preferences.', 'error');
+                    router.push('/properties/create');
+                    return;
+                  }
+                  showToast('System defaults & notification settings configured.', 'info');
+                }}
+                style={{ flex: 1, minWidth: isDesktop ? 220 : '100%', opacity: properties.length === 0 ? 0.6 : 1 }}
+              >
+                <BlurView intensity={60} tint="light" style={{ padding: 20, borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)', backgroundColor: 'rgba(255,255,255,0.5)' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(139, 92, 246, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                      <MaterialIcons name="tune" size={24} color="#8b5cf6" />
+                    </View>
+                    <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#8b5cf6' }}>Active</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 4 }}>System Preferences</Text>
+                  <Text style={{ fontSize: 12, color: '#6b7a7d', lineHeight: 17 }}>Notifications defaults, auto-invoicing rules & localizations.</Text>
+                </BlurView>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push('/billing' as any)}
+                style={{ flex: 1, minWidth: isDesktop ? 220 : '100%' }}
+              >
+                <BlurView intensity={60} tint="light" style={{ padding: 20, borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)', backgroundColor: 'rgba(255,255,255,0.5)' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(236, 72, 153, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                      <MaterialIcons name="credit-card" size={24} color="#ec4899" />
+                    </View>
+                    <View style={{ backgroundColor: 'rgba(236, 72, 153, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#ec4899' }}>SaaS Plan</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 4 }}>Subscription & Billing</Text>
+                  <Text style={{ fontSize: 12, color: '#6b7a7d', lineHeight: 17 }}>Manage plan tier, Razorpay gateway & AI credit wallet.</Text>
+                </BlurView>
+              </TouchableOpacity>
             </View>
-          ) : (
-            <View style={{ flex: 1 }}>
-              <FlatList
-                data={invites}
-                renderItem={renderInviteCard}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.list}
-                ListHeaderComponent={
-                  <TouchableOpacity style={styles.createRoleBtn} onPress={() => setInviteModalVisible(true)}>
-                    <LinearGradient
-                      colors={['#00d4ff', '#0072ff']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.btnGradient}
-                    >
-                      <MaterialIcons name="vpn-key" size={20} color="#fff" />
-                      <Text style={styles.createRoleBtnText}>GENERATE STAFF INVITE</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                }
-                ListEmptyComponent={
-                  <Text style={styles.emptyText}>No invite codes generated yet.</Text>
-                }
-              />
-            </View>
-          )}
-        </View>
-      )}
+
+            {/* Active Content Section */}
+            {properties.length > 0 && (
+              loading ? (
+                <View style={styles.center}>
+                  <ActivityIndicator size="large" color="#006875" style={{ marginTop: 40 }} />
+                </View>
+              ) : (
+              <View style={{ flex: 1 }}>
+                {activeTab === 'roles' ? (
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <Text style={{ fontSize: 18, fontWeight: '800', color: '#163235' }}>Property Roles & Permission Matrix</Text>
+                      {currentUserRole?.code === 'PROPERTY_OWNER' && (
+                        <TouchableOpacity style={{ borderRadius: 100, overflow: 'hidden' }} onPress={() => {
+                          setNewRolePerms([...currentUserRole.permissionCodes]);
+                          setCustomRoleModalVisible(true);
+                        }}>
+                          <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 20, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <MaterialIcons name="add" size={18} color="#fff" />
+                            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>CREATE ROLE</Text>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <FlatList
+                      data={roles}
+                      renderItem={renderRoleCard}
+                      keyExtractor={item => item.id}
+                      scrollEnabled={false}
+                    />
+                  </View>
+                ) : (
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                      <Text style={{ fontSize: 18, fontWeight: '800', color: '#163235' }}>Active Staff Invite Codes</Text>
+                      <TouchableOpacity style={{ borderRadius: 100, overflow: 'hidden' }} onPress={() => setInviteModalVisible(true)}>
+                        <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 20, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <MaterialIcons name="vpn-key" size={18} color="#fff" />
+                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>GENERATE INVITE</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
+                    <FlatList
+                      data={invites}
+                      renderItem={renderInviteCard}
+                      keyExtractor={item => item.id}
+                      scrollEnabled={false}
+                      ListEmptyComponent={
+                        <Text style={styles.emptyText}>No invite codes generated yet.</Text>
+                      }
+                    />
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
 
       {/* Permissions Editor Modal */}
       <Modal visible={selectedRole !== null} animationType={isDesktop ? "fade" : "slide"} transparent={isDesktop}>

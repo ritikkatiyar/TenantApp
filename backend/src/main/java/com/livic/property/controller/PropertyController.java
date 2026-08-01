@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import com.livic.billing.annotation.EnforceSubscription;
+import com.livic.billing.annotation.FeatureKey;
 
 @RestController
 @RequestMapping("/api/v1/property/properties")
@@ -26,6 +28,7 @@ public class PropertyController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
+    @EnforceSubscription(feature = FeatureKey.MAX_PROPERTIES)
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> createProperty(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody PropertyDTOs.CreatePropertyRequest request) {

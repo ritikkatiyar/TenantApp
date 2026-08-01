@@ -63,6 +63,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
+                                "/api/v1/billing/plans",
+                                "/api/v1/billing/webhooks/**",
                                 "/api/v1/payments/webhooks/**",
                                 "/api/v1/payments/rent-cycles/*/invoice"
                         ).permitAll()

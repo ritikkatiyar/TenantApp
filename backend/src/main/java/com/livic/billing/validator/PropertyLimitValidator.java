@@ -1,42 +1,35 @@
 package com.livic.billing.validator;
 
-import com.livic.billing.annotation.SubscriptionFeature;
+import com.livic.billing.annotation.FeatureKey;
+import com.livic.billing.dto.UserSubscriptionContext;
 import com.livic.property.service.interfaces.PropertyQueryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class PropertyLimitValidator implements SubscriptionValidator {
 
     private final PropertyQueryService propertyQueryService;
 
-    private static final int STARTER_PLAN_LIMIT = 1;      // Free plan: 1 property
-    private static final int BASIC_PLAN_LIMIT = 3;        // Basic: 3 properties
-    private static final int PREMIUM_PLAN_LIMIT = 10;     // Premium: 10 properties
-    private static final int ENTERPRISE_PLAN_LIMIT = Integer.MAX_VALUE;
-
     @Override
-    public boolean validate(UUID userId, String planName) {
-        int maxProperties = getPropertyLimitByPlan(planName);
+    public boolean validate(UUID userId, UserSubscriptionContext context) {
+        int maxProperties = context.getLimit(FeatureKey.MAX_PROPERTIES);
+        if (maxProperties == -1) {
+            return true; // Unlimited
+        }
+
         int currentPropertyCount = propertyQueryService.getPropertiesByUserId(userId).size();
+        log.info("[PROPERTY LIMIT CHECK] User: {}, Current: {}, Max Allowed: {}", userId, currentPropertyCount, maxProperties);
         return currentPropertyCount < maxProperties;
     }
 
     @Override
-    public SubscriptionFeature getSupportedFeature() {
-        return SubscriptionFeature.PROPERTIES;
-    }
-
-    private int getPropertyLimitByPlan(String planName) {
-        if (planName == null) return STARTER_PLAN_LIMIT;
-        return switch (planName.toUpperCase()) {
-            case "STARTER", "FREE" -> STARTER_PLAN_LIMIT;
-            case "BASIC" -> BASIC_PLAN_LIMIT;
-            case "PREMIUM" -> PREMIUM_PLAN_LIMIT;
-            case "ENTERPRISE" -> ENTERPRISE_PLAN_LIMIT;
-            default -> STARTER_PLAN_LIMIT;
-        };
+    public FeatureKey getSupportedFeature() {
+        return FeatureKey.MAX_PROPERTIES;
     }
 }

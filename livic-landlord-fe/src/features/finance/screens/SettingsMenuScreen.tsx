@@ -16,6 +16,7 @@ import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { listRentCycles } from '@/src/features/finance/api/rentCycle.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 export default function SettingsMenuScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -25,6 +26,7 @@ export default function SettingsMenuScreen() {
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
   const { accessToken } = useAuth();
+  const { showToast } = useToast();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
 
   const [pendingCount, setPendingCount] = useState<number | null>(null);
@@ -173,8 +175,15 @@ export default function SettingsMenuScreen() {
           >
             <TouchableOpacity
               activeOpacity={0.75}
-              onPress={() => router.push(item.route as any)}
-              style={styles.listItem}
+              onPress={() => {
+                if (properties.length === 0) {
+                  showToast('Please create a property first to access finance features.', 'error');
+                  router.push('/properties/create');
+                  return;
+                }
+                router.push(item.route as any);
+              }}
+              style={[styles.listItem, properties.length === 0 && { opacity: 0.6 }]}
             >
               <BlurView intensity={55} tint="light" style={styles.menuCard}>
                 {/* Left accent stripe */}
@@ -240,7 +249,11 @@ export default function SettingsMenuScreen() {
     >
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop && (
-          <DesktopNavBar title="Finance & Billing" />
+          <DesktopNavBar 
+            properties={properties || []}
+            selectedPropertyId={propertyId}
+            onPropertyChange={(id) => router.replace(`/expenses?propertyId=${id}`)}
+          />
         )}
 
         <Animated.ScrollView
@@ -256,7 +269,33 @@ export default function SettingsMenuScreen() {
             {isDesktop && (
               <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
                 <Text style={styles.titleLineDesktop}>Finance & Billing</Text>
+                <Text style={{ fontSize: 14, color: '#6b7a7d', marginTop: 4, fontWeight: '500', lineHeight: 20 }}>
+                  Configure rents, utilities, billing worksheets, monthly rent rolls & financial ledgers
+                </Text>
               </Animated.View>
+            )}
+
+            {properties.length === 0 && (
+              <BlurView intensity={60} tint="light" style={{ padding: 24, borderRadius: 20, marginBottom: 24, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.7)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                  <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
+                    <MaterialIcons name="business" size={26} color="#006875" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 2 }}>No Property Created Yet</Text>
+                    <Text style={{ fontSize: 13, color: '#6b7a7d', lineHeight: 18 }}>Finance & billing setup requires an active property. Create your first property to start configuring charges and rent cycles.</Text>
+                  </View>
+                </View>
+                <TouchableOpacity 
+                  style={{ borderRadius: 100, overflow: 'hidden' }}
+                  onPress={() => router.push('/properties/create')}
+                >
+                  <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 20, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <MaterialIcons name="add" size={18} color="#fff" />
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>CREATE PROPERTY</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </BlurView>
             )}
 
             {isDesktop ? (
@@ -265,8 +304,15 @@ export default function SettingsMenuScreen() {
                   <TouchableOpacity
                     key={item.id}
                     activeOpacity={0.75}
-                    onPress={() => router.push(item.route as any)}
-                    style={styles.gridItem}
+                    onPress={() => {
+                      if (properties.length === 0) {
+                        showToast('Please create a property first to access finance features.', 'error');
+                        router.push('/properties/create');
+                        return;
+                      }
+                      router.push(item.route as any);
+                    }}
+                    style={[styles.gridItem, properties.length === 0 && { opacity: 0.6 }]}
                   >
                     <BlurView intensity={60} tint="light" style={styles.menuCard}>
                       <View style={styles.cardContent}>
@@ -303,15 +349,16 @@ const styles = StyleSheet.create({
   },
   desktopInner: {
     width: '100%',
-    maxWidth: 1000,
+    maxWidth: 1080,
     alignSelf: 'center',
   },
-  titleContainer: { marginBottom: 40 },
+  titleContainer: { marginBottom: 32 },
   titleLineDesktop: {
     fontSize: 32,
     fontWeight: '800',
     color: '#151d1e',
     lineHeight: 38,
+    letterSpacing: -0.5,
   },
 
   // — Quick Stats Hero —

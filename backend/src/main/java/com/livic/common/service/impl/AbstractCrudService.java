@@ -20,6 +20,11 @@ public abstract class AbstractCrudService<T, ID, R extends JpaRepository<T, ID>>
     }
 
     @Override
+    public T saveAndFlush(T entity) {
+        return repository.saveAndFlush(entity);
+    }
+
+    @Override
     public List<T> saveAll(Iterable<T> entities) {
         return repository.saveAll(entities);
     }

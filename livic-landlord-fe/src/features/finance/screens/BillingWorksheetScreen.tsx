@@ -324,9 +324,11 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
     >
       <View style={styles.desktopMain}>
         <DesktopNavBar 
-          activeTab="Finance" 
-          onBack={() => router.back()} 
-          backText="Back to Settings" 
+          onBack={() => router.push('/expenses')} 
+          backText="Back to Finance & Billing" 
+          properties={properties || []}
+          selectedPropertyId={propertyId}
+          onPropertyChange={(id) => router.replace(`/expenses/billing-worksheet?propertyId=${id}`)}
         />
 
         <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
@@ -395,7 +397,24 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             </View>
 
             {/* Content */}
-            {isLoadingCharges ? (
+            {(!properties || properties.length === 0) ? (
+              <BlurView intensity={60} tint="light" style={styles.emptyStateCard}>
+                <MaterialIcons name="business" size={48} color="#006875" style={{ marginBottom: 16 }} />
+                <Text style={[styles.emptyText, { fontWeight: '800', color: '#163235', fontSize: 18, marginBottom: 8 }]}>No Property Created Yet</Text>
+                <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40, marginBottom: 20 }]}>
+                  Billing worksheets require an active property. Create your first property to start managing worksheets.
+                </Text>
+                <TouchableOpacity 
+                  style={{ borderRadius: 100, overflow: 'hidden' }}
+                  onPress={() => router.push('/properties/create')}
+                >
+                  <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <MaterialIcons name="add" size={20} color="#fff" />
+                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </BlurView>
+            ) : isLoadingCharges ? (
               <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />
             ) : charges.length === 0 ? (
               <BlurView intensity={60} tint="light" style={styles.emptyStateCard}>
@@ -540,10 +559,10 @@ const styles = StyleSheet.create({
   desktopContent: { paddingBottom: 80 },
   desktopInner: {
     width: '100%',
-    maxWidth: 1200,
+    maxWidth: 1080,
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 32,
+    paddingHorizontal: 40,
+    paddingTop: 24,
   },
   desktopHeaderRow: {
     flexDirection: 'row',
@@ -556,6 +575,8 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
     color: '#151d1e',
+    lineHeight: 38,
+    letterSpacing: -0.5,
   },
   desktopSaveButtonWrapper: {
     borderRadius: 23,

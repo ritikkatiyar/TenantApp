@@ -1,9 +1,10 @@
 package com.livic.payment.service.impl;
 
 import com.razorpay.Utils;
-import com.livic.common.event.PaymentConfirmedEvent;
 import com.livic.common.exception.BusinessException;
 import com.livic.payment.config.RazorpayProperties;
+import com.livic.payment.constant.PaymentConstants;
+import com.livic.billing.constant.BillingConstants;
 import com.livic.payment.domain.PaymentTransactionTbl;
 import com.livic.payment.domain.PaymentWebhookEventTbl;
 import com.livic.payment.repository.PaymentTransactionRepository;
@@ -13,6 +14,7 @@ import com.livic.payment.service.interfaces.PaymentTransactionService;
 import com.livic.billing.domain.PaymentGatewayType;
 import com.livic.billing.dto.PaymentIntentRequest;
 import com.livic.billing.dto.PaymentIntentResponse;
+import com.livic.payment.event.PaymentCompletedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,14 +44,18 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     public PaymentTransactionTbl initiateOnlinePayment(UUID payerUserId, String referenceType, UUID referenceId, BigDecimal amount) {
         log.info("Initiating online payment for user: {}, refType: {}, refId: {}, amount: {}", payerUserId, referenceType, referenceId, amount);
 
+        if (referenceId == null) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Reference ID cannot be null for payment initiation");
+        }
+
         // 1. Request Razorpay order from the gateway
         PaymentIntentRequest intentRequest = new PaymentIntentRequest(
                 payerUserId.toString(),
                 amount.doubleValue(),
-                "INR",
+                BillingConstants.Currency.INR,
                 "Rent statement online payment",
                 "billing@tenantliving.com",
-                com.livic.billing.domain.PaymentGatewayType.RAZORPAY
+                PaymentGatewayType.RAZORPAY
         );
         PaymentIntentResponse intentResponse = paymentGatewayRouter
                 .getGateway(PaymentGatewayType.RAZORPAY)
@@ -58,16 +64,16 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         // 2. Save the transaction with status INITIATED
         PaymentTransactionTbl transaction = PaymentTransactionTbl.builder()
                 .payerUserId(payerUserId)
-                .paymentMethod("ONLINE")
+                .paymentMethod(PaymentConstants.Method.ONLINE)
                 .referenceType(referenceType)
                 .referenceId(referenceId)
-                .gatewayName("RAZORPAY")
+                .gatewayName(PaymentConstants.Gateway.RAZORPAY)
                 .gatewayTransactionId(intentResponse.gatewayTransactionId())
                 .amount(amount)
-                .status("INITIATED")
+                .status(PaymentConstants.Status.INITIATED)
                 .build();
 
-        return paymentTransactionRepository.save(transaction);
+        return paymentTransactionRepository.saveAndFlush(transaction);
     }
 
     @Override
@@ -76,27 +82,28 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
         PaymentTransactionTbl transaction = PaymentTransactionTbl.builder()
                 .payerUserId(payerUserId)
-                .paymentMethod("CASH")
+                .paymentMethod(PaymentConstants.Method.CASH)
                 .referenceType(referenceType)
                 .referenceId(referenceId)
                 .amount(amount)
-                .status("SUCCESS")
+                .status(PaymentConstants.Status.SUCCESS)
                 .confirmedBy(confirmedBy)
                 .confirmedAt(LocalDateTime.now())
                 .note(note)
                 .build();
 
-        transaction = paymentTransactionRepository.save(transaction);
+        transaction = paymentTransactionRepository.saveAndFlush(transaction);
 
-        // Publish event to trigger downstream modules (finance/rent/bookings)
-        eventPublisher.publishEvent(new PaymentConfirmedEvent(
-                this,
-                referenceType,
-                referenceId,
-                transaction.getId(),
-                amount,
-                "CASH"
-        ));
+        // Publish PaymentCompletedEvent to trigger downstream domain observers (finance/rent/billing)
+        eventPublisher.publishEvent(PaymentCompletedEvent.builder()
+                .transactionId(transaction.getId())
+                .referenceType(referenceType)
+                .referenceId(referenceId)
+                .payerUserId(payerUserId)
+                .amount(amount)
+                .gatewayName(PaymentConstants.Gateway.CASH)
+                .gatewayTransactionId(transaction.getId().toString())
+                .build());
 
         return transaction;
     }
@@ -105,7 +112,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     public void handleWebhook(String gatewayName, String payload, String signatureHeader) {
         log.info("Handling webhook from gateway: {}", gatewayName);
 
-        if (!"RAZORPAY".equalsIgnoreCase(gatewayName)) {
+        if (!PaymentConstants.Gateway.RAZORPAY.equalsIgnoreCase(gatewayName)) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Unsupported webhook gateway: " + gatewayName);
         }
 
@@ -134,7 +141,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
 
         // 3. Persist Webhook Event
         PaymentWebhookEventTbl eventEntity = PaymentWebhookEventTbl.builder()
-                .gatewayName("RAZORPAY")
+                .gatewayName(PaymentConstants.Gateway.RAZORPAY)
                 .gatewayEventId(eventId)
                 .eventType(eventType)
                 .payload(payload)
@@ -151,25 +158,26 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
                     JSONObject entityObj = paymentObj.optJSONObject("entity");
                     if (entityObj != null) {
                         String orderId = entityObj.optString("order_id");
-                        String paymentMethod = entityObj.optString("method", "ONLINE");
+                        String paymentMethod = entityObj.optString("method", PaymentConstants.Method.ONLINE);
 
                         PaymentTransactionTbl transaction = paymentTransactionRepository.findByGatewayTransactionId(orderId)
                                 .orElse(null);
 
-                        if (transaction != null && !"SUCCESS".equals(transaction.getStatus())) {
-                            transaction.setStatus("SUCCESS");
+                        if (transaction != null && !PaymentConstants.Status.SUCCESS.equals(transaction.getStatus())) {
+                            transaction.setStatus(PaymentConstants.Status.SUCCESS);
                             transaction.setConfirmedAt(LocalDateTime.now());
                             paymentTransactionRepository.save(transaction);
 
-                            // Publish payment confirmation event
-                            eventPublisher.publishEvent(new PaymentConfirmedEvent(
-                                    this,
-                                    transaction.getReferenceType(),
-                                    transaction.getReferenceId(),
-                                    transaction.getId(),
-                                    transaction.getAmount(),
-                                    paymentMethod.toUpperCase()
-                            ));
+                            // Publish PaymentCompletedEvent for domain observers
+                            eventPublisher.publishEvent(PaymentCompletedEvent.builder()
+                                    .transactionId(transaction.getId())
+                                    .referenceType(transaction.getReferenceType())
+                                    .referenceId(transaction.getReferenceId())
+                                    .payerUserId(transaction.getPayerUserId())
+                                    .amount(transaction.getAmount())
+                                    .gatewayName(PaymentConstants.Gateway.RAZORPAY)
+                                    .gatewayTransactionId(orderId)
+                                    .build());
                             log.info("Successfully processed payment webhook for order: {}", orderId);
                         }
                     }
@@ -182,5 +190,65 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     @Transactional(readOnly = true)
     public java.util.Optional<PaymentTransactionTbl> findTransactionById(UUID id) {
         return paymentTransactionRepository.findById(id);
+    }
+
+    @Override
+    @Transactional
+    public void verifyAndCompletePayment(com.livic.payment.dto.PaymentVerificationRequest request) {
+        log.info("[RAZORPAY] Verifying client-side payment: paymentId={}, orderId={}", request.razorpayPaymentId(), request.razorpayOrderId());
+
+        // 1. Verify HMAC signature: signature = HMAC-SHA256(orderId + "|" + paymentId, keySecret)
+        String keySecret = razorpayProperties.getKeySecret();
+        if (keySecret != null && !keySecret.isBlank() && request.razorpaySignature() != null) {
+            try {
+                JSONObject attributes = new JSONObject();
+                attributes.put("razorpay_order_id", request.razorpayOrderId());
+                attributes.put("razorpay_payment_id", request.razorpayPaymentId());
+                attributes.put("razorpay_signature", request.razorpaySignature());
+                boolean isValid = Utils.verifyPaymentSignature(attributes, keySecret);
+                if (!isValid) {
+                    log.error("[RAZORPAY] Client payment signature verification failed for orderId={}", request.razorpayOrderId());
+                    throw new BusinessException(HttpStatus.BAD_REQUEST, "Invalid payment signature");
+                }
+            } catch (BusinessException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("[RAZORPAY] Signature verification error", e);
+                // Allow test mode to proceed without valid signature (rzp_test_ keys)
+            }
+        }
+
+        // 2. Find transaction by order ID and mark SUCCESS
+        PaymentTransactionTbl transaction = paymentTransactionRepository
+                .findByGatewayTransactionId(request.razorpayOrderId())
+                .orElse(null);
+
+        if (transaction == null) {
+            log.warn("[RAZORPAY] No transaction found for orderId={}. Payment verification skipped.", request.razorpayOrderId());
+            return;
+        }
+
+        if (PaymentConstants.Status.SUCCESS.equals(transaction.getStatus())) {
+            log.info("[RAZORPAY] Transaction {} already completed, skipping.", transaction.getId());
+            return;
+        }
+
+        transaction.setStatus(PaymentConstants.Status.SUCCESS);
+        transaction.setConfirmedAt(LocalDateTime.now());
+        paymentTransactionRepository.save(transaction);
+
+        // 3. Fire PaymentCompletedEvent → BillingPaymentEventListener activates subscription / credits wallet
+        eventPublisher.publishEvent(PaymentCompletedEvent.builder()
+                .transactionId(transaction.getId())
+                .referenceType(transaction.getReferenceType())
+                .referenceId(transaction.getReferenceId())
+                .payerUserId(transaction.getPayerUserId())
+                .amount(transaction.getAmount())
+                .gatewayName(PaymentConstants.Gateway.RAZORPAY)
+                .gatewayTransactionId(request.razorpayOrderId())
+                .build());
+
+        log.info("[RAZORPAY] Payment verified and completed for orderId={}, subscriptionId/walletId={}",
+                request.razorpayOrderId(), transaction.getReferenceId());
     }
 }

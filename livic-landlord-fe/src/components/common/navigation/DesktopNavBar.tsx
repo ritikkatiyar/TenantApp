@@ -3,11 +3,21 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useRouter } from 'expo-router';
+import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+
+export interface PropertyOption {
+  id: string;
+  name: string;
+}
 
 interface DesktopNavBarProps {
   onBack?: () => void;
   backText?: string;
   rightContent?: React.ReactNode;
+  properties?: PropertyOption[];
+  selectedPropertyId?: string | null;
+  onPropertyChange?: (propertyId: string) => void;
   title?: string;
   activeTab?: string;
   hideTabs?: boolean;
@@ -15,30 +25,63 @@ interface DesktopNavBarProps {
 
 export default function DesktopNavBar({ 
   onBack, 
-  backText = 'Back',
+  backText = 'Back to Portfolio',
   rightContent,
-  title
+  properties,
+  selectedPropertyId,
+  onPropertyChange,
 }: DesktopNavBarProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const initial = user?.fullName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
+  const propertyOptions = (properties || []).map(p => ({
+    label: p.name,
+    value: p.id,
+  }));
+
   return (
     <BlurView intensity={70} tint="light" style={styles.topbar}>
-      {/* Left Area: Back Button or Page Title */}
+      {/* Left Area: Back Button */}
       <View style={styles.topbarLeft}>
         {onBack ? (
-          <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop} activeOpacity={0.7}>
-            <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
+          <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop} activeOpacity={0.75}>
+            <MaterialIcons name="arrow-back" size={18} color="#151d1e" />
             <Text style={styles.backButtonTextDesktop}>{backText}</Text>
           </TouchableOpacity>
-        ) : title ? (
-          <Text style={styles.pageTitle}>{title}</Text>
         ) : null}
       </View>
 
-      {/* Right Area: Right Content (Search, notifications, etc.) + Avatar */}
+      {/* Center/Right Area: Property Selector Dropdown + Right Content + Avatar */}
       <View style={styles.topbarRight}>
+        {onPropertyChange ? (
+          <View style={styles.propertySelectorWrapper}>
+            <GlassDropdown
+              options={
+                propertyOptions.length > 0
+                  ? propertyOptions
+                  : [{ label: '+ Create Property', value: 'create_new_prop' }]
+              }
+              value={
+                propertyOptions.length > 0
+                  ? (selectedPropertyId || properties?.[0]?.id || null)
+                  : 'create_new_prop'
+              }
+              onChange={(val) => {
+                if (val === 'create_new_prop') {
+                  router.push('/properties/create');
+                } else if (onPropertyChange) {
+                  onPropertyChange(val);
+                }
+              }}
+              placeholder="Select Property"
+              icon="business"
+            />
+          </View>
+        ) : null}
+
         {rightContent}
+
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
@@ -56,21 +99,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderBottomWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
   },
   topbarLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  pageTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#151d1e',
-  },
   topbarRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
+    gap: 16,
+  },
+  propertySelectorWrapper: {
+    width: 220,
   },
   backButtonDesktop: {
     flexDirection: 'row',
@@ -79,9 +120,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   backButtonTextDesktop: {
     fontSize: 13,
@@ -95,10 +141,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#006875',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#006875',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
   },
   avatarText: {
     color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
+    fontWeight: '800',
+    fontSize: 15,
   },
 });

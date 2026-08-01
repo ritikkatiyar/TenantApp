@@ -166,12 +166,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {isDesktop && (
-          <DesktopNavBar 
-            hideTabs={true}
-            title="AI Command"
-            onBack={() => router.back()}
-            backText="Back"
-          />
+          <DesktopNavBar />
         )}
         <KeyboardAvoidingView
           style={styles.keyboardView}

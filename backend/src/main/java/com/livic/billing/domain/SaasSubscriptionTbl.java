@@ -1,12 +1,9 @@
 package com.livic.billing.domain;
 
 import com.livic.common.domain.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -22,14 +19,16 @@ public class SaasSubscriptionTbl extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "plan_name", nullable = false, length = 50)
-    private String planName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plan_id", nullable = false)
+    private SubscriptionPlanTbl plan;
 
     @Column(name = "status", nullable = false, length = 30)
     private String status;
 
-    @Column(name = "price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
+    @Column(name = "billing_cycle", nullable = false, length = 20)
+    @Builder.Default
+    private String billingCycle = "MONTHLY";
 
     @Column(name = "current_period_start", nullable = false)
     private LocalDateTime currentPeriodStart;
@@ -41,6 +40,23 @@ public class SaasSubscriptionTbl extends BaseEntity {
     @Builder.Default
     private Boolean autoRenew = true;
 
+    @Column(name = "gateway_type", nullable = false, length = 30)
+    @Builder.Default
+    private String gatewayType = "RAZORPAY";
+
     @Column(name = "gateway_subscription_id")
     private String gatewaySubscriptionId;
+
+    @Column(name = "gateway_customer_id")
+    private String gatewayCustomerId;
+
+    // --- Helper Convenience Methods ---
+
+    public String getPlanId() {
+        return (plan != null && plan.getId() != null) ? plan.getId().toString() : null;
+    }
+
+    public String getPlanName() {
+        return plan != null ? plan.getPlanKey() : "STARTER";
+    }
 }

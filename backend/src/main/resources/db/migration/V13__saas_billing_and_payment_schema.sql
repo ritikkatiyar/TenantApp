@@ -42,7 +42,7 @@ CREATE TABLE payment_transaction_tbl (
     id VARCHAR(36) PRIMARY KEY,
     user_id VARCHAR(36) NOT NULL,
     subscription_id VARCHAR(36),
-    gateway_name ENUM('STRIPE', 'RAZORPAY', 'PAYPAL') NOT NULL,
+    gateway_name ENUM('RAZORPAY') NOT NULL,
     gateway_transaction_id VARCHAR(255) UNIQUE,
     amount DECIMAL(10, 2) NOT NULL,
     status ENUM('PENDING', 'SUCCESS', 'FAILED') NOT NULL,

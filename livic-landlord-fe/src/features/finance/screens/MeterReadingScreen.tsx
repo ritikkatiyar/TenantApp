@@ -11,6 +11,7 @@ import { BlurView } from 'expo-blur';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useProperties } from '@/src/hooks/useProperties';
 
 // Phase 4 modular hook & component imports
 import { useMeterReading } from '@/src/features/finance/hooks/useMeterReading';
@@ -19,8 +20,10 @@ import { MeterReadingFloorCard } from '@/src/features/finance/components/MeterRe
 
 export default function MeterReadingScreen({ token }: { token: string | null }) {
   const router = useRouter();
-  const { id: propertyId } = useLocalSearchParams<{ id: string }>();
+  const { id: paramPropertyId, propertyId: paramPropertyIdAlt } = useLocalSearchParams<{ id?: string; propertyId?: string }>();
   const { isDesktop } = useResponsive();
+  const { properties } = useProperties();
+  const propertyId = paramPropertyId || paramPropertyIdAlt || (properties && properties.length > 0 ? properties[0].id : null);
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const {
@@ -97,9 +100,11 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
     >
       <View style={styles.desktopMain}>
         <DesktopNavBar 
-          activeTab="Properties" 
-          onBack={() => router.back()} 
-          backText="Back to Property" 
+          onBack={() => router.push('/expenses')} 
+          backText="Back to Finance & Billing" 
+          properties={properties || []}
+          selectedPropertyId={propertyId}
+          onPropertyChange={(id) => router.replace(`/expenses/meter-readings?propertyId=${id}` as any)}
         />
 
         <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
@@ -315,7 +320,26 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
         </View>
 
         <Animated.ScrollView contentContainerStyle={styles.listContent} keyboardShouldPersistTaps="handled">
-          {isLoading ? (
+          {(!properties || properties.length === 0) ? (
+            <BlurView intensity={60} tint="light" style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%' }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                <MaterialIcons name="business" size={32} color="#006875" />
+              </View>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: '#163235', marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
+              <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+                Logging meter readings requires an active property. Create your first property to start inputting meter logs.
+              </Text>
+              <TouchableOpacity 
+                style={{ borderRadius: 100, overflow: 'hidden' }}
+                onPress={() => router.push('/properties/create')}
+              >
+                <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
+                  <MaterialIcons name="add" size={20} color="#fff" />
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </BlurView>
+          ) : isLoading ? (
             <ActivityIndicator size="large" color="#006875" style={{ marginTop: 50 }} />
           ) : worksheet.length === 0 ? (
             <View style={styles.emptyState}>

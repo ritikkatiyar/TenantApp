@@ -1,12 +1,25 @@
 package com.livic.billing.service.impl;
 
+import com.livic.billing.constant.BillingConstants;
+import com.livic.payment.constant.PaymentConstants;
 import com.livic.billing.domain.BillingWalletTbl;
+import com.livic.billing.domain.PaymentGatewayType;
 import com.livic.billing.domain.SaasSubscriptionTbl;
+import com.livic.billing.domain.SubscriptionPlanTbl;
 import com.livic.billing.domain.WalletTransactionTbl;
+import com.livic.billing.dto.PaymentIntentRequest;
+import com.livic.billing.dto.PaymentIntentResponse;
+import com.livic.billing.dto.SubscriptionRequest;
 import com.livic.billing.repository.BillingWalletRepository;
-import com.livic.billing.repository.SaasSubscriptionRepository;
-import com.livic.billing.repository.WalletTransactionRepository;
+import com.livic.billing.service.interfaces.BillingWalletCrudService;
 import com.livic.billing.service.interfaces.BillingWalletService;
+import com.livic.billing.service.interfaces.SaasSubscriptionCrudService;
+import com.livic.billing.service.interfaces.SubscriptionPlanCrudService;
+import com.livic.billing.service.interfaces.WalletTransactionCrudService;
+import com.livic.payment.dto.PaymentInitiationRequest;
+import com.livic.payment.dto.PaymentInitiationResponse;
+import com.livic.payment.facade.PaymentFacade;
+import com.livic.payment.service.PaymentGatewayRouter;
 import com.livic.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +36,13 @@ import java.util.UUID;
 @Slf4j
 public class BillingWalletServiceImpl implements BillingWalletService {
 
+    private final BillingWalletCrudService walletCrudService;
+    private final WalletTransactionCrudService transactionCrudService;
+    private final SaasSubscriptionCrudService subscriptionCrudService;
+    private final SubscriptionPlanCrudService planCrudService;
     private final BillingWalletRepository walletRepository;
-    private final WalletTransactionRepository transactionRepository;
-    private final SaasSubscriptionRepository subscriptionRepository;
+    private final PaymentGatewayRouter paymentGatewayRouter;
+    private final PaymentFacade paymentFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -33,9 +50,8 @@ public class BillingWalletServiceImpl implements BillingWalletService {
         if (requiredCredits <= 0) {
             return true;
         }
-        BillingWalletTbl wallet = walletRepository.findByUserId(userId).orElse(null);
+        BillingWalletTbl wallet = walletCrudService.findByUserId(userId).orElse(null);
         if (wallet == null) {
-            // New users start with a free trial of 50 credits
             return 50.0 >= requiredCredits;
         }
         return wallet.getCreditBalance().doubleValue() >= requiredCredits;
@@ -48,13 +64,12 @@ public class BillingWalletServiceImpl implements BillingWalletService {
 
         BillingWalletTbl wallet = walletRepository.findByUserIdForUpdate(userId)
                 .orElseGet(() -> {
-                    // Create wallet on first usage with 50 starter credits
                     BillingWalletTbl newWallet = BillingWalletTbl.builder()
                             .userId(userId)
                             .creditBalance(BigDecimal.valueOf(50.0))
-                            .currency("USD")
+                            .currency(BillingConstants.Currency.DEFAULT_CURRENCY)
                             .build();
-                    return walletRepository.save(newWallet);
+                    return walletCrudService.save(newWallet);
                 });
 
         BigDecimal deduction = BigDecimal.valueOf(requiredCredits);
@@ -66,16 +81,15 @@ public class BillingWalletServiceImpl implements BillingWalletService {
         }
 
         wallet.setCreditBalance(wallet.getCreditBalance().subtract(deduction));
-        walletRepository.save(wallet);
+        walletCrudService.save(wallet);
 
-        // Record the transaction
         WalletTransactionTbl transaction = WalletTransactionTbl.builder()
                 .walletId(wallet.getId())
                 .amount(deduction)
-                .transactionType("DEBIT")
+                .transactionType(BillingConstants.WalletTxType.DEBIT)
                 .reason(reason)
                 .build();
-        transactionRepository.save(transaction);
+        transactionCrudService.save(transaction);
 
         log.info("[WALLET DEBIT] Successfully debited {} credits from user: {}. New balance: {}", 
                 requiredCredits, userId, wallet.getCreditBalance());
@@ -91,25 +105,29 @@ public class BillingWalletServiceImpl implements BillingWalletService {
                     BillingWalletTbl newWallet = BillingWalletTbl.builder()
                             .userId(userId)
                             .creditBalance(BigDecimal.ZERO)
-                            .currency("USD")
+                            .currency(BillingConstants.Currency.DEFAULT_CURRENCY)
                             .build();
-                    return walletRepository.save(newWallet);
+                    return walletCrudService.save(newWallet);
                 });
+
+        if (referenceId != null && transactionCrudService.existsByWalletIdAndReferenceId(wallet.getId(), referenceId)) {
+            log.info("[WALLET CREDIT] Transaction with referenceId {} already credited for wallet: {}. Skipping.", referenceId, wallet.getId());
+            return;
+        }
 
         BigDecimal addition = BigDecimal.valueOf(credits);
         wallet.setCreditBalance(wallet.getCreditBalance().add(addition));
         wallet.setLastToppedUp(LocalDateTime.now());
-        walletRepository.save(wallet);
+        walletCrudService.save(wallet);
 
-        // Record the transaction
         WalletTransactionTbl transaction = WalletTransactionTbl.builder()
                 .walletId(wallet.getId())
                 .amount(addition)
-                .transactionType("CREDIT")
+                .transactionType(BillingConstants.WalletTxType.CREDIT)
                 .reason(reason)
                 .referenceId(referenceId)
                 .build();
-        transactionRepository.save(transaction);
+        transactionCrudService.save(transaction);
 
         log.info("[WALLET CREDIT] Successfully credited {} credits to user: {}. New balance: {}", 
                 credits, userId, wallet.getCreditBalance());
@@ -118,9 +136,9 @@ public class BillingWalletServiceImpl implements BillingWalletService {
     @Override
     @Transactional(readOnly = true)
     public double getRemainingBalance(UUID userId) {
-        BillingWalletTbl wallet = walletRepository.findByUserId(userId).orElse(null);
+        BillingWalletTbl wallet = walletCrudService.findByUserId(userId).orElse(null);
         if (wallet == null) {
-            return 50.0; // Starter tier default credits
+            return 50.0;
         }
         return wallet.getCreditBalance().doubleValue();
     }
@@ -128,32 +146,111 @@ public class BillingWalletServiceImpl implements BillingWalletService {
     @Override
     @Transactional
     public BillingWalletTbl getOrCreateWallet(UUID userId) {
-        return walletRepository.findByUserId(userId)
+        return walletCrudService.findByUserId(userId)
                 .orElseGet(() -> {
                     BillingWalletTbl newWallet = BillingWalletTbl.builder()
                             .userId(userId)
-                            .creditBalance(BigDecimal.valueOf(50.0)) // Starter allocation
-                            .currency("USD")
+                            .creditBalance(BigDecimal.valueOf(50.0))
+                            .currency(BillingConstants.Currency.DEFAULT_CURRENCY)
                             .build();
-                    return walletRepository.save(newWallet);
+                    return walletCrudService.save(newWallet);
                 });
     }
 
     @Override
     @Transactional(readOnly = true)
     public SaasSubscriptionTbl getActiveSubscription(UUID userId) {
-        return subscriptionRepository.findByUserIdAndStatus(userId, "ACTIVE")
+        return subscriptionCrudService.findLatestByUserIdAndStatus(userId, BillingConstants.SubscriptionStatus.ACTIVE)
                 .orElseGet(() -> {
-                    // Return Starter / Free plan representation if no subscription exists
+                    SubscriptionPlanTbl starterPlan = planCrudService.findByPlanKey(BillingConstants.PlanKey.STARTER).orElse(null);
                     return SaasSubscriptionTbl.builder()
                             .userId(userId)
-                            .planName("STARTER")
-                            .status("ACTIVE")
-                            .price(BigDecimal.ZERO)
+                            .plan(starterPlan)
+                            .status(BillingConstants.SubscriptionStatus.ACTIVE)
+                            .billingCycle(BillingConstants.Cycle.MONTHLY)
                             .currentPeriodStart(LocalDateTime.now())
-                            .currentPeriodEnd(LocalDateTime.now().plusYears(1))
+                            .currentPeriodEnd(LocalDateTime.now().plusYears(100))
                             .autoRenew(false)
                             .build();
                 });
+    }
+
+    @Override
+    @Transactional
+    public PaymentIntentResponse topUpWallet(UUID userId, String username, PaymentIntentRequest request) {
+        log.info("Executing topUpWallet for user: {} amount: {}", userId, request.amount());
+
+        BillingWalletTbl wallet = getOrCreateWallet(userId);
+
+        PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
+                .payerUserId(userId)
+                .referenceType(PaymentConstants.ReferenceType.WALLET_TOPUP)
+                .referenceId(wallet.getId())
+                .amount(BigDecimal.valueOf(request.amount()))
+                .paymentMethod(PaymentConstants.Method.ONLINE)
+                .description("AI Credit Wallet Top-up")
+                .build();
+
+        PaymentInitiationResponse initResponse = paymentFacade.initiateOnlinePayment(initRequest);
+
+        return new PaymentIntentResponse(
+                initResponse.getTransactionId().toString(),
+                null,
+                initResponse.getGatewayTransactionId(),
+                null,
+                initResponse.getStatus()
+        );
+    }
+
+    @Override
+    @Transactional
+    public PaymentInitiationResponse subscribeToPlan(UUID userId, SubscriptionRequest request) {
+        log.info("Executing subscribeToPlan for user: {} plan: {} cycle: {}", userId, request.planName(), request.billingCycle());
+
+        String targetPlanKey = request.planName() != null ? request.planName().trim().toUpperCase() : BillingConstants.PlanKey.STARTER;
+
+        SubscriptionPlanTbl plan = planCrudService.findByPlanKey(targetPlanKey)
+                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Plan not found: " + request.planName()));
+
+        // Create or update the pending subscription record safely
+        SaasSubscriptionTbl subscription = subscriptionCrudService.findLatestByUserIdAndStatus(userId, BillingConstants.SubscriptionStatus.PENDING)
+                .orElse(null);
+
+        LocalDateTime now = LocalDateTime.now();
+        String cycle = request.billingCycle() != null ? request.billingCycle() : BillingConstants.Cycle.MONTHLY;
+        LocalDateTime periodEnd = BillingConstants.Cycle.YEARLY.equalsIgnoreCase(cycle) ? now.plusYears(1) : now.plusMonths(1);
+
+        if (subscription == null) {
+            subscription = SaasSubscriptionTbl.builder()
+                    .userId(userId)
+                    .plan(plan)
+                    .status(BillingConstants.SubscriptionStatus.PENDING)
+                    .billingCycle(cycle)
+                    .currentPeriodStart(now)
+                    .currentPeriodEnd(periodEnd)
+                    .autoRenew(true)
+                    .gatewayType(PaymentConstants.Gateway.RAZORPAY)
+                    .build();
+        } else {
+            subscription.setPlan(plan);
+            subscription.setBillingCycle(cycle);
+            subscription.setCurrentPeriodStart(now);
+            subscription.setCurrentPeriodEnd(periodEnd);
+            subscription.setStatus(BillingConstants.SubscriptionStatus.PENDING);
+        }
+
+        subscription = subscriptionCrudService.saveAndFlush(subscription);
+
+        // Build payment request with the subscription's ID as referenceId
+        PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
+                .payerUserId(userId)
+                .referenceType(PaymentConstants.ReferenceType.SAAS_SUBSCRIPTION)
+                .referenceId(subscription.getId())
+                .amount(BigDecimal.valueOf(request.amount()))
+                .paymentMethod(PaymentConstants.Method.ONLINE)
+                .description(plan.getName() + " Subscription (" + cycle + ")")
+                .build();
+
+        return paymentFacade.initiateOnlinePayment(initRequest);
     }
 }

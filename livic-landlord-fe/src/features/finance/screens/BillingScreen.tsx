@@ -17,8 +17,17 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
-import { getBillingStatus, subscribeToPlan, topUpWallet, BillingStatusResponse } from '@/src/features/finance/api/billing.api';
+import {
+  getBillingStatus,
+  getPlans,
+  subscribeToPlan,
+  topUpWallet,
+  verifyPayment,
+  BillingStatusResponse,
+  PlanResponse,
+} from '@/src/features/finance/api/billing.api';
 import { Theme } from '@/src/theme/Theme';
 
 const { width } = Dimensions.get('window');
@@ -28,56 +37,133 @@ type BillingScreenProps = {
   token: string;
 };
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 export default function BillingScreen({ token }: BillingScreenProps) {
   const router = useRouter();
   const { isDesktop } = useResponsive();
   const [isLoading, setIsLoading] = useState(true);
   const [billingData, setBillingData] = useState<BillingStatusResponse | null>(null);
+  const [plans, setPlans] = useState<PlanResponse[]>([]);
   const [isAnnual, setIsAnnual] = useState(false);
   const [expectedAITasks, setExpectedAITasks] = useState(1000);
   const [additionalUnits, setAdditionalUnits] = useState(5);
-  const [topUpAmount, setTopUpAmount] = useState('10');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState('500');
+  const [subscribingPlanKey, setSubscribingPlanKey] = useState<string | null>(null);
+  const [isTopUpProcessing, setIsTopUpProcessing] = useState(false);
 
   useEffect(() => {
-    fetchBillingStatus();
+    fetchInitialData();
+    loadRazorpayScript();
   }, [token]);
 
-  const fetchBillingStatus = async () => {
+  const loadRazorpayScript = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && !window.Razorpay) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  };
+
+  const fetchInitialData = async () => {
     try {
       setIsLoading(true);
-      const data = await getBillingStatus(token);
-      setBillingData(data);
+      const [statusRes, plansRes] = await Promise.all([
+        getBillingStatus(token),
+        getPlans(token).catch(() => []),
+      ]);
+      setBillingData(statusRes);
+      if (plansRes && plansRes.length > 0) {
+        setPlans(plansRes);
+      }
     } catch (error: any) {
-      console.error('[BILLING] Failed to load billing status:', error);
+      console.error('[BILLING] Failed to load billing context:', error);
       Alert.alert('Error', 'Failed to load billing context.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubscribe = async (planName: string, amount: number) => {
+  const handleSubscribe = async (planKey: string, price: number) => {
     try {
-      setIsProcessing(true);
-      const finalAmount = isAnnual ? amount * 12 * 0.8 : amount; // 20% yearly discount
+      setSubscribingPlanKey(planKey);
       const cycle = isAnnual ? 'YEARLY' : 'MONTHLY';
-      
+      const finalAmount = isAnnual ? price * 12 * 0.8 : price;
+
       const res = await subscribeToPlan({
-        planName,
+        planName: planKey,
         amount: finalAmount,
         billingCycle: cycle,
-        gateway: 'STRIPE',
       }, token);
 
-      Alert.alert(
-        'Subscription Activated!',
-        `Successfully subscribed to ${planName} (${cycle})! Checkout mock URL was generated.`,
-        [{ text: 'Great!', onPress: fetchBillingStatus }]
-      );
+      const razorpayKey = process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_TKP4I9m5sGhRXH';
+
+      if (Platform.OS === 'web' && window.Razorpay) {
+        const options: any = {
+          key: razorpayKey,
+          name: 'Livic TenantApp',
+          description: `${planKey} Plan Subscription (${cycle})`,
+          upi: {
+            flow: 'qr',
+          },
+          method: {
+            upi: true,
+            card: true,
+            netbanking: true,
+            wallet: true,
+          },
+          prefill: {
+            method: 'upi',
+          },
+          handler: async function (response: any) {
+            try {
+              await verifyPayment({
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id || options.order_id || res.gatewaySubscriptionId,
+                razorpaySignature: response.razorpay_signature,
+              }, token);
+              Alert.alert('Success!', `Subscribed to ${planKey} plan successfully!`, [
+                { text: 'Great!', onPress: fetchInitialData },
+              ]);
+            } catch (err: any) {
+              Alert.alert('Verification Error', err.message || 'Could not verify payment. Contact support.');
+            } finally {
+              setSubscribingPlanKey(null);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setSubscribingPlanKey(null);
+            },
+          },
+        };
+
+        if (res.gatewaySubscriptionId && !res.gatewaySubscriptionId.startsWith('sub_rzp_test_')) {
+          options.subscription_id = res.gatewaySubscriptionId;
+        } else {
+          options.amount = Math.round(finalAmount * 100);
+          options.currency = 'INR';
+          options.order_id = res.gatewaySubscriptionId;
+        }
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        Alert.alert(
+          'Subscription Initiated!',
+          `Plan ${planKey} (${cycle}) checkout initiated via Razorpay Test Mode.`,
+          [{ text: 'OK', onPress: fetchInitialData }]
+        );
+        setSubscribingPlanKey(null);
+      }
     } catch (error: any) {
       Alert.alert('Subscription Failed', error.message || 'Check your payment connection.');
-    } finally {
-      setIsProcessing(false);
+      setSubscribingPlanKey(null);
     }
   };
 
@@ -89,38 +175,90 @@ export default function BillingScreen({ token }: BillingScreenProps) {
     }
 
     try {
-      setIsProcessing(true);
+      setIsTopUpProcessing(true);
       const res = await topUpWallet({
         amount: amt,
-        gateway: 'STRIPE',
       }, token);
 
-      const creditsAdded = amt * 50;
-      Alert.alert(
-        'Top-Up Successful!',
-        `Purchased $${amt.toFixed(2)} converting to +${creditsAdded} AI credits instantly.`,
-        [{ text: 'Done', onPress: fetchBillingStatus }]
-      );
+      const creditsAdded = Math.round(amt);
+
+      const razorpayKey = process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || 'rzp_test_TKP4I9m5sGhRXH';
+
+      if (Platform.OS === 'web' && window.Razorpay) {
+        const options: any = {
+          key: razorpayKey,
+          name: 'Livic TenantApp',
+          description: `AI Wallet Top-Up (+${creditsAdded} Credits)`,
+          upi: {
+            flow: 'qr',
+          },
+          method: {
+            upi: true,
+            card: true,
+            netbanking: true,
+            wallet: true,
+          },
+          prefill: {
+            method: 'upi',
+          },
+          handler: async function (response: any) {
+            try {
+              await verifyPayment({
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id || res.gatewayTransactionId,
+                razorpaySignature: response.razorpay_signature,
+              }, token);
+              Alert.alert('Top-Up Successful!', `+${creditsAdded} AI credits added to your wallet.`, [
+                { text: 'Done', onPress: fetchInitialData },
+              ]);
+            } catch (err: any) {
+              Alert.alert('Verification Error', err.message || 'Could not verify payment. Contact support.');
+            } finally {
+              setIsTopUpProcessing(false);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setIsTopUpProcessing(false);
+            },
+          },
+        };
+
+        if (res.gatewayTransactionId && !res.gatewayTransactionId.startsWith('order_rzp_test_')) {
+          options.order_id = res.gatewayTransactionId;
+        } else {
+          options.amount = Math.round(amt * 100);
+          options.currency = 'INR';
+          options.order_id = res.gatewayTransactionId;
+        }
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        Alert.alert(
+          'Top-Up Successful!',
+          `Purchased ₹${amt.toFixed(0)} converting to +${creditsAdded} AI credits instantly.`,
+          [{ text: 'Done', onPress: fetchInitialData }]
+        );
+        setIsTopUpProcessing(false);
+      }
     } catch (error: any) {
       Alert.alert('Top-Up Failed', error.message || 'Payment processing error.');
-    } finally {
-      setIsProcessing(false);
+      setIsTopUpProcessing(false);
     }
   };
 
-  // Custom Interactive Slider Calculation
-  // Landlord Pro is $19.99/mo (includes 1,000 AI credits)
-  // Additional tasks are $0.02 per credit
-  // Additional units are $1.50 per unit
   const calculateEstimatedTotal = () => {
-    const basePrice = 19.99;
-    const additionalCreditsCost = Math.max(0, expectedAITasks - 1000) * 0.02;
-    const unitsCost = additionalUnits * 1.50;
+    const aiTasks = isNaN(expectedAITasks) ? 1000 : expectedAITasks;
+    const units = isNaN(additionalUnits) ? 5 : additionalUnits;
+    const basePrice = 1599;
+    const additionalCreditsCost = Math.max(0, aiTasks - 1000) * 1.50;
+    const unitsCost = units * 100;
     let total = basePrice + additionalCreditsCost + unitsCost;
     if (isAnnual) {
-      total = total * 0.8; // 20% discount
+      total = total * 0.8;
     }
-    return total.toFixed(2);
+    return Math.round(total).toLocaleString('en-IN');
   };
 
   if (isLoading) {
@@ -143,22 +281,38 @@ export default function BillingScreen({ token }: BillingScreenProps) {
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {/* Glassy Overlay Header */}
-        <View style={styles.headerContainer}>
-          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
-            </TouchableOpacity>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.headerTitle}>CHOOSE YOUR POWER</Text>
+        {/* Desktop Uniform Navbar */}
+        {isDesktop ? (
+          <DesktopNavBar 
+            onBack={() => router.push('/settings')} 
+            backText="Back to Settings" 
+          />
+        ) : (
+          /* Mobile Glassy Header */
+          <View style={styles.headerContainer}>
+            <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+            <View style={styles.headerContent}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+              </TouchableOpacity>
+              <View style={styles.titleWrapper}>
+                <Text style={styles.headerTitle}>SUBSCRIPTION & BILLING</Text>
+              </View>
+              <View style={{ width: 36 }} />
             </View>
-            {isDesktop && <View style={{ width: 40 }} />}
-            {!isDesktop && <View style={{ width: 36 }} />}
           </View>
-        </View>
+        )}
 
         <ScrollView contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 72 }]} showsVerticalScrollIndicator={false}>
+          <View style={isDesktop ? styles.desktopInner : null}>
+            
+            {/* Desktop Hero Title */}
+            {isDesktop && (
+              <View style={styles.titleContainer}>
+                <Text style={styles.titleLineDesktop}>SaaS Subscription & Billing</Text>
+                <Text style={styles.subtitleDesktop}>Manage subscription plan tier, Razorpay gateway & prepaid AI credit wallet</Text>
+              </View>
+            )}
           
           {/* Quick Wallet Summary Card */}
           <BlurView intensity={60} tint="light" style={styles.walletStatusCard}>
@@ -168,7 +322,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             >
               <View style={styles.walletHeader}>
                 <View>
-                  <Text style={styles.walletLabel}>ACTIVE SUBSCRIPTION</Text>
+                  <Text style={styles.walletLabel}>ACTIVE SUBSCRIPTION TIER</Text>
                   <Text style={styles.walletValue}>{currentPlan}</Text>
                 </View>
                 <View style={styles.badgeContainer}>
@@ -180,7 +334,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
 
               <View style={styles.walletFooter}>
                 <View>
-                  <Text style={styles.walletLabel}>PREPAID WALLET CREDIT</Text>
+                  <Text style={styles.walletLabel}>PREPAID AI CREDIT BALANCE</Text>
                   <Text style={styles.creditValue}>
                     {remainingCredits.toLocaleString()} <Text style={styles.creditUnit}>AI Credits</Text>
                   </Text>
@@ -196,100 +350,96 @@ export default function BillingScreen({ token }: BillingScreenProps) {
               style={[styles.toggleBtn, !isAnnual && styles.toggleBtnActive]}
               onPress={() => setIsAnnual(false)}
             >
-              <Text style={[styles.toggleText, !isAnnual && styles.toggleTextActive]}>Monthly</Text>
+              <Text style={[styles.toggleText, !isAnnual && styles.toggleTextActive]}>Monthly Billing</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleBtn, isAnnual && styles.toggleBtnActive]}
               onPress={() => setIsAnnual(true)}
             >
-              <Text style={[styles.toggleText, isAnnual && styles.toggleTextActive]}>Yearly (Save 20%)</Text>
+              <Text style={[styles.toggleText, isAnnual && styles.toggleTextActive]}>Annual Billing (Save 20%)</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Plan Cards */}
+          {/* Dynamic Plan Cards from Backend */}
           <View style={styles.cardsWrapper}>
-            
-            {/* Starter Plan */}
-            <BlurView intensity={60} tint="light" style={[styles.planCard, currentPlan === 'STARTER' && styles.planCardActive]}>
-              {currentPlan === 'STARTER' && <View style={styles.currentPlanRibbon}><Text style={styles.ribbonText}>CURRENT</Text></View>}
-              <Text style={styles.planTitle}>STARTER</Text>
-              <View style={styles.priceContainer}>
-                <Text style={styles.priceDollar}>$0</Text>
-                <Text style={styles.priceMonth}>/mo</Text>
+            {plans.length === 0 ? (
+              <View style={{ padding: 24, alignItems: 'center', width: '100%' }}>
+                <Text style={{ color: Theme.Colors.onSurfaceVariant, fontSize: 14 }}>No plans available. Please try again later.</Text>
               </View>
-              
-              <View style={styles.bulletList}>
-                <View style={styles.bulletRow}>
-                  <MaterialIcons name="check" size={16} color={Theme.Colors.primaryContainer} />
-                  <Text style={styles.bulletText}>1 Property Limit</Text>
-                </View>
-                <View style={styles.bulletRow}>
-                  <MaterialIcons name="check" size={16} color={Theme.Colors.primaryContainer} />
-                  <Text style={styles.bulletText}>Roommate Split (Basic)</Text>
-                </View>
-                <View style={styles.bulletRow}>
-                  <MaterialIcons name="check" size={16} color={Theme.Colors.primaryContainer} />
-                  <Text style={styles.bulletText}>50 Free AI Credits / Month</Text>
-                </View>
-              </View>
+            ) : plans.map((plan) => {
+              const isCurrent = currentPlan.toUpperCase() === plan.planKey.toUpperCase();
+              const price = isAnnual ? (plan.priceYearly ? plan.priceYearly / 12 : plan.priceMonthly * 0.8) : plan.priceMonthly;
 
-              <TouchableOpacity
-                style={[styles.cardButton, currentPlan === 'STARTER' && styles.cardButtonDisabled]}
-                disabled={currentPlan === 'STARTER'}
-                onPress={() => handleSubscribe('STARTER', 0.00)}
-              >
-                <Text style={styles.cardButtonText}>
-                  {currentPlan === 'STARTER' ? 'Active Plan' : 'Get Started'}
-                </Text>
-              </TouchableOpacity>
-            </BlurView>
+              return (
+                <BlurView
+                  key={plan.id || plan.planKey}
+                  intensity={60}
+                  tint="light"
+                  style={[
+                    styles.planCard,
+                    plan.planKey === 'PREMIUM' && styles.planCardPro,
+                    isCurrent && styles.planCardActive,
+                  ]}
+                >
+                  {isCurrent && (
+                    <View style={styles.currentPlanRibbon}>
+                      <Text style={styles.ribbonText}>CURRENT</Text>
+                    </View>
+                  )}
 
-            {/* Landlord Pro Plan */}
-            <BlurView intensity={60} tint="light" style={[styles.planCard, styles.planCardPro, currentPlan === 'LANDLORD_PRO' && styles.planCardActive]}>
-              {currentPlan === 'LANDLORD_PRO' && <View style={styles.currentPlanRibbon}><Text style={styles.ribbonText}>CURRENT</Text></View>}
-              <View style={styles.proHeaderRow}>
-                <Text style={[styles.planTitle, { color: Theme.Colors.primary }]}>LANDLORD PRO</Text>
-                <View style={styles.popularBadge}><Text style={styles.popularText}>POPULAR</Text></View>
-              </View>
-              <View style={styles.priceContainer}>
-                <Text style={styles.priceDollar}>${isAnnual ? '15.99' : '19.99'}</Text>
-                <Text style={styles.priceMonth}>/mo</Text>
-              </View>
-              
-              <View style={styles.bulletList}>
-                <View style={styles.bulletRow}>
-                  <MaterialIcons name="check" size={16} color={Theme.Colors.primaryContainer} />
-                  <Text style={styles.bulletText}>Unlimited Properties & Units</Text>
-                </View>
-                <View style={styles.bulletRow}>
-                  <MaterialIcons name="check" size={16} color={Theme.Colors.primaryContainer} />
-                  <Text style={styles.bulletText}>Roommate Split (Premium)</Text>
-                </View>
-                <View style={styles.bulletRow}>
-                  <MaterialIcons name="check" size={16} color={Theme.Colors.primaryContainer} />
-                  <Text style={styles.bulletText}>1,000 AI Credits / Month</Text>
-                </View>
-                <View style={styles.bulletRow}>
-                  <MaterialIcons name="check" size={16} color={Theme.Colors.primaryContainer} />
-                  <Text style={styles.bulletText}>Landlord Operation Dashboard</Text>
-                </View>
-              </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.proHeaderRow}>
+                      <Text style={[styles.planTitle, plan.planKey === 'PREMIUM' && { color: Theme.Colors.primary }]}>
+                        {plan.name || plan.planKey}
+                      </Text>
+                      {plan.planKey === 'PREMIUM' && (
+                        <View style={styles.popularBadge}>
+                          <Text style={styles.popularText}>POPULAR</Text>
+                        </View>
+                      )}
+                    </View>
 
-              <TouchableOpacity
-                style={[styles.cardButton, styles.cardButtonPro]}
-                onPress={() => handleSubscribe('LANDLORD_PRO', 19.99)}
-                disabled={isProcessing}
-              >
-                {isProcessing ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.cardButtonTextPro}>
-                    {currentPlan === 'LANDLORD_PRO' ? 'Renew / Extend Pro' : 'Upgrade to Pro'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </BlurView>
+                    <View style={styles.priceContainer}>
+                      <Text style={styles.priceDollar}>₹{Math.round(price).toLocaleString('en-IN')}</Text>
+                      <Text style={styles.priceMonth}>/mo</Text>
+                    </View>
 
+                    <View style={styles.bulletList}>
+                      {plan.features.slice(0, 6).map((feat, idx) => (
+                        <View key={idx} style={styles.bulletRow}>
+                          <MaterialIcons
+                            name={feat.included ? 'check' : 'close'}
+                            size={16}
+                            color={feat.included ? Theme.Colors.primaryContainer : '#94a3b8'}
+                          />
+                          <Text style={[styles.bulletText, !feat.included && styles.bulletTextDisabled]}>
+                            {feat.displayLabel}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.cardButton,
+                      plan.planKey === 'PREMIUM' && styles.cardButtonPro,
+                      isCurrent && styles.cardButtonDisabled,
+                    ]}
+                    disabled={isCurrent || subscribingPlanKey !== null || isTopUpProcessing}
+                    onPress={() => handleSubscribe(plan.planKey, plan.priceMonthly)}
+                  >
+                    {subscribingPlanKey === plan.planKey ? (
+                      <ActivityIndicator size="small" color={plan.planKey === 'PREMIUM' ? '#004f58' : Theme.Colors.primary} />
+                    ) : (
+                      <Text style={[styles.cardButtonText, plan.planKey === 'PREMIUM' && styles.cardButtonTextPro]} numberOfLines={1}>
+                        {isCurrent ? 'Active Plan' : `Upgrade to ${plan.name || plan.planKey}`}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </BlurView>
+              );
+            })}
           </View>
 
           {/* Interactive Calculator Slider Card */}
@@ -300,23 +450,25 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             <View style={styles.sliderSection}>
               <View style={styles.sliderLabelRow}>
                 <Text style={styles.sliderLabel}>Expected Monthly AI Tasks</Text>
-                <Text style={styles.sliderValue}>{expectedAITasks.toLocaleString()}</Text>
+                <Text style={styles.sliderValue}>{(isNaN(expectedAITasks) ? 1000 : expectedAITasks).toLocaleString()}</Text>
               </View>
-              
-              {/* Custom touch slider track */}
+
               <View style={styles.trackContainer}>
                 <TouchableOpacity
                   style={styles.trackPressable}
                   activeOpacity={1}
                   onPress={(e) => {
-                    const relativeX = e.nativeEvent.locationX;
-                    const pct = Math.min(Math.max(0, relativeX / (width - 80)), 1);
-                    setExpectedAITasks(Math.round(pct * 5000));
+                    const locationX = e.nativeEvent?.locationX ?? (e.nativeEvent as any)?.offsetX ?? 0;
+                    if (typeof locationX === 'number' && !isNaN(locationX) && locationX > 0) {
+                      const pct = Math.min(Math.max(0, locationX / Math.max(1, width - 80)), 1);
+                      const val = Math.round(pct * 5000);
+                      if (!isNaN(val)) setExpectedAITasks(val);
+                    }
                   }}
                 >
                   <View style={styles.trackBase} />
-                  <View style={[styles.trackFill, { width: `${(expectedAITasks / 5000) * 100}%` }]} />
-                  <View style={[styles.trackThumb, { left: `${(expectedAITasks / 5000) * 92}%` }]} />
+                  <View style={[styles.trackFill, { width: `${(((isNaN(expectedAITasks) ? 1000 : expectedAITasks) / 5000) * 100)}%` }]} />
+                  <View style={[styles.trackThumb, { left: `${(((isNaN(expectedAITasks) ? 1000 : expectedAITasks) / 5000) * 92)}%` }]} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -324,23 +476,25 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             <View style={styles.sliderSection}>
               <View style={styles.sliderLabelRow}>
                 <Text style={styles.sliderLabel}>Additional Portfolio Units</Text>
-                <Text style={styles.sliderValue}>{additionalUnits} Units</Text>
+                <Text style={styles.sliderValue}>{(isNaN(additionalUnits) ? 5 : additionalUnits)} Units</Text>
               </View>
 
-              {/* Custom touch slider track */}
               <View style={styles.trackContainer}>
                 <TouchableOpacity
                   style={styles.trackPressable}
                   activeOpacity={1}
                   onPress={(e) => {
-                    const relativeX = e.nativeEvent.locationX;
-                    const pct = Math.min(Math.max(0, relativeX / (width - 80)), 1);
-                    setAdditionalUnits(Math.round(pct * 50));
+                    const locationX = e.nativeEvent?.locationX ?? (e.nativeEvent as any)?.offsetX ?? 0;
+                    if (typeof locationX === 'number' && !isNaN(locationX) && locationX > 0) {
+                      const pct = Math.min(Math.max(0, locationX / Math.max(1, width - 80)), 1);
+                      const val = Math.round(pct * 50);
+                      if (!isNaN(val)) setAdditionalUnits(val);
+                    }
                   }}
                 >
                   <View style={styles.trackBase} />
-                  <View style={[styles.trackFill, { width: `${(additionalUnits / 50) * 100}%` }]} />
-                  <View style={[styles.trackThumb, { left: `${(additionalUnits / 50) * 92}%` }]} />
+                  <View style={[styles.trackFill, { width: `${(((isNaN(additionalUnits) ? 5 : additionalUnits) / 50) * 100)}%` }]} />
+                  <View style={[styles.trackThumb, { left: `${(((isNaN(additionalUnits) ? 5 : additionalUnits) / 50) * 92)}%` }]} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -348,7 +502,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             <View style={styles.estimateBox}>
               <Text style={styles.estimateLabel}>ESTIMATED TOTAL COST</Text>
               <Text style={styles.estimateTotal}>
-                ${calculateEstimatedTotal()}
+                ₹{calculateEstimatedTotal()}
                 <Text style={styles.estimateCycle}>/{isAnnual ? 'yr' : 'mo'}</Text>
               </Text>
               <Text style={styles.estimateDesc}>Pro Plan + Customized Out-of-Bundle AI Credit Pack</Text>
@@ -361,34 +515,34 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             <Text style={styles.calculatorSub}>Out-of-bundle credit purchases (never expire):</Text>
 
             <View style={styles.topUpInputContainer}>
-              <Text style={styles.dollarPrefix}>$</Text>
+              <Text style={styles.dollarPrefix}>₹</Text>
               <TextInput
                 style={styles.topUpInput}
                 keyboardType="numeric"
                 value={topUpAmount}
                 onChangeText={setTopUpAmount}
-                placeholder="10"
+                placeholder="500"
                 placeholderTextColor="#64748B"
               />
               <Text style={styles.creditsConversion}>
-                = +{(parseFloat(topUpAmount || '0') * 50).toLocaleString()} Credits
+                = +{(parseFloat(topUpAmount || '0')).toLocaleString()} Credits
               </Text>
             </View>
 
             <View style={styles.topUpPresets}>
-              {['10', '25', '50', '100'].map((val) => (
+              {['500', '1000', '2500', '5000'].map((val) => (
                 <TouchableOpacity
                   key={val}
                   style={[styles.presetBtn, topUpAmount === val && styles.presetBtnActive]}
                   onPress={() => setTopUpAmount(val)}
                 >
-                  <Text style={[styles.presetText, topUpAmount === val && styles.presetTextActive]}>${val}</Text>
+                  <Text style={[styles.presetText, topUpAmount === val && styles.presetTextActive]}>₹{parseInt(val, 10).toLocaleString('en-IN')}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <TouchableOpacity style={styles.topUpSubmit} onPress={handleTopUp} disabled={isProcessing}>
-              {isProcessing ? (
+            <TouchableOpacity style={styles.topUpSubmit} onPress={handleTopUp} disabled={isTopUpProcessing || subscribingPlanKey !== null}>
+              {isTopUpProcessing ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <LinearGradient
@@ -398,12 +552,13 @@ export default function BillingScreen({ token }: BillingScreenProps) {
                   style={styles.topUpSubmitGradient}
                 >
                   <Ionicons name="shield-checkmark" size={18} color="#fff" />
-                  <Text style={styles.topUpSubmitText}>SECURE CHECKOUT</Text>
+                  <Text style={styles.topUpSubmitText}>RAZORPAY TEST CHECKOUT</Text>
                 </LinearGradient>
               )}
             </TouchableOpacity>
           </BlurView>
 
+          </View>
           <View style={{ height: 120 }} />
         </ScrollView>
       </SafeAreaView>
@@ -459,11 +614,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   headerTitle: {
     color: Theme.Colors.onSurface,
@@ -562,17 +712,46 @@ const styles = StyleSheet.create({
   toggleTextActive: {
     color: Theme.Colors.onSurface,
   },
+  desktopInner: {
+    width: '100%',
+    maxWidth: 1080,
+    alignSelf: 'center',
+  },
+  titleContainer: {
+    marginBottom: 32,
+  },
+  titleLineDesktop: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#151d1e',
+    lineHeight: 38,
+    letterSpacing: -0.5,
+  },
+  subtitleDesktop: {
+    fontSize: 14,
+    color: '#6b7a7d',
+    marginTop: 4,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
   cardsWrapper: {
-    gap: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
     marginVertical: 15,
   },
   planCard: {
+    flex: 1,
+    minWidth: 230,
     borderRadius: 24,
     padding: 25,
     borderWidth: 1,
     borderColor: Theme.Colors.glassStroke,
     overflow: 'hidden',
     backgroundColor: Theme.Colors.glassFill,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   },
   planCardPro: {
     borderColor: 'rgba(0, 224, 255, 0.55)',
@@ -639,7 +818,7 @@ const styles = StyleSheet.create({
   },
   bulletList: {
     gap: 12,
-    marginBottom: 25,
+    marginBottom: 16,
   },
   bulletRow: {
     flexDirection: 'row',
@@ -651,14 +830,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  bulletTextDisabled: {
+    color: '#94a3b8',
+    textDecorationLine: 'line-through',
+  },
   cardButton: {
     width: '100%',
-    paddingVertical: 14,
+    height: 48,
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 10,
     borderRadius: 14,
     backgroundColor: Theme.Colors.surfaceContainerLow,
     borderWidth: 1,
     borderColor: Theme.Colors.outlineVariant,
+    marginTop: 16,
   },
   cardButtonPro: {
     backgroundColor: Theme.Colors.primaryContainer,
@@ -669,8 +855,9 @@ const styles = StyleSheet.create({
   },
   cardButtonText: {
     color: Theme.Colors.onSurface,
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   cardButtonTextPro: {
     color: Theme.Colors.onPrimaryContainer,
@@ -799,8 +986,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: Theme.Colors.outlineVariant,
     marginBottom: 15,
   },
   dollarPrefix: {
@@ -835,16 +1020,16 @@ const styles = StyleSheet.create({
     borderColor: Theme.Colors.outlineVariant,
   },
   presetBtnActive: {
-    borderColor: Theme.Colors.primaryContainer,
-    backgroundColor: 'rgba(0, 224, 255, 0.18)',
+    backgroundColor: 'rgba(0, 224, 255, 0.16)',
+    borderColor: 'rgba(0, 224, 255, 0.42)',
   },
   presetText: {
     color: Theme.Colors.onSurfaceVariant,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   presetTextActive: {
-    color: Theme.Colors.primary,
+    color: Theme.Colors.onSurface,
   },
   topUpSubmit: {
     borderRadius: 16,
@@ -854,13 +1039,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: 15,
     gap: 8,
   },
   topUpSubmitText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
 });
