@@ -177,9 +177,13 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     </Animated.View>
   );
 
-  const ListEmptyComponent = () => (
-    <CommandCenterEmptyState onNavigateToCreateProperty={onNavigateToCreateProperty} />
-  );
+  const ListEmptyComponent = () => {
+    // Don't show the empty state while the initial fetch is in progress.
+    // Without this guard, `properties` is [] for the brief moment the API call
+    // is in flight, causing the "Create Property" banner to flash then disappear.
+    if (isLoading) return null;
+    return <CommandCenterEmptyState onNavigateToCreateProperty={onNavigateToCreateProperty} />;
+  };
 
   const ListFooter = () => (
     properties.length > 0 && !isDesktop ? (

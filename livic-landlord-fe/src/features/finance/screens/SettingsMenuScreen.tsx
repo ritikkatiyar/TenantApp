@@ -24,7 +24,7 @@ export default function SettingsMenuScreen() {
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
-  const { properties } = useProperties();
+  const { properties, isLoading } = useProperties();
   const { accessToken } = useAuth();
   const { showToast } = useToast();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
@@ -275,7 +275,7 @@ export default function SettingsMenuScreen() {
               </Animated.View>
             )}
 
-            {properties.length === 0 && (
+            {!isLoading && properties.length === 0 && (
               <BlurView intensity={60} tint="light" style={{ padding: 24, borderRadius: 20, marginBottom: 24, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.7)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                   <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
