@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +35,6 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/search")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<UserDTOs.UserSearchResponse>>> searchByPhone(
             @RequestParam String phone
     ) {
@@ -47,7 +45,6 @@ public class UserController {
     }
 
     @PostMapping("/create-tenant")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UserDTOs.UserSearchResponse>> createTenant(
             @Valid @RequestBody UserDTOs.CreateTenantRequest request
     ) {
@@ -93,7 +90,6 @@ public class UserController {
     }
 
     @GetMapping("/tenant/profile")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UserDTOs.TenantProfileResponse>> getTenantProfile(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
@@ -106,7 +102,6 @@ public class UserController {
     }
 
     @org.springframework.web.bind.annotation.PutMapping("/tenant/profile")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UserDTOs.TenantProfileResponse>> updateTenantProfile(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestBody UserDTOs.UpdateTenantProfileRequest request

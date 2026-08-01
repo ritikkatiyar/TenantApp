@@ -23,6 +23,7 @@ import { createProperty } from '@/src/features/properties/api/property.api';
 import { generateBatchUnits } from '@/src/features/properties/api/unit.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -352,20 +353,10 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     >
       <View style={styles.desktopShell}>
         <View style={styles.desktopMain}>
-          <BlurView intensity={70} tint="light" style={styles.topbar}>
-            <View style={styles.topbarTabs}>
-              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Dashboard</Text></TouchableOpacity>
-              <TouchableOpacity onPress={onBack}><Text style={[styles.topbarTab, styles.topbarTabActive]}>Properties</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/analytics')}><Text style={styles.topbarTab}>Reports</Text></TouchableOpacity>
-            </View>
-            <View style={styles.topbarRight}>
-              <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop}>
-                <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
-                <Text style={styles.backButtonTextDesktop}>Back to Properties</Text>
-              </TouchableOpacity>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{user?.fullName?.[0] || 'A'}</Text></View>
-            </View>
-          </BlurView>
+          <DesktopNavBar 
+            onBack={onBack ? onBack : () => router.push('/command-center')} 
+            backText="Back to Portfolio" 
+          />
 
           <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
             <View style={styles.desktopInner}>

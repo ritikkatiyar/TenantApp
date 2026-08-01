@@ -13,7 +13,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +26,6 @@ public class MaintenanceTicketController {
     private final MaintenanceTicketRepository maintenanceTicketRepository;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<MaintenanceTicketDTOs.MaintenanceTicketResponse>> createTicket(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody MaintenanceTicketDTOs.CreateTicketRequest request
@@ -57,7 +55,6 @@ public class MaintenanceTicketController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Page<MaintenanceTicketDTOs.MaintenanceTicketResponse>>> listTenantTickets(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 15) Pageable pageable
@@ -73,7 +70,6 @@ public class MaintenanceTicketController {
     }
 
     @GetMapping("/health-stats")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<MaintenanceTicketDTOs.TicketHealthStatsResponse>> getHealthStats(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {

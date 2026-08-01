@@ -9,7 +9,7 @@ import com.livic.billing.dto.SubscriptionResponse;
 public interface PaymentGatewayService {
     
     /**
-     * Identifies which gateway implementation this service handles (Stripe, Razorpay, etc.)
+     * Identifies which gateway implementation this service handles (Razorpay, etc.)
      */
     PaymentGatewayType getSupportedGateway();
 

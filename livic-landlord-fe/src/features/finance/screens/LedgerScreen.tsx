@@ -254,6 +254,29 @@ export default function LedgerScreen({ token }: { token: string | null }) {
   };
 
   const renderLedgerList = () => {
+    if (!properties || properties.length === 0) {
+      return (
+        <BlurView intensity={60} tint="light" style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%' }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <MaterialIcons name="business" size={32} color="#006875" />
+          </View>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: '#163235', marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
+          <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+            Viewing financial ledgers requires an active property. Create your first property to start logging transactions.
+          </Text>
+          <TouchableOpacity 
+            style={{ borderRadius: 100, overflow: 'hidden' }}
+            onPress={() => router.push('/properties/create')}
+          >
+            <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
+              <MaterialIcons name="add" size={20} color="#fff" />
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </BlurView>
+      );
+    }
+
     if (isLoading) {
       return <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />;
     }
@@ -374,7 +397,13 @@ export default function LedgerScreen({ token }: { token: string | null }) {
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop ? (
           <>
-            <DesktopNavBar activeTab="Finance" onBack={() => router.back()} backText="Back to Settings" />
+            <DesktopNavBar 
+              onBack={() => router.push('/expenses')} 
+              backText="Back to Finance & Billing" 
+              properties={properties || []}
+              selectedPropertyId={propertyId}
+              onPropertyChange={(id) => router.replace(`/expenses/ledger?propertyId=${id}`)}
+            />
             <ScrollView contentContainerStyle={styles.desktopScroll} showsVerticalScrollIndicator={false}>
               <View style={styles.desktopInner}>
                 <View style={styles.desktopHeaderRow}>
@@ -605,12 +634,12 @@ const styles = StyleSheet.create({
   pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   pillText: { fontSize: 11, fontWeight: '800' },
   
-  desktopScroll: { padding: 40, alignItems: 'center' },
-  desktopInner: { width: '100%', maxWidth: 1100 },
+  desktopScroll: { paddingVertical: 24, paddingHorizontal: 40, alignItems: 'center' },
+  desktopInner: { width: '100%', maxWidth: 1080 },
   desktopHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 },
   largeTitleContainer: { flex: 1, marginRight: 24 },
-  titleLineDesktop: { fontSize: 32, fontWeight: '800', color: '#151d1e', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#6b7a7d' },
+  titleLineDesktop: { fontSize: 32, fontWeight: '800', color: '#151d1e', lineHeight: 38, letterSpacing: -0.5 },
+  subtitle: { fontSize: 14, color: '#6b7a7d', fontWeight: '500', marginTop: 4, lineHeight: 20 },
   
   desktopTableCard: {
     borderRadius: 20,

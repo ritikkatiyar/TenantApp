@@ -5,6 +5,7 @@ import java.util.Optional;
 
 public interface CrudService<T, ID> {
     T save(T entity);
+    T saveAndFlush(T entity);
     List<T> saveAll(Iterable<T> entities);
     Optional<T> findById(ID id);
     List<T> findAll();

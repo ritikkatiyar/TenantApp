@@ -3,9 +3,6 @@ package com.livic.auth.service.impl;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
-import com.livic.finance.service.interfaces.ExpenseGroupCrudService;
-import com.livic.finance.service.interfaces.ExpenseCrudService;
-import com.livic.finance.service.interfaces.ExpenseSplitCrudService;
 import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.RentCycleCrudService;
 import com.livic.finance.service.ChargeConfigQueryService;
@@ -32,9 +29,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final MembershipCrudService membershipCrudService;
     private final UnitQueryService unitQueryService;
     private final LeaseQueryService leaseQueryService;
-    private final ExpenseGroupCrudService expenseGroupCrudService;
-    private final ExpenseCrudService expenseCrudService;
-    private final ExpenseSplitCrudService expenseSplitCrudService;
     private final RentCycleCrudService rentCycleCrudService;
     private final ChargeConfigQueryService chargeConfigQueryService;
 
@@ -128,42 +122,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasPermissionByExpenseGroupId(UUID groupId, String permissionCode) {
-        if (groupId == null) return false;
-        return expenseGroupCrudService.findById(groupId)
-                .map(g -> checkPermission(g.getUnit().getProperty().getId(), permissionCode))
-                .orElse(false);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasPermissionByExpenseSplitId(UUID splitId, String permissionCode) {
-        if (splitId == null) return false;
-        
-        UserDetailsImpl currentUser = getCurrentUser();
-        if (currentUser == null) return false;
-        UUID userId = UUID.fromString(currentUser.getId());
-        
-        return expenseSplitCrudService.findById(splitId).map(split -> {
-            if (split.getUserId().toString().equals(currentUser.getId())) {
-                log.debug("User {} has own expense split access for split {}", userId, splitId);
-                return true;
-            }
-            return checkPermission(split.getExpense().getExpenseGroup().getUnit().getProperty().getId(), permissionCode);
-        }).orElse(false);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasPermissionByExpenseId(UUID expenseId, String permissionCode) {
-        if (expenseId == null) return false;
-        return expenseCrudService.findById(expenseId)
-                .map(e -> checkPermission(e.getExpenseGroup().getUnit().getProperty().getId(), permissionCode))
-                .orElse(false);
     }
 
     @Override

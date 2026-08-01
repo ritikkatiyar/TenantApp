@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import com.livic.billing.annotation.EnforceSubscription;
+import com.livic.billing.annotation.FeatureKey;
 
 @RestController
 @RequestMapping("/api/v1/property/properties/{propertyId}/memberships")
@@ -46,6 +48,7 @@ public class MembershipController {
 
     @PostMapping
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'MANAGE_STAFF')")
+    @EnforceSubscription(feature = FeatureKey.MAX_TEAM_MEMBERS)
     public ResponseEntity<ApiResponse<MembershipDTOs.MembershipResponse>> assignRole(
             @PathVariable UUID propertyId,
             @AuthenticationPrincipal UserDetailsImpl currentUser,

@@ -13,6 +13,9 @@ import com.livic.finance.mapper.RentCycleMapper;
 import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.RentCycleService;
 import com.livic.finance.specification.RentCycleSpecifications;
+import com.livic.payment.dto.PaymentInitiationRequest;
+import com.livic.payment.dto.PaymentInitiationResponse;
+import com.livic.payment.facade.PaymentFacade;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
-import com.livic.payment.service.interfaces.PaymentTransactionService;
 import com.livic.finance.strategy.ChargeCalculationService;
 import com.livic.finance.strategy.CalculationResult;
 import com.livic.user.service.interfaces.UserQueryService;
@@ -64,7 +66,7 @@ public class RentCycleServiceImpl implements RentCycleService {
     private final ChargeConfigCrudService chargeConfigCrudService;
     private final ChargeCalculationService chargeCalculationService;
     private final UserQueryService userQueryService;
-    private final PaymentTransactionService paymentTransactionService;
+    private final PaymentFacade paymentFacade;
     private final ApplicationEventPublisher eventPublisher;
     private final UnitBookingCrudService unitBookingCrudService;
 
@@ -81,7 +83,6 @@ public class RentCycleServiceImpl implements RentCycleService {
     public List<RentCycleDTOs.RentCycleResponse> batchGenerate(RentCycleDTOs.BatchGenerateRentCycleRequest request) {
         List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(request.propertyId(), LeaseStatus.ACTIVE);
         
-        // Optimized: pre-calculate roommate counts in bulk to avoid unit queries in loop
         Map<UUID, Integer> roommateCounts = activeLeases.stream()
                 .collect(Collectors.groupingBy(l -> l.getUnit().getId(), Collectors.collectingAndThen(Collectors.toList(), List::size)));
 
@@ -101,7 +102,7 @@ public class RentCycleServiceImpl implements RentCycleService {
     @Transactional(readOnly = true)
     public RentCycleDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth) {
         List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
-        int totalUnits = activeLeases.size(); // We base totalUnits on active leases since we only bill occupied units
+        int totalUnits = activeLeases.size();
         int activeLeasesCount = activeLeases.size();
         
         long meteredTypesCount = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
@@ -116,7 +117,6 @@ public class RentCycleServiceImpl implements RentCycleService {
             int year = Integer.parseInt(parts[0]);
             int month = Integer.parseInt(parts[1]);
             
-            // Optimized: fetch property meter readings in bulk
             List<MeterReadingTbl> propertyReadings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
             Map<UUID, List<MeterReadingTbl>> readingsByUnit = propertyReadings.stream()
                     .collect(Collectors.groupingBy(r -> r.getUnit().getId()));
@@ -140,6 +140,59 @@ public class RentCycleServiceImpl implements RentCycleService {
         );
     }
 
+    @Override
+    @Transactional
+    public PaymentInitiationResponse initiateOnlinePayment(UUID rentCycleId, UUID payerUserId) {
+        log.info("Executing initiateOnlinePayment for RentCycle: {} by user: {}", rentCycleId, payerUserId);
+        RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+
+        BigDecimal amountPaid = rentCycle.getAmountPaid() != null ? rentCycle.getAmountPaid() : BigDecimal.ZERO;
+        BigDecimal remainingAmount = rentCycle.getTotalAmount().subtract(amountPaid);
+
+        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle is already fully paid");
+        }
+
+        PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
+                .payerUserId(payerUserId)
+                .referenceType("RENT_CYCLE")
+                .referenceId(rentCycleId)
+                .amount(remainingAmount)
+                .paymentMethod("ONLINE")
+                .description("Rent Cycle Online Payment")
+                .build();
+
+        return paymentFacade.initiateOnlinePayment(initRequest);
+    }
+
+    @Override
+    @Transactional
+    public PaymentInitiationResponse recordCashPayment(UUID rentCycleId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy) {
+        log.info("Executing recordCashPayment for RentCycle: {} amount: {}", rentCycleId, amount);
+        RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Valid positive amount is required");
+        }
+
+        UUID finalPayerId = payerUserId != null ? payerUserId : (rentCycle.getLease() != null ? rentCycle.getLease().getUserId() : confirmedBy);
+
+        PaymentInitiationRequest initRequest = PaymentInitiationRequest.builder()
+                .payerUserId(finalPayerId)
+                .referenceType("RENT_CYCLE")
+                .referenceId(rentCycleId)
+                .amount(amount)
+                .paymentMethod("CASH")
+                .confirmedBy(confirmedBy)
+                .note(note)
+                .description("Rent Cycle Cash Payment")
+                .build();
+
+        return paymentFacade.recordCashPayment(initRequest);
+    }
+
     private RentCycleTbl processLeaseGeneration(LeaseTbl lease, String billingMonthStr, LocalDate dueDate) {
         return processLeaseGeneration(lease, billingMonthStr, dueDate, null);
     }
@@ -155,7 +208,6 @@ public class RentCycleServiceImpl implements RentCycleService {
                 throw new BusinessException(HttpStatus.CONFLICT, "Cannot regenerate a paid rent cycle for unit " + lease.getUnit().getUnitNumber());
             }
             previousTotal = cycle.getTotalAmount();
-            // Delete existing charges to recreate them
             List<RentCycleChargeTbl> existingCharges = rentCycleChargeCrudService.findByRentCycle_Id(cycle.getId());
             rentCycleChargeCrudService.deleteAll(existingCharges);
         } else {
@@ -171,7 +223,6 @@ public class RentCycleServiceImpl implements RentCycleService {
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 
-        // Optimized: roommate count pre-computed lookup
         int roommateCount = 1;
         if (roommateCounts != null && roommateCounts.containsKey(lease.getUnit().getId())) {
             roommateCount = roommateCounts.get(lease.getUnit().getId());
@@ -180,7 +231,6 @@ public class RentCycleServiceImpl implements RentCycleService {
             roommateCount = Math.max(1, activeUnitLeases.size());
         }
 
-        // 1. Process all active charge configurations using Strategy Engine
         List<ChargeConfigTbl> activeConfigs = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(lease.getUnit().getProperty().getId());
         for (ChargeConfigTbl config : activeConfigs) {
             CalculationResult result = chargeCalculationService.executeChargePipeline(config, lease.getUnit().getId(), billingMonthStr, false);
@@ -216,7 +266,6 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
-        // First-cycle check for token bookings
         List<RentCycleTbl> existingCycles = rentCycleCrudService.findByLease_Id(lease.getId());
         final UUID currentCycleId = cycle.getId();
         long priorCyclesCount = existingCycles.stream()
@@ -242,7 +291,6 @@ public class RentCycleServiceImpl implements RentCycleService {
         cycle.setTotalAmount(totalAmount);
         RentCycleTbl savedCycle = rentCycleCrudService.save(cycle);
 
-        // Ledger entry for the delta
         BigDecimal delta = totalAmount.subtract(previousTotal);
         if (delta.compareTo(BigDecimal.ZERO) != 0) {
             FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
@@ -308,14 +356,7 @@ public class RentCycleServiceImpl implements RentCycleService {
         BigDecimal amountPaid = cycle.getAmountPaid() != null ? cycle.getAmountPaid() : BigDecimal.ZERO;
         BigDecimal remainingAmount = cycle.getTotalAmount().subtract(amountPaid);
 
-        paymentTransactionService.recordCashPayment(
-                cycle.getLease().getUserId(),
-                "RENT_CYCLE",
-                cycle.getId(),
-                remainingAmount,
-                confirmedBy,
-                "Recorded via legacy markPaid"
-        );
+        recordCashPayment(id, remainingAmount, "Recorded via legacy markPaid", cycle.getLease().getUserId(), confirmedBy);
 
         RentCycleTbl updated = rentCycleCrudService.findById(id).orElse(cycle);
         log.info("rent_cycle_marked_paid rentCycleId={} leaseId={} paidAt={}",
@@ -329,18 +370,15 @@ public class RentCycleServiceImpl implements RentCycleService {
         List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
         Set<UUID> activeLeaseIds = activeLeases.stream().map(LeaseTbl::getId).collect(Collectors.toSet());
 
-        // Optimized: Fetch all rent cycles for this month in bulk, filter in memory
         List<RentCycleTbl> allMonthCycles = rentCycleCrudService.findByBillingMonth(billingMonth);
         Map<UUID, RentCycleTbl> cycleByLeaseId = allMonthCycles.stream()
                 .filter(c -> activeLeaseIds.contains(c.getLease().getId()))
                 .collect(Collectors.toMap(c -> c.getLease().getId(), c -> c));
 
-        // Optimized: Fetch all worksheet entries for the property in bulk
         List<BillingWorksheetEntryTbl> allPropertyWorksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
         Map<UUID, List<BillingWorksheetEntryTbl>> worksheetsByUnit = allPropertyWorksheets.stream()
                 .collect(Collectors.groupingBy(w -> w.getUnit().getId()));
 
-        // Optimized: Fetch all meter readings for the property in bulk
         String[] parts = billingMonth.split("-");
         int year = Integer.parseInt(parts[0]);
         int month = Integer.parseInt(parts[1]);
@@ -360,14 +398,12 @@ public class RentCycleServiceImpl implements RentCycleService {
                     cycle.setStatus(RentCycleStatus.PUBLISHED);
                     cyclesToSave.add(cycle);
 
-                    // LOCK worksheet entries in-memory
                     List<BillingWorksheetEntryTbl> worksheetEntries = worksheetsByUnit.getOrDefault(lease.getUnit().getId(), List.of());
                     for (BillingWorksheetEntryTbl entry : worksheetEntries) {
                         entry.setIsBilled(true);
                         worksheetsToSave.add(entry);
                     }
                     
-                    // LOCK meter readings in-memory
                     List<MeterReadingTbl> meterReadings = readingsByUnit.getOrDefault(lease.getUnit().getId(), List.of());
                     for (MeterReadingTbl reading : meterReadings) {
                         reading.setIsBilled(true);
@@ -381,7 +417,6 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
-        // Optimized: batch saves outside the loop
         if (!cyclesToSave.isEmpty()) {
             rentCycleCrudService.saveAll(cyclesToSave);
             for (RentCycleTbl c : cyclesToSave) {
@@ -413,13 +448,11 @@ public class RentCycleServiceImpl implements RentCycleService {
         List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
         Set<UUID> activeLeaseIds = activeLeases.stream().map(LeaseTbl::getId).collect(Collectors.toSet());
 
-        // Optimized: Fetch all rent cycles for this month in bulk, filter in memory
         List<RentCycleTbl> allMonthCycles = rentCycleCrudService.findByBillingMonth(billingMonth);
         Map<UUID, RentCycleTbl> cycleByLeaseId = allMonthCycles.stream()
                 .filter(c -> activeLeaseIds.contains(c.getLease().getId()))
                 .collect(Collectors.toMap(c -> c.getLease().getId(), c -> c));
         
-        // Validation pass
         for (LeaseTbl lease : activeLeases) {
             RentCycleTbl cycle = cycleByLeaseId.get(lease.getId());
             if (cycle != null && cycle.getStatus() == RentCycleStatus.PAID) {
@@ -427,12 +460,10 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
-        // Optimized: Fetch all worksheet entries for the property in bulk
         List<BillingWorksheetEntryTbl> allPropertyWorksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
         Map<UUID, List<BillingWorksheetEntryTbl>> worksheetsByUnit = allPropertyWorksheets.stream()
                 .collect(Collectors.groupingBy(w -> w.getUnit().getId()));
 
-        // Optimized: Fetch all meter readings for the property in bulk
         String[] parts = billingMonth.split("-");
         int year = Integer.parseInt(parts[0]);
         int month = Integer.parseInt(parts[1]);
@@ -452,14 +483,12 @@ public class RentCycleServiceImpl implements RentCycleService {
                     cycle.setStatus(RentCycleStatus.PENDING);
                     cyclesToSave.add(cycle);
 
-                    // UNLOCK worksheet entries in-memory
                     List<BillingWorksheetEntryTbl> worksheetEntries = worksheetsByUnit.getOrDefault(lease.getUnit().getId(), List.of());
                     for (BillingWorksheetEntryTbl entry : worksheetEntries) {
                         entry.setIsBilled(false);
                         worksheetsToSave.add(entry);
                     }
                     
-                    // UNLOCK meter readings in-memory
                     List<MeterReadingTbl> meterReadings = readingsByUnit.getOrDefault(lease.getUnit().getId(), List.of());
                     for (MeterReadingTbl reading : meterReadings) {
                         reading.setIsBilled(false);
@@ -473,7 +502,6 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
-        // Optimized: batch saves outside the loop
         if (!cyclesToSave.isEmpty()) {
             rentCycleCrudService.saveAll(cyclesToSave);
         }

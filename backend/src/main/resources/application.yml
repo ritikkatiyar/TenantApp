@@ -4,6 +4,12 @@ spring:
   main:
     lazy-initialization: true
 
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${DB_URL:jdbc:mysql://localhost:3307/livic?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:livic}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:livic}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   profiles:
     default: dev
 
@@ -49,8 +55,8 @@ app:
   jwt:
     # HS256 requires a secret with enough entropy; use at least 32 bytes in production (APP_JWT_SECRET).
     secret: ${APP_JWT_SECRET:dev-only-change-this-to-a-long-random-secret-32b-min}
-    access-expiration-ms: ${APP_JWT_ACCESS_MS:900000}
-    refresh-expiration-ms: ${APP_JWT_REFRESH_MS:604800000}
+    access-expiration-ms: ${APP_JWT_ACCESS_EXPIRATION_MS:${APP_JWT_ACCESS_MS:900000}}
+    refresh-expiration-ms: ${APP_JWT_REFRESH_EXPIRATION_MS:${APP_JWT_REFRESH_MS:604800000}}
   auth:
     max-failed-login-attempts: ${APP_AUTH_MAX_FAILED_LOGIN_ATTEMPTS:5}
     lockout-duration-ms: ${APP_AUTH_LOCKOUT_DURATION_MS:900000}

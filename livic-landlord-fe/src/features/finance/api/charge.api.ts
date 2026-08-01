@@ -38,6 +38,9 @@ export const createChargeConfig = async (request: ChargeConfigRequest, token: st
 };
 
 export const getActiveChargesForProperty = async (propertyId: string, token: string): Promise<ChargeConfigResponse[]> => {
+    if (!propertyId || propertyId === 'null' || propertyId === 'undefined') {
+        return [];
+    }
     return apiRequest<ChargeConfigResponse[]>(`/api/v1/finance/charge-configs/property/${propertyId}`, {
         method: 'GET',
         token
@@ -45,6 +48,9 @@ export const getActiveChargesForProperty = async (propertyId: string, token: str
 };
 
 export const getChargesForProperty = async (propertyId: string, includeInactive: boolean, token: string): Promise<ChargeConfigResponse[]> => {
+    if (!propertyId || propertyId === 'null' || propertyId === 'undefined') {
+        return [];
+    }
     return apiRequest<ChargeConfigResponse[]>(`/api/v1/finance/charge-configs/property/${propertyId}?includeInactive=${includeInactive}`, {
         method: 'GET',
         token

@@ -1,9 +1,11 @@
 package com.livic.billing.validator;
 
-import com.livic.billing.annotation.SubscriptionFeature;
+import com.livic.billing.annotation.FeatureKey;
+import com.livic.billing.dto.UserSubscriptionContext;
+
 import java.util.UUID;
 
 public interface SubscriptionValidator {
-    boolean validate(UUID userId, String planName);
-    SubscriptionFeature getSupportedFeature();
+    boolean validate(UUID userId, UserSubscriptionContext context);
+    FeatureKey getSupportedFeature();
 }

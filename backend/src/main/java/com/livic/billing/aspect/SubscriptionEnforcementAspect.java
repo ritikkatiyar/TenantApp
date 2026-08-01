@@ -1,19 +1,18 @@
 package com.livic.billing.aspect;
 
+import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.billing.annotation.EnforceSubscription;
-import com.livic.billing.annotation.SubscriptionFeature;
-import com.livic.billing.domain.SaasSubscriptionTbl;
-import com.livic.billing.service.interfaces.BillingWalletService;
+import com.livic.billing.annotation.FeatureKey;
+import com.livic.billing.dto.UserSubscriptionContext;
+import com.livic.billing.service.interfaces.SubscriptionCacheService;
 import com.livic.billing.validator.SubscriptionValidator;
 import com.livic.billing.validator.SubscriptionValidatorRegistry;
 import com.livic.common.exception.BusinessException;
-import com.livic.auth.principal.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -26,34 +25,40 @@ import java.util.UUID;
 @Slf4j
 public class SubscriptionEnforcementAspect {
 
-    private final BillingWalletService billingWalletService;
+    private final SubscriptionCacheService subscriptionCacheService;
     private final SubscriptionValidatorRegistry validatorRegistry;
 
     @Before("@annotation(enforceSubscription)")
     public void enforce(JoinPoint joinPoint, EnforceSubscription enforceSubscription) {
-        SubscriptionFeature feature = enforceSubscription.feature();
+        FeatureKey feature = enforceSubscription.feature();
         UUID ownerId = resolveOwnerId();
 
         if (ownerId == null) {
             log.warn("[SUBSCRIPTION ENFORCEMENT] Could not resolve owner ID for feature check: {}", feature);
-            return; // Skip validation if user info not resolvable
+            return; // Skip validation if authentication info not resolvable
         }
 
-        SaasSubscriptionTbl subscription = billingWalletService.getActiveSubscription(ownerId);
+        // Sub-millisecond lookup from in-memory cache
+        UserSubscriptionContext context = subscriptionCacheService.getUserSubscriptionContext(ownerId);
         SubscriptionValidator validator = validatorRegistry.getValidator(feature);
 
+        boolean allowed;
         if (validator != null) {
-            boolean allowed = validator.validate(ownerId, subscription.getPlanName());
-            log.info("[SUBSCRIPTION ASPECT] User: {}, Feature: {}, Plan: {}, Allowed: {}",
-                    ownerId, feature, subscription.getPlanName(), allowed);
+            allowed = validator.validate(ownerId, context);
+        } else {
+            // Default check for boolean feature toggles
+            allowed = context.isFeatureEnabled(feature);
+        }
 
-            if (!allowed) {
-                throw new BusinessException(
-                        HttpStatus.FORBIDDEN,
-                        String.format("Property limit exceeded. Your '%s' plan has hit its maximum allowed resources for %s. Upgrade your plan to add more.",
-                                subscription.getPlanName(), feature.name().toLowerCase())
-                );
-            }
+        log.info("[SUBSCRIPTION ASPECT] User: {}, Feature: {}, Plan: {}, Allowed: {}",
+                ownerId, feature, context.getPlanKey(), allowed);
+
+        if (!allowed) {
+            throw new BusinessException(
+                    HttpStatus.FORBIDDEN,
+                    String.format("Feature '%s' limit reached or not included in your '%s' plan. Please upgrade your subscription plan to access this capability.",
+                            feature.name(), context.getPlanKey())
+            );
         }
     }
 

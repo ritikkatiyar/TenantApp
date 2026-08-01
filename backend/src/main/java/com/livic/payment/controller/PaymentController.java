@@ -1,93 +1,47 @@
 package com.livic.payment.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.common.exception.BusinessException;
 import com.livic.common.response.ApiResponse;
-import com.livic.finance.domain.RentCycleTbl;
-import com.livic.finance.service.interfaces.RentCycleCrudService;
 import com.livic.payment.domain.PaymentTransactionTbl;
 import com.livic.payment.dto.PaymentTransactionResponse;
+import com.livic.payment.dto.PaymentVerificationRequest;
 import com.livic.payment.service.interfaces.PaymentTransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/finance/payments")
+@RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentController {
 
     private final PaymentTransactionService paymentTransactionService;
-    private final RentCycleCrudService rentCycleCrudService;
 
-    @PostMapping("/rent-cycles/{rentCycleId}/online")
-    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_VIEW_OWN')")
-    public ResponseEntity<ApiResponse<PaymentTransactionResponse>> initiateRentOnlinePayment(
-            @PathVariable UUID rentCycleId
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<PaymentTransactionResponse>> getTransaction(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        log.info("API request: Initiate online payment for RentCycle: {}", rentCycleId);
-        RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
-
-        BigDecimal amountPaid = rentCycle.getAmountPaid() != null ? rentCycle.getAmountPaid() : BigDecimal.ZERO;
-        BigDecimal remainingAmount = rentCycle.getTotalAmount().subtract(amountPaid);
-
-        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle is already fully paid");
-        }
-
-        UUID payerUserId = rentCycle.getLease().getUserId();
-
-        PaymentTransactionTbl transaction = paymentTransactionService.initiateOnlinePayment(
-                payerUserId,
-                "RENT_CYCLE",
-                rentCycleId,
-                remainingAmount
-        );
+        log.info("API request: Get payment transaction: {} by user: {}", id, userDetails.getId());
+        PaymentTransactionTbl transaction = paymentTransactionService.findTransactionById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
 
         return ResponseEntity.ok(ApiResponse.success(toResponse(transaction)));
     }
 
-    @PostMapping("/rent-cycles/{rentCycleId}/cash")
-    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_UPDATE')")
-    public ResponseEntity<ApiResponse<PaymentTransactionResponse>> recordRentCashPayment(
-            @PathVariable UUID rentCycleId,
-            @RequestBody Map<String, Object> request,
+    @PostMapping("/verify")
+    public ResponseEntity<ApiResponse<String>> verifyPayment(
+            @RequestBody PaymentVerificationRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        log.info("API request: Record cash payment for RentCycle: {}", rentCycleId);
-        RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
-
-        Object amountObj = request.get("amount");
-        if (amountObj == null) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Amount is required");
-        }
-
-        BigDecimal amount = new BigDecimal(amountObj.toString());
-        String note = (String) request.get("note");
-        UUID payerUserId = rentCycle.getLease().getUserId();
-        UUID confirmedBy = UUID.fromString(userDetails.getId());
-
-        PaymentTransactionTbl transaction = paymentTransactionService.recordCashPayment(
-                payerUserId,
-                "RENT_CYCLE",
-                rentCycleId,
-                amount,
-                confirmedBy,
-                note
-        );
-
-        return ResponseEntity.ok(ApiResponse.success(toResponse(transaction)));
+        log.info("API request: Verify Razorpay payment orderId={} by user={}", request.razorpayOrderId(), userDetails.getId());
+        paymentTransactionService.verifyAndCompletePayment(request);
+        return ResponseEntity.ok(ApiResponse.success("Payment verified and subscription activated"));
     }
 
     @PostMapping("/webhooks/{gatewayName}")

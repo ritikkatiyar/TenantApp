@@ -1,6 +1,7 @@
 package com.livic.payment.service.interfaces;
 
 import com.livic.payment.domain.PaymentTransactionTbl;
+import com.livic.payment.dto.PaymentVerificationRequest;
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -13,4 +14,6 @@ public interface PaymentTransactionService {
     void handleWebhook(String gatewayName, String payload, String signatureHeader);
 
     java.util.Optional<PaymentTransactionTbl> findTransactionById(UUID id);
+
+    void verifyAndCompletePayment(PaymentVerificationRequest request);
 }

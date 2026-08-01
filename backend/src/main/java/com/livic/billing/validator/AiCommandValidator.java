@@ -1,41 +1,36 @@
 package com.livic.billing.validator;
 
-import com.livic.billing.annotation.SubscriptionFeature;
-
+import com.livic.billing.annotation.FeatureKey;
+import com.livic.billing.dto.UserSubscriptionContext;
+import com.livic.billing.service.interfaces.BillingWalletService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 @Slf4j
 public class AiCommandValidator implements SubscriptionValidator {
 
+    private final BillingWalletService billingWalletService;
+
     @Override
-    public boolean validate(UUID userId, String planName) {
-        // For demo purposes we set simple limits:
-        // FREE (STARTER) -> 0 AI commands allowed
-        // BASIC -> up to 5 commands per day (not tracked here, just a static guard)
-        // PREMIUM/ENTERPRISE -> unlimited (return true)
-        SubscriptionFeature feature = SubscriptionFeature.AI_COMMANDS;
-        int allowed = getAllowedCommands(planName);
-        log.debug("[AI VALIDATOR] User {} on plan {} allowed commands: {}", userId, planName, allowed);
-        // In a real implementation we would track usage count; here we just enforce static limit >0
-        return allowed > 0;
+    public boolean validate(UUID userId, UserSubscriptionContext context) {
+        int monthlyCredits = context.getLimit(FeatureKey.AI_CREDITS_MONTHLY);
+        if (monthlyCredits == -1) {
+            return true; // Unlimited AI credits for Enterprise
+        }
+
+        // Check if user has at least 1 credit available in their prepaid/allocated wallet
+        boolean hasBalance = billingWalletService.hasBalance(userId, 1.0);
+        log.info("[AI CREDIT VALIDATOR] User: {}, Monthly Limit: {}, Has Balance: {}", userId, monthlyCredits, hasBalance);
+        return hasBalance;
     }
 
     @Override
-    public SubscriptionFeature getSupportedFeature() {
-        return SubscriptionFeature.AI_COMMANDS;
-    }
-
-    private int getAllowedCommands(String planName) {
-        if (planName == null) return 0;
-        return switch (planName.toUpperCase()) {
-            case "STARTER", "FREE" -> 0; // No AI commands
-            case "BASIC" -> 5; // Limited
-            case "PREMIUM", "ENTERPRISE" -> Integer.MAX_VALUE; // Unlimited
-            default -> 0;
-        };
+    public FeatureKey getSupportedFeature() {
+        return FeatureKey.AI_CREDITS_MONTHLY;
     }
 }

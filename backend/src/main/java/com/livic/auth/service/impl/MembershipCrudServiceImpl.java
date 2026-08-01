@@ -4,6 +4,8 @@ import com.livic.auth.domain.MembershipTbl;
 import com.livic.auth.repository.MembershipRepository;
 import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.common.service.impl.AbstractCrudService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,6 +40,7 @@ public class MembershipCrudServiceImpl extends AbstractCrudService<MembershipTbl
     }
 
     @Override
+    @Cacheable(value = "userPermissions", key = "#userId.toString() + ':' + #propertyId.toString()")
     public Set<String> findPermissionCodesByUserIdAndPropertyId(UUID userId, UUID propertyId) {
         return repository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
     }
@@ -58,6 +61,7 @@ public class MembershipCrudServiceImpl extends AbstractCrudService<MembershipTbl
     }
 
     @Override
+    @CacheEvict(value = "userPermissions", allEntries = true)
     public void deleteByPropertyId(UUID propertyId) {
         repository.deleteByPropertyId(propertyId);
     }

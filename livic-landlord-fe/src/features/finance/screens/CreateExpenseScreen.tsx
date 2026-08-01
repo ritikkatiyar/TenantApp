@@ -22,11 +22,15 @@ import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 
+import { useProperties } from '@/src/hooks/useProperties';
+
 export default function CreateExpenseScreen({ token }: { token: string | null }) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
-  const { propertyId, chargeId } = useLocalSearchParams<{ propertyId: string, chargeId?: string }>();
+  const { propertyId: paramPropertyId, chargeId } = useLocalSearchParams<{ propertyId?: string, chargeId?: string }>();
   const { isDesktop } = useResponsive();
+  const { properties } = useProperties();
+  const propertyId = paramPropertyId && paramPropertyId !== 'null' ? paramPropertyId : (properties && properties.length > 0 ? properties[0].id : null);
   const { showToast } = useToast();
   const isEditMode = !!chargeId;
 
@@ -542,9 +546,8 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
     <View style={styles.desktopShell}>
       <View style={styles.desktopMain}>
           <DesktopNavBar 
-            activeTab="Properties" 
-            onBack={() => router.back()} 
-            backText="Back to Config" 
+            onBack={() => router.push(`/expenses/charge-config?propertyId=${propertyId}`)} 
+            backText="Back to Charge Configuration" 
           />
 
         <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
@@ -571,6 +574,46 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       </View>
     </View>
   );
+
+  if (!properties || properties.length === 0 || !propertyId) {
+    return (
+      <LinearGradient
+        colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      >
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          {isDesktop && (
+            <DesktopNavBar 
+              onBack={() => router.push('/expenses')} 
+              backText="Back to Finance & Billing" 
+            />
+          )}
+          <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
+            <BlurView intensity={60} tint="light" style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%' }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                <MaterialIcons name="business" size={32} color="#006875" />
+              </View>
+              <Text style={{ fontSize: 20, fontWeight: '800', color: '#163235', marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
+              <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+                Creating charges and expense configurations requires an active property. Create your first property to start configuring billing logic.
+              </Text>
+              <TouchableOpacity 
+                style={{ borderRadius: 100, overflow: 'hidden' }}
+                onPress={() => router.push('/properties/create')}
+              >
+                <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
+                  <MaterialIcons name="add" size={20} color="#fff" />
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </BlurView>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
 
   if (isDesktop) {
     return (
@@ -1002,10 +1045,10 @@ const styles = StyleSheet.create({
   },
   desktopInner: {
     width: '100%',
-    maxWidth: 1200,
+    maxWidth: 1080,
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 32,
+    paddingHorizontal: 40,
+    paddingTop: 24,
   },
   desktopHeaderRow: {
     flexDirection: 'row',
@@ -1017,6 +1060,8 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
     color: '#151d1e',
+    lineHeight: 38,
+    letterSpacing: -0.5,
   },
   desktopActionsRow: {
     flexDirection: 'row',

@@ -11,14 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/finance/payments")
+@RequestMapping("/api/v1/finance/rent-cycles")
 @RequiredArgsConstructor
 @Slf4j
 public class InvoiceController {
 
     private final PaymentStatementService paymentStatementService;
 
-    @GetMapping(value = "/rent-cycles/{rentCycleId}/invoice", produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = "/{rentCycleId}/invoice", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> getPaymentStatementHtml(
             @PathVariable UUID rentCycleId,
             @RequestParam(required = false) String token,

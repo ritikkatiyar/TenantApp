@@ -38,38 +38,11 @@ public class AnalyticsRepository {
     }
 
     public Map<String, BigDecimal> getOperationalOverhead(List<UUID> propertyIds) {
-        Map<String, BigDecimal> overhead = new HashMap<>();
-        if (propertyIds == null || propertyIds.isEmpty()) return overhead;
-
-        String jpql = "SELECT e.expenseType, SUM(e.totalAmount) " +
-                      "FROM ExpenseTbl e JOIN e.expenseGroup eg JOIN eg.unit u " +
-                      "WHERE u.property.id IN :propertyIds " +
-                      "GROUP BY e.expenseType";
-                      
-        Query query = entityManager.createQuery(jpql);
-        query.setParameter("propertyIds", propertyIds);
-        
-        List<Object[]> results = query.getResultList();
-        for (Object[] row : results) {
-            String type = row[0].toString();
-            BigDecimal amount = new BigDecimal(row[1].toString());
-            overhead.put(type, amount);
-        }
-        return overhead;
+        return new HashMap<>();
     }
 
     public BigDecimal getTotalExpenses(List<UUID> propertyIds) {
-        if (propertyIds == null || propertyIds.isEmpty()) return BigDecimal.ZERO;
-        
-        String jpql = "SELECT SUM(e.totalAmount) " +
-                      "FROM ExpenseTbl e JOIN e.expenseGroup eg JOIN eg.unit u " +
-                      "WHERE u.property.id IN :propertyIds";
-                      
-        Query query = entityManager.createQuery(jpql);
-        query.setParameter("propertyIds", propertyIds);
-        
-        Object result = query.getSingleResult();
-        return result != null ? new BigDecimal(result.toString()) : BigDecimal.ZERO;
+        return BigDecimal.ZERO;
     }
 
     public List<Object[]> getDefaulters(List<UUID> propertyIds) {

@@ -5,7 +5,7 @@ param(
     [int]$TenantFrontendPort = 3001,
     [int]$BackendPort = 8080,
     [int]$AiServicePort = 8081,
-    [string]$Mode = "both",
+    [string]$Mode = "landlord",
     [switch]$SkipDocker
 )
 
@@ -335,10 +335,25 @@ $mysqlPort = if ($SkipDocker) { 3307 } else { Get-MysqlHostPort }
 $dbUrl = "jdbc:mysql://localhost:$mysqlPort/livic?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 
 Write-Step "Using DB_URL=$dbUrl"
-Ensure-MavenModuleCompiled -ModuleDir $BackendDir -RequiredClassRelativePaths @(
-    "com\livic\LivicApplication.class",
-    "com\livic\user\service\impl\UserServiceImpl.class"
-)
+
+$jarPath = Join-Path $BackendDir "target\livic-backend-0.0.1-SNAPSHOT.jar"
+$isJarValid = $false
+if (Test-Path $jarPath) {
+    try {
+        $manifestCheck = & jar tf $jarPath 2>$null | Select-String "BOOT-INF/classes" -List
+        if ($manifestCheck) { $isJarValid = $true }
+    } catch {}
+}
+
+if (-not $isJarValid) {
+    Write-Step "Building backend executable JAR..."
+    Push-Location $BackendDir
+    try {
+        mvn package "-Dmaven.test.skip=true"
+    } finally {
+        Pop-Location
+    }
+}
 
 Assert-PortAvailable -Port $BackendPort -ServiceName "Backend"
 if ($Mode -ieq "both" -or $Mode -ieq "landlord") {
@@ -355,7 +370,10 @@ $backendCommand = @"
 `$env:DB_USERNAME='livic'
 `$env:DB_PASSWORD='livic'
 `$env:SERVER_PORT='$BackendPort'
-mvn -DskipTests compile spring-boot:run
+`$env:RAZORPAY_KEY_ID='$env:RAZORPAY_KEY_ID'
+`$env:RAZORPAY_KEY_SECRET='$env:RAZORPAY_KEY_SECRET'
+`$env:RAZORPAY_WEBHOOK_SECRET='$env:RAZORPAY_WEBHOOK_SECRET'
+java -jar target/livic-backend-0.0.1-SNAPSHOT.jar
 "@
 
 $backendProcess = Start-Process `

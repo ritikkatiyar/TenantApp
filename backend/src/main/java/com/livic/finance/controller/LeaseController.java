@@ -49,7 +49,6 @@ public class LeaseController {
     }
 
     @GetMapping("/tenant/active")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> getActiveTenantLease(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {

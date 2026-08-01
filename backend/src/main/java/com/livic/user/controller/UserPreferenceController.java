@@ -7,7 +7,6 @@ import com.livic.user.dto.SaveUserPreferenceRequest;
 import com.livic.user.service.interfaces.UserPreferenceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +20,6 @@ public class UserPreferenceController {
     private final UserPreferenceService service;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
     public ApiResponse<UserPreferenceResponse> savePreference(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @Valid @RequestBody SaveUserPreferenceRequest request
@@ -32,7 +30,6 @@ public class UserPreferenceController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ApiResponse<UserPreferenceResponse> getPreference(
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
