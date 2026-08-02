@@ -2,9 +2,8 @@ package com.livic.billing.validator;
 
 import com.livic.billing.annotation.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
-import com.livic.property.domain.PropertyTbl;
-import com.livic.property.service.interfaces.PropertyQueryService;
-import com.livic.property.service.interfaces.UnitQueryService;
+import com.livic.property.dto.PropertySummaryDTO;
+import com.livic.property.facade.PropertyFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,8 +16,7 @@ import java.util.UUID;
 @Slf4j
 public class UnitLimitValidator implements SubscriptionValidator {
 
-    private final PropertyQueryService propertyQueryService;
-    private final UnitQueryService unitQueryService;
+    private final PropertyFacade propertyFacade;
 
     @Override
     public boolean validate(UUID userId, UserSubscriptionContext context) {
@@ -27,10 +25,10 @@ public class UnitLimitValidator implements SubscriptionValidator {
             return true; // Unlimited
         }
 
-        List<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId);
+        List<PropertySummaryDTO> properties = propertyFacade.getPropertiesByUserId(userId);
         int currentUnitCount = 0;
-        for (PropertyTbl prop : properties) {
-            currentUnitCount += unitQueryService.getUnitsByProperty(prop.getId()).size();
+        for (PropertySummaryDTO prop : properties) {
+            currentUnitCount += propertyFacade.getUnitsByPropertyId(prop.id()).size();
         }
 
         log.info("[UNIT LIMIT CHECK] User: {}, Current Units: {}, Max Allowed: {}", userId, currentUnitCount, maxUnits);

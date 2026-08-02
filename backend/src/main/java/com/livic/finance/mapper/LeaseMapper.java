@@ -30,13 +30,18 @@ public final class LeaseMapper {
     }
 
     public static LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease, UserTbl user) {
+        return toResponseWithDetails(
+                lease,
+                user != null ? user.getFullName() : null,
+                user != null ? user.getPhoneNumber() : null
+        );
+    }
+
+    public static LeaseDTOs.LeaseResponse toResponseWithDetails(LeaseTbl lease, String tenantName, String tenantPhone) {
         String unitNumber = lease.getUnit() != null ? lease.getUnit().getUnitNumber() : null;
         String propertyName = (lease.getUnit() != null && lease.getUnit().getProperty() != null) 
                 ? lease.getUnit().getProperty().getName() : null;
         BigDecimal rentAmount = BigDecimal.ZERO;
-        
-        String tenantName = user != null ? user.getFullName() : null;
-        String tenantPhone = user != null ? user.getPhoneNumber() : null;
 
         return new LeaseDTOs.LeaseResponse(
                 lease.getId(),

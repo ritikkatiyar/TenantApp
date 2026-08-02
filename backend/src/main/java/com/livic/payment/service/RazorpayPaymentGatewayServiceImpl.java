@@ -3,7 +3,6 @@ package com.livic.payment.service;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.Subscription;
-import com.razorpay.Utils;
 import com.livic.billing.domain.PaymentGatewayType;
 import com.livic.billing.dto.PaymentIntentRequest;
 import com.livic.billing.dto.PaymentIntentResponse;
@@ -128,23 +127,5 @@ public class RazorpayPaymentGatewayServiceImpl implements PaymentGatewayService 
             }
         }
         return true;
-    }
-
-    @Override
-    public void handleWebhook(String payload, String signatureHeader) {
-        log.info("[RAZORPAY] Processing webhook payload. Signature present: {}", signatureHeader != null);
-        String webhookSecret = razorpayProperties.getWebhookSecret();
-
-        if (webhookSecret != null && !webhookSecret.isBlank() && signatureHeader != null) {
-            try {
-                boolean isValid = Utils.verifyWebhookSignature(payload, signatureHeader, webhookSecret);
-                if (!isValid) {
-                    log.warn("[RAZORPAY WEBHOOK] Invalid HMAC signature!");
-                    throw new IllegalArgumentException("Invalid Razorpay webhook signature");
-                }
-            } catch (Exception e) {
-                log.error("[RAZORPAY WEBHOOK] HMAC Signature verification error", e);
-            }
-        }
     }
 }

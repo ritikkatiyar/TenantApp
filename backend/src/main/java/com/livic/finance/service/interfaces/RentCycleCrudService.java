@@ -15,6 +15,7 @@ public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
     List<RentCycleTbl> findByLease_Id(UUID leaseId);
     List<RentCycleTbl> findByLease_IdInAndBillingMonth(List<UUID> leaseIds, String billingMonth);
     List<RentCycleTbl> findByBillingMonth(String billingMonth);
+    List<RentCycleTbl> findByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth);
     Page<RentCycleTbl> findAll(Specification<RentCycleTbl> spec, Pageable pageable);
     List<RentCycleTbl> findAll(Specification<RentCycleTbl> spec);
 }

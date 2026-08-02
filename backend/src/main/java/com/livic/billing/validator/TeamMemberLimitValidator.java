@@ -1,6 +1,6 @@
 package com.livic.billing.validator;
 
-import com.livic.auth.service.interfaces.MembershipQueryService;
+import com.livic.auth.facade.AuthFacade;
 import com.livic.billing.annotation.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @Slf4j
 public class TeamMemberLimitValidator implements SubscriptionValidator {
 
-    private final MembershipQueryService membershipQueryService;
+    private final AuthFacade authFacade;
 
     @Override
     public boolean validate(UUID userId, UserSubscriptionContext context) {
@@ -23,7 +23,7 @@ public class TeamMemberLimitValidator implements SubscriptionValidator {
             return true; // Unlimited
         }
 
-        int currentMembers = membershipQueryService.getMembershipsByUserId(userId).size();
+        int currentMembers = authFacade.getMembershipsByUserId(userId).size();
         log.info("[TEAM MEMBER LIMIT CHECK] User: {}, Current Members: {}, Max Allowed: {}", userId, currentMembers, maxMembers);
         return currentMembers < maxMembers;
     }

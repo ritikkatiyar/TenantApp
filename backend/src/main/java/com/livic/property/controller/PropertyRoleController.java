@@ -2,10 +2,9 @@ package com.livic.property.controller;
 
 import com.livic.auth.domain.MembershipRoleTbl;
 import com.livic.auth.dto.RoleDTOs;
-import com.livic.auth.service.interfaces.PropertyRoleService;
+import com.livic.auth.facade.AuthFacade;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,13 +21,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PropertyRoleController {
 
-    private final PropertyRoleService propertyRoleService;
+    private final AuthFacade authFacade;
 
     @GetMapping
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<RoleDTOs.RoleResponse>>> getPropertyRoles(
             @PathVariable UUID propertyId) {
-        return ResponseEntity.ok(ApiResponse.success(propertyRoleService.getPropertyRoles(propertyId)));
+        return ResponseEntity.ok(ApiResponse.success(authFacade.getPropertyRoles(propertyId)));
     }
 
     @PostMapping("/{roleCode}/toggle-active")
@@ -39,7 +38,7 @@ public class PropertyRoleController {
             @RequestParam boolean active,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID actorId = UUID.fromString(currentUser.getId());
-        propertyRoleService.toggleRoleActive(propertyId, roleCode, active, actorId);
+        authFacade.toggleRoleActive(propertyId, roleCode, active, actorId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -51,7 +50,7 @@ public class PropertyRoleController {
             @Valid @RequestBody RoleDTOs.UpdateRolePermissionsRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID actorId = UUID.fromString(currentUser.getId());
-        propertyRoleService.updateRolePermissions(propertyId, roleCode, request.permissionCodes(), actorId);
+        authFacade.updateRolePermissions(propertyId, roleCode, request.permissionCodes(), actorId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -62,7 +61,7 @@ public class PropertyRoleController {
             @Valid @RequestBody RoleDTOs.CreateCustomRoleRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID actorId = UUID.fromString(currentUser.getId());
-        MembershipRoleTbl created = propertyRoleService.createCustomRole(propertyId, request, actorId);
+        MembershipRoleTbl created = authFacade.createCustomRole(propertyId, request, actorId);
         
         RoleDTOs.RoleResponse response = new RoleDTOs.RoleResponse(
                 created.getId(),

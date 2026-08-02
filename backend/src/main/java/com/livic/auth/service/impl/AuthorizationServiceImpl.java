@@ -3,13 +3,11 @@ package com.livic.auth.service.impl;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
-import com.livic.finance.service.interfaces.LeaseQueryService;
-import com.livic.finance.service.interfaces.RentCycleCrudService;
-import com.livic.finance.service.ChargeConfigQueryService;
-import com.livic.property.service.interfaces.UnitQueryService;
-import com.livic.property.domain.UnitTbl;
-import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.dto.ChargeConfigDTOs;
+import com.livic.finance.dto.LeaseSummaryDTO;
+import com.livic.finance.facade.FinanceFacade;
+import com.livic.property.dto.UnitSummaryDTO;
+import com.livic.property.facade.PropertyFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +25,8 @@ import java.util.UUID;
 public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final MembershipCrudService membershipCrudService;
-    private final UnitQueryService unitQueryService;
-    private final LeaseQueryService leaseQueryService;
-    private final RentCycleCrudService rentCycleCrudService;
-    private final ChargeConfigQueryService chargeConfigQueryService;
+    private final PropertyFacade propertyFacade;
+    private final FinanceFacade financeFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -96,8 +92,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasPermissionByUnitId(UUID unitId, String permissionCode) {
         if (unitId == null) return false;
         try {
-            UnitTbl u = unitQueryService.getUnitById(unitId);
-            return checkPermission(u.getProperty().getId(), permissionCode);
+            UnitSummaryDTO u = propertyFacade.getUnitById(unitId).orElse(null);
+            return u != null && checkPermission(u.propertyId(), permissionCode);
         } catch (Exception e) {
             return false;
         }
@@ -113,12 +109,13 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         UUID userId = UUID.fromString(currentUser.getId());
         
         try {
-            LeaseTbl lease = leaseQueryService.getLeaseById(leaseId);
-            if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.getUserId().toString().equals(currentUser.getId())) {
-                log.debug("User {} has own lease access for lease {}", userId, leaseId);
-                return true;
-            }
-            return checkPermission(lease.getUnit().getProperty().getId(), permissionCode);
+            return financeFacade.getLeaseById(leaseId).map(lease -> {
+                if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.userId() != null && lease.userId().toString().equals(currentUser.getId())) {
+                    log.debug("User {} has own lease access for lease {}", userId, leaseId);
+                    return true;
+                }
+                return checkPermission(lease.propertyId(), permissionCode);
+            }).orElse(false);
         } catch (Exception e) {
             return false;
         }
@@ -128,8 +125,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode) {
         if (rentCycleId == null) return false;
-        return rentCycleCrudService.findById(rentCycleId)
-                .map(r -> checkPermission(r.getLease().getUnit().getProperty().getId(), permissionCode))
+        return financeFacade.getPropertyIdByRentCycleId(rentCycleId)
+                .map(propertyId -> checkPermission(propertyId, permissionCode))
                 .orElse(false);
     }
 
@@ -138,7 +135,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode) {
         if (chargeConfigId == null) return false;
         try {
-            ChargeConfigDTOs.ChargeConfigResponse c = chargeConfigQueryService.getChargeConfigById(chargeConfigId);
+            ChargeConfigDTOs.ChargeConfigResponse c = financeFacade.getChargeConfigById(chargeConfigId);
             return checkPermission(c.getPropertyId(), permissionCode);
         } catch (Exception e) {
             return false;

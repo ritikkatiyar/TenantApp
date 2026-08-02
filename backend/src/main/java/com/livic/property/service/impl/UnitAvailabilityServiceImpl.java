@@ -1,9 +1,7 @@
 package com.livic.property.service.impl;
 
-import com.livic.common.domain.LeaseStatus;
 import com.livic.common.exception.BusinessException;
-import com.livic.finance.domain.LeaseTbl;
-import com.livic.finance.repository.LeaseRepository;
+import com.livic.finance.facade.FinanceFacade;
 import com.livic.property.domain.UnitTbl;
 import com.livic.property.repository.UnitRepository;
 import com.livic.property.service.interfaces.UnitAvailabilityService;
@@ -14,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -24,7 +21,7 @@ import java.util.UUID;
 public class UnitAvailabilityServiceImpl implements UnitAvailabilityService {
 
     private final UnitRepository unitRepository;
-    private final LeaseRepository leaseRepository;
+    private final FinanceFacade financeFacade;
 
     @Override
     public boolean isUnitAvailableOnDate(UUID unitId, LocalDate date) {
@@ -33,17 +30,9 @@ public class UnitAvailabilityServiceImpl implements UnitAvailabilityService {
         UnitTbl unit = unitRepository.findById(unitId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
 
-        List<LeaseTbl> activeLeases = leaseRepository.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE);
+        boolean isOccupied = financeFacade.isUnitOccupiedOnDate(unitId, date);
 
-        long activeOccupants = activeLeases.stream()
-                .filter(lease -> {
-                    boolean hasMovedIn = !date.isBefore(lease.getMoveInDate());
-                    boolean hasNotMovedOut = lease.getMoveOutDate() == null || date.isBefore(lease.getMoveOutDate());
-                    return hasMovedIn && hasNotMovedOut;
-                })
-                .count();
-
-        log.info("Unit: {} has capacity: {}, active occupants on {}: {}", unitId, unit.getCapacity(), date, activeOccupants);
-        return activeOccupants < unit.getCapacity();
+        log.info("Unit: {} has capacity: {}, occupied on {}: {}", unitId, unit.getCapacity(), date, isOccupied);
+        return !isOccupied;
     }
 }

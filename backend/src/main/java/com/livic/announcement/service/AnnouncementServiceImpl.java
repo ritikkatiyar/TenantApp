@@ -4,20 +4,20 @@ import com.livic.announcement.domain.*;
 import com.livic.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
 import com.livic.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
 import com.livic.announcement.service.interfaces.AnnouncementService;
-import com.livic.common.domain.LeaseStatus;
 import com.livic.common.domain.BaseEntity;
 import com.livic.common.event.AnnouncementBroadcastEvent;
-import com.livic.finance.domain.LeaseTbl;
-import com.livic.finance.service.interfaces.LeaseQueryService;
+import com.livic.finance.dto.LeaseSummaryDTO;
+import com.livic.finance.facade.FinanceFacade;
 import com.livic.property.domain.PropertyTbl;
-import com.livic.property.domain.UnitTbl;
-import com.livic.property.service.interfaces.PropertyQueryService;
-import com.livic.property.service.interfaces.UnitQueryService;
+import com.livic.property.dto.PropertySummaryDTO;
+import com.livic.property.facade.PropertyFacade;
 import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import com.livic.announcement.service.interfaces.AnnouncementCrudService;
 import com.livic.announcement.service.interfaces.AnnouncementReceiptCrudService;
-import com.livic.finance.service.interfaces.LeaseCrudService;
+import com.livic.common.exception.BusinessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
@@ -34,18 +34,23 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     private final AnnouncementCrudService announcementCrudService;
     private final AnnouncementReceiptCrudService announcementReceiptCrudService;
-    private final PropertyQueryService propertyQueryService;
-    private final UserQueryService userQueryService;
-    private final LeaseCrudService leaseCrudService;
-    private final LeaseQueryService leaseQueryService;
-    private final UnitQueryService unitQueryService;
+    private final PropertyFacade propertyFacade;
+    private final UserFacade userFacade;
+    private final FinanceFacade financeFacade;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
     public AnnouncementResponse createAnnouncement(CreateAnnouncementRequest request, UUID creatorId) {
-        PropertyTbl property = propertyQueryService.getPropertyById(request.getPropertyId());
-        UserTbl creator = userQueryService.getUserById(creatorId);
+        PropertySummaryDTO propSummary = propertyFacade.getPropertyById(request.getPropertyId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
+        UserSummaryDTO userSummary = userFacade.getUserById(creatorId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
+
+        PropertyTbl property = new PropertyTbl();
+        property.setId(propSummary.id());
+        UserTbl creator = new UserTbl();
+        creator.setId(userSummary.id());
 
         AnnouncementTbl announcement = AnnouncementTbl.builder()
                 .property(property)
@@ -82,16 +87,15 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     @Override
     @Transactional(readOnly = true)
     public Page<AnnouncementResponse> getNoticesForTenant(UUID tenantUserId, Pageable pageable) {
-        LeaseTbl activeLease = leaseCrudService.findByUserIdAndStatus(tenantUserId, LeaseStatus.ACTIVE)
-                .orElse(null);
+        LeaseSummaryDTO activeLease = financeFacade.getActiveLeaseForUser(tenantUserId).orElse(null);
 
-        if (activeLease == null || activeLease.getUnit() == null || activeLease.getUnit().getProperty() == null) {
+        if (activeLease == null || activeLease.propertyId() == null) {
             return Page.empty(pageable);
         }
 
-        UUID propertyId = activeLease.getUnit().getProperty().getId();
-        String floorStr = String.valueOf(activeLease.getUnit().getFloor());
-        String unitIdStr = activeLease.getUnit().getId().toString();
+        UUID propertyId = activeLease.propertyId();
+        String floorStr = activeLease.floor() != null ? String.valueOf(activeLease.floor()) : "0";
+        String unitIdStr = activeLease.unitId() != null ? activeLease.unitId().toString() : "";
 
         Page<AnnouncementTbl> announcements = announcementCrudService.findNoticesForTenant(propertyId, floorStr, unitIdStr, pageable);
 
@@ -131,11 +135,13 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         }
 
         // Optimized: Fetch all active property leases once to group in memory instead of executing DB queries in loop
-        List<LeaseTbl> allActivePropertyLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
-        Map<UUID, List<LeaseTbl>> leasesByUnit = allActivePropertyLeases.stream()
-                .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
-        Map<Integer, List<LeaseTbl>> leasesByFloor = allActivePropertyLeases.stream()
-                .collect(Collectors.groupingBy(l -> l.getUnit().getFloor()));
+        List<LeaseSummaryDTO> allActivePropertyLeases = financeFacade.getActiveLeasesByPropertyId(propertyId);
+        Map<UUID, List<LeaseSummaryDTO>> leasesByUnit = allActivePropertyLeases.stream()
+                .filter(l -> l.unitId() != null)
+                .collect(Collectors.groupingBy(LeaseSummaryDTO::unitId));
+        Map<Integer, List<LeaseSummaryDTO>> leasesByFloor = allActivePropertyLeases.stream()
+                .filter(l -> l.floor() != null)
+                .collect(Collectors.groupingBy(LeaseSummaryDTO::floor));
 
         return announcements.map(announcement -> {
             long readCount = readCountsMap.getOrDefault(announcement.getId(), 0L);
@@ -148,24 +154,24 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     }
 
     private List<String> getRecipientUserIdsOptimized(AnnouncementTargetType targetType, String targetValue, 
-                                                      List<LeaseTbl> allActivePropertyLeases, 
-                                                      Map<UUID, List<LeaseTbl>> leasesByUnit, 
-                                                      Map<Integer, List<LeaseTbl>> leasesByFloor) {
+                                                      List<LeaseSummaryDTO> allActivePropertyLeases, 
+                                                      Map<UUID, List<LeaseSummaryDTO>> leasesByUnit, 
+                                                      Map<Integer, List<LeaseSummaryDTO>> leasesByFloor) {
         List<String> recipientUserIds = new ArrayList<>();
         if (targetType == AnnouncementTargetType.PROPERTY) {
-            for (LeaseTbl lease : allActivePropertyLeases) {
-                if (lease.getUserId() != null) {
-                    recipientUserIds.add(lease.getUserId().toString());
+            for (LeaseSummaryDTO lease : allActivePropertyLeases) {
+                if (lease.userId() != null) {
+                    recipientUserIds.add(lease.userId().toString());
                 }
             }
         } else if (targetType == AnnouncementTargetType.FLOOR) {
             if (targetValue != null) {
                 try {
                     Integer floorNumber = Integer.valueOf(targetValue);
-                    List<LeaseTbl> floorLeases = leasesByFloor.getOrDefault(floorNumber, List.of());
-                    for (LeaseTbl lease : floorLeases) {
-                        if (lease.getUserId() != null) {
-                            recipientUserIds.add(lease.getUserId().toString());
+                    List<LeaseSummaryDTO> floorLeases = leasesByFloor.getOrDefault(floorNumber, List.of());
+                    for (LeaseSummaryDTO lease : floorLeases) {
+                        if (lease.userId() != null) {
+                            recipientUserIds.add(lease.userId().toString());
                         }
                     }
                 } catch (NumberFormatException ignored) {}
@@ -174,10 +180,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             if (targetValue != null) {
                 try {
                     UUID unitId = UUID.fromString(targetValue);
-                    List<LeaseTbl> unitLeases = leasesByUnit.getOrDefault(unitId, List.of());
-                    for (LeaseTbl lease : unitLeases) {
-                        if (lease.getUserId() != null) {
-                            recipientUserIds.add(lease.getUserId().toString());
+                    List<LeaseSummaryDTO> unitLeases = leasesByUnit.getOrDefault(unitId, List.of());
+                    for (LeaseSummaryDTO lease : unitLeases) {
+                        if (lease.userId() != null) {
+                            recipientUserIds.add(lease.userId().toString());
                         }
                     }
                 } catch (IllegalArgumentException ignored) {}
@@ -192,7 +198,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         AnnouncementTbl announcement = announcementCrudService.findById(announcementId)
                 .orElseThrow(() -> new IllegalArgumentException("Announcement not found with ID: " + announcementId));
 
-        UserTbl user = userQueryService.getUserById(tenantUserId);
+        UserSummaryDTO userSummary = userFacade.getUserById(tenantUserId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
+        UserTbl user = new UserTbl();
+        user.setId(userSummary.id());
 
         boolean alreadyRead = announcementReceiptCrudService.existsByAnnouncementIdAndUserId(announcementId, tenantUserId);
         if (!alreadyRead) {
@@ -208,24 +217,26 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         List<String> recipientUserIds = new ArrayList<>();
 
         if (targetType == AnnouncementTargetType.PROPERTY) {
-            List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(propertyId);
-            for (LeaseTbl lease : activeLeases) {
-                if (lease.getUserId() != null) {
-                    recipientUserIds.add(lease.getUserId().toString());
+            List<LeaseSummaryDTO> activeLeases = financeFacade.getActiveLeasesByPropertyId(propertyId);
+            for (LeaseSummaryDTO lease : activeLeases) {
+                if (lease.userId() != null) {
+                    recipientUserIds.add(lease.userId().toString());
                 }
             }
         } else if (targetType == AnnouncementTargetType.FLOOR) {
             if (targetValue != null) {
                 try {
                     Integer floorNumber = Integer.valueOf(targetValue);
-                    List<UnitTbl> unitsOnFloor = unitQueryService.getUnitsByFloor(propertyId, floorNumber);
-                    List<UUID> unitIds = unitsOnFloor.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                    List<com.livic.property.dto.UnitSummaryDTO> unitsOnFloor = propertyFacade.getUnitsByPropertyId(propertyId).stream()
+                            .filter(u -> u.floor() != null && u.floor().equals(floorNumber))
+                            .toList();
+                    List<UUID> unitIds = unitsOnFloor.stream().map(com.livic.property.dto.UnitSummaryDTO::id).collect(Collectors.toList());
                     if (!unitIds.isEmpty()) {
-                        leaseQueryService.findActiveLeasesByUnitIds(unitIds).values().stream()
+                        financeFacade.getActiveLeasesByUnitIds(unitIds).values().stream()
                                   .flatMap(List::stream)
                                   .forEach(lease -> {
-                                      if (lease.getUserId() != null) {
-                                          recipientUserIds.add(lease.getUserId().toString());
+                                      if (lease.userId() != null) {
+                                          recipientUserIds.add(lease.userId().toString());
                                       }
                                   });
                     }
@@ -235,10 +246,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             if (targetValue != null) {
                 try {
                     UUID unitId = UUID.fromString(targetValue);
-                    List<LeaseTbl> activeLeases = leaseQueryService.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE);
-                    for (LeaseTbl lease : activeLeases) {
-                        if (lease.getUserId() != null) {
-                            recipientUserIds.add(lease.getUserId().toString());
+                    List<LeaseSummaryDTO> activeLeases = financeFacade.getActiveLeasesByUnitId(unitId);
+                    for (LeaseSummaryDTO lease : activeLeases) {
+                        if (lease.userId() != null) {
+                            recipientUserIds.add(lease.userId().toString());
                         }
                     }
                 } catch (IllegalArgumentException ignored) {}

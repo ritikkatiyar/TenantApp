@@ -1,11 +1,9 @@
 package com.livic.finance.controller;
 
-import com.livic.common.response.ApiResponse;
 import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.common.response.ApiResponse;
 import com.livic.finance.dto.LeaseDTOs;
-import com.livic.finance.mapper.LeaseMapper;
-import com.livic.finance.service.interfaces.LeaseService;
-import com.livic.finance.service.interfaces.LeaseQueryService;
+import com.livic.finance.service.impl.LeaseOrchestrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,11 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import com.livic.common.domain.LeaseStatus;
-import com.livic.finance.domain.LeaseTbl;
-import com.livic.user.service.interfaces.UserQueryService;
-import com.livic.user.domain.UserTbl;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,23 +22,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LeaseController {
 
-    private final LeaseService leaseService;
-    private final LeaseQueryService leaseQueryService;
-    private final UserQueryService userQueryService;
+    private final LeaseOrchestrationService leaseOrchestrationService;
 
     @GetMapping
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_VIEW')")
     public ResponseEntity<ApiResponse<List<LeaseDTOs.LeaseResponse>>> getActiveLeasesByProperty(
             @RequestParam UUID propertyId
     ) {
-        List<LeaseTbl> leases = leaseQueryService.findActiveLeasesByProperty(propertyId);
-        List<UUID> userIds = leases.stream().map(LeaseTbl::getUserId).toList();
-        Map<UUID, UserTbl> usersMap = userQueryService.getUsersByIds(userIds);
-
-        List<LeaseDTOs.LeaseResponse> responseList = leases.stream()
-                .map(lease -> LeaseMapper.toResponse(lease, usersMap.get(lease.getUserId())))
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(responseList));
+        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.getActiveLeasesByProperty(propertyId)));
     }
 
     @GetMapping("/tenant/active")
@@ -56,11 +40,8 @@ public class LeaseController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         UUID userId = UUID.fromString(currentUser.getId());
-        return leaseQueryService.findByUserIdAndStatus(userId, LeaseStatus.ACTIVE)
-                .map(lease -> {
-                    UserTbl user = userQueryService.getUserById(lease.getUserId());
-                    return ResponseEntity.ok(ApiResponse.success(LeaseMapper.toResponse(lease, user)));
-                })
+        return leaseOrchestrationService.getActiveTenantLease(userId)
+                .map(lease -> ResponseEntity.ok(ApiResponse.success(lease)))
                 .orElseGet(() -> ResponseEntity.ok(ApiResponse.success(null)));
     }
 
@@ -71,10 +52,8 @@ public class LeaseController {
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
         UUID assignedByUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
-        LeaseTbl lease = leaseService.createLease(request, assignedByUserId);
-        UserTbl user = userQueryService.getUserById(lease.getUserId());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(LeaseMapper.toResponse(lease, user)));
+        LeaseDTOs.LeaseResponse response = leaseOrchestrationService.createLease(request, assignedByUserId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     @GetMapping("/{id}")
@@ -82,9 +61,7 @@ public class LeaseController {
     public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> get(
             @PathVariable UUID id
     ) {
-        LeaseTbl lease = leaseQueryService.getLeaseById(id);
-        UserTbl user = userQueryService.getUserById(lease.getUserId());
-        return ResponseEntity.ok(ApiResponse.success(LeaseMapper.toResponse(lease, user)));
+        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.getLeaseById(id)));
     }
 
     @DeleteMapping("/{id}")
@@ -92,7 +69,7 @@ public class LeaseController {
     public ResponseEntity<ApiResponse<Void>> deleteLease(
             @PathVariable UUID id
     ) {
-        leaseService.deleteLease(id);
+        leaseOrchestrationService.deleteLease(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -104,8 +81,6 @@ public class LeaseController {
     ) {
         String moveOutDateStr = request.get("moveOutDate");
         LocalDate moveOutDate = moveOutDateStr != null ? LocalDate.parse(moveOutDateStr) : null;
-        LeaseTbl lease = leaseService.updateNoticePeriod(id, moveOutDate);
-        UserTbl user = userQueryService.getUserById(lease.getUserId());
-        return ResponseEntity.ok(ApiResponse.success(LeaseMapper.toResponse(lease, user)));
+        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.serveNotice(id, moveOutDate)));
     }
 }

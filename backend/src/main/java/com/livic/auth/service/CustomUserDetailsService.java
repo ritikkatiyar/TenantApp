@@ -1,8 +1,8 @@
 package com.livic.auth.service;
 
 import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,31 +12,30 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-/**
- * Bridges persisted {@link UserTbl} entities to Spring Security {@link UserDetails}.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserQueryService userQueryService;
+    private final UserFacade userFacade;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("Loading user by username: {}", username);
 
-        UserTbl user = userQueryService.getUserByEmail(username);
+        UserSummaryDTO user = userFacade.getUserByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
 
-        log.debug("User found: {}", user.getFullName());
-        return UserDetailsImpl.fromUser(user);
+        log.debug("User found: {}", user.fullName());
+        return UserDetailsImpl.fromSummary(user);
     }
 
     public UserDetails loadUserById(String userId) throws UsernameNotFoundException {
         log.debug("Loading user by ID: {}", userId);
 
-        UserTbl user = userQueryService.getUserById(UUID.fromString(userId));
+        UserSummaryDTO user = userFacade.getUserById(UUID.fromString(userId))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
 
-        return UserDetailsImpl.fromUser(user);
+        return UserDetailsImpl.fromSummary(user);
     }
 }

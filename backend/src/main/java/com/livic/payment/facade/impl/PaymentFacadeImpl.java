@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,6 +52,16 @@ public class PaymentFacadeImpl implements PaymentFacade {
     public Optional<PaymentInitiationResponse> getTransactionStatus(UUID transactionId) {
         return paymentTransactionService.findTransactionById(transactionId)
                 .map(this::toResponse);
+    }
+
+    @Override
+    public PaymentTransactionTbl initiateOnlinePaymentEntity(UUID payerUserId, String referenceType, UUID referenceId, BigDecimal amount) {
+        return paymentTransactionService.initiateOnlinePayment(payerUserId, referenceType, referenceId, amount);
+    }
+
+    @Override
+    public PaymentTransactionTbl recordCashPaymentEntity(UUID payerUserId, String referenceType, UUID referenceId, BigDecimal amount, UUID confirmedBy, String note) {
+        return paymentTransactionService.recordCashPayment(payerUserId, referenceType, referenceId, amount, confirmedBy, note);
     }
 
     private PaymentInitiationResponse toResponse(PaymentTransactionTbl tx) {

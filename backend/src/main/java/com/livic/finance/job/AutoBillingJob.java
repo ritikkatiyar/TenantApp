@@ -8,8 +8,8 @@ import com.livic.finance.repository.ChargeConfigRepository;
 import com.livic.finance.repository.LeaseRepository;
 import com.livic.finance.service.BillingWorksheetService;
 import com.livic.finance.service.interfaces.RentCycleService;
-import com.livic.property.domain.PropertyTbl;
-import com.livic.property.service.interfaces.PropertyQueryService;
+import com.livic.property.dto.PropertySummaryDTO;
+import com.livic.property.facade.PropertyFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,7 +25,7 @@ import java.util.List;
 @Slf4j
 public class AutoBillingJob {
 
-    private final PropertyQueryService propertyQueryService;
+    private final PropertyFacade propertyFacade;
     private final ChargeConfigRepository chargeConfigRepository;
     private final BillingWorksheetService worksheetService;
     private final LeaseRepository leaseRepository;
@@ -43,26 +43,24 @@ public class AutoBillingJob {
 
         log.info("Starting Auto-Billing Job for Day: {}, Hour: {}, Month: {}", currentDay, currentHour, currentBillingMonth);
 
-        List<PropertyTbl> properties = propertyQueryService.getPropertiesByAutoBillDayOfMonth(currentDay);
+        List<PropertySummaryDTO> properties = propertyFacade.getPropertiesByAutoBillDayOfMonth(currentDay);
 
-        for (PropertyTbl property : properties) {
-            if (property.getAutoBillTime() != null && property.getAutoBillTime().getHour() == currentHour) {
-                log.info("Processing auto-billing for Property ID: {}", property.getId());
-                processPropertyBilling(property, currentBillingMonth);
-            }
+        for (PropertySummaryDTO property : properties) {
+            log.info("Processing auto-billing for Property ID: {}", property.id());
+            processPropertyBilling(property.id(), currentBillingMonth);
         }
     }
 
-    private void processPropertyBilling(PropertyTbl property, String billingMonth) {
+    private void processPropertyBilling(java.util.UUID propertyId, String billingMonth) {
         try {
             // 1. Initialize Worksheets for all active Charge Configs
-            List<ChargeConfigTbl> activeConfigs = chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(property.getId());
+            List<ChargeConfigTbl> activeConfigs = chargeConfigRepository.findAllByPropertyIdAndIsActiveTrue(propertyId);
             for (ChargeConfigTbl config : activeConfigs) {
-                worksheetService.getOrCreateWorksheetForMonth(property.getId(), config.getId(), billingMonth);
+                worksheetService.getOrCreateWorksheetForMonth(propertyId, config.getId(), billingMonth);
             }
 
             // 2. Generate Rent Cycles for all active leases
-            List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(property.getId(), LeaseStatus.ACTIVE);
+            List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
             LocalDate dueDate = LocalDate.now().plusDays(5); // Default due in 5 days
 
             for (LeaseTbl lease : activeLeases) {
@@ -79,7 +77,7 @@ public class AutoBillingJob {
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to process auto-billing for Property ID: {}", property.getId(), e);
+            log.error("Failed to process auto-billing for Property ID: {}", propertyId, e);
         }
     }
 }

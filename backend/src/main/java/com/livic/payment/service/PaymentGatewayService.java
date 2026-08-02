@@ -27,9 +27,4 @@ public interface PaymentGatewayService {
      * Cancels an active recurring SaaS subscription.
      */
     boolean cancelSubscription(String gatewaySubscriptionId);
-
-    /**
-     * Handles standard incoming webhooks from the payment gateway.
-     */
-    void handleWebhook(String payload, String signatureHeader);
 }

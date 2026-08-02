@@ -6,8 +6,8 @@ import com.livic.finance.dto.LedgerDTOs.LedgerEntryResponse;
 import com.livic.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.finance.specification.FinanceLedgerSpecifications;
 import com.livic.finance.service.interfaces.LedgerService;
-import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class LedgerServiceImpl implements LedgerService {
 
     private final FinanceLedgerCrudService financeLedgerCrudService;
-    private final UserQueryService userQueryService;
+    private final UserFacade userFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -51,7 +51,7 @@ public class LedgerServiceImpl implements LedgerService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Map<UUID, UserTbl> usersMap = userQueryService.getUsersByIds(userIds);
+        Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(userIds);
 
         // Batch fetch running balances to avoid N+1 query
         List<UUID> entryIds = entriesPage.getContent().stream()
@@ -83,9 +83,9 @@ public class LedgerServiceImpl implements LedgerService {
             String tenantName = "N/A";
             LeaseTbl lease = entry.getLease();
             if (lease != null && lease.getUserId() != null) {
-                UserTbl tenant = usersMap.get(lease.getUserId());
+                UserSummaryDTO tenant = usersMap.get(lease.getUserId());
                 if (tenant != null) {
-                    tenantName = tenant.getFullName();
+                    tenantName = tenant.fullName();
                 } else {
                     log.warn("Tenant user not found for lease userId: {}", lease.getUserId());
                 }

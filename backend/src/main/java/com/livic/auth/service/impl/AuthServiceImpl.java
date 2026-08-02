@@ -1,5 +1,6 @@
 package com.livic.auth.service.impl;
 
+import com.livic.auth.domain.RefreshTokenTbl;
 import com.livic.auth.dto.AuthRequests.LoginRequest;
 import com.livic.auth.dto.AuthRequests.LogoutRequest;
 import com.livic.auth.dto.AuthRequests.RefreshRequest;
@@ -8,27 +9,24 @@ import com.livic.auth.dto.AuthRequests.ValidateRequest;
 import com.livic.auth.dto.AuthResponses.AuthUserSummary;
 import com.livic.auth.dto.AuthResponses.TokenBundle;
 import com.livic.auth.dto.AuthResponses.ValidateResponse;
-import com.livic.auth.domain.RefreshTokenTbl;
+import com.livic.auth.service.JwtService;
+import com.livic.auth.service.TokenHasher;
+import com.livic.auth.service.interfaces.AuthService;
 import com.livic.auth.service.interfaces.RefreshTokenCrudService;
-import com.livic.common.domain.UserRole;
 import com.livic.common.exception.BusinessException;
 import com.livic.config.AuthProperties;
 import com.livic.config.JwtProperties;
 import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserService;
-import com.livic.user.service.interfaces.UserQueryService;
-import com.livic.auth.mapper.UserMapper;
-import com.livic.auth.service.interfaces.AuthService;
-import com.livic.auth.service.JwtService;
-import com.livic.auth.service.TokenHasher;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,19 +36,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Optional;
 
 /**
  * Application use-cases for registration, credential login, token refresh, and JWT validation.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final UserService userService;
-    private final UserQueryService userQueryService;
+    private final UserFacade userFacade;
     private final RefreshTokenCrudService refreshTokenCrudService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -61,85 +58,43 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public TokenBundle signup(SignupRequest request) {
         String email = normalizeEmail(request.email());
-        if (userQueryService.existsByEmail(email)) {
+        if (userFacade.existsByEmail(email)) {
             throw new BusinessException(HttpStatus.CONFLICT, "Email already registered");
         }
 
         String phone = normalizePhone(request.phoneNumber());
-
-        String hashedPassword = passwordEncoder.encode(request.password());
-        UserTbl user = UserMapper.toEntity(request, email, phone, hashedPassword);
-        userService.createUser(user);
+        UserSummaryDTO userSummary = userFacade.createUser(email, request.fullName(), phone, request.password());
+        UserTbl user = new UserTbl();
+        user.setId(userSummary.id());
+        user.setAuthUid(userSummary.authUid());
+        user.setFullName(userSummary.fullName());
+        user.setPhoneNumber(userSummary.phoneNumber());
+        user.setGlobalRole(com.livic.common.domain.UserRole.USER);
         return issueTokensForUser(user);
     }
 
     @Transactional
     public TokenBundle login(LoginRequest request) {
         String email = normalizeEmail(request.email());
-        Optional<UserTbl> optionalUser = userQueryService.findByEmail(email);
-        optionalUser.ifPresent(this::clearExpiredLock);
-
-        if (optionalUser.isPresent() && isLocked(optionalUser.get())) {
-            throw new BusinessException(HttpStatus.LOCKED,
-                    "Account temporarily locked due to repeated login attempts. Try again later.");
-        }
+        UserSummaryDTO userSummary = userFacade.getUserByEmail(email)
+                .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
 
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, request.password())
             );
-        } catch (LockedException e) {
-            throw new BusinessException(HttpStatus.LOCKED,
-                    "Account temporarily locked due to repeated login attempts. Try again later.");
-        } catch (BadCredentialsException e) {
-            optionalUser.ifPresent(this::recordFailedLogin);
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         } catch (AuthenticationException e) {
-            optionalUser.ifPresent(this::recordFailedLogin);
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        UserTbl user = optionalUser.orElseThrow(
-                () -> new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid email or password")
-        );
+        UserTbl loginUser = new UserTbl();
+        loginUser.setId(userSummary.id());
+        loginUser.setAuthUid(userSummary.authUid());
+        loginUser.setFullName(userSummary.fullName());
+        loginUser.setPhoneNumber(userSummary.phoneNumber());
+        loginUser.setGlobalRole(com.livic.common.domain.UserRole.USER);
 
-        if (user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Password login is not enabled for this account");
-        }
-
-        resetFailedLogin(user);
-        return issueTokensForUser(user);
-    }
-
-    private boolean isLocked(UserTbl user) {
-        return user.getLockoutUntil() != null && user.getLockoutUntil().isAfter(Instant.now());
-    }
-
-    private void clearExpiredLock(UserTbl user) {
-        if (user.getLockoutUntil() != null && !user.getLockoutUntil().isAfter(Instant.now())) {
-            user.setFailedLoginAttempts(0);
-            user.setLockoutUntil(null);
-            userService.saveUser(user);
-        }
-    }
-
-    private void resetFailedLogin(UserTbl user) {
-        if (user.getFailedLoginAttempts() != 0 || user.getLockoutUntil() != null) {
-            user.setFailedLoginAttempts(0);
-            user.setLockoutUntil(null);
-            userService.saveUser(user);
-        }
-    }
-
-    private void recordFailedLogin(UserTbl user) {
-        int attempts = user.getFailedLoginAttempts() + 1;
-        if (attempts >= authProperties.maxFailedLoginAttempts()) {
-            user.setFailedLoginAttempts(0);
-            user.setLockoutUntil(Instant.now().plusMillis(authProperties.lockoutDurationMs()));
-        } else {
-            user.setFailedLoginAttempts(attempts);
-        }
-        userService.saveUser(user);
+        return issueTokensForUser(loginUser);
     }
 
     @Transactional

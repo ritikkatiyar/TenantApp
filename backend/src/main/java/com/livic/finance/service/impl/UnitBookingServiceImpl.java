@@ -1,5 +1,3 @@
-package com.livic.finance.service.impl;
-
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.UnitBookingTbl;
@@ -7,12 +5,11 @@ import com.livic.finance.dto.UnitBookingDTOs;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.finance.service.interfaces.UnitBookingService;
 import com.livic.payment.domain.PaymentTransactionTbl;
-import com.livic.payment.service.interfaces.PaymentTransactionService;
+import com.livic.payment.facade.PaymentFacade;
 import com.livic.property.domain.UnitTbl;
-import com.livic.property.service.interfaces.UnitAvailabilityService;
-import com.livic.property.service.interfaces.UnitQueryService;
-import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.property.facade.PropertyFacade;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import com.livic.finance.mapper.UnitBookingMapper;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -25,6 +22,8 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.livic.property.dto.UnitSummaryDTO;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -32,22 +31,24 @@ import java.util.stream.Collectors;
 public class UnitBookingServiceImpl implements UnitBookingService {
 
     private final UnitBookingCrudService unitBookingCrudService;
-    private final UnitQueryService unitQueryService;
-    private final UnitAvailabilityService unitAvailabilityService;
-    private final PaymentTransactionService paymentTransactionService;
+    private final PropertyFacade propertyFacade;
+    private final PaymentFacade paymentFacade;
     private final AuthorizationService authorizationService;
-    private final UserQueryService userQueryService;
+    private final UserFacade userFacade;
 
     @Override
     public UnitBookingDTOs.UnitBookingResponse createBooking(UnitBookingDTOs.CreateBookingRequest request) {
         log.info("Processing booking creation for unit: {}, tenant name: {}", request.unitId(), request.prospectiveTenantName());
 
-        boolean available = unitAvailabilityService.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
+        boolean available = propertyFacade.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
         if (!available) {
             throw new BusinessException(HttpStatus.CONFLICT, "No vacancy available in this unit on the requested date");
         }
 
-        UnitTbl unit = unitQueryService.getUnitById(request.unitId());
+        UnitSummaryDTO unitSummary = propertyFacade.getUnitById(request.unitId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
+        UnitTbl unit = new UnitTbl();
+        unit.setId(unitSummary.id());
 
         UnitBookingTbl booking = UnitBookingMapper.toEntity(request, unit);
         booking = unitBookingCrudService.save(booking);
@@ -97,7 +98,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
 
         UUID payerUserId = resolvePayerUserId(booking, userDetailsId);
 
-        return paymentTransactionService.initiateOnlinePayment(
+        return paymentFacade.initiateOnlinePaymentEntity(
                 payerUserId,
                 "UNIT_BOOKING",
                 bookingId,
@@ -120,7 +121,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
 
         UUID payerUserId = resolvePayerUserId(booking, userDetailsId);
 
-        return paymentTransactionService.recordCashPayment(
+        return paymentFacade.recordCashPaymentEntity(
                 payerUserId,
                 "UNIT_BOOKING",
                 bookingId,
@@ -139,15 +140,9 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         UUID payerUserId = booking.getProspectiveTenantUserId();
         if (payerUserId == null) {
             if (booking.getProspectiveTenantEmail() != null) {
-                UserTbl u = userQueryService.findByEmail(booking.getProspectiveTenantEmail()).orElse(null);
+                UserSummaryDTO u = userFacade.getUserByEmail(booking.getProspectiveTenantEmail()).orElse(null);
                 if (u != null) {
-                    payerUserId = u.getId();
-                }
-            }
-            if (payerUserId == null && booking.getProspectiveTenantPhone() != null) {
-                UserTbl u = userQueryService.findByPhoneNumber(booking.getProspectiveTenantPhone()).orElse(null);
-                if (u != null) {
-                    payerUserId = u.getId();
+                    payerUserId = u.id();
                 }
             }
         }

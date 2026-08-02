@@ -19,7 +19,6 @@ import com.livic.billing.service.interfaces.WalletTransactionCrudService;
 import com.livic.payment.dto.PaymentInitiationRequest;
 import com.livic.payment.dto.PaymentInitiationResponse;
 import com.livic.payment.facade.PaymentFacade;
-import com.livic.payment.service.PaymentGatewayRouter;
 import com.livic.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +40,6 @@ public class BillingWalletServiceImpl implements BillingWalletService {
     private final SaasSubscriptionCrudService subscriptionCrudService;
     private final SubscriptionPlanCrudService planCrudService;
     private final BillingWalletRepository walletRepository;
-    private final PaymentGatewayRouter paymentGatewayRouter;
     private final PaymentFacade paymentFacade;
 
     @Override

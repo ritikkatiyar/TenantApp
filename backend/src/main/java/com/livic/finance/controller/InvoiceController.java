@@ -1,11 +1,11 @@
 package com.livic.finance.controller;
 
 import com.livic.finance.service.interfaces.PaymentStatementService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,14 +19,10 @@ public class InvoiceController {
     private final PaymentStatementService paymentStatementService;
 
     @GetMapping(value = "/{rentCycleId}/invoice", produces = MediaType.TEXT_HTML_VALUE)
-    public ResponseEntity<String> getPaymentStatementHtml(
-            @PathVariable UUID rentCycleId,
-            @RequestParam(required = false) String token,
-            HttpServletRequest request
-    ) {
+    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_VIEW')")
+    public ResponseEntity<String> getPaymentStatementHtml(@PathVariable UUID rentCycleId) {
         log.info("API request: Get payment statement HTML for RentCycle: {}", rentCycleId);
-        String authHeader = request.getHeader("Authorization");
-        String html = paymentStatementService.generateStatementHtml(rentCycleId, token, authHeader);
+        String html = paymentStatementService.generateStatementHtml(rentCycleId);
         return ResponseEntity.ok(html);
     }
 }

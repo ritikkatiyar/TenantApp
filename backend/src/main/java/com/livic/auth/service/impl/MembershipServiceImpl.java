@@ -7,7 +7,8 @@ import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.auth.service.interfaces.MembershipService;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import com.livic.common.exception.BusinessException;
 
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class MembershipServiceImpl implements MembershipService {
 
     private final MembershipCrudService membershipCrudService;
     private final MembershipRoleCrudService membershipRoleCrudService;
-    private final UserQueryService userQueryService;
+    private final UserFacade userFacade;
 
     @Override
     @Transactional
@@ -34,11 +35,18 @@ public class MembershipServiceImpl implements MembershipService {
             return; // Already has tenant role here
         }
 
-        UserTbl tenant = userQueryService.getUserById(tenantId);
+        UserSummaryDTO tenantSummary = userFacade.getUserById(tenantId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Tenant user not found"));
+        UserTbl tenant = new UserTbl();
+        tenant.setId(tenantSummary.id());
         
         PropertyTbl property = new PropertyTbl();
         property.setId(propertyId);
-        UserTbl assigner = assignedByUserId != null ? userQueryService.getUserById(assignedByUserId) : null;
+        UserTbl assigner = null;
+        if (assignedByUserId != null) {
+            assigner = new UserTbl();
+            assigner.setId(assignedByUserId);
+        }
         
         MembershipRoleTbl tenantRole = membershipRoleCrudService.findByCode("PROPERTY_TENANT")
                 .orElseThrow(() -> new RuntimeException("PROPERTY_TENANT role not found"));
@@ -53,10 +61,7 @@ public class MembershipServiceImpl implements MembershipService {
         membershipCrudService.save(membership);
     }
 
-    @Override
-    @Transactional
-    public void removeTenantRole(UUID tenantId, UUID propertyId) {
-        List<MembershipTbl> memberships = membershipCrudService.findByUserIdAndPropertyId(tenantId, propertyId);
+    private void removeOtherTenantMemberships(List<MembershipTbl> memberships) {
         List<MembershipTbl> tenantsToRemove = memberships.stream()
                 .filter(m -> "PROPERTY_TENANT".equals(m.getRole().getCode()))
                 .toList();
@@ -67,8 +72,18 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     @Transactional
+    public void removeTenantRole(UUID tenantId, UUID propertyId) {
+        List<MembershipTbl> memberships = membershipCrudService.findByUserIdAndPropertyId(tenantId, propertyId);
+        removeOtherTenantMemberships(memberships);
+    }
+
+    @Override
+    @Transactional
     public void createOwnerMembership(UUID propertyId, UUID ownerId) {
-        UserTbl owner = userQueryService.getUserById(ownerId);
+        UserSummaryDTO ownerSummary = userFacade.getUserById(ownerId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Owner user not found"));
+        UserTbl owner = new UserTbl();
+        owner.setId(ownerSummary.id());
         PropertyTbl property = new PropertyTbl();
         property.setId(propertyId);
         
@@ -99,12 +114,19 @@ public class MembershipServiceImpl implements MembershipService {
             throw new BusinessException(HttpStatus.CONFLICT, "User already has this role on the property");
         }
         
-        UserTbl user = userQueryService.getUserById(userId);
+        UserSummaryDTO userSummary = userFacade.getUserById(userId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
+        UserTbl user = new UserTbl();
+        user.setId(userSummary.id());
         PropertyTbl property = new PropertyTbl();
         property.setId(propertyId);
         MembershipRoleTbl role = membershipRoleCrudService.findByCode(roleCode)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found"));
-        UserTbl assigner = assignedByUserId != null ? userQueryService.getUserById(assignedByUserId) : null;
+        UserTbl assigner = null;
+        if (assignedByUserId != null) {
+            assigner = new UserTbl();
+            assigner.setId(assignedByUserId);
+        }
         
         MembershipTbl membership = MembershipTbl.builder()
                 .user(user)
@@ -142,7 +164,10 @@ public class MembershipServiceImpl implements MembershipService {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(HttpStatus.FORBIDDEN, "Current user is not the owner"));
                 
-        UserTbl newOwner = userQueryService.getUserById(toUserId);
+        UserSummaryDTO newOwnerSummary = userFacade.getUserById(toUserId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "New owner user not found"));
+        UserTbl newOwner = new UserTbl();
+        newOwner.setId(newOwnerSummary.id());
         PropertyTbl property = new PropertyTbl();
         property.setId(propertyId);
         MembershipRoleTbl ownerRole = membershipRoleCrudService.findByCode("PROPERTY_OWNER")
@@ -168,11 +193,13 @@ public class MembershipServiceImpl implements MembershipService {
                 managerOrCaretakerMembership.get().setRole(ownerRole);
                 membershipCrudService.save(managerOrCaretakerMembership.get());
             } else {
+                UserTbl assignerRef = new UserTbl();
+                assignerRef.setId(currentOwnerId);
                 MembershipTbl newMembership = MembershipTbl.builder()
                         .user(newOwner)
                         .property(property)
                         .role(ownerRole)
-                        .assignedBy(userQueryService.getUserById(currentOwnerId))
+                        .assignedBy(assignerRef)
                         .build();
                 membershipCrudService.save(newMembership);
             }

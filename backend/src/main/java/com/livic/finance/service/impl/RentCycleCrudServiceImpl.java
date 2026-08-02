@@ -43,6 +43,11 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
     }
 
     @Override
+    public List<RentCycleTbl> findByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth) {
+        return repository.findByLease_Unit_Property_IdAndBillingMonth(propertyId, billingMonth);
+    }
+
+    @Override
     public Page<RentCycleTbl> findAll(Specification<RentCycleTbl> spec, Pageable pageable) {
         return repository.findAll(spec, pageable);
     }

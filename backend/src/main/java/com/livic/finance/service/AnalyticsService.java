@@ -1,12 +1,12 @@
 package com.livic.finance.service;
 
-import com.livic.auth.domain.MembershipTbl;
-import com.livic.auth.service.interfaces.MembershipQueryService;
+import com.livic.auth.dto.MembershipSummaryDTO;
+import com.livic.auth.facade.AuthFacade;
 import com.livic.finance.dto.analytics.LandlordAnalyticsDTO;
 import com.livic.finance.dto.analytics.LandlordAnalyticsDTO.*;
 import com.livic.finance.repository.AnalyticsRepository;
-import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,15 +26,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnalyticsService {
 
     private final AnalyticsRepository analyticsRepository;
-    private final MembershipQueryService membershipQueryService;
-    private final UserQueryService userQueryService;
+    private final AuthFacade authFacade;
+    private final UserFacade userFacade;
 
     public LandlordAnalyticsDTO getLandlordAnalytics(UUID landlordId, String billingMonth) {
-        List<MembershipTbl> memberships = membershipQueryService.getMembershipsByUserId(landlordId);
+        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(landlordId);
         List<UUID> landlordPropertyIds = memberships.stream()
-                .filter(m -> m.getRole() != null && ("PROPERTY_OWNER".equals(m.getRole().getCode()) || "PROPERTY_MANAGER".equals(m.getRole().getCode())))
-                .filter(m -> m.getProperty() != null)
-                .map(m -> m.getProperty().getId())
+                .filter(m -> m.roleCode() != null && ("PROPERTY_OWNER".equals(m.roleCode()) || "PROPERTY_MANAGER".equals(m.roleCode())))
+                .filter(m -> m.propertyId() != null)
+                .map(MembershipSummaryDTO::propertyId)
                 .distinct()
                 .collect(Collectors.toList());
 
@@ -109,7 +109,7 @@ public class AnalyticsService {
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<UUID, UserTbl> usersMap = userQueryService.getUsersByIds(tenantIds);
+        Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(tenantIds);
 
         for (Object[] row : defaulterData) {
             UUID tenantId = (UUID) row[0];
@@ -121,9 +121,9 @@ public class AnalyticsService {
 
             String tenantName = "Unknown";
             if (tenantId != null) {
-                UserTbl user = usersMap.get(tenantId);
-                if (user != null && user.getFullName() != null) {
-                    tenantName = user.getFullName();
+                UserSummaryDTO user = usersMap.get(tenantId);
+                if (user != null && user.fullName() != null) {
+                    tenantName = user.fullName();
                 }
             }
             
