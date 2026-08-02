@@ -52,8 +52,9 @@ public class LeaseOrchestrationService {
     }
 
     @Transactional
-    public void deleteLease(UUID id) {
-        leaseService.deleteLease(id);
+    public LeaseDTOs.LeaseResponse terminateLease(UUID id) {
+        LeaseTbl lease = leaseService.terminateLease(id);
+        return enrichLease(lease);
     }
 
     @Transactional

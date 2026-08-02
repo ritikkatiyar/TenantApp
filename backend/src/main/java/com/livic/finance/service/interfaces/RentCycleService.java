@@ -17,7 +17,7 @@ public interface RentCycleService {
 
     RentCycleDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);
 
-    Page<RentCycleDTOs.RentCycleResponse> list(UUID leaseId, String billingMonth, RentCycleStatus status, Pageable pageable);
+    Page<RentCycleDTOs.RentCycleResponse> list(UUID currentUserId, UUID leaseId, String billingMonth, RentCycleStatus status, Pageable pageable);
 
     RentCycleDTOs.RentCycleResponse markPaid(UUID id);
 

@@ -36,9 +36,6 @@ public class LeaseController {
     public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> getActiveTenantLease(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         UUID userId = UUID.fromString(currentUser.getId());
         return leaseOrchestrationService.getActiveTenantLease(userId)
                 .map(lease -> ResponseEntity.ok(ApiResponse.success(lease)))
@@ -51,7 +48,7 @@ public class LeaseController {
             @Valid @RequestBody LeaseDTOs.CreateLeaseRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
-        UUID assignedByUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
+        UUID assignedByUserId = UUID.fromString(currentUser.getId());
         LeaseDTOs.LeaseResponse response = leaseOrchestrationService.createLease(request, assignedByUserId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
@@ -64,13 +61,12 @@ public class LeaseController {
         return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.getLeaseById(id)));
     }
 
-    @DeleteMapping("/{id}")
+    @PutMapping("/{id}/terminate")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#id, 'LEASE_UPDATE')")
-    public ResponseEntity<ApiResponse<Void>> deleteLease(
+    public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> terminateLease(
             @PathVariable UUID id
     ) {
-        leaseOrchestrationService.deleteLease(id);
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.terminateLease(id)));
     }
 
     @PutMapping("/{id}/notice")

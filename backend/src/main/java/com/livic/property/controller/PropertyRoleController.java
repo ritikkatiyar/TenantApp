@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/property/properties/{propertyId}/roles")
+@RequestMapping("/api/v1/properties/{propertyId}/roles")
 @RequiredArgsConstructor
 public class PropertyRoleController {
 

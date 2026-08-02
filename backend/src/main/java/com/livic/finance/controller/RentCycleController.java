@@ -1,13 +1,9 @@
 package com.livic.finance.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.common.domain.LeaseStatus;
 import com.livic.common.domain.RentCycleStatus;
-import com.livic.common.exception.BusinessException;
 import com.livic.common.response.ApiResponse;
-import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.dto.RentCycleDTOs;
-import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.RentCycleService;
 import com.livic.payment.dto.PaymentInitiationResponse;
 import jakarta.validation.Valid;
@@ -23,10 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -36,7 +29,6 @@ import java.util.UUID;
 public class RentCycleController {
 
     private final RentCycleService rentCycleService;
-    private final LeaseQueryService leaseQueryService;
 
     @PostMapping("/generate")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#request.leaseId, 'LEASE_UPDATE')")
@@ -91,14 +83,8 @@ public class RentCycleController {
             @RequestParam(required = false) RentCycleStatus status,
             @PageableDefault(sort = "dueDate", direction = Sort.Direction.DESC, size = 20) Pageable pageable
     ) {
-        if (leaseId == null && currentUser != null) {
-            UUID currentUserId = UUID.fromString(currentUser.getId());
-            Optional<LeaseTbl> activeLease = leaseQueryService.findByUserIdAndStatus(currentUserId, LeaseStatus.ACTIVE);
-            if (activeLease.isPresent()) {
-                leaseId = activeLease.get().getId();
-            }
-        }
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.list(leaseId, billingMonth, status, pageable)));
+        UUID currentUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.list(currentUserId, leaseId, billingMonth, status, pageable)));
     }
 
     @PostMapping("/{id}/mark-paid")
@@ -123,20 +109,13 @@ public class RentCycleController {
     @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> recordRentCashPayment(
             @PathVariable UUID rentCycleId,
-            @RequestBody Map<String, Object> request,
+            @Valid @RequestBody RentCycleDTOs.RecordRentCashPaymentRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         log.info("API request: Record cash rent payment for RentCycle: {}", rentCycleId);
-        Object amountObj = request.get("amount");
-        if (amountObj == null) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Amount is required");
-        }
-
-        BigDecimal amount = new BigDecimal(amountObj.toString());
-        String note = (String) request.get("note");
-        UUID payerUserId = request.get("payerUserId") != null ? UUID.fromString(request.get("payerUserId").toString()) : null;
         UUID confirmedBy = UUID.fromString(userDetails.getId());
-
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.recordCashPayment(rentCycleId, amount, note, payerUserId, confirmedBy)));
+        return ResponseEntity.ok(ApiResponse.success(
+                rentCycleService.recordCashPayment(rentCycleId, request.amount(), request.note(), request.payerUserId(), confirmedBy)
+        ));
     }
 }

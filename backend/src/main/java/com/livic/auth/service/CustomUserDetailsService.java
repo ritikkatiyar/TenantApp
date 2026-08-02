@@ -1,8 +1,8 @@
 package com.livic.auth.service;
 
 import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.user.dto.UserSummaryDTO;
-import com.livic.user.facade.UserFacade;
+import com.livic.user.domain.UserTbl;
+import com.livic.user.service.interfaces.UserQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,25 +17,27 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserFacade userFacade;
+    private final UserQueryService userQueryService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("Loading user by username: {}", username);
 
-        UserSummaryDTO user = userFacade.getUserByEmail(username)
+        return userQueryService.findByEmail(username)
+                .map(user -> {
+                    log.debug("User found: {}", user.getFullName());
+                    return (UserDetails) UserDetailsImpl.fromUser(user);
+                })
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
-
-        log.debug("User found: {}", user.fullName());
-        return UserDetailsImpl.fromSummary(user);
     }
 
     public UserDetails loadUserById(String userId) throws UsernameNotFoundException {
         log.debug("Loading user by ID: {}", userId);
-
-        UserSummaryDTO user = userFacade.getUserById(UUID.fromString(userId))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
-
-        return UserDetailsImpl.fromSummary(user);
+        try {
+            UserTbl user = userQueryService.getUserById(UUID.fromString(userId));
+            return (UserDetails) UserDetailsImpl.fromUser(user);
+        } catch (Exception e) {
+            throw new UsernameNotFoundException("User not found with id: " + userId, e);
+        }
     }
 }

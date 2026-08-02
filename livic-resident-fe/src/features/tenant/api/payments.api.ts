@@ -1,5 +1,4 @@
-import { apiRequest } from '@/src/api/client';
-import { apiUrl } from '@/src/config/api';
+import { apiRequest, apiRawTextRequest } from '@/src/api/client';
 
 export interface RentCycle {
   id: string;
@@ -35,6 +34,10 @@ export function markRentCyclePaid(token: string, cycleId: string): Promise<RentC
   });
 }
 
-export function getStatementUrl(cycleId: string, token: string): string {
-  return apiUrl(`/api/v1/finance/rent-cycles/${cycleId}/invoice?token=${token}`);
+/**
+ * Fetches the payment statement HTML for a rent cycle.
+ * The Authorization header is sent via apiRawTextRequest — no token in the URL.
+ */
+export function fetchStatementHtml(cycleId: string, token: string): Promise<string> {
+  return apiRawTextRequest(`/api/v1/finance/rent-cycles/${cycleId}/invoice`, { token });
 }

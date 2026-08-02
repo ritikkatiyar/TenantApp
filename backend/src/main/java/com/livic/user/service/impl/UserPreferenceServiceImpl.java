@@ -3,7 +3,7 @@ package com.livic.user.service.impl;
 import com.livic.user.domain.UserPreferenceTbl;
 import com.livic.user.dto.UserPreferenceResponse;
 import com.livic.user.dto.SaveUserPreferenceRequest;
-import com.livic.user.repository.UserPreferenceRepository;
+import com.livic.user.service.interfaces.UserPreferenceCrudService;
 import com.livic.user.service.interfaces.UserPreferenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +18,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserPreferenceServiceImpl implements UserPreferenceService {
 
-    private final UserPreferenceRepository repository;
+    private final UserPreferenceCrudService userPreferenceCrudService;
 
     @Override
     @Transactional
     public UserPreferenceResponse savePreference(UUID userId, SaveUserPreferenceRequest request) {
-        Optional<UserPreferenceTbl> existingOpt = repository.findByUserId(userId);
+        Optional<UserPreferenceTbl> existingOpt = userPreferenceCrudService.findByUserId(userId);
 
         UserPreferenceTbl preference;
         if (existingOpt.isPresent()) {
@@ -38,7 +38,7 @@ public class UserPreferenceServiceImpl implements UserPreferenceService {
                     .build();
         }
 
-        preference = repository.save(preference);
+        preference = userPreferenceCrudService.save(preference);
         log.info("preference_saved userId={} activeMode={}", userId, request.activeMode());
 
         return new UserPreferenceResponse(
@@ -51,7 +51,7 @@ public class UserPreferenceServiceImpl implements UserPreferenceService {
     @Override
     @Transactional(readOnly = true)
     public UserPreferenceResponse getPreference(UUID userId) {
-        return repository.findByUserId(userId)
+        return userPreferenceCrudService.findByUserId(userId)
                 .map(pref -> new UserPreferenceResponse(
                         pref.getId(),
                         pref.getActiveMode(),

@@ -4,7 +4,7 @@ import com.livic.finance.domain.UnitBookingTbl;
 import com.livic.finance.dto.UnitBookingDTOs;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.finance.service.interfaces.UnitBookingService;
-import com.livic.payment.domain.PaymentTransactionTbl;
+import com.livic.payment.dto.PaymentTransactionResponse;
 import com.livic.payment.facade.PaymentFacade;
 import com.livic.property.domain.UnitTbl;
 import com.livic.property.facade.PropertyFacade;
@@ -23,6 +23,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.livic.property.dto.UnitSummaryDTO;
+
+import com.livic.common.domain.UnitBookingStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -64,7 +66,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        booking.setStatus("FORFEITED");
+        booking.setStatus(UnitBookingStatus.FORFEITED.name());
         booking = unitBookingCrudService.save(booking);
         return UnitBookingMapper.toResponse(booking);
     }
@@ -78,13 +80,13 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        booking.setStatus("REFUNDED");
+        booking.setStatus(UnitBookingStatus.REFUNDED.name());
         booking = unitBookingCrudService.save(booking);
         return UnitBookingMapper.toResponse(booking);
     }
 
     @Override
-    public PaymentTransactionTbl initiateTokenOnlinePayment(UUID bookingId, UUID userDetailsId) {
+    public PaymentTransactionResponse initiateTokenOnlinePayment(UUID bookingId, UUID userDetailsId) {
         log.info("Initiating token online payment for booking: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
@@ -92,13 +94,13 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        if (!"BOOKED".equals(booking.getStatus())) {
+        if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Booking is not in BOOKED status");
         }
 
         UUID payerUserId = resolvePayerUserId(booking, userDetailsId);
 
-        return paymentFacade.initiateOnlinePaymentEntity(
+        return paymentFacade.initiateOnlinePaymentTransaction(
                 payerUserId,
                 "UNIT_BOOKING",
                 bookingId,
@@ -107,7 +109,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     }
 
     @Override
-    public PaymentTransactionTbl recordTokenCashPayment(UUID bookingId, BigDecimal amount, String note, UUID userDetailsId) {
+    public PaymentTransactionResponse recordTokenCashPayment(UUID bookingId, BigDecimal amount, String note, UUID userDetailsId) {
         log.info("Recording token cash payment for booking: {} amount: {} by user: {}", bookingId, amount, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
@@ -115,13 +117,13 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        if (!"BOOKED".equals(booking.getStatus())) {
+        if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Booking is not in BOOKED status");
         }
 
         UUID payerUserId = resolvePayerUserId(booking, userDetailsId);
 
-        return paymentFacade.recordCashPaymentEntity(
+        return paymentFacade.recordCashPaymentTransaction(
                 payerUserId,
                 "UNIT_BOOKING",
                 bookingId,

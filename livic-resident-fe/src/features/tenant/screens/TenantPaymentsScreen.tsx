@@ -6,10 +6,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
 import { useResponsive } from '@/hooks/useResponsive';
-import { getTenantRentCycles, markRentCyclePaid, RentCycle, getStatementUrl } from '@/src/features/tenant/api/payments.api';
+import { getTenantRentCycles, markRentCyclePaid, RentCycle, fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 
 interface TenantPaymentsScreenProps {
   token: string;
@@ -52,8 +53,18 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
 
   const handleDownloadStatement = async (cycleId: string) => {
     try {
-      const url = getStatementUrl(cycleId, token);
-      await WebBrowser.openBrowserAsync(url);
+      const html = await fetchStatementHtml(cycleId, token);
+      if (Platform.OS === 'web') {
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      } else {
+        // Native: open in-app browser (future: WebView modal)
+        await WebBrowser.openBrowserAsync(
+          `data:text/html,${encodeURIComponent(html)}`
+        );
+      }
     } catch (err: any) {
       console.warn('[Statement] Error opening statement:', err.message);
     }

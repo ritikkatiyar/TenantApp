@@ -15,7 +15,7 @@ class ModuleBoundaryTest {
     private static JavaClasses classes;
 
     private static final String[] MODULES = {
-            "auth", "user", "property", "finance", "billing", "payment", "notification", "announcement"
+            "auth", "user", "property", "finance", "billing", "payment", "notification", "announcement", "analytics"
     };
 
     @BeforeAll

@@ -4,6 +4,8 @@ import com.livic.finance.domain.UnitBookingTbl;
 import com.livic.finance.dto.UnitBookingDTOs;
 import com.livic.property.domain.UnitTbl;
 
+import com.livic.common.domain.UnitBookingStatus;
+
 public final class UnitBookingMapper {
 
     private UnitBookingMapper() {
@@ -18,7 +20,7 @@ public final class UnitBookingMapper {
                 .prospectiveTenantEmail(request.prospectiveTenantEmail())
                 .tokenAmount(request.tokenAmount())
                 .expectedMoveInDate(request.expectedMoveInDate())
-                .status("BOOKED")
+                .status(UnitBookingStatus.BOOKED.name())
                 .build();
     }
 

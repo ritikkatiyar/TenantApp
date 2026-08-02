@@ -27,4 +27,9 @@ public interface PropertyFacade {
     boolean existsPropertyById(UUID propertyId);
 
     boolean existsUnitById(UUID unitId);
+
+    // Analytics Read Methods
+    record PropertyOccupancySummaryDTO(UUID propertyId, String propertyName, int totalUnits, int occupiedUnits) {}
+
+    List<PropertyOccupancySummaryDTO> getOccupancyByProperty(List<UUID> propertyIds);
 }

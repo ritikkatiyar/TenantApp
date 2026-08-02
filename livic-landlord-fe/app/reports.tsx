@@ -8,7 +8,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useProperties } from '@/src/hooks/useProperties';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { listRentCycles, RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
-import { getStatementUrl } from '@/src/features/tenant/api/payments.api';
+import { fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
 import { Theme } from '@/src/theme/Theme';
 
 import { PageShell } from '@/src/components/common/layout/PageShell';
@@ -84,8 +84,17 @@ export default function ReportsRoute() {
 
   const handleOpenStatement = async (cycleId: string) => {
     try {
-      const url = getStatementUrl(cycleId, accessToken || '');
-      await WebBrowser.openBrowserAsync(url);
+      const html = await fetchStatementHtml(cycleId, accessToken || '');
+      if (Platform.OS === 'web') {
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      } else {
+        await WebBrowser.openBrowserAsync(
+          `data:text/html,${encodeURIComponent(html)}`
+        );
+      }
     } catch (err: any) {
       console.warn('[Reports] Error opening statement:', err.message);
     }

@@ -1,30 +1,25 @@
 import { apiRequest } from '@/src/api/client';
 
-export interface RevenueMetrics {
-  expected: number;
-  collected: number;
+export interface SummaryResponse {
+  expectedRevenue: number;
+  collectedRevenue: number;
   collectionRate: number;
-}
-
-export interface ExpenseMetrics {
   totalExpenses: number;
-  growthFromLastMonth: number;
-}
-
-export interface NetProfitMetrics {
+  expenseGrowthRate: number;
   netProfit: number;
-  growth: number;
+  profitGrowthRate: number;
 }
 
-export interface PortfolioOccupancy {
+export interface PortfolioOccupancyResponse {
   propertyId: string;
   propertyName: string;
   totalUnits: number;
   occupiedUnits: number;
   occupancyRate: number;
+  netYield: number;
 }
 
-export interface DefaulterList {
+export interface DefaulterResponse {
   tenantName: string;
   unitNumber: string;
   propertyName: string;
@@ -33,32 +28,32 @@ export interface DefaulterList {
   rentCycleId: string;
 }
 
-export interface YieldAnalysis {
-  propertyId: string;
-  propertyName: string;
-  netYield: number;
-}
-
-export interface LandlordAnalyticsDTO {
-  revenue: RevenueMetrics;
-  expenses: ExpenseMetrics;
-  profit: NetProfitMetrics;
-  occupancy: PortfolioOccupancy[];
+export interface ExpensesBreakdownResponse {
+  totalExpenses: number;
+  growthFromLastMonth: number;
   operationalOverhead: Record<string, number>;
-  defaulters: DefaulterList[];
-  yieldAnalysis: YieldAnalysis[];
 }
 
-export function getLandlordDashboard(
-  token: string,
-  billingMonth?: string
-): Promise<LandlordAnalyticsDTO> {
-  let url = '/api/v1/analytics/landlord/dashboard';
+export function getAnalyticsSummary(token: string, billingMonth?: string): Promise<SummaryResponse> {
+  let url = '/api/v1/analytics/summary';
   if (billingMonth) {
     url += `?billingMonth=${billingMonth}`;
   }
-  return apiRequest<LandlordAnalyticsDTO>(url, {
-    method: 'GET',
-    token,
-  });
+  return apiRequest<SummaryResponse>(url, { method: 'GET', token });
+}
+
+export function getPortfolioOccupancy(token: string): Promise<PortfolioOccupancyResponse[]> {
+  return apiRequest<PortfolioOccupancyResponse[]>('/api/v1/analytics/occupancy', { method: 'GET', token });
+}
+
+export function getDefaultersList(token: string): Promise<DefaulterResponse[]> {
+  return apiRequest<DefaulterResponse[]>('/api/v1/analytics/defaulters', { method: 'GET', token });
+}
+
+export function getExpensesBreakdown(token: string, billingMonth?: string): Promise<ExpensesBreakdownResponse> {
+  let url = '/api/v1/analytics/expenses-breakdown';
+  if (billingMonth) {
+    url += `?billingMonth=${billingMonth}`;
+  }
+  return apiRequest<ExpensesBreakdownResponse>(url, { method: 'GET', token });
 }

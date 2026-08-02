@@ -1,8 +1,6 @@
 package com.livic.billing.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.billing.domain.BillingWalletTbl;
-import com.livic.billing.domain.SaasSubscriptionTbl;
 import com.livic.billing.dto.*;
 import com.livic.billing.service.interfaces.BillingWalletService;
 import com.livic.billing.service.interfaces.SubscriptionPlanQueryService;
@@ -14,12 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-
-import com.livic.billing.mapper.BillingMapper;
 
 @RestController
 @RequestMapping("/api/v1/billing")
@@ -38,11 +32,7 @@ public class BillingController {
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<BillingStatusResponse>> getStatus(@AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        SaasSubscriptionTbl subscription = walletService.getActiveSubscription(userId);
-        BillingWalletTbl wallet = walletService.getOrCreateWallet(userId);
-
-        BillingStatusResponse response = BillingMapper.toStatusResponse(subscription, wallet);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(walletService.getBillingStatus(userId)));
     }
 
     @PostMapping("/subscribe")

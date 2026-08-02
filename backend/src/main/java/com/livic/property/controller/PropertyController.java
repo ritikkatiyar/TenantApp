@@ -20,7 +20,7 @@ import com.livic.billing.annotation.EnforceSubscription;
 import com.livic.billing.annotation.FeatureKey;
 
 @RestController
-@RequestMapping("/api/v1/property/properties")
+@RequestMapping("/api/v1/properties")
 @RequiredArgsConstructor
 public class PropertyController {
     private final PropertyService propertyService;
@@ -32,9 +32,6 @@ public class PropertyController {
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> createProperty(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody PropertyDTOs.CreatePropertyRequest request) {
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         UUID creatorId = UUID.fromString(currentUser.getId());
         PropertyTbl createdProperty = propertyService.createProperty(request, creatorId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(toResponse(createdProperty)));
@@ -61,9 +58,6 @@ public class PropertyController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<List<PropertyDTOs.PropertyResponse>>> getMyProperties(
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         UUID userId = UUID.fromString(currentUser.getId());
         List<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId);
         return ResponseEntity.ok(ApiResponse.success(properties.stream().map(this::toResponse).toList()));

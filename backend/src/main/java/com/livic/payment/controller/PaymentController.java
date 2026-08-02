@@ -2,7 +2,6 @@ package com.livic.payment.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
-import com.livic.payment.domain.PaymentTransactionTbl;
 import com.livic.payment.dto.PaymentTransactionResponse;
 import com.livic.payment.dto.PaymentVerificationRequest;
 import com.livic.payment.service.interfaces.PaymentTransactionService;
@@ -28,10 +27,7 @@ public class PaymentController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         log.info("API request: Get payment transaction: {} by user: {}", id, userDetails.getId());
-        PaymentTransactionTbl transaction = paymentTransactionService.findTransactionById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
-
-        return ResponseEntity.ok(ApiResponse.success(toResponse(transaction)));
+        return ResponseEntity.ok(ApiResponse.success(paymentTransactionService.getTransactionResponse(id)));
     }
 
     @PostMapping("/verify")
@@ -53,24 +49,5 @@ public class PaymentController {
         log.info("Received webhook for gateway: {}", gatewayName);
         paymentTransactionService.handleWebhook(gatewayName, payload, signatureHeader);
         return ResponseEntity.ok().build();
-    }
-
-    private PaymentTransactionResponse toResponse(PaymentTransactionTbl tx) {
-        return new PaymentTransactionResponse(
-                tx.getId(),
-                tx.getPayerUserId(),
-                tx.getPaymentMethod(),
-                tx.getReferenceType(),
-                tx.getReferenceId(),
-                tx.getGatewayName(),
-                tx.getGatewayTransactionId(),
-                tx.getAmount(),
-                tx.getStatus(),
-                tx.getConfirmedBy(),
-                tx.getConfirmedAt(),
-                tx.getNote(),
-                tx.getCreatedAt(),
-                tx.getUpdatedAt()
-        );
     }
 }

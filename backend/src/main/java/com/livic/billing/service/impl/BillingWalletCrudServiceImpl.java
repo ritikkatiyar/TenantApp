@@ -22,4 +22,9 @@ public class BillingWalletCrudServiceImpl
     public Optional<BillingWalletTbl> findByUserId(UUID userId) {
         return repository.findByUserId(userId);
     }
+
+    @Override
+    public Optional<BillingWalletTbl> findByUserIdForUpdate(UUID userId) {
+        return repository.findByUserIdForUpdate(userId);
+    }
 }

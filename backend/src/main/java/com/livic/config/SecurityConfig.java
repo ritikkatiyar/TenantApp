@@ -12,8 +12,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -40,6 +38,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -78,13 +77,8 @@ public class SecurityConfig {
     @Bean
     public ProviderManager authenticationManager() {
         var provider = new org.springframework.security.authentication.dao.DaoAuthenticationProvider(customUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
+        provider.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(provider);
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     // Simple internal auth filter that checks a pre-shared token header and grants ADMIN role.

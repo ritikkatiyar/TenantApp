@@ -1,10 +1,13 @@
 package com.livic.property.service.impl;
 
 import com.livic.auth.domain.MembershipRoleTbl;
+import com.livic.auth.domain.MembershipTbl;
+import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.facade.AuthFacade;
 import com.livic.common.exception.BusinessException;
 import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.domain.PropertyTbl;
+import com.livic.property.dto.PropertyJoinCodeDTOs;
 import com.livic.property.service.interfaces.PropertyJoinCodeCrudService;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
 import com.livic.property.service.interfaces.PropertyQueryService;
@@ -37,7 +40,6 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
     private final UserFacade userFacade;
 
     @Override
-    @Transactional
     public PropertyJoinCodeTbl generateJoinCode(UUID propertyId, String roleCode, int maxUses, UUID actorId) {
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
         UserSummaryDTO actor = userFacade.getUserById(actorId)
@@ -49,10 +51,11 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot generate join code for an inactive role.");
         }
 
-        authFacade.validateCanDelegateRole(actorId, propertyId, roleCode, actor.globalRole());
+        authFacade.validateCanDelegateRole(actorId, propertyId, roleCode,
+                actor.globalRole() != null ? actor.globalRole().name() : null);
 
         String code = generateRandomCode(property.getName(), roleCode);
-        
+
         UserTbl actorRef = new UserTbl();
         actorRef.setId(actor.id());
 
@@ -64,39 +67,20 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
                 .maxUses(maxUses)
                 .usesCount(0)
                 .isActive(true)
-                .expiresAt(Instant.now().plusSeconds(172800)) // Expires in 48 hours
+                .expiresAt(Instant.now().plusSeconds(172800)) // 48 hours
                 .build();
 
         return propertyJoinCodeCrudService.save(joinCode);
     }
 
     @Override
-    @Transactional
-    public List<PropertyJoinCodeTbl> getActiveJoinCodesForProperty(UUID propertyId) {
-        return propertyJoinCodeCrudService.findByPropertyIdAndIsActiveTrue(propertyId).stream()
-                .filter(c -> c.getExpiresAt().isAfter(Instant.now()))
-                .filter(c -> c.getUsesCount() < c.getMaxUses())
-                .toList();
+    @Transactional(readOnly = true)
+    public List<PropertyJoinCodeTbl> getPropertyJoinCodes(UUID propertyId) {
+        return propertyJoinCodeCrudService.findByPropertyId(propertyId);
     }
 
     @Override
-    @Transactional
-    public void revokeJoinCode(UUID joinCodeId, UUID propertyId) {
-        PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findById(joinCodeId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Join code not found"));
-
-        if (!joinCode.getProperty().getId().equals(propertyId)) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code does not belong to this property");
-        }
-
-        joinCode.setActive(false);
-        propertyJoinCodeCrudService.save(joinCode);
-        log.info("join_code_revoked codeId={} propertyId={}", joinCodeId, propertyId);
-    }
-
-    @Override
-    @Transactional
-    public Object redeemJoinCode(String code, UUID userId) {
+    public MembershipTbl validateAndApplyJoinCode(String code, UUID userId) {
         String cleanCode = code != null ? code.trim().toUpperCase() : "";
 
         PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findByCode(cleanCode)
@@ -118,8 +102,6 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has reached its maximum uses.");
         }
 
-        UserSummaryDTO userSummary = userFacade.getUserById(userId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
         PropertyTbl property = joinCode.getProperty();
         MembershipRoleTbl role = joinCode.getRole();
 
@@ -128,7 +110,7 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         }
 
         UUID createdByUserId = joinCode.getCreatedBy() != null ? joinCode.getCreatedBy().getId() : null;
-        Object savedMembership = authFacade.assignRole(property.getId(), userId, role.getCode(), createdByUserId);
+        MembershipSummaryDTO saved = authFacade.assignRole(property.getId(), userId, role.getCode(), createdByUserId);
 
         joinCode.setUsesCount(joinCode.getUsesCount() + 1);
         if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
@@ -139,19 +121,67 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         log.info("join_code_applied userId={} propertyId={} roleCode={} code={}",
                 userId, property.getId(), role.getCode(), cleanCode);
 
-        return savedMembership;
+        // Build a MembershipTbl shell from the DTO for the return contract
+        com.livic.auth.domain.MembershipTbl membershipRef = new com.livic.auth.domain.MembershipTbl();
+        membershipRef.setId(saved.id());
+        return membershipRef;
+    }
+
+    @Override
+    public PropertyJoinCodeDTOs.JoinCodeResultResponse validateAndApplyJoinCodeResult(String code, UUID userId) {
+        String cleanCode = code != null ? code.trim().toUpperCase() : "";
+
+        PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findByCode(cleanCode)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Invalid join code."));
+
+        if (!joinCode.isActive()) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code is inactive.");
+        }
+
+        if (joinCode.getExpiresAt().isBefore(Instant.now())) {
+            joinCode.setActive(false);
+            propertyJoinCodeCrudService.save(joinCode);
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has expired.");
+        }
+
+        if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
+            joinCode.setActive(false);
+            propertyJoinCodeCrudService.save(joinCode);
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has reached its maximum uses.");
+        }
+
+        PropertyTbl property = joinCode.getProperty();
+        MembershipRoleTbl role = joinCode.getRole();
+
+        if (authFacade.existsByUserIdAndPropertyIdAndRoleCode(userId, property.getId(), role.getCode())) {
+            throw new BusinessException(HttpStatus.CONFLICT, "You are already a member of this property with this role.");
+        }
+
+        UUID createdByUserId = joinCode.getCreatedBy() != null ? joinCode.getCreatedBy().getId() : null;
+        MembershipSummaryDTO saved = authFacade.assignRole(property.getId(), userId, role.getCode(), createdByUserId);
+
+        joinCode.setUsesCount(joinCode.getUsesCount() + 1);
+        if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
+            joinCode.setActive(false);
+        }
+        propertyJoinCodeCrudService.save(joinCode);
+
+        log.info("join_code_applied userId={} propertyId={} roleCode={} code={}",
+                userId, property.getId(), role.getCode(), cleanCode);
+
+        return new PropertyJoinCodeDTOs.JoinCodeResultResponse(
+                property.getId(),
+                property.getName(),
+                role.getCode(),
+                saved.id()
+        );
     }
 
     private String generateRandomCode(String propertyName, String roleCode) {
         String propAbbr = propertyName.replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
-        if (propAbbr.length() > 4) {
-            propAbbr = propAbbr.substring(0, 4);
-        }
+        if (propAbbr.length() > 4) propAbbr = propAbbr.substring(0, 4);
         String roleAbbr = roleCode.replace("PROPERTY_", "");
-        if (roleAbbr.length() > 3) {
-            roleAbbr = roleAbbr.substring(0, 3);
-        }
-
+        if (roleAbbr.length() > 3) roleAbbr = roleAbbr.substring(0, 3);
         StringBuilder sb = new StringBuilder(6);
         for (int i = 0; i < 6; i++) {
             sb.append(ALPHANUMERIC.charAt(RANDOM.nextInt(ALPHANUMERIC.length())));

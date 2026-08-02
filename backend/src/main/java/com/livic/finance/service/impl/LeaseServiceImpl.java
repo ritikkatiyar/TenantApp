@@ -3,6 +3,7 @@ package com.livic.finance.service.impl;
 import com.livic.auth.facade.AuthFacade;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.domain.LedgerTransactionType;
+import com.livic.common.domain.UnitBookingStatus;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.FinanceLedgerTbl;
 import com.livic.finance.domain.LeaseTbl;
@@ -68,7 +69,7 @@ public class LeaseServiceImpl implements LeaseService {
             booking = unitBookingCrudService.findById(request.bookingId())
                     .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit booking not found"));
 
-            if (!"BOOKED".equals(booking.getStatus())) {
+            if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "Booking is not in BOOKED status");
             }
             if (booking.getPaymentTransaction() == null) {
@@ -115,7 +116,7 @@ public class LeaseServiceImpl implements LeaseService {
 
         // 3. Mark booking as converted
         if (booking != null) {
-            booking.setStatus("CONVERTED");
+            booking.setStatus(UnitBookingStatus.CONVERTED.name());
             booking.setConvertedLeaseId(saved.getId());
             unitBookingCrudService.save(booking);
         }
@@ -141,13 +142,18 @@ public class LeaseServiceImpl implements LeaseService {
     }
 
     @Override
-    public void deleteLease(UUID id) {
+    public LeaseTbl terminateLease(UUID id) {
         LeaseTbl lease = leaseCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
-        UUID tenantId = lease.getUserId();
-        UUID propertyId = lease.getUnit().getProperty().getId();
+        
+        lease.setStatus(LeaseStatus.ENDED);
+        if (lease.getMoveOutDate() == null) {
+            lease.setMoveOutDate(java.time.LocalDate.now());
+        }
+        LeaseTbl saved = leaseCrudService.save(lease);
 
-        leaseCrudService.delete(lease);
+        UUID tenantId = saved.getUserId();
+        UUID propertyId = saved.getUnit().getProperty().getId();
 
         // Check if this tenant has any other active leases in any unit of the same property
         boolean hasOtherLeases = leaseCrudService.existsByUserIdAndPropertyIdAndStatus(
@@ -157,6 +163,8 @@ public class LeaseServiceImpl implements LeaseService {
         if (!hasOtherLeases) {
             authFacade.removeTenantRole(tenantId, propertyId);
         }
+
+        return saved;
     }
 
     @Override

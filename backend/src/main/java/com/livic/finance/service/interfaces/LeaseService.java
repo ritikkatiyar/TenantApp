@@ -6,6 +6,6 @@ import java.util.UUID;
 
 public interface LeaseService {
     LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId);
-    void deleteLease(UUID id);
+    LeaseTbl terminateLease(UUID id);
     LeaseTbl updateNoticePeriod(UUID id, java.time.LocalDate moveOutDate);
 }

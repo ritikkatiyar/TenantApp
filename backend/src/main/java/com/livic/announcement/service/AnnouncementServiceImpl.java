@@ -120,6 +120,15 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<AnnouncementResponse> getAnnouncements(UUID userId, UUID propertyId, Pageable pageable) {
+        if (propertyId != null) {
+            return getAnnouncementsForProperty(propertyId, userId, pageable);
+        }
+        return getNoticesForTenant(userId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<AnnouncementResponse> getAnnouncementsForProperty(UUID propertyId, UUID userWithAccessId, Pageable pageable) {
         Page<AnnouncementTbl> announcements = announcementCrudService.findByPropertyId(propertyId, pageable);
 

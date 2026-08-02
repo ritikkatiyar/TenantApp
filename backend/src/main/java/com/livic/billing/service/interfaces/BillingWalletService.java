@@ -2,6 +2,7 @@ package com.livic.billing.service.interfaces;
 
 import com.livic.billing.domain.BillingWalletTbl;
 import com.livic.billing.domain.SaasSubscriptionTbl;
+import com.livic.billing.dto.BillingStatusResponse;
 import com.livic.billing.dto.PaymentIntentRequest;
 import com.livic.billing.dto.PaymentIntentResponse;
 import com.livic.billing.dto.SubscriptionRequest;
@@ -22,6 +23,8 @@ public interface BillingWalletService {
     BillingWalletTbl getOrCreateWallet(UUID userId);
 
     SaasSubscriptionTbl getActiveSubscription(UUID userId);
+
+    BillingStatusResponse getBillingStatus(UUID userId);
 
     PaymentIntentResponse topUpWallet(UUID userId, String username, PaymentIntentRequest request);
 

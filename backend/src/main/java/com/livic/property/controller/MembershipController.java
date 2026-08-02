@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/property/properties/{propertyId}/memberships")
+@RequestMapping("/api/v1/properties/{propertyId}/memberships")
 @RequiredArgsConstructor
 public class MembershipController {
 

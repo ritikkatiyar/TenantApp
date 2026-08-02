@@ -118,3 +118,44 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     clearTimeout(timeoutId);
   }
 }
+
+/**
+ * Fetches a raw text (e.g. HTML) response with Authorization header.
+ * Use this instead of apiRequest for non-JSON endpoints like the invoice endpoint.
+ */
+export async function apiRawTextRequest(
+  path: string,
+  options: { token?: string; headers?: Record<string, string> } = {}
+): Promise<string> {
+  const { token, headers } = options;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  const targetUrl = apiUrl(path);
+  logger.debug(`[API Raw] GET ${path}`);
+
+  try {
+    const response = await fetch(targetUrl, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        'X-Correlation-Id': generateCorrelationId(),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return await response.text();
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please check your connection.');
+    }
+    logger.error(`[API Raw] ${path} | ${error.message}`, error);
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}

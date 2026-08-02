@@ -1,12 +1,10 @@
 package com.livic.property.controller;
 
+import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.common.response.ApiResponse;
 import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.dto.PropertyJoinCodeDTOs;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
-import com.livic.auth.domain.MembershipTbl;
-import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.common.response.ApiResponse;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,13 +17,13 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/property")
+@RequestMapping("/api/v1/properties")
 @RequiredArgsConstructor
 public class PropertyJoinCodeController {
 
     private final PropertyJoinCodeService propertyJoinCodeService;
 
-    @PostMapping("/properties/{propertyId}/join-codes")
+    @PostMapping("/{propertyId}/join-codes")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'MANAGE_STAFF')")
     public ResponseEntity<ApiResponse<PropertyJoinCodeDTOs.JoinCodeResponse>> generateJoinCode(
             @PathVariable UUID propertyId,
@@ -41,7 +39,7 @@ public class PropertyJoinCodeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(toResponse(created)));
     }
 
-    @GetMapping("/properties/{propertyId}/join-codes")
+    @GetMapping("/{propertyId}/join-codes")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'MANAGE_STAFF')")
     public ResponseEntity<ApiResponse<List<PropertyJoinCodeDTOs.JoinCodeResponse>>> getPropertyJoinCodes(
             @PathVariable UUID propertyId) {
@@ -55,19 +53,10 @@ public class PropertyJoinCodeController {
     public ResponseEntity<ApiResponse<PropertyJoinCodeDTOs.JoinCodeResultResponse>> validateAndApplyJoinCode(
             @Valid @RequestBody PropertyJoinCodeDTOs.ValidateJoinCodeRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         UUID userId = UUID.fromString(currentUser.getId());
-        MembershipTbl membership = propertyJoinCodeService.validateAndApplyJoinCode(request.code(), userId);
-        
-        PropertyJoinCodeDTOs.JoinCodeResultResponse response = new PropertyJoinCodeDTOs.JoinCodeResultResponse(
-                membership.getProperty().getId(),
-                membership.getProperty().getName(),
-                membership.getRole().getCode(),
-                membership.getId()
-        );
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(
+                propertyJoinCodeService.validateAndApplyJoinCodeResult(request.code(), userId)
+        ));
     }
 
     private PropertyJoinCodeDTOs.JoinCodeResponse toResponse(PropertyJoinCodeTbl jc) {

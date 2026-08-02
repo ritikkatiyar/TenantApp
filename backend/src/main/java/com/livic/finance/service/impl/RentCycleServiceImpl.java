@@ -275,7 +275,7 @@ public class RentCycleServiceImpl implements RentCycleService {
 
         if (priorCyclesCount == 0) {
             java.util.Optional<com.livic.finance.domain.UnitBookingTbl> bookingOpt =
-                    unitBookingCrudService.findByStatusAndConvertedLeaseId("CONVERTED", lease.getId());
+                    unitBookingCrudService.findByStatusAndConvertedLeaseId(com.livic.common.domain.UnitBookingStatus.CONVERTED.name(), lease.getId());
             if (bookingOpt.isPresent()) {
                 com.livic.finance.domain.UnitBookingTbl booking = bookingOpt.get();
                 RentCycleChargeTbl discountCharge = RentCycleChargeTbl.builder()
@@ -325,7 +325,13 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RentCycleDTOs.RentCycleResponse> list(UUID leaseId, String billingMonth, RentCycleStatus status, Pageable pageable) {
+    public Page<RentCycleDTOs.RentCycleResponse> list(UUID currentUserId, UUID leaseId, String billingMonth, RentCycleStatus status, Pageable pageable) {
+        if (leaseId == null && currentUserId != null) {
+            leaseId = leaseQueryService.findByUserIdAndStatus(currentUserId, com.livic.common.domain.LeaseStatus.ACTIVE)
+                    .map(LeaseTbl::getId)
+                    .orElse(null);
+        }
+
         Specification<RentCycleTbl> spec = Specification
                 .where(RentCycleSpecifications.hasLeaseId(leaseId))
                 .and(RentCycleSpecifications.hasBillingMonth(billingMonth))

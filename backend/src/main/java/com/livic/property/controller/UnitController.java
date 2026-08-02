@@ -21,7 +21,7 @@ import com.livic.billing.annotation.FeatureKey;
 import com.livic.property.service.impl.UnitLayoutOrchestrationService;
 
 @RestController
-@RequestMapping("/api/v1/property/properties/{propertyId}")
+@RequestMapping("/api/v1/properties/{propertyId}")
 @RequiredArgsConstructor
 public class UnitController {
 

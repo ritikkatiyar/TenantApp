@@ -15,5 +15,7 @@ public interface PaymentTransactionService {
 
     java.util.Optional<PaymentTransactionTbl> findTransactionById(UUID id);
 
+    com.livic.payment.dto.PaymentTransactionResponse getTransactionResponse(UUID id);
+
     void verifyAndCompletePayment(PaymentVerificationRequest request);
 }
