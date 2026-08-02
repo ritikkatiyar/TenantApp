@@ -7,7 +7,8 @@ import com.livic.notification.service.interfaces.NotificationLogCrudService;
 import com.livic.notification.service.NotificationChannelSender;
 import com.livic.notification.service.NotificationService;
 import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,12 +24,6 @@ import java.util.stream.Collectors;
 /**
  * Core orchestrator for resolving the correct NotificationChannelSender strategy,
  * dispatching messages, and persisting audit logs.
- *
- * Design Patterns applied:
- * - Strategy Pattern: Iterates the list of all registered NotificationChannelSender beans
- *   and selects the first one that supports the requested channel.
- * - SRP: Responsible only for routing, log persistence, and error handling.
- * - DIP: Depends on abstractions (NotificationChannelSender, UserService interfaces).
  */
 @Slf4j
 @Service
@@ -38,13 +33,17 @@ public class NotificationServiceImpl implements NotificationService {
     /** All NotificationChannelSender @Component beans are auto-injected here by Spring */
     private final List<NotificationChannelSender> senders;
     private final NotificationLogCrudService notificationLogCrudService;
-    private final UserQueryService userQueryService;
+    private final UserFacade userFacade;
 
     @Override
     public void send(String recipientUserId, NotificationChannel channel, String title, String body) {
-        UserTbl recipient;
+        UserSummaryDTO recipient;
         try {
-            recipient = userQueryService.getUserById(UUID.fromString(recipientUserId));
+            recipient = userFacade.getUserById(UUID.fromString(recipientUserId)).orElse(null);
+            if (recipient == null) {
+                log.warn("[NotificationService] Recipient user not found: {}. Skipping.", recipientUserId);
+                return;
+            }
         } catch (Exception e) {
             log.warn("[NotificationService] Recipient user not found: {}. Skipping.", recipientUserId);
             return;
@@ -57,9 +56,12 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
 
+        UserTbl recipientRef = new UserTbl();
+        recipientRef.setId(recipient.id());
+
         // Persist an audit log record with PENDING status
         NotificationLogTbl logEntry = NotificationLogTbl.builder()
-                .recipient(recipient)
+                .recipient(recipientRef)
                 .channel(channel)
                 .recipientAddress(address)
                 .title(title)
@@ -99,17 +101,20 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (uuids.isEmpty()) return;
 
-        Map<UUID, UserTbl> recipients = userQueryService.getUsersByIds(uuids);
+        Map<UUID, UserSummaryDTO> recipients = userFacade.getUsersByIds(uuids);
         List<NotificationLogTbl> logs = new ArrayList<>();
 
         for (UUID uuid : uuids) {
-            UserTbl user = recipients.get(uuid);
+            UserSummaryDTO user = recipients.get(uuid);
             if (user == null) continue;
             String address = resolveAddress(user, channel);
             if (address == null) continue;
 
+            UserTbl recipientRef = new UserTbl();
+            recipientRef.setId(user.id());
+
             NotificationLogTbl logEntry = NotificationLogTbl.builder()
-                    .recipient(user)
+                    .recipient(recipientRef)
                     .channel(channel)
                     .recipientAddress(address)
                     .title(title)
@@ -142,14 +147,10 @@ public class NotificationServiceImpl implements NotificationService {
         notificationLogCrudService.saveAll(logs);
     }
 
-    /**
-     * Resolves the recipient's contact address from their user record based on the channel.
-     * EMAIL → authUid (email), WHATSAPP/SMS → phoneNumber, PUSH → not yet implemented.
-     */
-    private String resolveAddress(UserTbl user, NotificationChannel channel) {
+    private String resolveAddress(UserSummaryDTO user, NotificationChannel channel) {
         return switch (channel) {
-            case EMAIL -> user.getAuthUid();
-            case WHATSAPP, SMS -> user.getPhoneNumber();
+            case EMAIL -> user.authUid();
+            case WHATSAPP, SMS -> user.phoneNumber();
             case PUSH -> null;
         };
     }

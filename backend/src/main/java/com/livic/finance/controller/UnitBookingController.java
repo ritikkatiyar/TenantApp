@@ -4,7 +4,6 @@ import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.finance.dto.UnitBookingDTOs;
 import com.livic.finance.service.interfaces.UnitBookingService;
-import com.livic.payment.domain.PaymentTransactionTbl;
 import com.livic.payment.dto.PaymentTransactionResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -70,8 +69,7 @@ public class UnitBookingController {
     ) {
         log.info("API request: Initiate online token payment for booking ID: {}", id);
         UUID callerUserId = UUID.fromString(userDetails.getId());
-        PaymentTransactionTbl tx = unitBookingService.initiateTokenOnlinePayment(id, callerUserId);
-        return ResponseEntity.ok(ApiResponse.success(toResponse(tx)));
+        return ResponseEntity.ok(ApiResponse.success(unitBookingService.initiateTokenOnlinePayment(id, callerUserId)));
     }
 
     @PostMapping("/{id}/token-payment/cash")
@@ -82,31 +80,11 @@ public class UnitBookingController {
     ) {
         log.info("API request: Record cash token payment for booking ID: {}", id);
         UUID callerUserId = UUID.fromString(userDetails.getId());
-        
+
         Object amountObj = request.get("amount");
         BigDecimal amount = amountObj != null ? new BigDecimal(amountObj.toString()) : BigDecimal.ZERO;
         String note = (String) request.get("note");
 
-        PaymentTransactionTbl tx = unitBookingService.recordTokenCashPayment(id, amount, note, callerUserId);
-        return ResponseEntity.ok(ApiResponse.success(toResponse(tx)));
-    }
-
-    private PaymentTransactionResponse toResponse(PaymentTransactionTbl tx) {
-        return new PaymentTransactionResponse(
-                tx.getId(),
-                tx.getPayerUserId(),
-                tx.getPaymentMethod(),
-                tx.getReferenceType(),
-                tx.getReferenceId(),
-                tx.getGatewayName(),
-                tx.getGatewayTransactionId(),
-                tx.getAmount(),
-                tx.getStatus(),
-                tx.getConfirmedBy(),
-                tx.getConfirmedAt(),
-                tx.getNote(),
-                tx.getCreatedAt(),
-                tx.getUpdatedAt()
-        );
+        return ResponseEntity.ok(ApiResponse.success(unitBookingService.recordTokenCashPayment(id, amount, note, callerUserId)));
     }
 }

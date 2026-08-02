@@ -47,6 +47,7 @@ UNION ALL SELECT UUID(), id, 'CUSTOM_CHARGE_TYPES', 0 FROM subscription_plan_tbl
 UNION ALL SELECT UUID(), id, 'BATCH_RENT_GENERATION', 0 FROM subscription_plan_tbl WHERE plan_key = 'STARTER'
 UNION ALL SELECT UUID(), id, 'BILLING_WORKSHEET', 0 FROM subscription_plan_tbl WHERE plan_key = 'STARTER'
 UNION ALL SELECT UUID(), id, 'FINANCIAL_LEDGER', 0 FROM subscription_plan_tbl WHERE plan_key = 'STARTER'
+-- PREMIUM_EXPENSE_SPLIT is pre-provisioned for a planned feature currently being redesigned; not yet implemented in code as of this migration.
 UNION ALL SELECT UUID(), id, 'PREMIUM_EXPENSE_SPLIT', 0 FROM subscription_plan_tbl WHERE plan_key = 'STARTER'
 UNION ALL SELECT UUID(), id, 'INVOICE_PDF', 0 FROM subscription_plan_tbl WHERE plan_key = 'STARTER'
 UNION ALL SELECT UUID(), id, 'CUSTOM_ROLES', 0 FROM subscription_plan_tbl WHERE plan_key = 'STARTER'
@@ -66,6 +67,7 @@ UNION ALL SELECT UUID(), id, 'CUSTOM_CHARGE_TYPES', 1 FROM subscription_plan_tbl
 UNION ALL SELECT UUID(), id, 'BATCH_RENT_GENERATION', 1 FROM subscription_plan_tbl WHERE plan_key = 'BASIC'
 UNION ALL SELECT UUID(), id, 'BILLING_WORKSHEET', 0 FROM subscription_plan_tbl WHERE plan_key = 'BASIC'
 UNION ALL SELECT UUID(), id, 'FINANCIAL_LEDGER', 0 FROM subscription_plan_tbl WHERE plan_key = 'BASIC'
+-- PREMIUM_EXPENSE_SPLIT is pre-provisioned for a planned feature currently being redesigned; not yet implemented in code as of this migration.
 UNION ALL SELECT UUID(), id, 'PREMIUM_EXPENSE_SPLIT', 0 FROM subscription_plan_tbl WHERE plan_key = 'BASIC'
 UNION ALL SELECT UUID(), id, 'INVOICE_PDF', 1 FROM subscription_plan_tbl WHERE plan_key = 'BASIC'
 UNION ALL SELECT UUID(), id, 'CUSTOM_ROLES', 0 FROM subscription_plan_tbl WHERE plan_key = 'BASIC'
@@ -85,6 +87,7 @@ UNION ALL SELECT UUID(), id, 'CUSTOM_CHARGE_TYPES', 1 FROM subscription_plan_tbl
 UNION ALL SELECT UUID(), id, 'BATCH_RENT_GENERATION', 1 FROM subscription_plan_tbl WHERE plan_key = 'PREMIUM'
 UNION ALL SELECT UUID(), id, 'BILLING_WORKSHEET', 1 FROM subscription_plan_tbl WHERE plan_key = 'PREMIUM'
 UNION ALL SELECT UUID(), id, 'FINANCIAL_LEDGER', 1 FROM subscription_plan_tbl WHERE plan_key = 'PREMIUM'
+-- PREMIUM_EXPENSE_SPLIT is pre-provisioned for a planned feature currently being redesigned; not yet implemented in code as of this migration.
 UNION ALL SELECT UUID(), id, 'PREMIUM_EXPENSE_SPLIT', 1 FROM subscription_plan_tbl WHERE plan_key = 'PREMIUM'
 UNION ALL SELECT UUID(), id, 'INVOICE_PDF', 1 FROM subscription_plan_tbl WHERE plan_key = 'PREMIUM'
 UNION ALL SELECT UUID(), id, 'CUSTOM_ROLES', 1 FROM subscription_plan_tbl WHERE plan_key = 'PREMIUM'
@@ -104,6 +107,7 @@ UNION ALL SELECT UUID(), id, 'CUSTOM_CHARGE_TYPES', 1 FROM subscription_plan_tbl
 UNION ALL SELECT UUID(), id, 'BATCH_RENT_GENERATION', 1 FROM subscription_plan_tbl WHERE plan_key = 'ENTERPRISE'
 UNION ALL SELECT UUID(), id, 'BILLING_WORKSHEET', 1 FROM subscription_plan_tbl WHERE plan_key = 'ENTERPRISE'
 UNION ALL SELECT UUID(), id, 'FINANCIAL_LEDGER', 1 FROM subscription_plan_tbl WHERE plan_key = 'ENTERPRISE'
+-- PREMIUM_EXPENSE_SPLIT is pre-provisioned for a planned feature currently being redesigned; not yet implemented in code as of this migration.
 UNION ALL SELECT UUID(), id, 'PREMIUM_EXPENSE_SPLIT', 1 FROM subscription_plan_tbl WHERE plan_key = 'ENTERPRISE'
 UNION ALL SELECT UUID(), id, 'INVOICE_PDF', 1 FROM subscription_plan_tbl WHERE plan_key = 'ENTERPRISE'
 UNION ALL SELECT UUID(), id, 'CUSTOM_ROLES', 1 FROM subscription_plan_tbl WHERE plan_key = 'ENTERPRISE'

@@ -26,6 +26,12 @@ public class RentCycleDTOs {
             @NotNull LocalDate dueDate
     ) {}
 
+    public record RecordRentCashPaymentRequest(
+            @NotNull BigDecimal amount,
+            String note,
+            UUID payerUserId
+    ) {}
+
     public record PreFlightChecklistResponse(
             int totalUnits,
             int activeLeases,

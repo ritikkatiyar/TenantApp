@@ -36,9 +36,9 @@ export function createLease(payload: CreateLeaseRequest, token: string): Promise
   });
 }
 
-export function terminateLease(leaseId: string, token: string): Promise<void> {
-  return apiRequest<void>(`/api/v1/finance/leases/${leaseId}`, {
-    method: 'DELETE',
+export function terminateLease(leaseId: string, token: string): Promise<LeaseResponse> {
+  return apiRequest<LeaseResponse>(`/api/v1/finance/leases/${leaseId}/terminate`, {
+    method: 'PUT',
     token,
   });
 }

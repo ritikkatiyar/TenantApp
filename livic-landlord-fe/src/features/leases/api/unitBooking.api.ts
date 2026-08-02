@@ -83,7 +83,7 @@ export async function recordTokenCashPayment(bookingId: string, amount: number, 
 }
 
 export async function getVacatingUnits(propertyId: string, token: string): Promise<any[]> {
-  return await apiRequest<any[]>(`/api/v1/property/properties/${propertyId}/units/vacating`, {
+  return await apiRequest<any[]>(`/api/v1/properties/${propertyId}/units/vacating`, {
     method: 'GET',
     token,
   }).catch((err) => {

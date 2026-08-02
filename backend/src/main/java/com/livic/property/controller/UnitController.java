@@ -18,14 +18,16 @@ import java.util.UUID;
 import com.livic.billing.annotation.EnforceSubscription;
 import com.livic.billing.annotation.FeatureKey;
 
+import com.livic.property.service.impl.UnitLayoutOrchestrationService;
+
 @RestController
-@RequestMapping("/api/v1/property/properties/{propertyId}")
+@RequestMapping("/api/v1/properties/{propertyId}")
 @RequiredArgsConstructor
 public class UnitController {
 
     private final UnitService unitService;
     private final UnitQueryService unitQueryService;
-    private final com.livic.property.facade.UnitLayoutFacade unitLayoutFacade;
+    private final UnitLayoutOrchestrationService unitLayoutOrchestrationService;
 
     @GetMapping("/floors")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
@@ -41,7 +43,7 @@ public class UnitController {
     public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> getFloorLayout(
             @PathVariable UUID propertyId,
             @PathVariable int floorNumber) {
-        List<UnitDTOs.UnitResponse> layout = unitLayoutFacade.getFloorLayout(propertyId, floorNumber);
+        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getFloorLayout(propertyId, floorNumber);
         return ResponseEntity.ok(ApiResponse.success(layout));
     }
 
@@ -49,7 +51,7 @@ public class UnitController {
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> getAllFloorsLayout(
             @PathVariable UUID propertyId) {
-        List<UnitDTOs.UnitResponse> layout = unitLayoutFacade.getAllFloorsLayout(propertyId);
+        List<UnitDTOs.UnitResponse> layout = unitLayoutOrchestrationService.getAllFloorsLayout(propertyId);
         return ResponseEntity.ok(ApiResponse.success(layout));
     }
 
@@ -59,7 +61,7 @@ public class UnitController {
             @PathVariable UUID propertyId,
             @PathVariable int floorNumber,
             @Valid @RequestBody List<UnitDTOs.FloorLayoutUnitRequest> items) {
-        List<UnitDTOs.UnitResponse> saved = unitLayoutFacade.saveFloorLayout(propertyId, floorNumber, items);
+        List<UnitDTOs.UnitResponse> saved = unitLayoutOrchestrationService.saveFloorLayout(propertyId, floorNumber, items);
         return ResponseEntity.ok(ApiResponse.success(saved));
     }
 
@@ -70,14 +72,14 @@ public class UnitController {
             @PathVariable UUID propertyId,
             @Valid @RequestBody PropertyDTOs.BatchUnitRequest request) {
         List<UnitTbl> units = unitService.generateBatchUnits(propertyId, request);
-        return ResponseEntity.ok(ApiResponse.success(unitLayoutFacade.getFloorLayout(propertyId, request.startingFloorNumber())));
+        return ResponseEntity.ok(ApiResponse.success(unitLayoutOrchestrationService.getFloorLayout(propertyId, request.startingFloorNumber())));
     }
 
     @GetMapping("/units/vacating")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<UnitDTOs.UnitResponse>>> getVacatingUnits(
             @PathVariable UUID propertyId) {
-        List<UnitDTOs.UnitResponse> units = unitLayoutFacade.getVacatingUnits(propertyId);
+        List<UnitDTOs.UnitResponse> units = unitLayoutOrchestrationService.getVacatingUnits(propertyId);
         return ResponseEntity.ok(ApiResponse.success(units));
     }
 }

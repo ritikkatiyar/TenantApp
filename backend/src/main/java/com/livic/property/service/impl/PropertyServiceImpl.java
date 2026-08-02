@@ -5,12 +5,12 @@ import com.livic.property.dto.PropertyDTOs;
 import com.livic.property.service.interfaces.PropertyCrudService;
 import com.livic.property.service.interfaces.PropertyService;
 import com.livic.property.mapper.PropertyMapper;
-import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
-import com.livic.auth.service.interfaces.MembershipService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
+import com.livic.auth.facade.AuthFacade;
 import com.livic.property.service.interfaces.UnitCrudService;
 import com.livic.common.event.PropertyDeletionEvent;
-import com.livic.finance.service.interfaces.LeaseQueryService;
+import com.livic.finance.facade.FinanceFacade;
 import com.livic.common.exception.BusinessException;
 import org.springframework.http.HttpStatus;
 
@@ -28,21 +28,22 @@ import java.util.UUID;
 @Transactional
 public class PropertyServiceImpl implements PropertyService {
     private final PropertyCrudService propertyCrudService;
-    private final UserQueryService userQueryService;
-    private final MembershipService membershipService;
+    private final UserFacade userFacade;
+    private final AuthFacade authFacade;
     private final UnitCrudService unitCrudService;
     private final ApplicationEventPublisher eventPublisher;
-    private final LeaseQueryService leaseQueryService;
+    private final FinanceFacade financeFacade;
 
     @Override
     public PropertyTbl createProperty(PropertyDTOs.CreatePropertyRequest request, UUID creatorId) {
-        UserTbl creator = userQueryService.getUserById(creatorId);
+        UserSummaryDTO creator = userFacade.getUserById(creatorId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
         PropertyTbl property = PropertyMapper.toEntity(request);
         PropertyTbl savedProperty = propertyCrudService.save(property);
 
-        // Assign OWNER role using MembershipService (no cross-module repo manipulation)
-        membershipService.createOwnerMembership(savedProperty.getId(), creatorId);
+        // Assign OWNER role using AuthFacade
+        authFacade.createOwnerMembership(savedProperty.getId(), creatorId);
         
         log.info("[PROPERTY] User {} created property: {}", creatorId, savedProperty.getId());
         return savedProperty;
@@ -58,7 +59,7 @@ public class PropertyServiceImpl implements PropertyService {
 
     @Override
     public void deleteProperty(UUID propertyId) {
-        if (leaseQueryService.existsByPropertyId(propertyId)) {
+        if (financeFacade.hasLeasesForProperty(propertyId)) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot delete property because it has assigned tenants or leases.");
         }
 

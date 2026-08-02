@@ -27,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
 import com.livic.finance.strategy.ChargeCalculationService;
 import com.livic.finance.strategy.CalculationResult;
-import com.livic.user.service.interfaces.UserQueryService;
-import com.livic.user.domain.UserTbl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -51,6 +49,9 @@ import com.livic.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
 
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -65,10 +66,10 @@ public class RentCycleServiceImpl implements RentCycleService {
     private final FinanceLedgerCrudService financeLedgerCrudService;
     private final ChargeConfigCrudService chargeConfigCrudService;
     private final ChargeCalculationService chargeCalculationService;
-    private final UserQueryService userQueryService;
     private final PaymentFacade paymentFacade;
     private final ApplicationEventPublisher eventPublisher;
     private final UnitBookingCrudService unitBookingCrudService;
+    private final UserFacade userFacade;
 
     @Override
     @Transactional
@@ -274,7 +275,7 @@ public class RentCycleServiceImpl implements RentCycleService {
 
         if (priorCyclesCount == 0) {
             java.util.Optional<com.livic.finance.domain.UnitBookingTbl> bookingOpt =
-                    unitBookingCrudService.findByStatusAndConvertedLeaseId("CONVERTED", lease.getId());
+                    unitBookingCrudService.findByStatusAndConvertedLeaseId(com.livic.common.domain.UnitBookingStatus.CONVERTED.name(), lease.getId());
             if (bookingOpt.isPresent()) {
                 com.livic.finance.domain.UnitBookingTbl booking = bookingOpt.get();
                 RentCycleChargeTbl discountCharge = RentCycleChargeTbl.builder()
@@ -324,7 +325,13 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RentCycleDTOs.RentCycleResponse> list(UUID leaseId, String billingMonth, RentCycleStatus status, Pageable pageable) {
+    public Page<RentCycleDTOs.RentCycleResponse> list(UUID currentUserId, UUID leaseId, String billingMonth, RentCycleStatus status, Pageable pageable) {
+        if (leaseId == null && currentUserId != null) {
+            leaseId = leaseQueryService.findByUserIdAndStatus(currentUserId, com.livic.common.domain.LeaseStatus.ACTIVE)
+                    .map(LeaseTbl::getId)
+                    .orElse(null);
+        }
+
         Specification<RentCycleTbl> spec = Specification
                 .where(RentCycleSpecifications.hasLeaseId(leaseId))
                 .and(RentCycleSpecifications.hasBillingMonth(billingMonth))
@@ -520,9 +527,9 @@ public class RentCycleServiceImpl implements RentCycleService {
     private RentCycleDTOs.RentCycleResponse toResponse(RentCycleTbl cycle) {
         String tenantName = "Unknown Tenant";
         try {
-            UserTbl user = userQueryService.getUserById(cycle.getLease().getUserId());
-            if (user.getFullName() != null) {
-                tenantName = user.getFullName();
+            UserSummaryDTO user = userFacade.getUserById(cycle.getLease().getUserId()).orElse(null);
+            if (user != null && user.fullName() != null) {
+                tenantName = user.fullName();
             }
         } catch (Exception e) {
             // Keep default

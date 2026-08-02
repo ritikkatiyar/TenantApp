@@ -34,21 +34,19 @@ public class SubscriptionEnforcementAspect {
         UUID ownerId = resolveOwnerId();
 
         if (ownerId == null) {
-            log.warn("[SUBSCRIPTION ENFORCEMENT] Could not resolve owner ID for feature check: {}", feature);
-            return; // Skip validation if authentication info not resolvable
+            log.error("[SUBSCRIPTION ENFORCEMENT] Could not resolve owner ID for feature check: {}", feature);
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Unable to verify subscription — action denied");
+        }
+
+        SubscriptionValidator validator = validatorRegistry.getValidator(feature);
+        if (validator == null) {
+            log.error("[SUBSCRIPTION ENFORCEMENT] No validator registered for feature key: {}", feature);
+            throw new BusinessException(HttpStatus.FORBIDDEN, "No subscription validator registered for feature: " + feature);
         }
 
         // Sub-millisecond lookup from in-memory cache
         UserSubscriptionContext context = subscriptionCacheService.getUserSubscriptionContext(ownerId);
-        SubscriptionValidator validator = validatorRegistry.getValidator(feature);
-
-        boolean allowed;
-        if (validator != null) {
-            allowed = validator.validate(ownerId, context);
-        } else {
-            // Default check for boolean feature toggles
-            allowed = context.isFeatureEnabled(feature);
-        }
+        boolean allowed = validator.validate(ownerId, context);
 
         log.info("[SUBSCRIPTION ASPECT] User: {}, Feature: {}, Plan: {}, Allowed: {}",
                 ownerId, feature, context.getPlanKey(), allowed);

@@ -58,6 +58,18 @@ public class UserDetailsImpl implements UserDetails {
         );
     }
 
+    public static UserDetailsImpl fromSummary(com.livic.user.dto.UserSummaryDTO summary) {
+        return new UserDetailsImpl(
+                summary.id().toString(),
+                summary.authUid(),
+                "",
+                summary.fullName(),
+                true,
+                true,
+                List.of(new SimpleGrantedAuthority("ROLE_" + (summary.globalRole() != null ? summary.globalRole() : "USER")))
+        );
+    }
+
     public static UserDetailsImpl fromClaims(String id, String email, String role) {
         return new UserDetailsImpl(
                 id,

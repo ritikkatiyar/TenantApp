@@ -2,7 +2,7 @@ package com.livic.billing.validator;
 
 import com.livic.billing.annotation.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
-import com.livic.property.service.interfaces.PropertyQueryService;
+import com.livic.property.facade.PropertyFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @Slf4j
 public class PropertyLimitValidator implements SubscriptionValidator {
 
-    private final PropertyQueryService propertyQueryService;
+    private final PropertyFacade propertyFacade;
 
     @Override
     public boolean validate(UUID userId, UserSubscriptionContext context) {
@@ -23,7 +23,7 @@ public class PropertyLimitValidator implements SubscriptionValidator {
             return true; // Unlimited
         }
 
-        int currentPropertyCount = propertyQueryService.getPropertiesByUserId(userId).size();
+        int currentPropertyCount = propertyFacade.getPropertiesByUserId(userId).size();
         log.info("[PROPERTY LIMIT CHECK] User: {}, Current: {}, Max Allowed: {}", userId, currentPropertyCount, maxProperties);
         return currentPropertyCount < maxProperties;
     }

@@ -18,4 +18,6 @@ public interface RentCycleRepository extends JpaRepository<RentCycleTbl, UUID>, 
     List<RentCycleTbl> findByBillingMonth(String billingMonth);
 
     List<RentCycleTbl> findByLease_IdInAndBillingMonth(java.util.Collection<UUID> leaseIds, String billingMonth);
+
+    List<RentCycleTbl> findByLease_Unit_Property_IdAndBillingMonth(UUID propertyId, String billingMonth);
 }

@@ -251,4 +251,27 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         log.info("[RAZORPAY] Payment verified and completed for orderId={}, subscriptionId/walletId={}",
                 request.razorpayOrderId(), transaction.getReferenceId());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.livic.payment.dto.PaymentTransactionResponse getTransactionResponse(UUID id) {
+        PaymentTransactionTbl tx = paymentTransactionRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Transaction not found: " + id));
+        return new com.livic.payment.dto.PaymentTransactionResponse(
+                tx.getId(),
+                tx.getPayerUserId(),
+                tx.getPaymentMethod(),
+                tx.getReferenceType(),
+                tx.getReferenceId(),
+                tx.getGatewayName(),
+                tx.getGatewayTransactionId(),
+                tx.getAmount(),
+                tx.getStatus(),
+                tx.getConfirmedBy(),
+                tx.getConfirmedAt(),
+                tx.getNote(),
+                tx.getCreatedAt(),
+                tx.getUpdatedAt()
+        );
+    }
 }

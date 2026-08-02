@@ -16,11 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import com.livic.finance.repository.LeaseRepository;
-import com.livic.common.domain.LeaseStatus;
-import com.livic.finance.domain.LeaseTbl;
+import com.livic.finance.dto.LeaseSummaryDTO;
+import com.livic.finance.facade.FinanceFacade;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class UnitQueryServiceImpl implements UnitQueryService {
 
     private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
-    private final LeaseRepository leaseRepository;
+    private final FinanceFacade financeFacade;
 
     @Override
     public UnitTbl getUnitById(UUID id) {
@@ -88,11 +88,14 @@ public class UnitQueryServiceImpl implements UnitQueryService {
         if (!propertyQueryService.existsById(propertyId)) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
         }
-        List<LeaseTbl> leases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
-        return leases.stream()
-                .filter(lease -> lease.getMoveOutDate() != null)
-                .map(LeaseTbl::getUnit)
-                .distinct()
+        List<LeaseSummaryDTO> activeLeases = financeFacade.getActiveLeasesByPropertyId(propertyId);
+        Set<UUID> vacatingUnitIds = activeLeases.stream()
+                .filter(lease -> lease.moveOutDate() != null && lease.unitId() != null)
+                .map(LeaseSummaryDTO::unitId)
+                .collect(Collectors.toSet());
+
+        return unitCrudService.findByPropertyId(propertyId).stream()
+                .filter(unit -> vacatingUnitIds.contains(unit.getId()))
                 .collect(Collectors.toList());
     }
 }

@@ -10,7 +10,6 @@ import com.livic.billing.domain.WalletTransactionTbl;
 import com.livic.billing.dto.PaymentIntentRequest;
 import com.livic.billing.dto.PaymentIntentResponse;
 import com.livic.billing.dto.SubscriptionRequest;
-import com.livic.billing.repository.BillingWalletRepository;
 import com.livic.billing.service.interfaces.BillingWalletCrudService;
 import com.livic.billing.service.interfaces.BillingWalletService;
 import com.livic.billing.service.interfaces.SaasSubscriptionCrudService;
@@ -19,7 +18,6 @@ import com.livic.billing.service.interfaces.WalletTransactionCrudService;
 import com.livic.payment.dto.PaymentInitiationRequest;
 import com.livic.payment.dto.PaymentInitiationResponse;
 import com.livic.payment.facade.PaymentFacade;
-import com.livic.payment.service.PaymentGatewayRouter;
 import com.livic.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +38,6 @@ public class BillingWalletServiceImpl implements BillingWalletService {
     private final WalletTransactionCrudService transactionCrudService;
     private final SaasSubscriptionCrudService subscriptionCrudService;
     private final SubscriptionPlanCrudService planCrudService;
-    private final BillingWalletRepository walletRepository;
-    private final PaymentGatewayRouter paymentGatewayRouter;
     private final PaymentFacade paymentFacade;
 
     @Override
@@ -60,47 +56,42 @@ public class BillingWalletServiceImpl implements BillingWalletService {
     @Override
     @Transactional
     public void debitWallet(UUID userId, double requiredCredits, String reason) {
-        log.info("[WALLET DEBIT] Processing debit of {} credits for user: {}, reason: {}", requiredCredits, userId, reason);
-
-        BillingWalletTbl wallet = walletRepository.findByUserIdForUpdate(userId)
-                .orElseGet(() -> {
-                    BillingWalletTbl newWallet = BillingWalletTbl.builder()
-                            .userId(userId)
-                            .creditBalance(BigDecimal.valueOf(50.0))
-                            .currency(BillingConstants.Currency.DEFAULT_CURRENCY)
-                            .build();
-                    return walletCrudService.save(newWallet);
-                });
-
-        BigDecimal deduction = BigDecimal.valueOf(requiredCredits);
-        if (wallet.getCreditBalance().compareTo(deduction) < 0) {
-            throw new BusinessException(
-                    HttpStatus.PAYMENT_REQUIRED,
-                    "Insufficient credits. Please top up your wallet or upgrade your plan."
-            );
+        if (requiredCredits <= 0) {
+            return;
         }
 
-        wallet.setCreditBalance(wallet.getCreditBalance().subtract(deduction));
+        BillingWalletTbl wallet = walletCrudService.findByUserIdForUpdate(userId)
+                .orElseGet(() -> getOrCreateWallet(userId));
+
+        BigDecimal required = BigDecimal.valueOf(requiredCredits);
+        if (wallet.getCreditBalance().compareTo(required) < 0) {
+            throw new BusinessException(HttpStatus.PAYMENT_REQUIRED,
+                    "Insufficient credit balance. Required: " + requiredCredits + ", Available: " + wallet.getCreditBalance());
+        }
+
+        wallet.setCreditBalance(wallet.getCreditBalance().subtract(required));
         walletCrudService.save(wallet);
 
         WalletTransactionTbl transaction = WalletTransactionTbl.builder()
                 .walletId(wallet.getId())
-                .amount(deduction)
+                .amount(required.negate())
                 .transactionType(BillingConstants.WalletTxType.DEBIT)
                 .reason(reason)
                 .build();
         transactionCrudService.save(transaction);
 
-        log.info("[WALLET DEBIT] Successfully debited {} credits from user: {}. New balance: {}", 
+        log.info("[WALLET DEBIT] Successfully debited {} credits from user: {}. New balance: {}",
                 requiredCredits, userId, wallet.getCreditBalance());
     }
 
     @Override
     @Transactional
     public void creditWallet(UUID userId, double credits, String reason, String referenceId) {
-        log.info("[WALLET CREDIT] Processing credit of {} credits for user: {}, reason: {}", credits, userId, reason);
+        if (credits <= 0) {
+            return;
+        }
 
-        BillingWalletTbl wallet = walletRepository.findByUserIdForUpdate(userId)
+        BillingWalletTbl wallet = walletCrudService.findByUserIdForUpdate(userId)
                 .orElseGet(() -> {
                     BillingWalletTbl newWallet = BillingWalletTbl.builder()
                             .userId(userId)
@@ -155,6 +146,14 @@ public class BillingWalletServiceImpl implements BillingWalletService {
                             .build();
                     return walletCrudService.save(newWallet);
                 });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.livic.billing.dto.BillingStatusResponse getBillingStatus(UUID userId) {
+        SaasSubscriptionTbl subscription = getActiveSubscription(userId);
+        BillingWalletTbl wallet = getOrCreateWallet(userId);
+        return com.livic.billing.mapper.BillingMapper.toStatusResponse(subscription, wallet);
     }
 
     @Override

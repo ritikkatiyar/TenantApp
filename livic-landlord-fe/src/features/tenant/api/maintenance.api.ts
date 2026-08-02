@@ -34,7 +34,7 @@ export interface TicketHealthStats {
 }
 
 export function getMaintenanceTickets(token: string): Promise<MaintenanceTicket[]> {
-  return apiRequest<any>('/api/v1/property/tenant/maintenance-tickets', {
+  return apiRequest<any>('/api/v1/properties/maintenance-tickets', {
     method: 'GET',
     token,
   }).then((res) => {
@@ -45,7 +45,7 @@ export function getMaintenanceTickets(token: string): Promise<MaintenanceTicket[
 }
 
 export function createMaintenanceTicket(token: string, data: CreateTicketRequest): Promise<MaintenanceTicket> {
-  return apiRequest<MaintenanceTicket>('/api/v1/property/tenant/maintenance-tickets', {
+  return apiRequest<MaintenanceTicket>('/api/v1/properties/maintenance-tickets', {
     method: 'POST',
     token,
     body: JSON.stringify(data),
@@ -53,7 +53,7 @@ export function createMaintenanceTicket(token: string, data: CreateTicketRequest
 }
 
 export function getTicketHealthStats(token: string): Promise<TicketHealthStats> {
-  return apiRequest<TicketHealthStats>('/api/v1/property/tenant/maintenance-tickets/health-stats', {
+  return apiRequest<TicketHealthStats>('/api/v1/properties/maintenance-tickets/health-stats', {
     method: 'GET',
     token,
   });

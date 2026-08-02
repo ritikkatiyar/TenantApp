@@ -31,7 +31,7 @@ public class BackendAdminClient {
 
         WebClient client = webClientBuilder.baseUrl(properties.baseUrl()).build();
         WebClient.RequestBodySpec req = client.post()
-                .uri(uriBuilder -> uriBuilder.path("/api/v1/property/properties").queryParam("ownerId", ownerId.toString()).build());
+                .uri(uriBuilder -> uriBuilder.path("/api/v1/properties").queryParam("ownerId", ownerId.toString()).build());
 
         String tokenToUse = com.livic.ai.config.AIJobContext.getUserToken();
         if (StringUtils.hasText(tokenToUse)) {

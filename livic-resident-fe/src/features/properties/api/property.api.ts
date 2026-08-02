@@ -15,7 +15,7 @@ type UpdatePropertyParams = {
 export function createProperty(params: CreatePropertyParams): Promise<PropertyResponse> {
   const { token, property } = params;
 
-  return apiRequest<PropertyResponse>(`/api/v1/property/properties`, {
+  return apiRequest<PropertyResponse>(`/api/v1/properties`, {
     method: 'POST',
     token,
     body: JSON.stringify(property),
@@ -25,7 +25,7 @@ export function createProperty(params: CreatePropertyParams): Promise<PropertyRe
 export function updateProperty(params: UpdatePropertyParams): Promise<PropertyResponse> {
   const { propertyId, token, property } = params;
 
-  return apiRequest<PropertyResponse>(`/api/v1/property/properties/${propertyId}`, {
+  return apiRequest<PropertyResponse>(`/api/v1/properties/${propertyId}`, {
     method: 'PUT',
     token,
     body: JSON.stringify(property),
@@ -33,21 +33,21 @@ export function updateProperty(params: UpdatePropertyParams): Promise<PropertyRe
 }
 
 export function getProperty(propertyId: string, token: string): Promise<PropertyResponse> {
-  return apiRequest<PropertyResponse>(`/api/v1/property/properties/${propertyId}`, {
+  return apiRequest<PropertyResponse>(`/api/v1/properties/${propertyId}`, {
     method: 'GET',
     token,
   });
 }
 
 export function deletePropertyApi(propertyId: string, token: string): Promise<void> {
-  return apiRequest<void>(`/api/v1/property/properties/${propertyId}`, {
+  return apiRequest<void>(`/api/v1/properties/${propertyId}`, {
     method: 'DELETE',
     token,
   });
 }
 
 export function togglePropertyActiveApi(propertyId: string, active: boolean, token: string): Promise<PropertyResponse> {
-  return apiRequest<PropertyResponse>(`/api/v1/property/properties/${propertyId}/toggle-active?active=${active}`, {
+  return apiRequest<PropertyResponse>(`/api/v1/properties/${propertyId}/toggle-active?active=${active}`, {
     method: 'POST',
     token,
   });

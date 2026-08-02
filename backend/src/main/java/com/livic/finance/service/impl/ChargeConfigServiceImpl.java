@@ -10,7 +10,8 @@ import com.livic.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.finance.service.interfaces.RentCycleChargeCrudService;
 import com.livic.property.domain.PropertyTbl;
-import com.livic.property.service.interfaces.PropertyQueryService;
+import com.livic.property.dto.PropertySummaryDTO;
+import com.livic.property.facade.PropertyFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +26,17 @@ import java.util.UUID;
 public class ChargeConfigServiceImpl implements ChargeConfigService {
 
     private final ChargeConfigCrudService chargeConfigCrudService;
-    private final PropertyQueryService propertyQueryService;
+    private final PropertyFacade propertyFacade;
     private final BillingWorksheetCrudService billingWorksheetCrudService;
     private final MeterReadingCrudService meterReadingCrudService;
     private final RentCycleChargeCrudService rentCycleChargeCrudService;
 
     @Override
     public ChargeConfigResponse createChargeConfig(ChargeConfigRequest request) {
-        PropertyTbl property = propertyQueryService.getPropertyById(request.getPropertyId());
+        PropertySummaryDTO propSummary = propertyFacade.getPropertyById(request.getPropertyId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
+        PropertyTbl property = new PropertyTbl();
+        property.setId(propSummary.id());
         ChargeConfigTbl config = ChargeConfigMapper.toEntity(request, property);
         chargeConfigCrudService.save(config);
         return ChargeConfigMapper.toResponse(config);

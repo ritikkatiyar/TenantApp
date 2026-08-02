@@ -1,16 +1,13 @@
 package com.livic.finance.service.impl;
 
-import com.livic.auth.service.JwtService;
-import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.RentCycleChargeTbl;
 import com.livic.finance.domain.RentCycleTbl;
 import com.livic.finance.service.interfaces.PaymentStatementService;
 import com.livic.finance.service.interfaces.RentCycleChargeCrudService;
 import com.livic.finance.service.interfaces.RentCycleCrudService;
-import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
-import io.jsonwebtoken.Claims;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,48 +28,16 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
 
     private final RentCycleCrudService rentCycleCrudService;
     private final RentCycleChargeCrudService rentCycleChargeCrudService;
-    private final UserQueryService userQueryService;
-    private final JwtService jwtService;
-    private final AuthorizationService authorizationService;
+    private final UserFacade userFacade;
 
     @Override
-    public String generateStatementHtml(UUID rentCycleId, String token, String authHeader) {
+    public String generateStatementHtml(UUID rentCycleId) {
         log.info("Generating payment statement HTML for RentCycle: {}", rentCycleId);
 
         RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
 
-        UserTbl tenant = userQueryService.getUserById(rentCycle.getLease().getUserId());
-
-        // Token Verification
-        String resolvedToken = null;
-        if (token != null && !token.trim().isEmpty()) {
-            resolvedToken = token.trim();
-        } else if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            resolvedToken = authHeader.substring(7).trim();
-        }
-
-        if (resolvedToken == null || resolvedToken.isEmpty()) {
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Missing authorization token");
-        }
-
-        try {
-            Claims claims = jwtService.parseAndValidate(resolvedToken);
-            String tokenUserId = claims.getSubject();
-            if (tokenUserId == null) {
-                throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid token claims");
-            }
-            UUID tokenUserUuid = UUID.fromString(tokenUserId);
-            if (!tokenUserUuid.equals(tenant.getId())) {
-                UUID propertyId = rentCycle.getLease().getUnit().getProperty().getId();
-                if (!authorizationService.hasPermission(propertyId, "LEASE_VIEW")) {
-                    throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
-                }
-            }
-        } catch (Exception e) {
-            log.error("Token verification failed for statement request", e);
-            throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
-        }
+        UserSummaryDTO tenant = userFacade.getUserById(rentCycle.getLease().getUserId()).orElse(null);
 
         List<RentCycleChargeTbl> charges = rentCycleChargeCrudService.findByRentCycle_Id(rentCycleId);
 
@@ -139,24 +104,28 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
                     "  </tr>" +
                     "</table>",
                     tx.getPaymentMethod(),
-                    tx.getGatewayTransactionId() != null ? tx.getGatewayTransactionId() : tx.getId().toString().substring(0, 8).toUpperCase(),
+                    tx.getGatewayTransactionId() != null ? tx.getGatewayTransactionId() : tx.getId(),
                     tx.getConfirmedAt() != null ? tx.getConfirmedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) : "N/A",
                     tx.getAmount()
             );
         }
 
+        String tenantName = tenant != null ? tenant.fullName() : "N/A";
+        String tenantPhone = tenant != null ? tenant.phoneNumber() : "N/A";
+        String tenantEmail = tenant != null ? tenant.authUid() : "N/A";
+
         return "<!DOCTYPE html>\n" +
-                "<html lang=\"en\">\n" +
+                "<html>\n" +
                 "<head>\n" +
-                "  <meta charset=\"UTF-8\">\n" +
-                "  <title>Payment Statement - " + referenceNumber + "</title>\n" +
+                "  <meta charset=\"utf-8\">\n" +
+                "  <title>Payment Statement</title>\n" +
                 "  <style>\n" +
-                "    body { font-family: 'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif; color: #1e293b; background-color: #ffffff; margin: 0; padding: 40px; line-height: 1.5; }\n" +
+                "    body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; background-color: #ffffff; }\n" +
                 "    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 30px; }\n" +
-                "    .logo { font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }\n" +
-                "    .logo span { color: #2563eb; }\n" +
+                "    .logo { font-size: 24px; font-weight: 800; color: #0f172a; }\n" +
+                "    .logo span { color: #3b82f6; }\n" +
                 "    .title-area { text-align: right; }\n" +
-                "    .title-area h1 { font-size: 20px; font-weight: 700; margin: 0 0 5px 0; color: #0f172a; }\n" +
+                "    .title-area h1 { margin: 0; font-size: 22px; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px; }\n" +
                 "    .ref-no { font-size: 14px; font-weight: 600; color: #64748b; }\n" +
                 "    .details-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }\n" +
                 "    .details-table td { padding: 8px 0; vertical-align: top; font-size: 14px; }\n" +
@@ -185,9 +154,9 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
                 "    <tr>\n" +
                 "      <td style=\"width: 50%;\">\n" +
                 "        <strong>Billed To:</strong><br>\n" +
-                "        " + tenant.getFullName() + "<br>\n" +
-                "        Phone: " + tenant.getPhoneNumber() + "<br>\n" +
-                "        Email: " + tenant.getAuthUid() + "\n" +
+                "        " + tenantName + "<br>\n" +
+                "        Phone: " + tenantPhone + "<br>\n" +
+                "        Email: " + tenantEmail + "\n" +
                 "      </td>\n" +
                 "      <td style=\"width: 50%; text-align: right;\">\n" +
                 "        <strong>Property Details:</strong><br>\n" +

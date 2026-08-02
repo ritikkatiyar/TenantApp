@@ -12,9 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-/**
- * Bridges persisted {@link UserTbl} entities to Spring Security {@link UserDetails}.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,17 +23,21 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("Loading user by username: {}", username);
 
-        UserTbl user = userQueryService.getUserByEmail(username);
-
-        log.debug("User found: {}", user.getFullName());
-        return UserDetailsImpl.fromUser(user);
+        return userQueryService.findByEmail(username)
+                .map(user -> {
+                    log.debug("User found: {}", user.getFullName());
+                    return (UserDetails) UserDetailsImpl.fromUser(user);
+                })
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
     }
 
     public UserDetails loadUserById(String userId) throws UsernameNotFoundException {
         log.debug("Loading user by ID: {}", userId);
-
-        UserTbl user = userQueryService.getUserById(UUID.fromString(userId));
-
-        return UserDetailsImpl.fromUser(user);
+        try {
+            UserTbl user = userQueryService.getUserById(UUID.fromString(userId));
+            return (UserDetails) UserDetailsImpl.fromUser(user);
+        } catch (Exception e) {
+            throw new UsernameNotFoundException("User not found with id: " + userId, e);
+        }
     }
 }

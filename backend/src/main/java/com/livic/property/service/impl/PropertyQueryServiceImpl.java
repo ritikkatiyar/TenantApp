@@ -3,7 +3,8 @@ package com.livic.property.service.impl;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.service.interfaces.PropertyCrudService;
 import com.livic.property.service.interfaces.PropertyQueryService;
-import com.livic.auth.service.interfaces.MembershipQueryService;
+import com.livic.auth.dto.MembershipSummaryDTO;
+import com.livic.auth.facade.AuthFacade;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,17 +20,18 @@ import java.util.UUID;
 public class PropertyQueryServiceImpl implements PropertyQueryService {
 
     private final PropertyCrudService propertyCrudService;
-    private final MembershipQueryService membershipQueryService;
+    private final AuthFacade authFacade;
 
     @Override
     public List<PropertyTbl> getPropertiesByUserId(UUID userId) {
-        List<com.livic.auth.domain.MembershipTbl> memberships = membershipQueryService.getMembershipsByUserId(userId);
-        return memberships.stream()
-                .filter(m -> m.getRole() == null || !"PROPERTY_TENANT".equals(m.getRole().getCode()))
-                .map(com.livic.auth.domain.MembershipTbl::getProperty)
+        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
+        List<UUID> propertyIds = memberships.stream()
+                .filter(m -> m.roleCode() == null || !"PROPERTY_TENANT".equals(m.roleCode()))
+                .map(MembershipSummaryDTO::propertyId)
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .toList();
+        return getPropertiesByIds(propertyIds);
     }
 
     @Override

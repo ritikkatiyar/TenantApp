@@ -1,8 +1,8 @@
 package com.livic.user.dto;
 
 import com.livic.common.domain.UserRole;
-import com.livic.auth.domain.MembershipTbl;
-import com.livic.finance.domain.LeaseTbl;
+import com.livic.auth.dto.MembershipSummaryDTO;
+import com.livic.finance.dto.LeaseSummaryDTO;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,12 +40,12 @@ public class MeDTOs {
             String membershipRoleCode,
             String membershipRoleName
     ) {
-        public static MembershipSummary from(MembershipTbl membership) {
+        public static MembershipSummary from(MembershipSummaryDTO membership) {
             return new MembershipSummary(
-                    membership.getProperty().getId(),
-                    membership.getProperty().getName(),
-                    membership.getRole().getCode(),
-                    membership.getRole().getName()
+                    membership.propertyId(),
+                    membership.propertyName(),
+                    membership.roleCode(),
+                    membership.roleName()
             );
         }
     }
@@ -58,14 +58,14 @@ public class MeDTOs {
             String unitNumber,
             String status
     ) {
-        public static ActiveLeaseSummary from(LeaseTbl lease) {
+        public static ActiveLeaseSummary from(LeaseSummaryDTO lease) {
             return new ActiveLeaseSummary(
-                    lease.getId(),
-                    lease.getUnit().getProperty().getId(),
-                    lease.getUnit().getProperty().getName(),
-                    lease.getUnit().getId(),
-                    lease.getUnit().getUnitNumber(),
-                    lease.getStatus().name()
+                    lease.id(),
+                    lease.propertyId(),
+                    lease.propertyName(),
+                    lease.unitId(),
+                    lease.unitNumber(),
+                    lease.status()
             );
         }
     }

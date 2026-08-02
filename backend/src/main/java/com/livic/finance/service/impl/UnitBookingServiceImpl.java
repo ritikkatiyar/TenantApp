@@ -1,18 +1,15 @@
-package com.livic.finance.service.impl;
-
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.UnitBookingTbl;
 import com.livic.finance.dto.UnitBookingDTOs;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.finance.service.interfaces.UnitBookingService;
-import com.livic.payment.domain.PaymentTransactionTbl;
-import com.livic.payment.service.interfaces.PaymentTransactionService;
+import com.livic.payment.dto.PaymentTransactionResponse;
+import com.livic.payment.facade.PaymentFacade;
 import com.livic.property.domain.UnitTbl;
-import com.livic.property.service.interfaces.UnitAvailabilityService;
-import com.livic.property.service.interfaces.UnitQueryService;
-import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.property.facade.PropertyFacade;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import com.livic.finance.mapper.UnitBookingMapper;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -25,6 +22,10 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.livic.property.dto.UnitSummaryDTO;
+
+import com.livic.common.domain.UnitBookingStatus;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -32,22 +33,24 @@ import java.util.stream.Collectors;
 public class UnitBookingServiceImpl implements UnitBookingService {
 
     private final UnitBookingCrudService unitBookingCrudService;
-    private final UnitQueryService unitQueryService;
-    private final UnitAvailabilityService unitAvailabilityService;
-    private final PaymentTransactionService paymentTransactionService;
+    private final PropertyFacade propertyFacade;
+    private final PaymentFacade paymentFacade;
     private final AuthorizationService authorizationService;
-    private final UserQueryService userQueryService;
+    private final UserFacade userFacade;
 
     @Override
     public UnitBookingDTOs.UnitBookingResponse createBooking(UnitBookingDTOs.CreateBookingRequest request) {
         log.info("Processing booking creation for unit: {}, tenant name: {}", request.unitId(), request.prospectiveTenantName());
 
-        boolean available = unitAvailabilityService.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
+        boolean available = propertyFacade.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
         if (!available) {
             throw new BusinessException(HttpStatus.CONFLICT, "No vacancy available in this unit on the requested date");
         }
 
-        UnitTbl unit = unitQueryService.getUnitById(request.unitId());
+        UnitSummaryDTO unitSummary = propertyFacade.getUnitById(request.unitId())
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
+        UnitTbl unit = new UnitTbl();
+        unit.setId(unitSummary.id());
 
         UnitBookingTbl booking = UnitBookingMapper.toEntity(request, unit);
         booking = unitBookingCrudService.save(booking);
@@ -63,7 +66,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        booking.setStatus("FORFEITED");
+        booking.setStatus(UnitBookingStatus.FORFEITED.name());
         booking = unitBookingCrudService.save(booking);
         return UnitBookingMapper.toResponse(booking);
     }
@@ -77,13 +80,13 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        booking.setStatus("REFUNDED");
+        booking.setStatus(UnitBookingStatus.REFUNDED.name());
         booking = unitBookingCrudService.save(booking);
         return UnitBookingMapper.toResponse(booking);
     }
 
     @Override
-    public PaymentTransactionTbl initiateTokenOnlinePayment(UUID bookingId, UUID userDetailsId) {
+    public PaymentTransactionResponse initiateTokenOnlinePayment(UUID bookingId, UUID userDetailsId) {
         log.info("Initiating token online payment for booking: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
@@ -91,13 +94,13 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        if (!"BOOKED".equals(booking.getStatus())) {
+        if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Booking is not in BOOKED status");
         }
 
         UUID payerUserId = resolvePayerUserId(booking, userDetailsId);
 
-        return paymentTransactionService.initiateOnlinePayment(
+        return paymentFacade.initiateOnlinePaymentTransaction(
                 payerUserId,
                 "UNIT_BOOKING",
                 bookingId,
@@ -106,7 +109,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     }
 
     @Override
-    public PaymentTransactionTbl recordTokenCashPayment(UUID bookingId, BigDecimal amount, String note, UUID userDetailsId) {
+    public PaymentTransactionResponse recordTokenCashPayment(UUID bookingId, BigDecimal amount, String note, UUID userDetailsId) {
         log.info("Recording token cash payment for booking: {} amount: {} by user: {}", bookingId, amount, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
@@ -114,13 +117,13 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
-        if (!"BOOKED".equals(booking.getStatus())) {
+        if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Booking is not in BOOKED status");
         }
 
         UUID payerUserId = resolvePayerUserId(booking, userDetailsId);
 
-        return paymentTransactionService.recordCashPayment(
+        return paymentFacade.recordCashPaymentTransaction(
                 payerUserId,
                 "UNIT_BOOKING",
                 bookingId,
@@ -139,15 +142,9 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         UUID payerUserId = booking.getProspectiveTenantUserId();
         if (payerUserId == null) {
             if (booking.getProspectiveTenantEmail() != null) {
-                UserTbl u = userQueryService.findByEmail(booking.getProspectiveTenantEmail()).orElse(null);
+                UserSummaryDTO u = userFacade.getUserByEmail(booking.getProspectiveTenantEmail()).orElse(null);
                 if (u != null) {
-                    payerUserId = u.getId();
-                }
-            }
-            if (payerUserId == null && booking.getProspectiveTenantPhone() != null) {
-                UserTbl u = userQueryService.findByPhoneNumber(booking.getProspectiveTenantPhone()).orElse(null);
-                if (u != null) {
-                    payerUserId = u.getId();
+                    payerUserId = u.id();
                 }
             }
         }

@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface BillingWalletCrudService extends CrudService<BillingWalletTbl, UUID> {
     Optional<BillingWalletTbl> findByUserId(UUID userId);
+
+    Optional<BillingWalletTbl> findByUserIdForUpdate(UUID userId);
 }

@@ -15,5 +15,7 @@ public interface AnnouncementService {
 
     Page<AnnouncementResponse> getAnnouncementsForProperty(UUID propertyId, UUID userWithAccessId, Pageable pageable);
 
+    Page<AnnouncementResponse> getAnnouncements(UUID userId, UUID propertyId, Pageable pageable);
+
     void markAsRead(UUID announcementId, UUID tenantUserId);
 }

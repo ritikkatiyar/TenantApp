@@ -9,7 +9,7 @@ export interface FloorSummaryResponse {
 
 export function getFloorSummaries(propertyId: string, token: string, throughFloor?: number): Promise<FloorSummaryResponse[]> {
   const query = throughFloor !== undefined ? `?throughFloor=${throughFloor}` : '';
-  const path = `/api/v1/property/properties/${propertyId}/floors${query}`;
+  const path = `/api/v1/properties/${propertyId}/floors${query}`;
 
   return apiRequest<FloorSummaryResponse[]>(path, {
     method: 'GET',
@@ -41,7 +41,7 @@ export interface ActiveLeaseSummary {
 }
 
 export function getFloorLayout(propertyId: string, floorNumber: number, token: string): Promise<UnitResponse[]> {
-  const path = `/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`;
+  const path = `/api/v1/properties/${propertyId}/floors/${floorNumber}/layout`;
   return apiRequest<UnitResponse[]>(path, {
     method: 'GET',
     token,
@@ -49,7 +49,7 @@ export function getFloorLayout(propertyId: string, floorNumber: number, token: s
 }
 
 export function getAllFloorsLayout(propertyId: string, token: string): Promise<UnitResponse[]> {
-  const path = `/api/v1/property/properties/${propertyId}/floors/layouts`;
+  const path = `/api/v1/properties/${propertyId}/floors/layouts`;
   return apiRequest<UnitResponse[]>(path, {
     method: 'GET',
     token,
@@ -66,7 +66,7 @@ export interface BatchUnitRequest {
 }
 
 export function generateBatchUnits(propertyId: string, request: BatchUnitRequest, token: string): Promise<UnitResponse[]> {
-  const path = `/api/v1/property/properties/${propertyId}/units/batch`;
+  const path = `/api/v1/properties/${propertyId}/units/batch`;
   return apiRequest<UnitResponse[]>(path, {
     method: 'POST',
     token,
@@ -80,7 +80,7 @@ export function saveFloorLayout(
   token: string,
   layout: any[]
 ): Promise<UnitResponse[]> {
-  const path = `/api/v1/property/properties/${propertyId}/floors/${floorNumber}/layout`;
+  const path = `/api/v1/properties/${propertyId}/floors/${floorNumber}/layout`;
   return apiRequest<UnitResponse[]>(path, {
     method: 'PUT',
     token,

@@ -1,14 +1,14 @@
-package com.livic.property.facade;
+package com.livic.property.service.impl;
 
 import com.livic.common.exception.BusinessException;
-import com.livic.finance.domain.LeaseTbl;
-import com.livic.finance.service.interfaces.LeaseQueryService;
+import com.livic.finance.dto.LeaseSummaryDTO;
+import com.livic.finance.facade.FinanceFacade;
 import com.livic.property.domain.UnitTbl;
 import com.livic.property.dto.UnitDTOs;
 import com.livic.property.service.interfaces.UnitService;
 import com.livic.property.service.interfaces.UnitQueryService;
-import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,18 +20,18 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Application Service / Facade to orchestrate cross-domain logic between
+ * Application Service to orchestrate cross-domain logic between
  * Property, Finance, and User modules for Unit Layouts.
  * This keeps the Controllers thin and Domain Services pure.
  */
 @Service
 @RequiredArgsConstructor
-public class UnitLayoutFacade {
+public class UnitLayoutOrchestrationService {
 
     private final UnitService unitService;
     private final UnitQueryService unitQueryService;
-    private final LeaseQueryService leaseQueryService;
-    private final UserQueryService userQueryService;
+    private final FinanceFacade financeFacade;
+    private final UserFacade userFacade;
 
     public List<UnitDTOs.UnitResponse> getFloorLayout(UUID propertyId, int floorNumber) {
         List<UnitTbl> units = unitQueryService.getUnitsByFloor(propertyId, floorNumber);
@@ -60,7 +60,7 @@ public class UnitLayoutFacade {
         
         for (UnitTbl unit : existingUnits) {
             if (!incomingNumbers.contains(unit.getUnitNumber())) {
-                if (leaseQueryService.existsByUnitId(unit.getId())) {
+                if (financeFacade.hasLeasesForUnit(unit.getId())) {
                     throw new BusinessException(
                             HttpStatus.CONFLICT,
                             "Cannot remove unit " + unit.getUnitNumber() + " from the layout while leases reference it"
@@ -74,13 +74,13 @@ public class UnitLayoutFacade {
     }
 
     private List<UnitDTOs.UnitResponse> enrichUnits(List<UnitTbl> units) {
-        Map<UUID, List<LeaseTbl>> activeLeasesByUnitId = leaseQueryService.findActiveLeasesByUnitIds(
+        Map<UUID, List<LeaseSummaryDTO>> activeLeasesByUnitId = financeFacade.getActiveLeasesByUnitIds(
                 units.stream().map(UnitTbl::getId).collect(Collectors.toSet())
         );
-        Map<UUID, UserTbl> usersById = userQueryService.getUsersByIds(
+        Map<UUID, UserSummaryDTO> usersById = userFacade.getUsersByIds(
                 activeLeasesByUnitId.values().stream()
                         .flatMap(List::stream)
-                        .map(LeaseTbl::getUserId)
+                        .map(LeaseSummaryDTO::userId)
                         .collect(Collectors.toSet())
         );
 
@@ -89,7 +89,7 @@ public class UnitLayoutFacade {
                 .collect(Collectors.toList());
     }
 
-    private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<LeaseTbl> leases, Map<UUID, UserTbl> usersById) {
+    private UnitDTOs.UnitResponse toResponse(UnitTbl u, List<LeaseSummaryDTO> leases, Map<UUID, UserSummaryDTO> usersById) {
         return new UnitDTOs.UnitResponse(
                 u.getId(),
                 u.getUnitNumber(),
@@ -105,16 +105,16 @@ public class UnitLayoutFacade {
         );
     }
 
-    private List<UnitDTOs.ActiveLeaseSummary> toActiveLeaseSummaries(List<LeaseTbl> leases, Map<UUID, UserTbl> usersById) {
+    private List<UnitDTOs.ActiveLeaseSummary> toActiveLeaseSummaries(List<LeaseSummaryDTO> leases, Map<UUID, UserSummaryDTO> usersById) {
         return leases.stream()
                 .map(l -> {
-                    UserTbl user = usersById.get(l.getUserId());
+                    UserSummaryDTO user = usersById.get(l.userId());
                     return new UnitDTOs.ActiveLeaseSummary(
-                            l.getId(),
-                            l.getUserId(),
-                            user != null ? user.getFullName() : "Unknown User",
-                            user != null ? user.getPhoneNumber() : "",
-                            l.getStatus() != null ? l.getStatus().name() : "ACTIVE"
+                            l.id(),
+                            l.userId(),
+                            user != null ? user.fullName() : "Unknown User",
+                            user != null ? user.phoneNumber() : "",
+                            l.status() != null ? l.status() : "ACTIVE"
                     );
                 })
                 .collect(Collectors.toList());

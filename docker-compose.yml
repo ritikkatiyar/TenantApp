@@ -8,6 +8,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-livic}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-livic}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_ROOT_HOST: "%"
     ports:
       - "3307:3306"
     volumes:

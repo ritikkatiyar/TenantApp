@@ -13,7 +13,8 @@ import com.livic.common.exception.BusinessException;
 import com.livic.common.domain.UserRole;
 import com.livic.common.constant.RoleConstants;
 import com.livic.user.domain.UserTbl;
-import com.livic.user.service.interfaces.UserQueryService;
+import com.livic.user.dto.UserSummaryDTO;
+import com.livic.user.facade.UserFacade;
 import com.livic.property.domain.PropertyTbl;
 
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
     private final RolePermissionCrudService rolePermissionCrudService;
     private final PermissionCrudService permissionCrudService;
     private final MembershipCrudService membershipCrudService;
-    private final UserQueryService userQueryService;
+    private final UserFacade userFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -226,8 +227,9 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
     }
 
     private void validateActorCanDelegate(UUID propertyId, UUID actorId, Collection<String> targetPermissions) {
-        UserTbl actor = userQueryService.getUserById(actorId);
-        if (UserRole.SUPER_ADMIN.equals(actor.getGlobalRole())) {
+        UserSummaryDTO actor = userFacade.getUserById(actorId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Actor user not found"));
+        if ("SUPER_ADMIN".equals(actor.globalRole() != null ? actor.globalRole() : "")) {
             return; // Super Admin possesses all permissions
         }
 

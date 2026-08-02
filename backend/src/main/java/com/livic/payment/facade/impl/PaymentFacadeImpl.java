@@ -3,12 +3,14 @@ package com.livic.payment.facade.impl;
 import com.livic.payment.domain.PaymentTransactionTbl;
 import com.livic.payment.dto.PaymentInitiationRequest;
 import com.livic.payment.dto.PaymentInitiationResponse;
+import com.livic.payment.dto.PaymentTransactionResponse;
 import com.livic.payment.facade.PaymentFacade;
 import com.livic.payment.service.interfaces.PaymentTransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,6 +55,18 @@ public class PaymentFacadeImpl implements PaymentFacade {
                 .map(this::toResponse);
     }
 
+    @Override
+    public PaymentTransactionResponse initiateOnlinePaymentTransaction(UUID payerUserId, String referenceType, UUID referenceId, BigDecimal amount) {
+        PaymentTransactionTbl tx = paymentTransactionService.initiateOnlinePayment(payerUserId, referenceType, referenceId, amount);
+        return toTransactionResponse(tx);
+    }
+
+    @Override
+    public PaymentTransactionResponse recordCashPaymentTransaction(UUID payerUserId, String referenceType, UUID referenceId, BigDecimal amount, UUID confirmedBy, String note) {
+        PaymentTransactionTbl tx = paymentTransactionService.recordCashPayment(payerUserId, referenceType, referenceId, amount, confirmedBy, note);
+        return toTransactionResponse(tx);
+    }
+
     private PaymentInitiationResponse toResponse(PaymentTransactionTbl tx) {
         return PaymentInitiationResponse.builder()
                 .transactionId(tx.getId())
@@ -64,5 +78,24 @@ public class PaymentFacadeImpl implements PaymentFacade {
                 .paymentMethod(tx.getPaymentMethod())
                 .createdAt(tx.getCreatedAt())
                 .build();
+    }
+
+    private PaymentTransactionResponse toTransactionResponse(PaymentTransactionTbl tx) {
+        return new PaymentTransactionResponse(
+                tx.getId(),
+                tx.getPayerUserId(),
+                tx.getPaymentMethod(),
+                tx.getReferenceType(),
+                tx.getReferenceId(),
+                tx.getGatewayName(),
+                tx.getGatewayTransactionId(),
+                tx.getAmount(),
+                tx.getStatus(),
+                tx.getConfirmedBy(),
+                tx.getConfirmedAt(),
+                tx.getNote(),
+                tx.getCreatedAt(),
+                tx.getUpdatedAt()
+        );
     }
 }
