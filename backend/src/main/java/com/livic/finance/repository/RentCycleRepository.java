@@ -31,8 +31,8 @@ public interface RentCycleRepository extends JpaRepository<RentCycleTbl, UUID>, 
     List<RentCycleTbl> findByLease_Unit_Property_IdAndBillingMonth(UUID propertyId, String billingMonth);
 
     @Query("SELECT new com.livic.finance.dto.RevenueMetricsDTO(" +
-           "SUM(r.totalAmount), " +
-           "SUM(CASE WHEN r.status = :statusPaid THEN r.totalAmount ELSE 0.0 END)) " +
+           "COALESCE(SUM(r.totalAmount), 0), " +
+           "COALESCE(SUM(CASE WHEN r.status = :statusPaid THEN r.totalAmount ELSE 0 END), 0)) " +
            "FROM RentCycleTbl r JOIN r.lease l JOIN l.unit u " +
            "WHERE u.property.id IN :propertyIds AND r.billingMonth = :billingMonth")
     RevenueMetricsDTO calculateRevenueMetrics(
