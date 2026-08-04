@@ -5,6 +5,8 @@ import com.livic.common.service.impl.AbstractCrudService;
 import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.repository.LeaseRepository;
 import com.livic.finance.service.interfaces.LeaseCrudService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +57,11 @@ public class LeaseCrudServiceImpl extends AbstractCrudService<LeaseTbl, UUID, Le
     @Override
     public List<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status) {
         return repository.findActiveOccupanciesByProperty(propertyId, status);
+    }
+
+    @Override
+    public Page<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status, Pageable pageable) {
+        return repository.findActiveOccupanciesByProperty(propertyId, status, pageable);
     }
 
     @Override

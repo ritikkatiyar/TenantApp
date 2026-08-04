@@ -142,10 +142,10 @@ public class LeaseServiceImpl implements LeaseService {
     }
 
     @Override
-    public LeaseTbl terminateLease(UUID id) {
+    public LeaseDTOs.LeaseResponse terminateLease(UUID id) {
         LeaseTbl lease = leaseCrudService.findWithUnitAndPropertyById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
-        
+
         lease.setStatus(LeaseStatus.ENDED);
         if (lease.getMoveOutDate() == null) {
             lease.setMoveOutDate(java.time.LocalDate.now());
@@ -164,7 +164,10 @@ public class LeaseServiceImpl implements LeaseService {
             authFacade.removeTenantRole(tenantId, propertyId);
         }
 
-        return saved;
+        // Map to DTO — entity must not cross the service boundary.
+        // tenantName/tenantPhone are intentionally omitted here;
+        // the orchestration layer enriches them via UserFacade.
+        return LeaseMapper.toResponse(saved);
     }
 
     @Override

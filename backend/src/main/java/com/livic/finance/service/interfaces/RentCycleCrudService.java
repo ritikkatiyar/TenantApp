@@ -18,4 +18,7 @@ public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
     List<RentCycleTbl> findByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth);
     Page<RentCycleTbl> findAll(Specification<RentCycleTbl> spec, Pageable pageable);
     List<RentCycleTbl> findAll(Specification<RentCycleTbl> spec);
+
+    com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth);
+    List<com.livic.finance.dto.RentCycleDashboardDTOs.DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds);
 }

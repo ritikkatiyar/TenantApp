@@ -56,4 +56,32 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
     public List<RentCycleTbl> findAll(Specification<RentCycleTbl> spec) {
         return repository.findAll(spec);
     }
+
+    @Override
+    public com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return new com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO(java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO);
+        }
+        Object[] result = repository.calculateRevenueMetrics(propertyIds, billingMonth, com.livic.common.domain.RentCycleStatus.PAID);
+        if (result == null || result.length == 0 || result[0] == null) {
+            return new com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO(java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO);
+        }
+        java.math.BigDecimal expected = new java.math.BigDecimal(result[0].toString());
+        java.math.BigDecimal collected = result[1] != null ? new java.math.BigDecimal(result[1].toString()) : java.math.BigDecimal.ZERO;
+        return new com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO(expected, collected);
+    }
+
+    @Override
+    public List<com.livic.finance.dto.RentCycleDashboardDTOs.DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return repository.findDefaulters(
+                propertyIds,
+                com.livic.common.domain.RentCycleStatus.OVERDUE,
+                com.livic.common.domain.RentCycleStatus.PENDING,
+                java.time.LocalDate.now()
+        );
+    }
 }
+

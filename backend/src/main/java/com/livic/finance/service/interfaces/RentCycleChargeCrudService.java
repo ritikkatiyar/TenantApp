@@ -8,5 +8,6 @@ import java.util.UUID;
 
 public interface RentCycleChargeCrudService extends CrudService<RentCycleChargeTbl, UUID> {
     List<RentCycleChargeTbl> findByRentCycle_Id(UUID rentCycleId);
+    List<RentCycleChargeTbl> findByRentCycle_IdIn(java.util.Collection<UUID> rentCycleIds);
     boolean existsByCustomChargeConfigId(UUID customChargeConfigId);
 }

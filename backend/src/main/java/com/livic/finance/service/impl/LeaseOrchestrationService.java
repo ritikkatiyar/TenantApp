@@ -1,7 +1,6 @@
 package com.livic.finance.service.impl;
 
 import com.livic.common.domain.LeaseStatus;
-import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.dto.LeaseDTOs;
 import com.livic.finance.mapper.LeaseMapper;
@@ -10,7 +9,9 @@ import com.livic.finance.service.interfaces.LeaseService;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,12 @@ public class LeaseOrchestrationService {
         return enrichLeases(leases);
     }
 
+    public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId, Pageable pageable) {
+        Page<LeaseTbl> page = leaseQueryService.findActiveLeasesByProperty(propertyId, pageable);
+        List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
+        return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
     public Optional<LeaseDTOs.LeaseResponse> getActiveTenantLease(UUID userId) {
         return leaseQueryService.findByUserIdAndStatus(userId, LeaseStatus.ACTIVE)
                 .map(this::enrichLease);
@@ -53,8 +60,11 @@ public class LeaseOrchestrationService {
 
     @Transactional
     public LeaseDTOs.LeaseResponse terminateLease(UUID id) {
-        LeaseTbl lease = leaseService.terminateLease(id);
-        return enrichLease(lease);
+        LeaseDTOs.LeaseResponse response = leaseService.terminateLease(id);
+        UserSummaryDTO user = userFacade.getUserById(response.userId()).orElse(null);
+        String fullName = user != null ? user.fullName() : "Unknown User";
+        String phone = user != null ? user.phoneNumber() : "";
+        return LeaseMapper.withUserDetails(response, fullName, phone);
     }
 
     @Transactional

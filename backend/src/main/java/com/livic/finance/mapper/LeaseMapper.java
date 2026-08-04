@@ -61,4 +61,28 @@ public final class LeaseMapper {
                 lease.getUpdatedAt()
         );
     }
+    /**
+     * Enriches a basic LeaseResponse (returned by the service layer) with user display fields.
+     * Used by the orchestration layer after fetching tenant details from UserFacade.
+     */
+    public static LeaseDTOs.LeaseResponse withUserDetails(LeaseDTOs.LeaseResponse response,
+                                                           String tenantName, String tenantPhone) {
+        return new LeaseDTOs.LeaseResponse(
+                response.id(),
+                response.userId(),
+                response.unitId(),
+                response.unitNumber(),
+                response.propertyName(),
+                tenantName,
+                tenantPhone,
+                response.rentAmount(),
+                response.securityDeposit(),
+                response.splitStrategy(),
+                response.moveInDate(),
+                response.moveOutDate(),
+                response.status(),
+                response.createdAt(),
+                response.updatedAt()
+        );
+    }
 }

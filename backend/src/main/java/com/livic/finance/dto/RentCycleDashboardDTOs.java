@@ -1,0 +1,19 @@
+package com.livic.finance.dto;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
+
+public class RentCycleDashboardDTOs {
+
+    public record RevenueMetricsDTO(BigDecimal expected, BigDecimal collected) {}
+
+    public record DefaulterRecordDTO(
+            UUID tenantId,
+            String unitNumber,
+            String propertyName,
+            LocalDate dueDate,
+            BigDecimal amountDue,
+            UUID rentCycleId
+    ) {}
+}

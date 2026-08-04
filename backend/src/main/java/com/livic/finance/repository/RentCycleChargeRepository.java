@@ -10,6 +10,7 @@ import java.util.UUID;
 @Repository
 public interface RentCycleChargeRepository extends JpaRepository<RentCycleChargeTbl, UUID> {
     List<RentCycleChargeTbl> findByRentCycle_Id(UUID rentCycleId);
+    List<RentCycleChargeTbl> findByRentCycle_IdIn(java.util.Collection<UUID> rentCycleIds);
 
     boolean existsByCustomChargeConfigId(UUID customChargeConfigId);
 }
