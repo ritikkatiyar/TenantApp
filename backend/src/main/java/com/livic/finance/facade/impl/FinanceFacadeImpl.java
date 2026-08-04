@@ -2,7 +2,6 @@ package com.livic.finance.facade.impl;
 
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.domain.RentCycleStatus;
-import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.dto.ChargeConfigDTOs;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
@@ -40,12 +39,8 @@ public class FinanceFacadeImpl implements FinanceFacade {
 
     @Override
     public boolean isUnitOccupiedOnDate(UUID unitId, LocalDate date) {
-        List<LeaseTbl> activeLeases = leaseRepository.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE);
-        return activeLeases.stream().anyMatch(lease -> {
-            boolean hasMovedIn = !date.isBefore(lease.getMoveInDate());
-            boolean hasNotMovedOut = lease.getMoveOutDate() == null || date.isBefore(lease.getMoveOutDate());
-            return hasMovedIn && hasNotMovedOut;
-        });
+        // Single DB query with date-range predicate — avoids fetching lease rows into memory.
+        return leaseRepository.existsActiveLeaseOnDate(unitId, LeaseStatus.ACTIVE, date);
     }
 
     @Override

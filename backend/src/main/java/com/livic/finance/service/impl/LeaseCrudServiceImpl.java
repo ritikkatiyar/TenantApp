@@ -8,6 +8,7 @@ import com.livic.finance.service.interfaces.LeaseCrudService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,21 @@ public class LeaseCrudServiceImpl extends AbstractCrudService<LeaseTbl, UUID, Le
     @Override
     public Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status) {
         return repository.findByUserIdAndStatus(userId, status);
+    }
+
+    @Override
+    public boolean existsByUnitIdAndStatus(UUID unitId, LeaseStatus status) {
+        return repository.existsByUnitIdAndStatus(unitId, status);
+    }
+
+    @Override
+    public boolean existsActiveLeaseOnDate(UUID unitId, LeaseStatus status, LocalDate date) {
+        return repository.existsActiveLeaseOnDate(unitId, status, date);
+    }
+
+    @Override
+    public long countByUnitIdAndStatus(UUID unitId, LeaseStatus status) {
+        return repository.countByUnitIdAndStatus(unitId, status);
     }
 
     @Override

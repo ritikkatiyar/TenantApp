@@ -228,8 +228,7 @@ public class RentCycleServiceImpl implements RentCycleService {
         if (roommateCounts != null && roommateCounts.containsKey(lease.getUnit().getId())) {
             roommateCount = roommateCounts.get(lease.getUnit().getId());
         } else {
-            List<LeaseTbl> activeUnitLeases = leaseCrudService.findByUnitIdAndStatus(lease.getUnit().getId(), LeaseStatus.ACTIVE);
-            roommateCount = Math.max(1, activeUnitLeases.size());
+            roommateCount = Math.max(1, (int) leaseCrudService.countByUnitIdAndStatus(lease.getUnit().getId(), LeaseStatus.ACTIVE));
         }
 
         List<ChargeConfigTbl> activeConfigs = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(lease.getUnit().getProperty().getId());
