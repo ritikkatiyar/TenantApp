@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import com.livic.property.dto.UnitSummaryDTO;
@@ -148,7 +149,7 @@ public class LeaseServiceImpl implements LeaseService {
 
         lease.setStatus(LeaseStatus.ENDED);
         if (lease.getMoveOutDate() == null) {
-            lease.setMoveOutDate(java.time.LocalDate.now());
+            lease.setMoveOutDate(LocalDate.now());
         }
         LeaseTbl saved = leaseCrudService.save(lease);
 

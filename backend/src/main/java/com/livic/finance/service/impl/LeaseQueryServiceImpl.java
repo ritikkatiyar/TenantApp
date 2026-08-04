@@ -3,6 +3,7 @@ package com.livic.finance.service.impl;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.LeaseTbl;
+import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.service.interfaces.LeaseCrudService;
 import com.livic.finance.service.interfaces.LeaseQueryService;
 import lombok.RequiredArgsConstructor;
@@ -59,11 +60,14 @@ public class LeaseQueryServiceImpl implements LeaseQueryService {
     }
 
     @Override
-    public Map<UUID, List<LeaseTbl>> findActiveLeasesByUnitIds(Collection<UUID> unitIds) {
+    public Map<UUID, List<LeaseSummaryDTO>> findActiveLeasesByUnitIds(Collection<UUID> unitIds) {
         if (unitIds == null || unitIds.isEmpty()) return Collections.emptyMap();
         return leaseCrudService.findByUnit_IdInAndStatus(unitIds, LeaseStatus.ACTIVE)
                 .stream()
-                .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
+                .collect(Collectors.groupingBy(
+                        l -> l.getUnit().getId(),
+                        Collectors.mapping(LeaseSummaryDTO::from, Collectors.toList())
+                ));
     }
 
     @Override

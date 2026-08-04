@@ -1,23 +1,27 @@
 package com.livic.finance.facade.impl;
 
 import com.livic.common.domain.LeaseStatus;
-import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.dto.ChargeConfigDTOs;
 import com.livic.finance.dto.LeaseSummaryDTO;
-import com.livic.finance.dto.RentCycleDashboardDTOs;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.finance.service.ChargeConfigQueryService;
 import com.livic.finance.service.interfaces.LeaseCrudService;
 import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.RentCycleCrudService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -59,12 +63,7 @@ public class FinanceFacadeImpl implements FinanceFacade {
         if (unitIds == null || unitIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<UUID, List<LeaseTbl>> map = leaseQueryService.findActiveLeasesByUnitIds(unitIds);
-        return map.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().stream().map(LeaseSummaryDTO::from).toList()
-                ));
+        return leaseQueryService.findActiveLeasesByUnitIds(unitIds);
     }
 
     @Override
@@ -96,16 +95,19 @@ public class FinanceFacadeImpl implements FinanceFacade {
 
     @Override
     public RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth) {
-        RentCycleDashboardDTOs.RevenueMetricsDTO metrics = rentCycleCrudService.getRevenueMetrics(propertyIds, billingMonth);
-        return new RevenueMetricsDTO(metrics.expected(), metrics.collected());
+        com.livic.finance.dto.RevenueMetricsDTO m = rentCycleCrudService.getRevenueMetrics(propertyIds, billingMonth);
+        return new RevenueMetricsDTO(m.expected(), m.collected());
     }
 
     @Override
     public List<DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds) {
-        List<RentCycleDashboardDTOs.DefaulterRecordDTO> defaulters = rentCycleCrudService.getDefaulters(propertyIds);
-        return defaulters.stream()
-                .map(d -> new DefaulterRecordDTO(d.tenantId(), d.unitNumber(), d.propertyName(), d.dueDate(), d.amountDue(), d.rentCycleId()))
-                .toList();
+        return getDefaulters(propertyIds, Pageable.unpaged()).getContent();
+    }
+
+    @Override
+    public Page<DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds, Pageable pageable) {
+        Page<com.livic.finance.dto.DefaulterRecordDTO> page = rentCycleCrudService.getDefaulters(propertyIds, pageable);
+        return page.map(d -> new DefaulterRecordDTO(d.tenantId(), d.unitNumber(), d.propertyName(), d.dueDate(), d.amountDue(), d.rentCycleId()));
     }
 
     @Override

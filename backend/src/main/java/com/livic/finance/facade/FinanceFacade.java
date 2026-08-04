@@ -2,6 +2,8 @@ package com.livic.finance.facade;
 
 import com.livic.finance.dto.ChargeConfigDTOs;
 import com.livic.finance.dto.LeaseSummaryDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -41,6 +43,8 @@ public interface FinanceFacade {
     RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth);
 
     List<DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds);
+
+    Page<DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds, Pageable pageable);
 
     BigDecimal getTotalExpenses(List<UUID> propertyIds);
 

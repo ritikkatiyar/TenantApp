@@ -3,7 +3,7 @@ package com.livic.finance.controller;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.finance.dto.LeaseDTOs;
-import com.livic.finance.service.impl.LeaseOrchestrationService;
+import com.livic.finance.service.interfaces.LeaseOrchestrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

@@ -1,7 +1,10 @@
 package com.livic.finance.service.impl;
 
+import com.livic.common.domain.RentCycleStatus;
 import com.livic.common.service.impl.AbstractCrudService;
 import com.livic.finance.domain.RentCycleTbl;
+import com.livic.finance.dto.DefaulterRecordDTO;
+import com.livic.finance.dto.RevenueMetricsDTO;
 import com.livic.finance.repository.RentCycleRepository;
 import com.livic.finance.service.interfaces.RentCycleCrudService;
 import org.springframework.data.domain.Page;
@@ -10,6 +13,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,30 +65,25 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
     }
 
     @Override
-    public com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO getRevenueMetrics(List<UUID> propertyIds, String billingMonth) {
+    public RevenueMetricsDTO getRevenueMetrics(Collection<UUID> propertyIds, String billingMonth) {
         if (propertyIds == null || propertyIds.isEmpty()) {
-            return new com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO(java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO);
+            return new RevenueMetricsDTO(BigDecimal.ZERO, BigDecimal.ZERO);
         }
-        Object[] result = repository.calculateRevenueMetrics(propertyIds, billingMonth, com.livic.common.domain.RentCycleStatus.PAID);
-        if (result == null || result.length == 0 || result[0] == null) {
-            return new com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO(java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO);
-        }
-        java.math.BigDecimal expected = new java.math.BigDecimal(result[0].toString());
-        java.math.BigDecimal collected = result[1] != null ? new java.math.BigDecimal(result[1].toString()) : java.math.BigDecimal.ZERO;
-        return new com.livic.finance.dto.RentCycleDashboardDTOs.RevenueMetricsDTO(expected, collected);
+        RevenueMetricsDTO metrics = repository.calculateRevenueMetrics(propertyIds, billingMonth, RentCycleStatus.PAID);
+        return metrics != null ? metrics : new RevenueMetricsDTO(BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
     @Override
-    public List<com.livic.finance.dto.RentCycleDashboardDTOs.DefaulterRecordDTO> getDefaulters(List<UUID> propertyIds) {
+    public Page<DefaulterRecordDTO> getDefaulters(Collection<UUID> propertyIds, Pageable pageable) {
         if (propertyIds == null || propertyIds.isEmpty()) {
-            return java.util.Collections.emptyList();
+            return Page.empty(pageable);
         }
         return repository.findDefaulters(
                 propertyIds,
-                com.livic.common.domain.RentCycleStatus.OVERDUE,
-                com.livic.common.domain.RentCycleStatus.PENDING,
-                java.time.LocalDate.now()
+                RentCycleStatus.OVERDUE,
+                RentCycleStatus.PENDING,
+                LocalDate.now(),
+                pageable
         );
     }
 }
-
