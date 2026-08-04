@@ -22,6 +22,11 @@ public class LeaseCrudServiceImpl extends AbstractCrudService<LeaseTbl, UUID, Le
     }
 
     @Override
+    public Optional<LeaseTbl> findWithUnitAndPropertyById(UUID id) {
+        return repository.findWithUnitAndPropertyById(id);
+    }
+
+    @Override
     public Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status) {
         return repository.findByUserIdAndStatus(userId, status);
     }

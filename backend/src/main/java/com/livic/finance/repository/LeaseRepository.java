@@ -15,10 +15,16 @@ import java.util.UUID;
 @Repository
 public interface LeaseRepository extends JpaRepository<LeaseTbl, UUID> {
 
-    // 1. The Tenant "Hydration" Query: 
+    // 1. The Tenant "Hydration" Query:
     // Finds where a specific user is currently living.
     @EntityGraph(attributePaths = {"unit", "unit.property"})
     Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status);
+
+    // 2a. Single Lease Termination Query:
+    // Fetches a lease with its unit and property eagerly to avoid N+1 when
+    // terminateLease needs unit.property.id for role revocation.
+    @EntityGraph(attributePaths = {"unit", "unit.property"})
+    Optional<LeaseTbl> findWithUnitAndPropertyById(UUID id);
 
     // 2. The Move-In Safety Check: 
     // Checks if a Unit already has an active tenant.

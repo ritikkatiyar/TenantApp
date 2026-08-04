@@ -143,7 +143,7 @@ public class LeaseServiceImpl implements LeaseService {
 
     @Override
     public LeaseTbl terminateLease(UUID id) {
-        LeaseTbl lease = leaseCrudService.findById(id)
+        LeaseTbl lease = leaseCrudService.findWithUnitAndPropertyById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
         
         lease.setStatus(LeaseStatus.ENDED);

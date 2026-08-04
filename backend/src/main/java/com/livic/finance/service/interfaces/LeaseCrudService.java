@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface LeaseCrudService extends CrudService<LeaseTbl, UUID> {
+    Optional<LeaseTbl> findWithUnitAndPropertyById(UUID id);
     Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status);
     List<LeaseTbl> findByUnitIdAndStatus(UUID unitId, LeaseStatus status);
     List<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status);
