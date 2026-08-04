@@ -71,10 +71,10 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
             }
           }
 
-          if (currentContext.isTenant && !currentContext.isLandlord) {
-            // Pure tenants bypass onboarding
+          if (currentContext.isTenant || !currentContext.isLandlord) {
+            // Pure tenants / residents bypass landlord onboarding in resident app
             if (isMounted) {
-              logger.info('[OnboardingGate] Pure tenant, setting isOnboarded to true');
+              logger.info('[OnboardingGate] Resident user, setting isOnboarded to true');
               setIsOnboarded(true);
             }
           } else {
