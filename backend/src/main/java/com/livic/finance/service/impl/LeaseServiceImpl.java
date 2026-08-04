@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import com.livic.property.dto.UnitSummaryDTO;
@@ -109,7 +110,7 @@ public class LeaseServiceImpl implements LeaseService {
         UserSummaryDTO tenant = userFacade.getUserById(targetUserId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
-        authFacade.ensureTenantRole(tenant.id(), unit.getProperty().getId(), assignedByUserId);
+        authFacade.ensureTenantRole(tenant.id(), unitSummary.propertyId(), assignedByUserId);
 
         LeaseTbl lease = LeaseMapper.toEntity(request, unit, targetUserId);
         LeaseTbl saved = leaseCrudService.save(lease);
@@ -142,13 +143,13 @@ public class LeaseServiceImpl implements LeaseService {
     }
 
     @Override
-    public LeaseTbl terminateLease(UUID id) {
-        LeaseTbl lease = leaseCrudService.findById(id)
+    public LeaseDTOs.LeaseResponse terminateLease(UUID id) {
+        LeaseTbl lease = leaseCrudService.findWithUnitAndPropertyById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
-        
+
         lease.setStatus(LeaseStatus.ENDED);
         if (lease.getMoveOutDate() == null) {
-            lease.setMoveOutDate(java.time.LocalDate.now());
+            lease.setMoveOutDate(LocalDate.now());
         }
         LeaseTbl saved = leaseCrudService.save(lease);
 
@@ -164,7 +165,10 @@ public class LeaseServiceImpl implements LeaseService {
             authFacade.removeTenantRole(tenantId, propertyId);
         }
 
-        return saved;
+        // Map to DTO — entity must not cross the service boundary.
+        // tenantName/tenantPhone are intentionally omitted here;
+        // the orchestration layer enriches them via UserFacade.
+        return LeaseMapper.toResponse(saved);
     }
 
     @Override

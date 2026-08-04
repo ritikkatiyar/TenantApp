@@ -1,7 +1,10 @@
 package com.livic.finance.service.interfaces;
 
-import com.livic.finance.domain.LeaseTbl;
 import com.livic.common.domain.LeaseStatus;
+import com.livic.finance.domain.LeaseTbl;
+import com.livic.finance.dto.LeaseSummaryDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collection;
 import java.util.List;
@@ -15,6 +18,7 @@ public interface LeaseQueryService {
     Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status);
     List<LeaseTbl> findByUnitIdAndStatus(UUID unitId, LeaseStatus status);
     List<LeaseTbl> findActiveLeasesByProperty(UUID propertyId);
-    Map<UUID, List<LeaseTbl>> findActiveLeasesByUnitIds(Collection<UUID> unitIds);
+    Page<LeaseTbl> findActiveLeasesByProperty(UUID propertyId, Pageable pageable);
+    Map<UUID, List<LeaseSummaryDTO>> findActiveLeasesByUnitIds(Collection<UUID> unitIds);
     boolean existsByPropertyId(UUID propertyId);
 }

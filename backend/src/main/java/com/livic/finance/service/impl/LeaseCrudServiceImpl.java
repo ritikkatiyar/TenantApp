@@ -5,9 +5,12 @@ import com.livic.common.service.impl.AbstractCrudService;
 import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.repository.LeaseRepository;
 import com.livic.finance.service.interfaces.LeaseCrudService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -22,8 +25,28 @@ public class LeaseCrudServiceImpl extends AbstractCrudService<LeaseTbl, UUID, Le
     }
 
     @Override
+    public Optional<LeaseTbl> findWithUnitAndPropertyById(UUID id) {
+        return repository.findWithUnitAndPropertyById(id);
+    }
+
+    @Override
     public Optional<LeaseTbl> findByUserIdAndStatus(UUID userId, LeaseStatus status) {
         return repository.findByUserIdAndStatus(userId, status);
+    }
+
+    @Override
+    public boolean existsByUnitIdAndStatus(UUID unitId, LeaseStatus status) {
+        return repository.existsByUnitIdAndStatus(unitId, status);
+    }
+
+    @Override
+    public boolean existsActiveLeaseOnDate(UUID unitId, LeaseStatus status, LocalDate date) {
+        return repository.existsActiveLeaseOnDate(unitId, status, date);
+    }
+
+    @Override
+    public long countByUnitIdAndStatus(UUID unitId, LeaseStatus status) {
+        return repository.countByUnitIdAndStatus(unitId, status);
     }
 
     @Override
@@ -34,6 +57,11 @@ public class LeaseCrudServiceImpl extends AbstractCrudService<LeaseTbl, UUID, Le
     @Override
     public List<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status) {
         return repository.findActiveOccupanciesByProperty(propertyId, status);
+    }
+
+    @Override
+    public Page<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status, Pageable pageable) {
+        return repository.findActiveOccupanciesByProperty(propertyId, status, pageable);
     }
 
     @Override

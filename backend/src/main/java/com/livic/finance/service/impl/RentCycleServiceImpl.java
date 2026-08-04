@@ -19,6 +19,8 @@ import com.livic.payment.facade.PaymentFacade;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -87,13 +89,13 @@ public class RentCycleServiceImpl implements RentCycleService {
         Map<UUID, Integer> roommateCounts = activeLeases.stream()
                 .collect(Collectors.groupingBy(l -> l.getUnit().getId(), Collectors.collectingAndThen(Collectors.toList(), List::size)));
 
-        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>();
-        
+        List<RentCycleTbl> generatedCycles = new ArrayList<>();
         for (LeaseTbl lease : activeLeases) {
             RentCycleTbl cycle = processLeaseGeneration(lease, request.billingMonth(), request.dueDate(), roommateCounts);
-            responses.add(toResponse(cycle));
+            generatedCycles.add(cycle);
         }
         
+        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>(toResponses(generatedCycles));
         responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
                 .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
         return responses;
@@ -228,8 +230,7 @@ public class RentCycleServiceImpl implements RentCycleService {
         if (roommateCounts != null && roommateCounts.containsKey(lease.getUnit().getId())) {
             roommateCount = roommateCounts.get(lease.getUnit().getId());
         } else {
-            List<LeaseTbl> activeUnitLeases = leaseCrudService.findByUnitIdAndStatus(lease.getUnit().getId(), LeaseStatus.ACTIVE);
-            roommateCount = Math.max(1, activeUnitLeases.size());
+            roommateCount = Math.max(1, (int) leaseCrudService.countByUnitIdAndStatus(lease.getUnit().getId(), LeaseStatus.ACTIVE));
         }
 
         List<ChargeConfigTbl> activeConfigs = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(lease.getUnit().getProperty().getId());
@@ -337,8 +338,9 @@ public class RentCycleServiceImpl implements RentCycleService {
                 .and(RentCycleSpecifications.hasBillingMonth(billingMonth))
                 .and(RentCycleSpecifications.hasStatus(status));
 
-        return rentCycleCrudService.findAll(spec, pageable)
-                .map(this::toResponse);
+        org.springframework.data.domain.Page<RentCycleTbl> page = rentCycleCrudService.findAll(spec, pageable);
+        List<RentCycleDTOs.RentCycleResponse> content = toResponses(page.getContent());
+        return new org.springframework.data.domain.PageImpl<>(content, pageable, page.getTotalElements());
     }
 
     @Override
@@ -396,7 +398,7 @@ public class RentCycleServiceImpl implements RentCycleService {
         List<RentCycleTbl> cyclesToSave = new ArrayList<>();
         List<BillingWorksheetEntryTbl> worksheetsToSave = new ArrayList<>();
         List<MeterReadingTbl> readingsToSave = new ArrayList<>();
-        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>();
+        List<RentCycleTbl> cyclesToProcess = new ArrayList<>();
 
         for (LeaseTbl lease : activeLeases) {
             RentCycleTbl cycle = cycleByLeaseId.get(lease.getId());
@@ -420,7 +422,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                     log.info("rent_cycle_published rentCycleId={} leaseId={} billingMonth={}",
                             cycle.getId(), lease.getId(), billingMonth);
                 }
-                responses.add(toResponse(cycle));
+                cyclesToProcess.add(cycle);
             }
         }
 
@@ -444,6 +446,7 @@ public class RentCycleServiceImpl implements RentCycleService {
             meterReadingCrudService.saveAll(readingsToSave);
         }
 
+        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>(toResponses(cyclesToProcess));
         responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
                 .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
         return responses;
@@ -481,7 +484,7 @@ public class RentCycleServiceImpl implements RentCycleService {
         List<RentCycleTbl> cyclesToSave = new ArrayList<>();
         List<BillingWorksheetEntryTbl> worksheetsToSave = new ArrayList<>();
         List<MeterReadingTbl> readingsToSave = new ArrayList<>();
-        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>();
+        List<RentCycleTbl> cyclesToProcess = new ArrayList<>();
 
         for (LeaseTbl lease : activeLeases) {
             RentCycleTbl cycle = cycleByLeaseId.get(lease.getId());
@@ -505,7 +508,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                     log.info("rent_cycle_unpublished rentCycleId={} leaseId={} billingMonth={}",
                             cycle.getId(), lease.getId(), billingMonth);
                 }
-                responses.add(toResponse(cycle));
+                cyclesToProcess.add(cycle);
             }
         }
 
@@ -519,22 +522,61 @@ public class RentCycleServiceImpl implements RentCycleService {
             meterReadingCrudService.saveAll(readingsToSave);
         }
 
+        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>(toResponses(cyclesToProcess));
         responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
                 .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
         return responses;
     }
 
+    private List<RentCycleDTOs.RentCycleResponse> toResponses(List<RentCycleTbl> cycles) {
+        if (cycles == null || cycles.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<UUID> userIds = cycles.stream()
+                .filter(c -> c.getLease() != null && c.getLease().getUserId() != null)
+                .map(c -> c.getLease().getUserId())
+                .collect(Collectors.toSet());
+
+        Set<UUID> rentCycleIds = cycles.stream()
+                .filter(c -> c.getId() != null)
+                .map(RentCycleTbl::getId)
+                .collect(Collectors.toSet());
+
+        Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(userIds);
+
+        Map<UUID, List<RentCycleChargeTbl>> chargesMap = rentCycleIds.isEmpty() ? Collections.emptyMap() :
+                rentCycleChargeCrudService.findByRentCycle_IdIn(rentCycleIds)
+                        .stream()
+                        .filter(c -> c.getRentCycle() != null && c.getRentCycle().getId() != null)
+                        .collect(Collectors.groupingBy(c -> c.getRentCycle().getId()));
+
+        return cycles.stream()
+                .map(cycle -> {
+                    UserSummaryDTO user = cycle.getLease() != null ? usersMap.get(cycle.getLease().getUserId()) : null;
+                    List<RentCycleChargeTbl> charges = chargesMap.getOrDefault(cycle.getId(), Collections.emptyList());
+                    return toResponse(cycle, user, charges);
+                })
+                .toList();
+    }
+
     private RentCycleDTOs.RentCycleResponse toResponse(RentCycleTbl cycle) {
-        String tenantName = "Unknown Tenant";
+        UserSummaryDTO user = null;
         try {
-            UserSummaryDTO user = userFacade.getUserById(cycle.getLease().getUserId()).orElse(null);
-            if (user != null && user.fullName() != null) {
-                tenantName = user.fullName();
+            if (cycle.getLease() != null && cycle.getLease().getUserId() != null) {
+                user = userFacade.getUserById(cycle.getLease().getUserId()).orElse(null);
             }
         } catch (Exception e) {
             // Keep default
         }
-        String unitNumber = cycle.getLease().getUnit() != null ? cycle.getLease().getUnit().getUnitNumber() : "Vacant";
-        return RentCycleMapper.toResponse(cycle, tenantName, unitNumber, rentCycleChargeCrudService.findByRentCycle_Id(cycle.getId()));
+        List<RentCycleChargeTbl> charges = cycle.getId() != null ? rentCycleChargeCrudService.findByRentCycle_Id(cycle.getId()) : Collections.emptyList();
+        return toResponse(cycle, user, charges);
+    }
+
+    private RentCycleDTOs.RentCycleResponse toResponse(RentCycleTbl cycle, UserSummaryDTO user, List<RentCycleChargeTbl> charges) {
+        String tenantName = (user != null && user.fullName() != null) ? user.fullName() : "Unknown Tenant";
+        String unitNumber = (cycle.getLease() != null && cycle.getLease().getUnit() != null)
+                ? cycle.getLease().getUnit().getUnitNumber() : "Vacant";
+        return RentCycleMapper.toResponse(cycle, tenantName, unitNumber, charges != null ? charges : Collections.emptyList());
     }
 }

@@ -22,6 +22,14 @@ public class RentCycleChargeCrudServiceImpl extends AbstractCrudService<RentCycl
     }
 
     @Override
+    public List<RentCycleChargeTbl> findByRentCycle_IdIn(java.util.Collection<UUID> rentCycleIds) {
+        if (rentCycleIds == null || rentCycleIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return repository.findByRentCycle_IdIn(rentCycleIds);
+    }
+
+    @Override
     public boolean existsByCustomChargeConfigId(UUID customChargeConfigId) {
         return repository.existsByCustomChargeConfigId(customChargeConfigId);
     }

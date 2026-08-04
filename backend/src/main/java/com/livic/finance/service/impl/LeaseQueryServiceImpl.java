@@ -3,10 +3,12 @@ package com.livic.finance.service.impl;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.LeaseTbl;
+import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.service.interfaces.LeaseCrudService;
 import com.livic.finance.service.interfaces.LeaseQueryService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,11 +55,19 @@ public class LeaseQueryServiceImpl implements LeaseQueryService {
     }
 
     @Override
-    public Map<UUID, List<LeaseTbl>> findActiveLeasesByUnitIds(Collection<UUID> unitIds) {
+    public Page<LeaseTbl> findActiveLeasesByProperty(UUID propertyId, Pageable pageable) {
+        return leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE, pageable);
+    }
+
+    @Override
+    public Map<UUID, List<LeaseSummaryDTO>> findActiveLeasesByUnitIds(Collection<UUID> unitIds) {
         if (unitIds == null || unitIds.isEmpty()) return Collections.emptyMap();
         return leaseCrudService.findByUnit_IdInAndStatus(unitIds, LeaseStatus.ACTIVE)
                 .stream()
-                .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
+                .collect(Collectors.groupingBy(
+                        l -> l.getUnit().getId(),
+                        Collectors.mapping(LeaseSummaryDTO::from, Collectors.toList())
+                ));
     }
 
     @Override

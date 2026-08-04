@@ -3,9 +3,12 @@ package com.livic.finance.controller;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.finance.dto.LeaseDTOs;
-import com.livic.finance.service.impl.LeaseOrchestrationService;
+import com.livic.finance.service.interfaces.LeaseOrchestrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,7 +16,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,10 +28,11 @@ public class LeaseController {
 
     @GetMapping
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_VIEW')")
-    public ResponseEntity<ApiResponse<List<LeaseDTOs.LeaseResponse>>> getActiveLeasesByProperty(
-            @RequestParam UUID propertyId
+    public ResponseEntity<ApiResponse<Page<LeaseDTOs.LeaseResponse>>> getActiveLeasesByProperty(
+            @RequestParam UUID propertyId,
+            @PageableDefault(size = 20) Pageable pageable
     ) {
-        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.getActiveLeasesByProperty(propertyId)));
+        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.getActiveLeasesByProperty(propertyId, pageable)));
     }
 
     @GetMapping("/tenant/active")

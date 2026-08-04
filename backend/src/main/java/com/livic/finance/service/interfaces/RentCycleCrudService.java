@@ -2,10 +2,13 @@ package com.livic.finance.service.interfaces;
 
 import com.livic.common.service.interfaces.CrudService;
 import com.livic.finance.domain.RentCycleTbl;
+import com.livic.finance.dto.DefaulterRecordDTO;
+import com.livic.finance.dto.RevenueMetricsDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,4 +21,7 @@ public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
     List<RentCycleTbl> findByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth);
     Page<RentCycleTbl> findAll(Specification<RentCycleTbl> spec, Pageable pageable);
     List<RentCycleTbl> findAll(Specification<RentCycleTbl> spec);
+
+    RevenueMetricsDTO getRevenueMetrics(Collection<UUID> propertyIds, String billingMonth);
+    Page<DefaulterRecordDTO> getDefaulters(Collection<UUID> propertyIds, Pageable pageable);
 }
