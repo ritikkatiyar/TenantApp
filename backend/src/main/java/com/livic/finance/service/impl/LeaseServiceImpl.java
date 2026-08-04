@@ -109,7 +109,7 @@ public class LeaseServiceImpl implements LeaseService {
         UserSummaryDTO tenant = userFacade.getUserById(targetUserId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
-        authFacade.ensureTenantRole(tenant.id(), unit.getProperty().getId(), assignedByUserId);
+        authFacade.ensureTenantRole(tenant.id(), unitSummary.propertyId(), assignedByUserId);
 
         LeaseTbl lease = LeaseMapper.toEntity(request, unit, targetUserId);
         LeaseTbl saved = leaseCrudService.save(lease);
