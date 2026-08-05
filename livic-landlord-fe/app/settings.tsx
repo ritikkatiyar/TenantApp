@@ -33,7 +33,7 @@ const ALL_PERMISSIONS = [
 export default function SystemPreferencesRoute() {
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
-  const { properties } = useProperties();
+  const { properties, isLoading: propertiesLoading } = useProperties();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   const { accessToken, context } = useAuth();
   const { showToast } = useToast();
@@ -70,6 +70,7 @@ export default function SystemPreferencesRoute() {
   const [generatingInvite, setGeneratingInvite] = useState(false);
 
   useEffect(() => {
+    if (propertiesLoading) return;
     if (!properties || properties.length === 0) {
       setLoading(false);
       return;
@@ -79,7 +80,7 @@ export default function SystemPreferencesRoute() {
     } else {
       setLoading(false);
     }
-  }, [propertyId, accessToken, properties]);
+  }, [propertyId, accessToken, properties, propertiesLoading]);
 
   const loadData = async () => {
     try {
@@ -368,7 +369,7 @@ export default function SystemPreferencesRoute() {
             )}
 
             {/* Zero Property Warning Banner */}
-            {properties.length === 0 && (
+            {!propertiesLoading && properties.length === 0 && (
               <BlurView intensity={60} tint="light" style={{ padding: 24, borderRadius: 20, marginBottom: 24, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.7)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                   <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
@@ -492,12 +493,11 @@ export default function SystemPreferencesRoute() {
             </View>
 
             {/* Active Content Section */}
-            {properties.length > 0 && (
-              loading ? (
-                <View style={styles.center}>
-                  <ActivityIndicator size="large" color="#006875" style={{ marginTop: 40 }} />
-                </View>
-              ) : (
+            {propertiesLoading || loading ? (
+              <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator size="large" color="#006875" />
+              </View>
+            ) : properties.length > 0 ? (
               <View style={{ flex: 1 }}>
                 {activeTab === 'roles' ? (
                   <View style={{ flex: 1 }}>
@@ -545,7 +545,7 @@ export default function SystemPreferencesRoute() {
                   </View>
                 )}
               </View>
-            ))}
+            ) : null}
           </View>
         </ScrollView>
 
