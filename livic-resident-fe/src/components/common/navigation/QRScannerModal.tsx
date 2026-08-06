@@ -11,6 +11,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 
 interface QRScannerModalProps {
   visible: boolean;
@@ -22,22 +23,40 @@ export default function QRScannerModal({ visible, onClose }: QRScannerModalProps
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const mediaStreamRef = useRef<any>(null);
 
   const laserAnim = useRef(new Animated.Value(0)).current;
 
   const startCamera = async () => {
-    if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.mediaDevices) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        mediaStreamRef.current = stream;
-        setHasPermission(true);
-      } catch (err) {
-        console.warn('Camera permission denied or camera unavailable:', err);
+    if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
+      if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        console.warn('Camera access requires HTTPS or localhost');
+        setHasPermission(false);
+        return;
+      }
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } }
+          });
+          mediaStreamRef.current = stream;
+          setHasPermission(true);
+        } catch (err) {
+          console.warn('Camera permission denied or camera unavailable:', err);
+          setHasPermission(false);
+        }
+      } else {
         setHasPermission(false);
       }
     } else {
-      setHasPermission(true);
+      if (!permission?.granted) {
+        const res = await requestPermission();
+        setHasPermission(res.granted);
+      } else {
+        setHasPermission(true);
+      }
     }
   };
 
@@ -93,12 +112,48 @@ export default function QRScannerModal({ visible, onClose }: QRScannerModalProps
     }, 1200);
   };
 
+  const handleBarcodeScanned = ({ data }: { data: string }) => {
+    if (scanned) return;
+    handleSimulateScan(data);
+  };
+
   if (!visible) return null;
 
   return (
     <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
       <View style={styles.container}>
-        <BlurView intensity={Platform.OS === 'ios' ? 80 : 95} tint="dark" style={StyleSheet.absoluteFill} />
+        {/* Fullscreen Camera Preview Background */}
+        {Platform.OS === 'web' ? (
+          <video
+            ref={(node) => {
+              if (node && mediaStreamRef.current) {
+                node.srcObject = mediaStreamRef.current;
+                node.play().catch(() => {});
+              }
+            }}
+            autoPlay
+            playsInline
+            muted
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+        ) : (
+          hasPermission && (
+            <CameraView
+              style={StyleSheet.absoluteFillObject}
+              facing="back"
+              onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+            />
+          )
+        )}
+
+        <BlurView intensity={Platform.OS === 'ios' ? 40 : 60} tint="dark" style={StyleSheet.absoluteFill} />
 
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Scan QR Code</Text>
@@ -109,26 +164,6 @@ export default function QRScannerModal({ visible, onClose }: QRScannerModalProps
 
         <View style={styles.viewfinderContainer}>
           <View style={styles.viewfinder}>
-            {Platform.OS === 'web' && (
-              <video
-                ref={(node) => {
-                  if (node && mediaStreamRef.current) {
-                    node.srcObject = mediaStreamRef.current;
-                    node.play().catch(() => {});
-                  }
-                }}
-                autoPlay
-                playsInline
-                muted
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  borderRadius: 24,
-                }}
-              />
-            )}
-
             <View style={[styles.corner, styles.topLeft]} />
             <View style={[styles.corner, styles.topRight]} />
             <View style={[styles.corner, styles.bottomLeft]} />
@@ -227,12 +262,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   viewfinder: {
-    width: 250,
-    height: 250,
+    width: 260,
+    height: 260,
     borderRadius: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 216, 246, 0.5)',
     position: 'relative',
     overflow: 'hidden',
     justifyContent: 'center',

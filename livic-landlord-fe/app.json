@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.livic.app"
+      "bundleIdentifier": "com.livic.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Livic requires camera access to scan QR codes for property management and unit verification."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,6 +39,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Livic requires camera access to scan QR codes."
+        }
+      ],
       [
         "expo-splash-screen",
         {
