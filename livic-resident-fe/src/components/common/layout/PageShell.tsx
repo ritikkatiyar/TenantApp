@@ -3,6 +3,7 @@ import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform, ViewStyle
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface PageShellProps {
   children: React.ReactNode;
@@ -21,6 +22,8 @@ export function PageShell({
   keyboardAvoiding = false,
   edges = ['top', 'left', 'right'],
 }: PageShellProps) {
+  const { handleScroll } = useScrollNav();
+
   const container = (
     <SafeAreaView edges={edges} style={[styles.safeArea, style]}>
       {scrollable ? (
@@ -28,6 +31,8 @@ export function PageShell({
           style={styles.scrollView}
           contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
           showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
           {children}
         </ScrollView>
@@ -73,7 +78,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Theme.Spacing.containerPadding,
-    paddingBottom: Theme.Spacing.stackLg,
+    paddingBottom: Theme.Spacing.stackLg + 100,
   },
   flatContainer: {
     flex: 1,

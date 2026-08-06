@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 // Phase 4 modular hook & component imports
 import { useInventory, type InventoryTab } from '@/src/features/inventory/hooks/useInventory';
@@ -23,6 +24,7 @@ import { InventoryMoveOutView } from '@/src/features/inventory/components/Invent
 export default function InventoryScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
+  const { handleScroll } = useScrollNav();
 
   const {
     activeTab,
@@ -53,6 +55,8 @@ export default function InventoryScreen() {
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop && <DesktopNavBar title="Inventory" />}
         <ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scroll, isDesktop ? styles.scrollDesktop : { paddingTop: 88 }]}
         >

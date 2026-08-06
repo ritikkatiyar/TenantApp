@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 export default function UnitDetailScreen() {
+  const { handleScroll } = useScrollNav();
   return (
     <LinearGradient
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
@@ -13,7 +15,11 @@ export default function UnitDetailScreen() {
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView style={styles.container}>
+        <ScrollView
+          style={styles.container}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>Unit Details</Text>
           </View>

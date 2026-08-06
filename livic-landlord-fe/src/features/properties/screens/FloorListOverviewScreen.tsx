@@ -25,6 +25,7 @@ import { getFloorSummaries, FloorSummaryResponse, generateBatchUnits } from '@/s
 import { useFocusEffect, useRouter, Href } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -51,6 +52,7 @@ export default function FloorListOverviewScreen({
   const isDesktop = width >= 900;
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { handleScroll } = useScrollNav();
 
   const [propertyName, setPropertyName] = useState('Loading...');
   const [floors, setFloors] = useState<FloorSummaryResponse[]>([]);
@@ -359,7 +361,7 @@ export default function FloorListOverviewScreen({
           }
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
+            { useNativeDriver: false, listener: handleScroll }
           )}
           scrollEventThrottle={16}
         >

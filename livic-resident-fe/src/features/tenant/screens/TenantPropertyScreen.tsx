@@ -9,6 +9,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { getActiveLease, LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface TenantPropertyScreenProps {
   token: string;
@@ -17,6 +18,7 @@ interface TenantPropertyScreenProps {
 
 export default function TenantPropertyScreen({ token, onLogout }: TenantPropertyScreenProps) {
   const { isDesktop } = useResponsive();
+  const { handleScroll } = useScrollNav();
   const [lease, setLease] = useState<LeaseResponse | null>(null);
   const [showLeaseModal, setShowLeaseModal] = useState(false);
 
@@ -41,6 +43,8 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
         {isDesktop && <DesktopNavBar title="My Unit & Property Lease" />}
 
         <ScrollView 
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false} 
           contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
         >

@@ -11,13 +11,14 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 import {
   getBillingStatus,
@@ -44,8 +45,10 @@ declare global {
 }
 
 export default function BillingScreen({ token }: BillingScreenProps) {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isDesktop } = useResponsive();
+  const { handleScroll } = useScrollNav();
   const [isLoading, setIsLoading] = useState(true);
   const [billingData, setBillingData] = useState<BillingStatusResponse | null>(null);
   const [plans, setPlans] = useState<PlanResponse[]>([]);
@@ -289,7 +292,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
           />
         ) : (
           /* Mobile Glassy Header */
-          <View style={styles.headerContainer}>
+          <View style={[styles.headerContainer, !isDesktop && { paddingTop: insets.top, height: 56 + insets.top }]}>
             <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
             <View style={styles.headerContent}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -303,7 +306,12 @@ export default function BillingScreen({ token }: BillingScreenProps) {
           </View>
         )}
 
-        <ScrollView contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 72 }]} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={isDesktop ? styles.desktopInner : null}>
             
             {/* Desktop Hero Title */}

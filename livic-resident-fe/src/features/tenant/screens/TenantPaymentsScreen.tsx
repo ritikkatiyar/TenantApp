@@ -11,6 +11,7 @@ import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface TenantPaymentsScreenProps {
   token: string;
@@ -19,6 +20,7 @@ interface TenantPaymentsScreenProps {
 
 export default function TenantPaymentsScreen({ token, onLogout }: TenantPaymentsScreenProps) {
   const { isDesktop } = useResponsive();
+  const { handleScroll } = useScrollNav();
   const [cycles, setCycles] = useState<RentCycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPayModal, setShowPayModal] = useState(false);
@@ -86,6 +88,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
           </View>
         ) : (
           <ScrollView 
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false} 
             contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
           >

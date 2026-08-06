@@ -235,7 +235,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
           setHoveredFloor(null);
         }
 
-        // Subtract to rotate in the natural direction of the drag (drag right -> rotate right)
+        // Rotate in natural direction of drag
         rotateZ.setValue(lastRotation.current - gestureState.dx * 0.5);
         let newRotX = lastRotationX.current - gestureState.dy * 0.5;
         if (newRotX < 20) newRotX = 20;
@@ -289,17 +289,13 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                 const floorCenterY = state.containerHeight / 2 + yOffset;
                 
                 const dist = Math.abs(clickY - floorCenterY);
-                logger.debug(`[Building3DView] Floor ${fNum}: center=${floorCenterY}, dist=${dist}`);
                 if (dist < minDistance) {
                   minDistance = dist;
                   closestFloor = fNum;
                 }
               });
               
-              logger.debug(`[Building3DView] Closest: Floor ${closestFloor}, minDistance: ${minDistance}, limit: ${state.dynamicFloorHeight * 1.5}`);
-              
               if (minDistance < state.dynamicFloorHeight * 1.5) {
-                logger.debug(`[Building3DView] Triggering click for floor: ${closestFloor}`);
                 state.onFloorClick(closestFloor);
               }
             }
@@ -374,7 +370,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   return (
     <View 
       onLayout={handleLayout}
-      style={{ position: 'relative', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', minHeight: maxContainerHeight }}
+      style={{ position: 'relative', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', minHeight: maxContainerHeight, overflow: 'visible' }}
       {...(webMouseProps as any)}
     >
       {loading || !containerDimensions ? (
@@ -386,108 +382,138 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
           <Text style={styles.emptyText}>No Layout</Text>
         </View>
       ) : (
-        <View 
-          ref={containerRef}
-          style={[
-            styles.container, 
-            { 
-              width: buildingWidth + 40,
-              height: containerHeight
-            }
-          ]}
-          {...panResponder.panHandlers}
-        >
-          {floorNumbers.map((floorNum) => {
-            const elevationAnim = floorElevations[floorNum] || new Animated.Value(0);
-            const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset - buildingHeight / 2 + visualIsoHeight / 2 - 25;
-            const isHovered = floorNum === hoveredFloor;
-            
-            return (
-              <Animated.View
-                key={`floor-${floorNum}`}
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  zIndex: floorNum, // Higher floors should render on top
-                  transform: [
-                    // Elevate each floor, and shift down visually to fit perfectly within the container bounds accounting for rotation anchors
-                  { translateY: Animated.add(baseTranslateY, elevationAnim) },
-                ],
-              }}
-            >
-              {/* 3D Slab Thickness Extrusion (layer stacking) */}
-              {Array.from({ length: 4 }).map((_, idx) => (
+        <>
+          {/* Glassmorphic Occupancy Status Legend Badge */}
+          <View style={styles.legendContainer} pointerEvents="none">
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
+              <Text style={styles.legendText}>Vacant</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#f59e0b' }]} />
+              <Text style={styles.legendText}>Partial</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#ef4444' }]} />
+              <Text style={styles.legendText}>Occupied</Text>
+            </View>
+          </View>
+
+          <View 
+            ref={containerRef}
+            style={[
+              styles.container, 
+              { 
+                width: buildingWidth + 40,
+                height: containerHeight
+              }
+            ]}
+            {...panResponder.panHandlers}
+          >
+            {floorNumbers.map((floorNum) => {
+              const elevationAnim = floorElevations[floorNum] || new Animated.Value(0);
+              const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset - buildingHeight / 2 + visualIsoHeight / 2 - 25;
+              const isHovered = floorNum === hoveredFloor;
+              
+              return (
                 <Animated.View
-                  key={`floor-slab-extrusion-${floorNum}-${idx}`}
-                  style={[
-                    styles.isometricWrapper,
-                    styles.slabExtrusion,
-                    {
-                      position: 'absolute',
-                      zIndex: -1 - idx, // Render behind/below the units
-                      width: buildingWidth,
-                      height: buildingHeight,
-                      transform: [{ rotateX: tilt }, { rotateZ: spin }],
-                      top: (idx + 1) * 1.5, // Translate downward on screen
-                      opacity: 0.9 - idx * 0.15,
-                      backgroundColor: isHovered ? 'rgba(0, 180, 200, 0.7)' : 'rgba(0, 60, 70, 0.4)',
-                      borderColor: isHovered ? 'rgba(0, 229, 255, 0.5)' : 'rgba(0, 229, 255, 0.15)',
-                    }
-                  ]}
-                />
-              ))}
+                  key={`floor-${floorNum}`}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    zIndex: floorNum,
+                    transform: [
+                      { translateY: Animated.add(baseTranslateY, elevationAnim) },
+                    ],
+                  }}
+                >
+                  {/* 3D Slab Thickness Extrusion (layer stacking) */}
+                  {Array.from({ length: 4 }).map((_, idx) => (
+                    <Animated.View
+                      key={`floor-slab-extrusion-${floorNum}-${idx}`}
+                      style={[
+                        styles.isometricWrapper,
+                        styles.slabExtrusion,
+                        {
+                          position: 'absolute',
+                          zIndex: -1 - idx,
+                          width: buildingWidth,
+                          height: buildingHeight,
+                          transform: [{ rotateX: tilt }, { rotateZ: spin }],
+                          top: (idx + 1) * 1.5,
+                          opacity: 0.9 - idx * 0.15,
+                          backgroundColor: isHovered ? 'rgba(0, 180, 200, 0.7)' : 'rgba(0, 60, 70, 0.4)',
+                          borderColor: isHovered ? 'rgba(0, 229, 255, 0.5)' : 'rgba(0, 229, 255, 0.15)',
+                        }
+                      ]}
+                    />
+                  ))}
 
-              {/* Main Floor Plate & Units */}
-              <Animated.View 
-                style={[
-                  styles.isometricWrapper, 
-                  { 
-                    width: buildingWidth,
-                    height: buildingHeight,
-                    transform: [{ rotateX: tilt }, { rotateZ: spin }] 
-                  }
-                ]}
-              >
-                <View style={styles.floorLayer}>
-                  {floors[floorNum].map((unit) => {
-                    const left = (unit.gridX - minX) * dynamicCellSize;
-                    const top = (unit.gridY - minY) * dynamicCellSize;
-                    const width = unit.gridWidth * dynamicCellSize;
-                    const height = unit.gridHeight * dynamicCellSize;
+                  {/* Main Floor Plate & Units */}
+                  <Animated.View 
+                    style={[
+                      styles.isometricWrapper, 
+                      { 
+                        width: buildingWidth,
+                        height: buildingHeight,
+                        transform: [{ rotateX: tilt }, { rotateZ: spin }] 
+                      }
+                    ]}
+                  >
+                    <View style={styles.floorLayer}>
+                      {floors[floorNum].map((unit) => {
+                        const left = (unit.gridX - minX) * dynamicCellSize;
+                        const top = (unit.gridY - minY) * dynamicCellSize;
+                        const width = unit.gridWidth * dynamicCellSize;
+                        const height = unit.gridHeight * dynamicCellSize;
 
-                    const isOccupied = unit.activeLeases && unit.activeLeases.length > 0;
-                    
-                    const unitColor = isOccupied 
-                      ? (isHovered ? 'rgba(0, 229, 255, 1)' : 'rgba(0, 212, 255, 0.95)')
-                      : (isHovered ? 'rgba(0, 229, 255, 0.7)' : 'rgba(0, 229, 255, 0.4)');
-                    const borderColor = isHovered ? '#ffffff' : (isOccupied ? '#00e5ff' : 'rgba(0, 229, 255, 0.8)');
+                        const activeCount = unit.activeLeases ? unit.activeLeases.length : 0;
+                        const capacity = unit.capacity || 1;
+                        
+                        let unitBackgroundColor = '';
+                        let unitBorderColor = '';
 
-                    return (
-                      <View
-                        key={unit.id}
-                        style={[
-                          styles.unitBlock,
-                          { left, top, width, height, backgroundColor: unitColor, borderColor: borderColor, borderWidth: 1.5 }
-                        ]}
-                      />
-                    );
-                  })}
-                </View>
-              </Animated.View>
-            </Animated.View>
-          );
-        })}
-      </View>
-    )}
-  </View>
-);
+                        if (activeCount === 0) {
+                          // VACANT: Emerald Green
+                          unitBackgroundColor = isHovered ? 'rgba(16, 185, 129, 0.95)' : 'rgba(16, 185, 129, 0.65)';
+                          unitBorderColor = isHovered ? '#ffffff' : 'rgba(16, 185, 129, 0.95)';
+                        } else if (activeCount < capacity) {
+                          // PARTIAL: Amber Orange
+                          unitBackgroundColor = isHovered ? 'rgba(245, 158, 11, 0.95)' : 'rgba(245, 158, 11, 0.75)';
+                          unitBorderColor = isHovered ? '#ffffff' : 'rgba(245, 158, 11, 0.95)';
+                        } else {
+                          // OCCUPIED: Crimson Red
+                          unitBackgroundColor = isHovered ? 'rgba(239, 68, 68, 0.95)' : 'rgba(239, 68, 68, 0.75)';
+                          unitBorderColor = isHovered ? '#ffffff' : 'rgba(239, 68, 68, 0.95)';
+                        }
+
+                        return (
+                          <View
+                            key={unit.id}
+                            style={[
+                              styles.unitBlock,
+                              { left, top, width, height, backgroundColor: unitBackgroundColor, borderColor: unitBorderColor, borderWidth: 1.5 }
+                            ]}
+                          />
+                        );
+                      })}
+                    </View>
+                  </Animated.View>
+                </Animated.View>
+              );
+            })}
+          </View>
+        </>
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'visible', // Ensure the 3D stack doesn't clip at the top
+    overflow: 'visible',
     ...Platform.select({
       web: {
         touchAction: 'none',
@@ -536,5 +562,40 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 229, 255, 0.15)',
     borderWidth: 1,
     borderRadius: 2,
+  },
+  legendContainer: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    zIndex: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  legendText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#0b1c30',
   },
 });

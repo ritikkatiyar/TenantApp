@@ -24,6 +24,7 @@ import { generateBatchUnits } from '@/src/features/properties/api/unit.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -45,6 +46,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   const isDesktop = width >= 900;
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { handleScroll } = useScrollNav();
 
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -480,6 +482,34 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
           <Animated.View style={[styles.compactTitleContainer, { opacity: headerOpacity }]}>
             <Text style={styles.compactTitleText}>Create Property</Text>
           </Animated.View>
+          <TouchableOpacity
+            testID="save-button-top"
+            activeOpacity={0.85}
+            onPress={handleSave}
+            disabled={loading}
+            style={{
+              borderRadius: 100,
+              overflow: 'hidden',
+              shadowColor: '#00d4ff',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+          >
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ paddingVertical: 8, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* KAV wraps only the scrollable form — header stays above it */}
@@ -495,7 +525,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
             showsVerticalScrollIndicator={false}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: false }
+              { useNativeDriver: false, listener: handleScroll }
             )}
             scrollEventThrottle={16}
           >
@@ -506,7 +536,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
 
             {/* Main Content Area — same glass style as Login */}
             <BlurView intensity={60} tint="light" style={styles.cardContainer}>
-              {renderFormFieldsContent(true)}
+              {renderFormFieldsContent(false)}
             </BlurView>
           </Animated.ScrollView>
         </KeyboardAvoidingView>
@@ -530,9 +560,9 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
-    paddingHorizontal: 32,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,

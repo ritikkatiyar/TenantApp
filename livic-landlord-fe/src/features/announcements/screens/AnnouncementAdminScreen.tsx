@@ -17,6 +17,7 @@ import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 // Phase 4 modular hook & component imports
 import { useAnnouncementAdmin } from '@/src/features/announcements/hooks/useAnnouncementAdmin';
@@ -37,6 +38,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
   const useTwoColumnLayout = width >= 1500;
   const { accessToken } = useAuth();
   const { properties, isLoading: propertiesLoading } = useProperties();
+  const { handleScroll } = useScrollNav();
 
   const {
     selectedPropertyId,
@@ -153,7 +155,12 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
           </TouchableOpacity>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.mobileContent}>
+        <ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.mobileContent}
+        >
           {showHistory ? (
             <AnnouncementHistoryList
               properties={properties}

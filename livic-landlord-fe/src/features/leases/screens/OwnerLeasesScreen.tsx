@@ -20,8 +20,9 @@ import { BlurView } from 'expo-blur';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useProperties } from '@/src/hooks/useProperties';
-import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 import {
   listActiveLeasesByProperty,
@@ -68,6 +69,7 @@ export default function OwnerLeasesScreen() {
   const { accessToken } = useAuth();
   const { properties, isLoading: isPropsLoading } = useProperties();
   const { showToast } = useToast();
+  const { handleScroll } = useScrollNav();
 
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'leases' | 'bookings' | 'vacancies'>('leases');
@@ -271,9 +273,10 @@ export default function OwnerLeasesScreen() {
 
   // ─── Rendering Helpers ───────────────────────────────────────────────────────
   const filteredLeases = useMemo(() => {
+    if (!Array.isArray(leases)) return [];
     return leases.filter((lease) => {
       const q = searchQuery.toLowerCase();
-      const matchesSearch = `${lease.unitNumber} ${lease.tenantName || ''} ${lease.tenantPhone || ''}`
+      const matchesSearch = `${lease.unitNumber || ''} ${lease.tenantName || ''} ${lease.tenantPhone || ''}`
         .toLowerCase()
         .includes(q);
       return matchesSearch;
@@ -281,9 +284,10 @@ export default function OwnerLeasesScreen() {
   }, [leases, searchQuery]);
 
   const filteredBookings = useMemo(() => {
+    if (!Array.isArray(bookings)) return [];
     return bookings.filter((b) => {
       const q = searchQuery.toLowerCase();
-      return `${b.unitNumber} ${b.prospectiveTenantName} ${b.prospectiveTenantPhone}`
+      return `${b.unitNumber || ''} ${b.prospectiveTenantName || ''} ${b.prospectiveTenantPhone || ''}`
         .toLowerCase()
         .includes(q);
     });
@@ -313,6 +317,8 @@ export default function OwnerLeasesScreen() {
         {isDesktop && <DesktopNavBar title="Lease Operations" />}
 
         <ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.scrollContent,

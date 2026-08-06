@@ -10,7 +10,7 @@ import {
   Platform,
   Modal
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
@@ -26,11 +26,14 @@ import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 
 export default function ExpenseConfigurationScreen({ token }: { token: string | null }) {
+  const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+  const { handleScroll } = useScrollNav();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
@@ -204,7 +207,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             onPropertyChange={(id) => router.replace(`/expenses/charge-config?propertyId=${id}`)}
           />
         ) : (
-          <View style={styles.headerContainer}>
+          <View style={[styles.headerContainer, !isDesktop && { paddingTop: insets.top, height: 56 + insets.top }]}>
             <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
             <View style={styles.headerContent}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -213,17 +216,31 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
               <View style={styles.titleWrapper}>
                 <Text style={styles.compactTitleText}>Charge Configuration</Text>
               </View>
-              <View style={{ width: 40 }} />
+              <TouchableOpacity 
+                style={styles.headerGradientTouch}
+                onPress={() => router.push(`/expenses/create-expense?propertyId=${propertyId}` as any)}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.headerGradientInner}
+                >
+                  <MaterialIcons name="add" size={15} color="#fff" />
+                  <Text style={styles.headerGradientText}>NEW</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </View>
         )}
 
         <Animated.ScrollView
-          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 76 }]}
+          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
+            { useNativeDriver: false, listener: handleScroll }
           )}
           scrollEventThrottle={16}
         >
@@ -547,6 +564,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  headerGradientTouch: {
+    borderRadius: 100,
+    overflow: 'hidden',
+    shadowColor: '#00d4ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  headerGradientInner: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 100,
+  },
+  headerGradientText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   desktopBackButton: {
     flexDirection: 'row',

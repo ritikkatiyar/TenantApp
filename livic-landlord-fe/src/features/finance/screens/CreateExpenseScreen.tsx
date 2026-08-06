@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Platform
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -21,14 +21,17 @@ import { createChargeConfig, updateChargeConfig, getChargeConfigById } from '@/s
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 import { useProperties } from '@/src/hooks/useProperties';
 
 export default function CreateExpenseScreen({ token }: { token: string | null }) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+  const { handleScroll } = useScrollNav();
   const { propertyId: paramPropertyId, chargeId } = useLocalSearchParams<{ propertyId?: string, chargeId?: string }>();
   const { isDesktop } = useResponsive();
+  const insets = useSafeAreaInsets();
   const { properties } = useProperties();
   const propertyId = paramPropertyId && paramPropertyId !== 'null' ? paramPropertyId : (properties && properties.length > 0 ? properties[0].id : null);
   const { showToast } = useToast();
@@ -639,7 +642,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
         {/* Pinned Glassy Header */}
-        <View style={styles.headerContainer}>
+        <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
           <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
           <View style={styles.headerContent}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -648,16 +651,43 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             <View style={styles.titleWrapper}>
               <Text style={styles.compactTitleText}>{isEditMode ? 'Update Charge' : 'New Charge'}</Text>
             </View>
-            <View style={{ width: 36 }} />
+            <TouchableOpacity
+              onPress={handleSubmit}
+              disabled={isLoading}
+              style={{
+                borderRadius: 100,
+                overflow: 'hidden',
+                shadowColor: '#00d4ff',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient
+                colors={['#00d4ff', '#0072ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>
+                    {isEditMode ? 'Save' : 'Create'}
+                  </Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         </View>
 
         <Animated.ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingTop: 86 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: 68 + insets.top }]}
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
+            { useNativeDriver: false, listener: handleScroll }
           )}
           scrollEventThrottle={16}
         >
@@ -671,7 +701,6 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
           {renderCard2()}
           {renderCard3()}
           {renderLivePreview()}
-          {renderActionButtons(false)}
 
           <View style={{ height: 40 }} />
         </Animated.ScrollView>

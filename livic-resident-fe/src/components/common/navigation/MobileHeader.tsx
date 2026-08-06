@@ -1,40 +1,34 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 
 interface MobileHeaderProps {
   title: string;
-  onMenuPress: () => void;
+  onMenuPress?: () => void;
 }
 
-export default function MobileHeader({ title, onMenuPress }: MobileHeaderProps) {
+export default function MobileHeader({ title }: MobileHeaderProps) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.headerWrapper}>
+    <View style={[styles.headerWrapper, { paddingTop: insets.top, height: 56 + insets.top }]}>
       <BlurView intensity={70} tint="light" style={StyleSheet.absoluteFillObject} />
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity 
-            style={styles.menuButton} 
-            onPress={onMenuPress}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="menu" size={26} color="#0b1c30" />
-          </TouchableOpacity>
-          
-          <View style={styles.titleContainer}>
-            <Text style={styles.titleText} numberOfLines={1}>
-              {title}
-            </Text>
-          </View>
-          
-          <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
-            <Ionicons name="notifications-outline" size={23} color="#0b1c30" />
-            <View style={styles.notificationBadge} />
-          </TouchableOpacity>
+      <View style={styles.headerContainer}>
+        <View style={{ width: 40 }} />
+        
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText} numberOfLines={1}>
+            {title}
+          </Text>
         </View>
-      </SafeAreaView>
+        
+        <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
+          <Ionicons name="notifications-outline" size={23} color="#0b1c30" />
+          <View style={styles.notificationBadge} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -45,6 +39,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+    overflow: 'hidden',
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.4)',
     backgroundColor: 'rgba(248, 249, 255, 0.4)',

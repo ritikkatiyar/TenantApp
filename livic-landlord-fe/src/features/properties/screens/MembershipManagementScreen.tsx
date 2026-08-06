@@ -14,6 +14,7 @@ import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { ConfirmDialog } from '@/src/components/common/feedback/ConfirmDialog';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface UserSearchResponse {
   id: string;
@@ -29,6 +30,7 @@ interface Props {
 export default function MembershipManagementScreen({ propertyId }: Props) {
   const router = useRouter();
   const { accessToken } = useAuth();
+  const { handleScroll } = useScrollNav();
   
   const [memberships, setMemberships] = useState<MembershipResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,6 +193,8 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
           renderItem={renderItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.list}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           ListEmptyComponent={
             <Text style={styles.emptyText}>No staff members found.</Text>
           }

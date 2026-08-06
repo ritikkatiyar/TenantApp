@@ -11,7 +11,7 @@ import {
   TextInput,
   KeyboardAvoidingView
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -19,6 +19,7 @@ import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import GlassDropdown, { DropdownOption } from '@/src/components/common/inputs/GlassDropdown';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useProperties } from '@/src/hooks/useProperties';
 import { getActiveChargesForProperty, ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
 import { getOrCreateWorksheet, batchSaveWorksheet, WorksheetEntryResponse } from '@/src/features/finance/api/worksheet.api';
@@ -28,6 +29,8 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
+  const { handleScroll } = useScrollNav();
+  const insets = useSafeAreaInsets();
   const { properties } = useProperties();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   
@@ -447,8 +450,8 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
-        {/* Pinned Glassy Overlay Header — clean, title only */}
-        <View style={styles.headerContainer}>
+        {/* Pinned Glassy Overlay Header */}
+        <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
           <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
           <View style={styles.headerContent}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -457,12 +460,33 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             <View style={styles.titleWrapper}>
               <Text style={styles.compactTitleText}>Worksheets</Text>
             </View>
-            <View style={{ width: 36 }} />
+            <TouchableOpacity 
+              style={[styles.headerGradientTouch, (isSaving || entries.length === 0) && { opacity: 0.5 }]}
+              onPress={handleSave}
+              disabled={isSaving || entries.length === 0}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#00d4ff', '#0072ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.headerGradientInner}
+              >
+                {isSaving ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <MaterialIcons name="check" size={15} color="#fff" />
+                    <Text style={styles.headerGradientText}>SAVE</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Filters */}
-        <View style={[styles.filterSection, { paddingTop: 76 }]}>
+        <View style={[styles.filterSection, { paddingTop: 68 + insets.top }]}>
           <View style={styles.mobileDropdownWrapper}>
             <GlassDropdown 
               options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
@@ -489,7 +513,12 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={[styles.mobileListContent, { paddingBottom: 120 }]} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={[styles.mobileListContent, { paddingBottom: 120 }]}
+          keyboardShouldPersistTaps="handled"
+        >
           {isLoadingCharges ? (
             <ActivityIndicator size="large" color="#006875" style={{ marginTop: 50 }} />
           ) : charges.length === 0 ? (
@@ -508,33 +537,6 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             renderFloorsList()
           )}
         </ScrollView>
-
-        {/* Floating Save Button */}
-        <View style={styles.floatingSaveBar}>
-          <BlurView intensity={55} tint="light" style={StyleSheet.absoluteFillObject} />
-          <TouchableOpacity
-            style={[styles.floatingSaveBtn, (isSaving || entries.length === 0) && { opacity: 0.5 }]}
-            onPress={handleSave}
-            disabled={isSaving || entries.length === 0}
-            activeOpacity={0.85}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.floatingSaveBtnInner}
-            >
-              {isSaving ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <>
-                  <MaterialIcons name="check" size={20} color="#fff" />
-                  <Text style={styles.floatingSaveText}>SAVE WORKSHEET</Text>
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -902,5 +904,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#5b6b6d',
+  },
+  headerGradientTouch: {
+    borderRadius: 100,
+    overflow: 'hidden',
+    shadowColor: '#00d4ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  headerGradientInner: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 100,
+  },
+  headerGradientText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });

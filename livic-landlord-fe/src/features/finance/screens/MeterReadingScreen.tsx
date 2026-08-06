@@ -12,6 +12,7 @@ import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 // Phase 4 modular hook & component imports
 import { useMeterReading } from '@/src/features/finance/hooks/useMeterReading';
@@ -25,6 +26,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   const { properties } = useProperties();
   const propertyId = paramPropertyId || paramPropertyIdAlt || (properties && properties.length > 0 ? properties[0].id : null);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const { handleScroll } = useScrollNav();
 
   const {
     isLoading,
@@ -319,7 +321,12 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
           </View>
         </View>
 
-        <Animated.ScrollView contentContainerStyle={styles.listContent} keyboardShouldPersistTaps="handled">
+        <Animated.ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
+        >
           {(!properties || properties.length === 0) ? (
             <BlurView intensity={60} tint="light" style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%' }}>
               <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>

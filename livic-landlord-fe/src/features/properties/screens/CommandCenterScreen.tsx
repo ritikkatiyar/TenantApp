@@ -20,8 +20,9 @@ import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { PropertyResponse } from '@/src/types/property';
-import { useToast } from '@/src/components/common/feedback/ToastContext';
 import FloorLayoutViewerModal from '@/src/features/properties/components/FloorLayoutViewerModal';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 // Phase 4 modular hook & component imports
 import { useCommandCenter } from '@/src/features/properties/hooks/useCommandCenter';
@@ -43,6 +44,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const { user, accessToken } = useAuth();
   const { properties, isLoading, error, refreshProperties, deleteProperty, togglePropertyActive } = useProperties();
   const { showToast } = useToast();
+  const { handleScroll: handleNavScroll } = useScrollNav();
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const {
@@ -271,10 +273,13 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               showsVerticalScrollIndicator={false}
               refreshing={isLoading}
               onRefresh={refreshProperties}
-              onScroll={Animated.event(
-                [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                { useNativeDriver: false }
-              )}
+              onScroll={(e) => {
+                handleNavScroll(e);
+                Animated.event(
+                  [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                  { useNativeDriver: false }
+                )(e);
+              }}
               scrollEventThrottle={16}
             />
           )}

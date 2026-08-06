@@ -37,12 +37,13 @@ export function PropertyCard({
 
   if (isDesktop) {
     return (
-      <BlurView intensity={60} tint="light" style={[styles.propertyCard, styles.propertyCardDesktop]}>
+      <View style={[styles.propertyCard, styles.propertyCardDesktop]}>
+        <BlurView intensity={60} tint="light" style={styles.cardBlurBackground} />
         <View style={styles.desktopCardRow}>
           {/* Left Side: 3D Building Preview */}
           <View style={styles.desktopCardLeft}>
             <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerDesktop, item.isActive === false && { opacity: 0.65 }]}>
-              <View style={{ transform: [{ translateY: -45 }], width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ transform: [{ translateY: -30 }], width: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}>
                 {accessToken && (
                   <Building3DView 
                     propertyId={item.id} 
@@ -157,12 +158,13 @@ export function PropertyCard({
             </View>
           </View>
         </View>
-      </BlurView>
+      </View>
     );
   }
 
   return (
-    <BlurView intensity={60} tint="light" style={[styles.propertyCard, item.isActive === false && { opacity: 0.85 }]}>
+    <View style={[styles.propertyCard, item.isActive === false && { opacity: 0.85 }]}>
+      <BlurView intensity={60} tint="light" style={styles.cardBlurBackground} />
       <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile, item.isActive === false && { opacity: 0.65 }]}>
         {accessToken && (
           <Building3DView 
@@ -267,23 +269,30 @@ export function PropertyCard({
           <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
         </View>
       </TouchableOpacity>
-    </BlurView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   propertyCard: {
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
     padding: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
-    overflow: 'hidden',
+    overflow: 'visible',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.05,
     shadowRadius: 16,
     elevation: 4,
+    position: 'relative',
+    zIndex: 1,
+  },
+  cardBlurBackground: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 24,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.75)',
   },
   propertyCardDesktop: {
     minHeight: 280,
@@ -303,20 +312,23 @@ const styles = StyleSheet.create({
   buildingPreviewContainer: {
     backgroundColor: 'rgba(0, 104, 117, 0.04)',
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: 'visible',
     position: 'relative',
     borderWidth: 1,
     borderColor: 'rgba(0, 104, 117, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 5,
   },
   buildingPreviewContainerDesktop: {
     height: 232,
     width: '100%',
+    overflow: 'visible',
   },
   buildingPreviewContainerMobile: {
     height: 180,
     width: '100%',
+    overflow: 'visible',
   },
   resetButtonOverlay: {
     position: 'absolute',

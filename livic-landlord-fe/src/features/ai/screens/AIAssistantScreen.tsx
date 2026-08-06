@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -9,8 +9,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Pressable,
+  Animated,
+  PanResponder,
+  Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -39,16 +43,76 @@ const EXAMPLES = [
 
 export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isDesktop } = useResponsive();
+  const scrollViewRef = useRef<ScrollView>(null);
+  
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<Message[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Tell me what you want to do in Tenant Living. For now I can guide and clarify; action tools come next.',
+      text: 'Hello! I am your AI Property Assistant. How can I assist with your properties, billing, or unit planning today?',
     },
   ]);
   const [isSending, setIsSending] = React.useState(false);
+
+  // Animations & Gestures
+  const translateY = useRef(new Animated.Value(500)).current;
+
+  // Slide up on mount
+  useEffect(() => {
+    Animated.spring(translateY, {
+      toValue: 0,
+      tension: 60,
+      friction: 9,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const animateClose = React.useCallback(() => {
+    Keyboard.dismiss();
+    Animated.timing(translateY, {
+      toValue: 550,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => {
+      router.back();
+    });
+  }, [router, translateY]);
+
+  // PanResponder for drag-down-to-dismiss handle gesture
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5,
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 80 || gestureState.vy > 0.5) {
+          animateClose();
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            tension: 80,
+            friction: 8,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  // Auto scroll to latest message
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [messages, isSending]);
 
   const sendMessage = React.useCallback(async (text: string) => {
     const trimmedText = text.trim();
@@ -72,7 +136,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
       if (response.jobId && response.status === 'PENDING') {
         const jobId = response.jobId;
         let pollCount = 0;
-        const maxPolls = 40; // 40 * 1.5s = 60s timeout limit
+        const maxPolls = 40;
 
         const poll = async (): Promise<string> => {
           return new Promise((resolve, reject) => {
@@ -133,361 +197,436 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
     }
   }, [isSending, token]);
 
-  const renderHeader = () => {
-    if (isDesktop) return null;
-    return (
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity 
-            onPress={() => router.back()} 
-            style={styles.backButton}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-          </TouchableOpacity>
-          <View style={styles.titleBlock}>
-            <Text style={styles.title}>AI Command</Text>
-          </View>
-        </View>
-        <View style={styles.statusPill}>
-          <MaterialIcons name="auto-awesome" size={16} color="#006875" />
-          <Text style={styles.statusText}>Gemini</Text>
-        </View>
-      </View>
-    );
-  };
-
   return (
-    <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
-        {isDesktop && (
-          <DesktopNavBar />
-        )}
-        <KeyboardAvoidingView
-          style={styles.keyboardView}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <View style={styles.outerWrapper}>
+      {/* Translucent Frosted Glass Background */}
+      <BlurView intensity={35} tint="dark" style={StyleSheet.absoluteFillObject} />
+
+      {isDesktop && <DesktopNavBar />}
+
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        pointerEvents="box-none"
+      >
+        {/* Backdrop overlay listener to collapse panel when tapping anywhere outside */}
+        <Pressable 
+          style={styles.backdropOverlay} 
+          onPress={animateClose} 
+        />
+
+        <Animated.View 
+          style={[
+            styles.dialogueContainer,
+            isDesktop && styles.dialogueContainerDesktop,
+            { 
+              transform: [{ translateY }],
+              paddingBottom: isDesktop ? 0 : Math.max(insets.bottom, 8) 
+            }
+          ]}
+          pointerEvents="auto"
         >
-          <View style={[styles.mainContainer, isDesktop && styles.mainContainerDesktop]}>
-            {renderHeader()}
+          <BlurView intensity={95} tint="light" style={styles.glassCard}>
+            {/* Drag Handle Container with PanResponder */}
+            <View {...panResponder.panHandlers} style={styles.dragHandleZone}>
+              <View style={styles.dragBar} />
+            </View>
 
-            <ScrollView
-              style={styles.messageList}
-              contentContainerStyle={styles.messageContent}
-              keyboardShouldPersistTaps="handled"
-            >
-              {isDesktop && (
-                <View style={styles.desktopHero}>
-                  <Text style={styles.desktopHeroTitle}>AI Command</Text>
+            {/* Header */}
+            <View style={styles.dialogueHeader}>
+              <View style={styles.headerTitleGroup}>
+                <LinearGradient
+                  colors={['#00F2FE', '#4FACFE', '#7F00FF']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.aiOrbIcon}
+                >
+                  <MaterialIcons name="auto-awesome" size={16} color="#ffffff" />
+                </LinearGradient>
+                <View>
+                  <Text style={styles.dialogueTitle}>AI Command Desk</Text>
+                  <View style={styles.onlineBadge}>
+                    <View style={styles.greenDot} />
+                    <Text style={styles.onlineText}>Gemini 1.5 Pro</Text>
+                  </View>
                 </View>
-              )}
+              </View>
+            </View>
 
-              <View style={[styles.examples, isDesktop && styles.examplesDesktop]}>
-                {EXAMPLES.map((example) => (
-                  <TouchableOpacity
-                    key={example}
-                    onPress={() => sendMessage(example)}
-                    disabled={isSending}
-                    activeOpacity={0.75}
-                    style={[{ borderRadius: 20, overflow: 'hidden' }, isDesktop && styles.exampleButtonDesktop]}
-                  >
-                    <BlurView
-                      intensity={60}
-                      tint="light"
-                      style={[styles.exampleButton, isDesktop && { flex: 1, justifyContent: 'center' }]}
+            {/* Message Stream */}
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.messageStream}
+              contentContainerStyle={styles.messageStreamContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
+              {/* Quick Command Suggestions */}
+              <View style={styles.suggestionBlock}>
+                <Text style={styles.suggestionTitle}>QUICK COMMANDS</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  {EXAMPLES.map((example) => (
+                    <TouchableOpacity
+                      key={example}
+                      onPress={() => sendMessage(example)}
+                      disabled={isSending}
+                      activeOpacity={0.75}
+                      style={styles.chipButton}
                     >
-                      <MaterialIcons name="auto-awesome" size={14} color="#006875" />
-                      <Text style={[styles.exampleText, { flexShrink: 1 }]}>{example}</Text>
-                    </BlurView>
-                  </TouchableOpacity>
-                ))}
+                      <MaterialIcons name="bolt" size={14} color="#006875" />
+                      <Text style={styles.chipText}>{example}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
 
+              {/* Chat Messages */}
               {messages.map((message) => (
-                <BlurView
+                <View
                   key={message.id}
-                  intensity={95}
-                  tint="light"
                   style={[
-                    styles.messageBubble,
-                    message.role === 'user' ? styles.userBubble : styles.assistantBubble,
-                    isDesktop && styles.messageBubbleDesktop,
+                    styles.msgRow,
+                    message.role === 'user' ? styles.msgRowUser : styles.msgRowAssistant,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.messageText,
-                      message.role === 'user' ? styles.userText : styles.assistantText,
-                    ]}
-                  >
-                    {message.text}
-                  </Text>
-                </BlurView>
+                  {message.role === 'assistant' && (
+                    <View style={styles.assistantAvatar}>
+                      <MaterialIcons name="auto-awesome" size={14} color="#006875" />
+                    </View>
+                  )}
+
+                  {message.role === 'user' ? (
+                    <LinearGradient
+                      colors={['#008394', '#005b66']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[styles.bubble, styles.userBubble]}
+                    >
+                      <Text style={styles.userText}>{message.text}</Text>
+                    </LinearGradient>
+                  ) : (
+                    <BlurView intensity={95} tint="light" style={[styles.bubble, styles.assistantBubble]}>
+                      <Text style={styles.assistantText}>{message.text}</Text>
+                    </BlurView>
+                  )}
+                </View>
               ))}
 
-              {isSending ? (
-                <BlurView
-                  intensity={95}
-                  tint="light"
-                  style={[styles.messageBubble, styles.assistantBubble, styles.loadingBubble]}
-                >
-                  <ActivityIndicator size="small" color="#006875" />
-                  <Text style={styles.loadingText}>Thinking...</Text>
-                </BlurView>
-              ) : null}
+              {isSending && (
+                <View style={[styles.msgRow, styles.msgRowAssistant]}>
+                  <View style={styles.assistantAvatar}>
+                    <MaterialIcons name="auto-awesome" size={14} color="#006875" />
+                  </View>
+                  <BlurView intensity={95} tint="light" style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
+                    <ActivityIndicator size="small" color="#006875" />
+                    <Text style={styles.loadingText}>Analyzing command...</Text>
+                  </BlurView>
+                </View>
+              )}
             </ScrollView>
 
-            <BlurView intensity={60} tint="light" style={[styles.inputBar, isDesktop && styles.inputBarDesktop]}>
-              <TextInput
-                style={styles.input}
-                value={input}
-                onChangeText={setInput}
-                placeholder="Ask AI to help with a property task..."
-                placeholderTextColor="#7d8b8e"
-                multiline
-                maxLength={1000}
-                editable={!isSending}
-              />
-              <TouchableOpacity
-                onPress={() => sendMessage(input)}
-                disabled={!input.trim() || isSending}
-                activeOpacity={0.8}
-                style={{ borderRadius: 20, overflow: 'hidden' }}
-              >
-                {(!input.trim() || isSending) ? (
-                  <View style={[styles.sendButton, styles.sendButtonDisabled]}>
-                    <MaterialIcons name="arrow-upward" size={20} color="rgba(0, 104, 117, 0.3)" />
-                  </View>
-                ) : (
-                  <LinearGradient
-                    colors={['#008394', '#005b66']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
-                    style={styles.sendButton}
-                  >
-                    <MaterialIcons name="arrow-upward" size={20} color="#fff" />
-                  </LinearGradient>
-                )}
-              </TouchableOpacity>
-            </BlurView>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </LinearGradient>
+            {/* Input Bar */}
+            <View style={styles.dialogueFooter}>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.textInput}
+                  value={input}
+                  onChangeText={setInput}
+                  placeholder="Ask AI to execute a task..."
+                  placeholderTextColor="#7d8b8e"
+                  multiline
+                  maxLength={1000}
+                  editable={!isSending}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 150);
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => sendMessage(input)}
+                  disabled={!input.trim() || isSending}
+                  activeOpacity={0.8}
+                  style={styles.sendButtonWrapper}
+                >
+                  {(!input.trim() || isSending) ? (
+                    <View style={styles.sendButtonDisabled}>
+                      <MaterialIcons name="arrow-upward" size={18} color="rgba(0, 104, 117, 0.3)" />
+                    </View>
+                  ) : (
+                    <LinearGradient
+                      colors={['#00e0ff', '#0072ff']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.sendButtonActive}
+                    >
+                      <MaterialIcons name="arrow-upward" size={18} color="#ffffff" />
+                    </LinearGradient>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </BlurView>
+        </Animated.View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
+  outerWrapper: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
-  safeArea: {
+  backdropOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.35)',
+  },
+  keyboardAvoid: {
     flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  header: {
+    justifyContent: 'flex-end',
     alignItems: 'center',
+  },
+  dialogueContainer: {
+    width: '100%',
+    height: '52%',
+    minHeight: 380,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: 'hidden',
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 28,
+    elevation: 16,
+  },
+  dialogueContainerDesktop: {
+    maxWidth: 680,
+    height: 480,
+    borderRadius: 28,
+    marginBottom: 24,
+    borderWidth: 1.5,
+  },
+  glassCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+  },
+  dragHandleZone: {
+    width: '100%',
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  dragBar: {
+    width: 42,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: 'rgba(0, 104, 117, 0.3)',
+  },
+  dialogueHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 12,
+    paddingBottom: 10,
+    paddingTop: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
   },
-  headerLeft: {
+  headerTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-  },
-  titleBlock: {
-    flex: 1,
-  },
-  title: {
-    color: '#151d1e',
-    fontSize: 30,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: '#607174',
-    fontSize: 15,
-    marginTop: 4,
-  },
-  statusPill: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 104, 117, 0.1)',
-    borderRadius: 18,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  statusText: {
-    color: '#006875',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  messageList: {
-    flex: 1,
-  },
-  messageContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  examples: {
-    flexDirection: 'column',
     gap: 10,
-    marginBottom: 18,
-    marginTop: 8,
   },
-  exampleButton: {
+  aiOrbIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dialogueTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0b1c30',
+  },
+  onlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 1,
+  },
+  greenDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10b981',
+  },
+  onlineText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#006875',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  messageStream: {
+    flex: 1,
+  },
+  messageStreamContent: {
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  suggestionBlock: {
+    gap: 6,
+    marginBottom: 6,
+  },
+  suggestionTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#607174',
+    letterSpacing: 0.8,
+  },
+  chipButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
-  exampleText: {
-    color: '#004b57',
-    fontSize: 13,
+  chipText: {
+    fontSize: 12,
     fontWeight: '600',
+    color: '#006875',
   },
-  messageBubble: {
+  msgRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    marginVertical: 2,
+  },
+  msgRowUser: {
+    justifyContent: 'flex-end',
+  },
+  msgRowAssistant: {
+    justifyContent: 'flex-start',
+  },
+  assistantAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(0, 104, 117, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  bubble: {
+    maxWidth: '82%',
     borderRadius: 16,
-    marginBottom: 12,
-    maxWidth: '88%',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     overflow: 'hidden',
   },
   userBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: 'rgba(0, 104, 117, 0.32)',
+    borderBottomRightRadius: 4,
   },
   assistantBubble: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-  },
-  messageText: {
-    fontSize: 15,
-    lineHeight: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    borderWidth: 1,
+    borderBottomLeftRadius: 4,
   },
   userText: {
-    color: '#004b57',
+    color: '#ffffff',
+    fontSize: 13.5,
+    lineHeight: 19,
+    fontWeight: '600',
   },
   assistantText: {
-    color: '#172426',
+    color: '#151d1e',
+    fontSize: 13.5,
+    lineHeight: 19,
+    fontWeight: '500',
   },
   loadingBubble: {
-    alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
+    gap: 8,
   },
   loadingText: {
+    fontSize: 12,
+    fontWeight: '600',
     color: '#006875',
-    fontSize: 14,
-    fontWeight: '700',
   },
-  inputBar: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    borderWidth: 1,
-    borderRadius: 30,
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    marginBottom: Platform.OS === 'ios' ? 24 : 20,
-    marginHorizontal: 16,
-    boxShadow: '0px 8px 32px rgba(0, 104, 117, 0.08)',
-    overflow: 'hidden',
-  },
-  input: {
-    backgroundColor: 'transparent',
-    color: '#172426',
-    flex: 1,
-    fontSize: 15,
-    lineHeight: 20,
-    maxHeight: 120,
-    minHeight: 40,
-    paddingHorizontal: 4,
+  dialogueFooter: {
+    paddingHorizontal: 14,
     paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: 'rgba(0, 104, 117, 0.2)',
+    borderWidth: 1.5,
+    borderRadius: 22,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    gap: 8,
+  },
+  textInput: {
+    flex: 1,
+    fontSize: 13.5,
+    color: '#151d1e',
+    maxHeight: 80,
+    minHeight: 36,
+    paddingVertical: 4,
     ...Platform.select({
       web: {
         outlineStyle: 'none',
       } as any,
     }),
   },
-  sendButton: {
+  sendButtonWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  sendButtonActive: {
+    width: 34,
+    height: 34,
     alignItems: 'center',
-    borderRadius: 20,
-    height: 40,
     justifyContent: 'center',
-    width: 40,
-    boxShadow: '0px 4px 12px rgba(0, 104, 117, 0.25)',
   },
   sendButtonDisabled: {
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-    boxShadow: 'none',
-  },
-  mainContainer: {
-    flex: 1,
-  },
-  mainContainerDesktop: {
-    width: '100%',
-    maxWidth: 900,
-    alignSelf: 'center',
-    paddingTop: 16,
-  },
-  examplesDesktop: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  exampleButtonDesktop: {
-    flex: 1,
-    justifyContent: 'center',
-    minHeight: 60,
-  },
-  inputBarDesktop: {
-    marginBottom: 24,
-    marginHorizontal: 0,
-  },
-  messageBubbleDesktop: {
-    maxWidth: '75%',
-  },
-  desktopHero: {
+    width: 34,
+    height: 34,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 24,
-  },
-  desktopHeroTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#151d1e',
-  },
-  desktopHeroSubtitle: {
-    fontSize: 15,
-    color: '#607174',
-    marginTop: 6,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
 });

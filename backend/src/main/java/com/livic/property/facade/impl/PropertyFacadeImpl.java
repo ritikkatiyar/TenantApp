@@ -25,7 +25,7 @@ import java.util.*;
 public class PropertyFacadeImpl implements PropertyFacade {
 
     @PersistenceContext
-    private final EntityManager entityManager;
+    private EntityManager entityManager;
 
     private final PropertyQueryService propertyQueryService;
     private final UnitQueryService unitQueryService;

@@ -14,7 +14,7 @@ import {
   useWindowDimensions
 } from 'react-native';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -26,6 +26,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useRouter, Href } from 'expo-router';
 import Building3DView from '@/src/features/properties/components/Building3DView';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -54,6 +55,8 @@ export default function EditPropertyScreen({
   const isDesktop = width >= 900;
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const { handleScroll } = useScrollNav();
+  const insets = useSafeAreaInsets();
 
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -442,7 +445,7 @@ export default function EditPropertyScreen({
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
         {/* Pinned Glassy Overlay Back Header */}
-        <View style={styles.headerContainer}>
+        <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
           <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
           <View style={styles.headerContent}>
             <TouchableOpacity onPress={onBack} style={styles.backButton}>
@@ -451,7 +454,32 @@ export default function EditPropertyScreen({
             <View style={styles.titleWrapper}>
               <Text style={styles.compactTitleText}>Edit Property</Text>
             </View>
-            <View style={{ width: 40 }} />
+            <TouchableOpacity
+              onPress={handleUpdate}
+              disabled={saving}
+              style={{
+                borderRadius: 100,
+                overflow: 'hidden',
+                shadowColor: '#00d4ff',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <LinearGradient
+                colors={['#00d4ff', '#0072ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ paddingVertical: 8, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -460,11 +488,11 @@ export default function EditPropertyScreen({
           style={styles.flex}
         >
           <Animated.ScrollView 
-            contentContainerStyle={[styles.scrollContent, { paddingTop: 76 }]}
+            contentContainerStyle={[styles.scrollContent, { paddingTop: 68 + insets.top }]}
             showsVerticalScrollIndicator={false}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: false }
+              { useNativeDriver: false, listener: handleScroll }
             )}
             scrollEventThrottle={16}
           >
@@ -556,29 +584,6 @@ export default function EditPropertyScreen({
                   </View>
                 )}
               </View>
-
-              <TouchableOpacity 
-                style={styles.saveButtonWrapper} 
-                onPress={handleUpdate}
-                disabled={saving}
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.saveButton}
-                >
-                  {saving ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Text style={styles.saveButtonText}>SAVE CHANGES</Text>
-                      <MaterialIcons name="check" size={20} color="#fff" />
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
 
               <View style={styles.divider} />
 

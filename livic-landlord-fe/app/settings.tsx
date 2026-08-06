@@ -13,6 +13,7 @@ import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 
 import { useProperties } from '@/src/hooks/useProperties';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
 
@@ -37,6 +38,7 @@ export default function SystemPreferencesRoute() {
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   const { accessToken, context } = useAuth();
   const { showToast } = useToast();
+  const { handleScroll } = useScrollNav();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
 
@@ -353,7 +355,12 @@ export default function SystemPreferencesRoute() {
         />
       )}
 
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingTop: isDesktop ? 24 : 12, paddingBottom: 100 }}>
+        <ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingTop: isDesktop ? 24 : 12, paddingBottom: 100 }}
+        >
           <View style={isDesktop ? { maxWidth: 1080, alignSelf: 'center', width: '100%' } : { width: '100%' }}>
             
             {/* Title Header */}

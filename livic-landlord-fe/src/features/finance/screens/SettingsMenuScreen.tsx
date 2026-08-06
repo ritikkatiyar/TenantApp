@@ -6,7 +6,7 @@ import {
   Animated,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -17,11 +17,14 @@ import { useProperties } from '@/src/hooks/useProperties';
 import { listRentCycles } from '@/src/features/finance/api/rentCycle.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 export default function SettingsMenuScreen() {
+  const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+  const { handleScroll } = useScrollNav();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties, isLoading } = useProperties();
@@ -35,6 +38,12 @@ export default function SettingsMenuScreen() {
   const largeTitleOpacity = scrollY.interpolate({
     inputRange: [0, 70],
     outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [40, 90],
+    outputRange: [0, 1],
     extrapolate: 'clamp',
   });
 
@@ -256,21 +265,41 @@ export default function SettingsMenuScreen() {
           />
         )}
 
+        {/* Mobile Compact Header */}
+        {!isDesktop && (
+          <View style={styles.headerContainer}>
+            <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+            <Animated.View style={[styles.headerContent, { opacity: headerOpacity }]}>
+              <View style={styles.titleWrapper}>
+                <Text style={styles.compactTitleText}>Finance & Billing</Text>
+              </View>
+            </Animated.View>
+          </View>
+        )}
+
         <Animated.ScrollView
-          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 88 }]}
+          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
+            { useNativeDriver: false, listener: handleScroll }
           )}
           scrollEventThrottle={16}
         >
           <View style={isDesktop ? styles.desktopInner : null}>
-            {isDesktop && (
+            {isDesktop ? (
               <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
                 <Text style={styles.titleLineDesktop}>Finance & Billing</Text>
                 <Text style={{ fontSize: 14, color: '#6b7a7d', marginTop: 4, fontWeight: '500', lineHeight: 20 }}>
                   Configure rents, utilities, billing worksheets, monthly rent rolls & financial ledgers
+                </Text>
+              </Animated.View>
+            ) : (
+              <Animated.View style={[styles.mobileLargeTitle, { opacity: largeTitleOpacity }]}>
+                <Text style={styles.titleLine}>Finance &</Text>
+                <Text style={styles.titleLine}>Billing</Text>
+                <Text style={styles.mobileSubtitle}>
+                  Configure rents, utilities & billing pipelines
                 </Text>
               </Animated.View>
             )}
@@ -359,6 +388,54 @@ const styles = StyleSheet.create({
     color: '#151d1e',
     lineHeight: 38,
     letterSpacing: -0.5,
+  },
+
+  // — Mobile Header —
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.6)',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 54,
+    paddingBottom: 14,
+    paddingHorizontal: 20,
+  },
+  titleWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  compactTitleText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0b1c30',
+    fontFamily: 'Inter',
+  },
+  mobileLargeTitle: {
+    marginBottom: 24,
+  },
+  titleLine: {
+    fontSize: 42,
+    fontWeight: '800',
+    color: '#151d1e',
+    lineHeight: 46,
+    letterSpacing: -1,
+    fontFamily: 'Inter',
+  },
+  mobileSubtitle: {
+    fontSize: 14,
+    color: '#6b7a7d',
+    marginTop: 8,
+    fontWeight: '500',
+    lineHeight: 20,
   },
 
   // — Quick Stats Hero —

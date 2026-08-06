@@ -32,10 +32,12 @@ import { ResponsiveHeader } from '@/src/components/common/layout/ResponsiveHeade
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import { SectionHeader } from '@/src/components/common/display/SectionHeader';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 
 export default function RentRollScreen({ token }: { token: string | null }) {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
@@ -285,13 +287,15 @@ export default function RentRollScreen({ token }: { token: string | null }) {
               </Text>
             </View>
 
-            <ActionButton
-              title="GENERATE INVOICES"
-              onPress={handleGenerate}
-              loading={isGenerating}
-              disabled={isGenerating || !!(checklist && !checklist.isReady)}
-              style={styles.generateBtn}
-            />
+            {isDesktop && (
+              <ActionButton
+                title="GENERATE INVOICES"
+                onPress={handleGenerate}
+                loading={isGenerating}
+                disabled={isGenerating || !!(checklist && !checklist.isReady)}
+                style={styles.generateBtn}
+              />
+            )}
           </GlassCard>
         ) : (
           <View style={styles.resultsContainer}>
@@ -318,7 +322,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                 />
               </View>
 
-              {pendingCount > 0 && (
+              {isDesktop && pendingCount > 0 && (
                 <View style={styles.actionGroup}>
                   <ActionButton
                     title={publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
@@ -337,7 +341,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                 </View>
               )}
 
-              {publishedCount > 0 && (
+              {isDesktop && publishedCount > 0 && (
                 <ActionButton
                   title="REVERT TO DRAFT (UNPUBLISH)"
                   onPress={handleUnpublish}
@@ -482,25 +486,178 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     );
   };
 
+  const renderGlassyHeader = () => (
+    <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
+      <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+      <View style={styles.headerContent}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+        </TouchableOpacity>
+        <View style={styles.titleWrapper}>
+          <Text style={styles.compactTitleText}>Rent Roll</Text>
+        </View>
+        
+        {/* Top Right Blue Gradient Action Button */}
+        {!hasGenerated ? (
+          <TouchableOpacity 
+            style={[styles.headerGradientTouch, (isGenerating || !!(checklist && !checklist.isReady)) && { opacity: 0.5 }]}
+            onPress={handleGenerate}
+            disabled={isGenerating || !!(checklist && !checklist.isReady)}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.headerGradientInner}
+            >
+              {isGenerating ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <MaterialIcons name="flash-on" size={15} color="#fff" />
+                  <Text style={styles.headerGradientText}>GENERATE</Text>
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        ) : pendingCount > 0 ? (
+          <TouchableOpacity 
+            style={[styles.headerGradientTouch, isPublishing && { opacity: 0.5 }]}
+            onPress={handlePublish}
+            disabled={isPublishing}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.headerGradientInner}
+            >
+              {isPublishing ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <MaterialIcons name="send" size={14} color="#fff" />
+                  <Text style={styles.headerGradientText}>PUBLISH</Text>
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.headerGradientTouch, isUnpublishing && { opacity: 0.5 }]}
+            onPress={handleUnpublish}
+            disabled={isUnpublishing}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#ff416c', '#ff4b2b']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.headerGradientInner}
+            >
+              {isUnpublishing ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.headerGradientText}>UNPUBLISH</Text>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
   return (
-    <PageShell scrollable edges={isDesktop ? ['top'] : []} contentContainerStyle={isDesktop ? styles.desktopScroll : styles.mobileScroll}>
-      {isDesktop ? (
-        <DesktopNavBar 
-          onBack={() => router.push('/expenses')} 
-          backText="Back to Finance & Billing" 
-          properties={properties || []}
-          selectedPropertyId={propertyId}
-          onPropertyChange={(id) => router.replace(`/expenses/rent-roll?propertyId=${id}`)}
-        />
-      ) : (
-        <ResponsiveHeader title="Rent Roll" onBack={() => router.back()} />
-      )}
-      {renderContent()}
-    </PageShell>
+    <View style={{ flex: 1 }}>
+      {!isDesktop && renderGlassyHeader()}
+      <PageShell 
+        scrollable 
+        edges={isDesktop ? ['top'] : []} 
+        contentContainerStyle={isDesktop ? styles.desktopScroll : [styles.mobileScroll, { paddingTop: 68 + insets.top }]}
+      >
+        {isDesktop && (
+          <DesktopNavBar 
+            onBack={() => router.push('/expenses')} 
+            backText="Back to Finance & Billing" 
+            properties={properties || []}
+            selectedPropertyId={propertyId}
+            onPropertyChange={(id) => router.replace(`/expenses/rent-roll?propertyId=${id}`)}
+          />
+        )}
+        {renderContent()}
+      </PageShell>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 999,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+  },
+  headerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  titleWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  compactTitleText: {
+    fontSize: 18,
+    fontFamily: 'Inter',
+    fontWeight: '800',
+    color: '#0b1c30',
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#006677',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  headerGradientTouch: {
+    borderRadius: 100,
+    overflow: 'hidden',
+    shadowColor: '#00d4ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  headerGradientInner: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 100,
+  },
+  headerGradientText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   desktopScroll: { paddingVertical: 24, paddingHorizontal: 40, alignItems: 'center' },
   mobileScroll: { paddingVertical: 10, paddingHorizontal: 20 },
   inner: { width: '100%', maxWidth: 1080 },

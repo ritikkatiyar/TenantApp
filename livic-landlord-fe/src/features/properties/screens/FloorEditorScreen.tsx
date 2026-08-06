@@ -425,7 +425,7 @@ export default function FloorEditorScreen({
                           <MaterialIcons name="info-outline" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
                           <Text style={{ fontSize: 18, fontWeight: '700', color: '#151d1e', textAlign: 'center', marginBottom: 8 }}>No Unit Selected</Text>
                           <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', lineHeight: 20 }}>
-                            Select any unit block in the grid layout to manage rent configurations and assign tenants.
+                            Select any unit block in the grid layout to configure unit capacity and assign tenants.
                           </Text>
                         </BlurView>
                       )}
@@ -462,14 +462,47 @@ export default function FloorEditorScreen({
         style={styles.gradient}
       >
         <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
-          </TouchableOpacity>
-          <View style={styles.titleContainer}>
-            <Text style={styles.titleLine}>Edit Floor {floorNumber}</Text>
-            <Text style={styles.titleLine}>Layout</Text>
+        <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+          <View>
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+            </TouchableOpacity>
+            <View style={styles.titleContainer}>
+              <Text style={styles.titleLine}>Edit Floor {floorNumber}</Text>
+              <Text style={styles.titleLine}>Layout</Text>
+            </View>
           </View>
+          
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleSave}
+            disabled={saving}
+            style={{
+              borderRadius: 100,
+              overflow: 'hidden',
+              shadowColor: '#00d4ff',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+          >
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
+                  <MaterialIcons name="check" size={16} color="#fff" />
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.contentContainer}>
@@ -511,31 +544,10 @@ export default function FloorEditorScreen({
               )}
             </View>
           </GestureDetector>
-
-          {!selectedBlock && (
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              onPress={handleSave}
-              disabled={saving}
-            >
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.saveButton}
-              >
-                {saving ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveButtonText}>SAVE LAYOUT</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
         </View>
 
         {selectedBlock && (
-          <View style={[StyleSheet.absoluteFillObject, { zIndex: 999 }]}>
+          <View style={[StyleSheet.absoluteFillObject, { zIndex: 999, overflow: 'hidden' }]}>
             <BlurView intensity={35} tint="light" style={StyleSheet.absoluteFillObject} />
 
             <TouchableOpacity

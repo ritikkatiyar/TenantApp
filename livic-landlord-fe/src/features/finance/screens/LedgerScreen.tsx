@@ -11,7 +11,7 @@ import {
   FlatList,
   TextInput
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -20,11 +20,14 @@ import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { getLedgerForProperty, LedgerEntryResponse } from '../api/ledger.api';
 
 export default function LedgerScreen({ token }: { token: string | null }) {
+  const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+  const { handleScroll } = useScrollNav();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
@@ -161,7 +164,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
   });
 
   const renderGlassyHeader = () => (
-    <View style={styles.headerContainer}>
+    <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
       <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContent}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -428,11 +431,11 @@ export default function LedgerScreen({ token }: { token: string | null }) {
           <>
             {renderGlassyHeader()}
             <Animated.ScrollView
-              contentContainerStyle={styles.mobileScroll}
+              contentContainerStyle={[styles.mobileScroll, { paddingTop: 68 + insets.top }]}
               showsVerticalScrollIndicator={false}
               onScroll={Animated.event(
                 [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                { useNativeDriver: false }
+                { useNativeDriver: false, listener: handleScroll }
               )}
               scrollEventThrottle={16}
             >

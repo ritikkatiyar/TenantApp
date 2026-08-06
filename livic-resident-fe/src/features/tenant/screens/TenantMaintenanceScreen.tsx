@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -9,6 +9,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { getMaintenanceTickets, getTicketHealthStats, createMaintenanceTicket, MaintenanceTicket, TicketHealthStats } from '@/src/features/tenant/api/maintenance.api';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface TenantMaintenanceScreenProps {
   token: string;
@@ -20,6 +21,8 @@ const PRIORITIES = ['STANDARD', 'HIGH', 'URGENT'];
 
 export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaintenanceScreenProps) {
   const { isDesktop } = useResponsive();
+  const insets = useSafeAreaInsets();
+  const { handleScroll } = useScrollNav();
   const [tickets, setTickets] = useState<MaintenanceTicket[]>([]);
   const [stats, setStats] = useState<TicketHealthStats | null>(null);
 
@@ -84,11 +87,49 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
       style={styles.root}
     >
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop && <DesktopNavBar title="Maintenance & Service Center" />}
+        {isDesktop ? (
+          <DesktopNavBar title="Maintenance & Service Center" />
+        ) : (
+          <View style={[styles.mobileHeaderContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
+            <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+            <View style={styles.mobileHeaderContent}>
+              <Text style={styles.mobileHeaderTitle}>Maintenance</Text>
+              <TouchableOpacity
+                onPress={handleSubmit}
+                disabled={!title.trim() || !description.trim() || submitting}
+                style={{
+                  borderRadius: 100,
+                  overflow: 'hidden',
+                  shadowColor: '#00d4ff',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  opacity: (!title.trim() || !description.trim() || submitting) ? 0.5 : 1,
+                }}
+              >
+                <LinearGradient
+                  colors={['#00e0ff', '#0070ea']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                >
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>Submit</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         <ScrollView 
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false} 
-          contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
+          contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 68 + insets.top }]}
         >
           {/* New Ticket Form Glass Card */}
           <BlurView intensity={70} tint="light" style={styles.glassCard}>
@@ -314,6 +355,25 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 20 },
   scrollContentDesktop: { paddingTop: 20 },
+  mobileHeaderContainer: {
+    height: 56,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  mobileHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  mobileHeaderTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter',
+    fontWeight: '800',
+    color: '#0b1c30',
+  },
   
   glassCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.65)',

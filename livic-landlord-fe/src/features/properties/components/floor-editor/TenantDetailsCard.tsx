@@ -203,36 +203,6 @@ export function TenantDetailsCard({
                 </View>
               </View>
             </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>SECURITY DEPOSIT</Text>
-              <View style={styles.inputWrapper}>
-                <MaterialIcons name="account-balance-wallet" size={18} color="#006875" />
-                <TextInput 
-                  style={styles.textInput}
-                  placeholder="e.g. 30000"
-                  placeholderTextColor="#9ba9ab"
-                  value={securityDeposit}
-                  onChangeText={setSecurityDeposit}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>RENT AMOUNT</Text>
-              <View style={styles.inputWrapper}>
-                <MaterialIcons name="attach-money" size={18} color="#006875" />
-                <TextInput 
-                  style={styles.textInput}
-                  placeholder="e.g. 15000"
-                  placeholderTextColor="#9ba9ab"
-                  value={rentAmount}
-                  onChangeText={setRentAmount}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
           </View>
 
           {/* Assigned Tenants */}
@@ -443,6 +413,35 @@ export function TenantDetailsCard({
                         <Text style={styles.tenantMatchEmail}>{tenantSearchResult.email}</Text>
                       </View>
                       <MaterialIcons name="check-circle" size={20} color="#2e7d32" />
+                    </View>
+
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      <View style={[styles.inputGroup, { flex: 1 }]}>
+                        <Text style={styles.inputLabel}>LEASE RENT (₹)</Text>
+                        <View style={[styles.inputWrapper, { height: 42 }]}>
+                          <TextInput 
+                            style={styles.textInput}
+                            placeholder="e.g. 15000"
+                            placeholderTextColor="#9ba9ab"
+                            value={rentAmount}
+                            onChangeText={setRentAmount}
+                            keyboardType="numeric"
+                          />
+                        </View>
+                      </View>
+                      <View style={[styles.inputGroup, { flex: 1 }]}>
+                        <Text style={styles.inputLabel}>DEPOSIT (₹)</Text>
+                        <View style={[styles.inputWrapper, { height: 42 }]}>
+                          <TextInput 
+                            style={styles.textInput}
+                            placeholder="e.g. 30000"
+                            placeholderTextColor="#9ba9ab"
+                            value={securityDeposit}
+                            onChangeText={setSecurityDeposit}
+                            keyboardType="numeric"
+                          />
+                        </View>
+                      </View>
                     </View>
 
                     <TouchableOpacity

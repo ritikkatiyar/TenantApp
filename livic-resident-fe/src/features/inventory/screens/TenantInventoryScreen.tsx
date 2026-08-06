@@ -7,12 +7,14 @@ import { Theme } from '@/src/theme/Theme';
 import { inventoryItems, tenantAmenities, type InventoryItem } from '@/src/features/inventory/mockInventoryData';
 import { BlurView } from 'expo-blur';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 const tenantVisibleItems = inventoryItems.filter((item) => item.location === 'Unit 402' || item.shared);
 
 export default function TenantInventoryScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
+  const { handleScroll } = useScrollNav();
 
   return (
     <LinearGradient
@@ -24,6 +26,8 @@ export default function TenantInventoryScreen() {
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop && <DesktopNavBar title="My Unit Inventory" />}
         <ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
         >

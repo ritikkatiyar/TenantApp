@@ -11,6 +11,7 @@ import { getAnnouncements, markAnnouncementRead, Announcement } from '@/src/feat
 import { useResponsive } from '@/hooks/useResponsive';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface TenantHomeScreenProps {
   token: string;
@@ -26,6 +27,7 @@ function getGreeting() {
 
 export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenProps) {
   const { isDesktop } = useResponsive();
+  const { handleScroll } = useScrollNav();
   const [lease, setLease] = useState<ActiveLeaseSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -84,6 +86,8 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
           </View>
         ) : (
           <ScrollView 
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={false} 
             contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
           >

@@ -16,10 +16,12 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 export default function AnalyticsDashboardScreen() {
   const { accessToken } = useAuth();
   const { isDesktop } = useResponsive();
+  const { handleScroll } = useScrollNav();
 
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [occupancy, setOccupancy] = useState<PortfolioOccupancyResponse[]>([]);
@@ -95,7 +97,12 @@ export default function AnalyticsDashboardScreen() {
       <SafeAreaView style={{ flex: 1 }} edges={isDesktop ? ['top'] : []}>
         {isDesktop && <DesktopNavBar title="Overview" />}
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: isDesktop ? 24 : 88, paddingBottom: 100, gap: 32 }}>
+        <ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: isDesktop ? 24 : 88, paddingBottom: 100, gap: 32 }}
+        >
           {/* Header & Date Picker */}
           <View style={{ flexDirection: 'row', justifyContent: isDesktop ? 'space-between' : 'flex-end', alignItems: 'flex-end' }}>
             {isDesktop && (
