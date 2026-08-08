@@ -313,7 +313,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       const payload = {
         userId: targetUser.id,
         unitId: selectedBlock.id,
-        rentAmount: leaseRentAmount,
+        monthlyRentAmount: leaseRentAmount,
         securityDeposit: depositAmount,
         splitStrategy: 'FULL_UNIT' as const,
         moveInDate: today,

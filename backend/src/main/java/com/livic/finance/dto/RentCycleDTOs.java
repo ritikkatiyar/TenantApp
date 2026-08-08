@@ -68,4 +68,19 @@ public class RentCycleDTOs {
             String description,
             LocalDateTime createdAt
     ) {}
+
+    public record RentCycleListResponse(
+            List<RentCycleResponse> content,
+            long totalElements,
+            int totalPages,
+            int size,
+            int number,
+            RentRollMetricsDTO metrics
+    ) {}
+
+    public record RentRollMetricsDTO(
+            BigDecimal totalExpectedRevenue,
+            long pendingDraftsCount,
+            long publishedCount
+    ) {}
 }

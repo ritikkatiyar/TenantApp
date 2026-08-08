@@ -3,6 +3,7 @@ package com.livic.announcement.service;
 import com.livic.announcement.domain.*;
 import com.livic.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
 import com.livic.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
+import com.livic.announcement.mapper.AnnouncementMapper;
 import com.livic.announcement.service.interfaces.AnnouncementService;
 import com.livic.common.domain.BaseEntity;
 import com.livic.common.event.AnnouncementBroadcastEvent;
@@ -11,6 +12,7 @@ import com.livic.finance.facade.FinanceFacade;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.dto.PropertySummaryDTO;
 import com.livic.property.facade.PropertyFacade;
+import com.livic.property.facade.UnitFacade;
 import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
@@ -35,6 +37,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     private final AnnouncementCrudService announcementCrudService;
     private final AnnouncementReceiptCrudService announcementReceiptCrudService;
     private final PropertyFacade propertyFacade;
+    private final UnitFacade unitFacade;
     private final UserFacade userFacade;
     private final FinanceFacade financeFacade;
     private final ApplicationEventPublisher eventPublisher;
@@ -52,17 +55,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         UserTbl creator = new UserTbl();
         creator.setId(userSummary.id());
 
-        AnnouncementTbl announcement = AnnouncementTbl.builder()
-                .property(property)
-                .creator(creator)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .category(request.getCategory())
-                .severity(request.getSeverity())
-                .targetType(request.getTargetType())
-                .targetValue(request.getTargetValue())
-                .metadata(request.getMetadata())
-                .build();
+        AnnouncementTbl announcement = AnnouncementMapper.toEntity(request, property, creator);
 
         announcement = announcementCrudService.save(announcement);
 
@@ -81,7 +74,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         );
         eventPublisher.publishEvent(event);
 
-        return mapToResponse(announcement, false, 0L, (long) recipientUserIds.size());
+        return AnnouncementMapper.toResponse(announcement, false, 0L, (long) recipientUserIds.size());
     }
 
     @Override
@@ -114,7 +107,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         return announcements.map(announcement -> {
             boolean isRead = finalReadAnnouncementIds.contains(announcement.getId());
-            return mapToResponse(announcement, isRead, null, null);
+            return AnnouncementMapper.toResponse(announcement, isRead, null, null);
         });
     }
 
@@ -158,7 +151,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                     announcement.getTargetType(), announcement.getTargetValue(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
             long totalRecipients = recipients.size();
 
-            return mapToResponse(announcement, false, readCount, totalRecipients);
+            return AnnouncementMapper.toResponse(announcement, false, readCount, totalRecipients);
         });
     }
 
@@ -236,7 +229,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             if (targetValue != null) {
                 try {
                     Integer floorNumber = Integer.valueOf(targetValue);
-                    List<com.livic.property.dto.UnitSummaryDTO> unitsOnFloor = propertyFacade.getUnitsByPropertyId(propertyId).stream()
+                    List<com.livic.property.dto.UnitSummaryDTO> unitsOnFloor = unitFacade.getUnitsByPropertyId(propertyId).stream()
                             .filter(u -> u.floor() != null && u.floor().equals(floorNumber))
                             .toList();
                     List<UUID> unitIds = unitsOnFloor.stream().map(com.livic.property.dto.UnitSummaryDTO::id).collect(Collectors.toList());
@@ -266,26 +259,5 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         }
 
         return recipientUserIds.stream().distinct().collect(Collectors.toList());
-    }
-
-    private AnnouncementResponse mapToResponse(AnnouncementTbl announcement, boolean read, Long readCount, Long totalRecipientsCount) {
-        String creatorName = announcement.getCreator() != null ? announcement.getCreator().getFullName() : "System";
-        return AnnouncementResponse.builder()
-                .id(announcement.getId())
-                .propertyId(announcement.getProperty().getId())
-                .creatorId(announcement.getCreator() != null ? announcement.getCreator().getId() : null)
-                .creatorName(creatorName)
-                .title(announcement.getTitle())
-                .content(announcement.getContent())
-                .category(announcement.getCategory())
-                .severity(announcement.getSeverity())
-                .targetType(announcement.getTargetType())
-                .targetValue(announcement.getTargetValue())
-                .metadata(announcement.getMetadata())
-                .createdAt(announcement.getCreatedAt())
-                .read(read)
-                .readCount(readCount)
-                .totalRecipientsCount(totalRecipientsCount)
-                .build();
     }
 }

@@ -1,15 +1,19 @@
 package com.livic.finance.controller;
 
+import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.common.response.ApiResponse;
 import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigRequest;
 import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
-import com.livic.finance.service.ChargeConfigService;
 import com.livic.finance.service.ChargeConfigQueryService;
+import com.livic.finance.service.ChargeConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import com.livic.common.response.ApiResponse;
-
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.UUID;
 
@@ -58,11 +62,14 @@ public class ChargeConfigController {
 
     @GetMapping("/property/{propertyId}")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
-    public ResponseEntity<ApiResponse<List<ChargeConfigResponse>>> getChargesForProperty(
+    public ResponseEntity<ApiResponse<Page<ChargeConfigResponse>>> getChargesForProperty(
             @PathVariable UUID propertyId,
-            @RequestParam(required = false, defaultValue = "false") boolean includeInactive
+            @RequestParam(required = false, defaultValue = "false") boolean includeInactive,
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            Pageable pageable
     ) {
-        List<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive);
+        UUID userId = userDetails != null ? UUID.fromString(userDetails.getId()) : null;
+        Page<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive, userId, pageable);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 

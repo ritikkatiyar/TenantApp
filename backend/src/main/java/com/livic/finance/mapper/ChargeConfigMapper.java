@@ -5,6 +5,8 @@ import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigRequest;
 import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
 import com.livic.property.domain.PropertyTbl;
 
+import java.util.UUID;
+
 public final class ChargeConfigMapper {
 
     private ChargeConfigMapper() {
@@ -24,6 +26,24 @@ public final class ChargeConfigMapper {
                 .autoCarryForward(request.getAutoCarryForward() != null ? request.getAutoCarryForward() : false)
                 .isActive(true)
                 .isSystemRequired(false)
+                .build();
+    }
+
+    public static ChargeConfigTbl createSystemRentConfig(UUID propertyId) {
+        PropertyTbl property = new PropertyTbl();
+        property.setId(propertyId);
+
+        return ChargeConfigTbl.builder()
+                .property(property)
+                .chargeName("Base Rent")
+                .chargeCategory(com.livic.common.domain.ChargeCategory.RENT)
+                .billingFrequency(com.livic.common.domain.BillingFrequency.MONTHLY)
+                .calculationStrategy(com.livic.common.domain.CalculationStrategyType.FIXED_RATE)
+                .baseRate(null)
+                .applySalesTax(false)
+                .autoCarryForward(false)
+                .isSystemRequired(true)
+                .isActive(true)
                 .build();
     }
 

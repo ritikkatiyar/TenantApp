@@ -1,10 +1,13 @@
 package com.livic.user.facade.impl;
 
 import com.livic.common.domain.UserRole;
+import com.livic.user.domain.UserMode;
+import com.livic.user.domain.UserPreferenceTbl;
 import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import com.livic.user.service.interfaces.UserCrudService;
+import com.livic.user.service.interfaces.UserPreferenceCrudService;
 import com.livic.user.service.interfaces.UserQueryService;
 import com.livic.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,8 @@ public class UserFacadeImpl implements UserFacade {
     private final UserCrudService userCrudService;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+
+    private final UserPreferenceCrudService userPreferenceCrudService;
 
     @Override
     public Optional<UserSummaryDTO> getUserById(UUID userId) {
@@ -82,5 +87,12 @@ public class UserFacadeImpl implements UserFacade {
                 .build();
         UserTbl saved = userService.createUser(newUser);
         return UserSummaryDTO.from(saved);
+    }
+
+    @Override
+    public UserMode getActiveModeForUser(UUID userId) {
+        return userPreferenceCrudService.findByUserId(userId)
+                .map(UserPreferenceTbl::getActiveMode)
+                .orElse(UserMode.RENTAL);
     }
 }

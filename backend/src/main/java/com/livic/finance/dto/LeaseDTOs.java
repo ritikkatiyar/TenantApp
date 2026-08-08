@@ -2,6 +2,7 @@ package com.livic.finance.dto;
 
 import com.livic.common.domain.LeaseSplitStrategy;
 import com.livic.common.domain.LeaseStatus;
+import com.livic.common.exception.BusinessException;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -14,10 +15,11 @@ public class LeaseDTOs {
 
     public record CreateLeaseRequest(
             UUID userId,
-            @NotNull UUID unitId,
-            @NotNull @PositiveOrZero BigDecimal securityDeposit,
-            @NotNull LeaseSplitStrategy splitStrategy,
-            @NotNull LocalDate moveInDate,
+            @NotNull(message = "Unit ID is required") UUID unitId,
+            @NotNull(message = "Monthly rent amount is required") @PositiveOrZero(message = "Monthly rent amount must be zero or positive") BigDecimal monthlyRentAmount,
+            @NotNull(message = "Security deposit is required") @PositiveOrZero(message = "Security deposit must be zero or positive") BigDecimal securityDeposit,
+            @NotNull(message = "Split strategy is required") LeaseSplitStrategy splitStrategy,
+            @NotNull(message = "Move-in date is required") LocalDate moveInDate,
             LocalDate moveOutDate,
             LeaseStatus status,
             UUID bookingId
@@ -31,7 +33,7 @@ public class LeaseDTOs {
             String propertyName,
             String tenantName,
             String tenantPhone,
-            BigDecimal rentAmount,
+            BigDecimal monthlyRentAmount,
             BigDecimal securityDeposit,
             LeaseSplitStrategy splitStrategy,
             LocalDate moveInDate,

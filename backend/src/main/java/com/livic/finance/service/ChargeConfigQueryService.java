@@ -1,10 +1,11 @@
 package com.livic.finance.service;
 
 import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 public interface ChargeConfigQueryService {
-    List<ChargeConfigResponse> getChargesForProperty(UUID propertyId, boolean includeInactive);
+    Page<ChargeConfigResponse> getChargesForProperty(UUID propertyId, boolean includeInactive, UUID userId, Pageable pageable);
     ChargeConfigResponse getChargeConfigById(UUID id);
 }

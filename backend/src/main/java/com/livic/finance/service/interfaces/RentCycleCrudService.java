@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.dto.RentCycleDTOs;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -24,4 +26,13 @@ public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
 
     RevenueMetricsDTO getRevenueMetrics(Collection<UUID> propertyIds, String billingMonth);
     Page<DefaulterRecordDTO> getDefaulters(Collection<UUID> propertyIds, Pageable pageable);
+    RentCycleDTOs.RentRollMetricsDTO getRentRollMetrics(
+            UUID propertyId,
+            String billingMonth,
+            RentCycleStatus statusPending,
+            RentCycleStatus statusPublished,
+            RentCycleStatus statusPaid,
+            RentCycleStatus statusOverdue,
+            RentCycleStatus statusPartiallyPaid
+    );
 }

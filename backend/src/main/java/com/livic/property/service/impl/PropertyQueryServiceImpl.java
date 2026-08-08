@@ -14,6 +14,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -21,6 +24,18 @@ public class PropertyQueryServiceImpl implements PropertyQueryService {
 
     private final PropertyCrudService propertyCrudService;
     private final AuthFacade authFacade;
+
+    @Override
+    public Page<PropertyTbl> getPropertiesByUserId(UUID userId, Pageable pageable) {
+        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
+        List<UUID> propertyIds = memberships.stream()
+                .filter(m -> m.roleCode() == null || !"PROPERTY_TENANT".equals(m.roleCode()))
+                .map(MembershipSummaryDTO::propertyId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        return propertyCrudService.findDistinctByIdIn(propertyIds, pageable);
+    }
 
     @Override
     public List<PropertyTbl> getPropertiesByUserId(UUID userId) {

@@ -40,7 +40,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-generate")
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchGenerate(
             @Valid @RequestBody RentCycleDTOs.BatchGenerateRentCycleRequest request
     ) {
@@ -48,8 +48,24 @@ public class RentCycleController {
                 .body(ApiResponse.success(rentCycleService.batchGenerate(request)));
     }
 
+    @PostMapping("/{id}/publish")
+    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#id, 'PROPERTY_EDIT')")
+    public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> publish(
+            @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.publish(id)));
+    }
+
+    @PostMapping("/{id}/unpublish")
+    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#id, 'PROPERTY_EDIT')")
+    public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> unpublish(
+            @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.unpublish(id)));
+    }
+
     @PostMapping("/batch-publish")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchPublish(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth
@@ -58,7 +74,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-unpublish")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchUnpublish(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth
@@ -76,18 +92,20 @@ public class RentCycleController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<RentCycleDTOs.RentCycleResponse>>> list(
+    public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleListResponse>> list(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
+            @RequestParam(required = false) UUID propertyId,
             @RequestParam(required = false) UUID leaseId,
             @RequestParam(required = false) String billingMonth,
             @RequestParam(required = false) RentCycleStatus status,
             @PageableDefault(sort = "dueDate", direction = Sort.Direction.DESC, size = 20) Pageable pageable
     ) {
         UUID currentUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.list(currentUserId, leaseId, billingMonth, status, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.list(currentUserId, propertyId, leaseId, billingMonth, status, pageable)));
     }
 
     @PostMapping("/{id}/mark-paid")
+    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> markPaid(
             @PathVariable UUID id
     ) {

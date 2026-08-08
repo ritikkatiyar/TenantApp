@@ -12,6 +12,7 @@ import com.livic.finance.service.interfaces.RentCycleChargeCrudService;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.dto.PropertySummaryDTO;
 import com.livic.property.facade.PropertyFacade;
+import com.livic.common.domain.ChargeCategory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,9 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
 
     @Override
     public ChargeConfigResponse createChargeConfig(ChargeConfigRequest request) {
+        if (request.getChargeCategory() == ChargeCategory.RENT) {
+            throw new BusinessException("Rent is no longer configured here — it's set per lease when the lease is created");
+        }
         PropertySummaryDTO propSummary = propertyFacade.getPropertyById(request.getPropertyId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
         PropertyTbl property = new PropertyTbl();
@@ -46,6 +50,12 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
     public ChargeConfigResponse updateChargeConfig(UUID id, ChargeConfigRequest request) {
         ChargeConfigTbl config = chargeConfigCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Charge Config not found"));
+
+        if (config.getChargeCategory() != request.getChargeCategory() && 
+            (config.getChargeCategory() == ChargeCategory.RENT || request.getChargeCategory() == ChargeCategory.RENT)) {
+            throw new BusinessException("Rent is no longer configured here — it's set per lease when the lease is created");
+        }
+
         ChargeConfigMapper.updateEntity(request, config);
         chargeConfigCrudService.save(config);
         return ChargeConfigMapper.toResponse(config);

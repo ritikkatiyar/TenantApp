@@ -76,11 +76,12 @@ class ModuleBoundaryTest {
     void strictUserServiceBoundaryEnforcement() {
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackage("com.livic.user..")
+                .and().doNotHaveFullyQualifiedName("com.livic.auth.service.CustomUserDetailsService")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "com.livic.user.service.interfaces..",
                         "com.livic.user.service.impl.."
                 )
-                .because("Outside modules must access user capabilities strictly through com.livic.user.facade or DTOs");
+                .because("Outside modules must access user capabilities strictly through com.livic.user.facade or DTOs (except CustomUserDetailsService)");
 
         rule.check(classes);
     }

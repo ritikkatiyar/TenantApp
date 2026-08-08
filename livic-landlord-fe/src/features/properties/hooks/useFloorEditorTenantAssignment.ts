@@ -201,7 +201,7 @@ export function useFloorEditorTenantAssignment({
       const payload = {
         userId: targetUser.id,
         unitId: realUnitId,
-        rentAmount: leaseRentAmount,
+        monthlyRentAmount: leaseRentAmount,
         securityDeposit: depositAmount,
         splitStrategy: 'FULL_UNIT' as const,
         moveInDate: today,

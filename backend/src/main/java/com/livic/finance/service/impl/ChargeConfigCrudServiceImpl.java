@@ -6,6 +6,9 @@ import com.livic.finance.repository.ChargeConfigRepository;
 import com.livic.finance.service.interfaces.ChargeConfigCrudService;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.livic.common.domain.ChargeCategory;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +28,21 @@ public class ChargeConfigCrudServiceImpl extends AbstractCrudService<ChargeConfi
     @Override
     public List<ChargeConfigTbl> findAllByPropertyId(UUID propertyId) {
         return repository.findAllByPropertyId(propertyId);
+    }
+
+    @Override
+    public Page<ChargeConfigTbl> findAllByPropertyIdAndIsActiveTrue(UUID propertyId, Pageable pageable) {
+        return repository.findAllByPropertyIdAndIsActiveTrue(propertyId, pageable);
+    }
+
+    @Override
+    public Page<ChargeConfigTbl> findAllByPropertyId(UUID propertyId, Pageable pageable) {
+        return repository.findAllByPropertyId(propertyId, pageable);
+    }
+
+    @Override
+    public boolean existsByPropertyIdAndChargeCategory(UUID propertyId, ChargeCategory chargeCategory) {
+        return repository.existsByPropertyIdAndChargeCategory(propertyId, chargeCategory);
     }
 
     @Override

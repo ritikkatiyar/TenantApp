@@ -1,5 +1,6 @@
 package com.livic.user.facade;
 
+import com.livic.user.domain.UserMode;
 import com.livic.user.dto.UserSummaryDTO;
 
 import java.util.Collection;
@@ -22,4 +23,6 @@ public interface UserFacade {
     boolean existsById(UUID userId);
 
     UserSummaryDTO createUser(String email, String fullName, String phoneNumber, String password);
+
+    UserMode getActiveModeForUser(UUID userId);
 }

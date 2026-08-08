@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import org.slf4j.MDC;
+import org.springframework.data.domain.Pageable;
+
 import java.util.UUID;
 
 @Component
@@ -23,8 +26,18 @@ public class PropertyLimitValidator implements SubscriptionValidator {
             return true; // Unlimited
         }
 
-        int currentPropertyCount = propertyFacade.getPropertiesByUserId(userId).size();
-        log.info("[PROPERTY LIMIT CHECK] User: {}, Current: {}, Max Allowed: {}", userId, currentPropertyCount, maxProperties);
+        long currentPropertyCount = propertyFacade.getPropertiesByUserId(userId, Pageable.unpaged()).getTotalElements();
+        
+        log.atInfo()
+                .setMessage("[PROPERTY LIMIT CHECK]")
+                .addKeyValue("userId", userId)
+                .addKeyValue("currentProperties", currentPropertyCount)
+                .addKeyValue("maxAllowed", maxProperties)
+                .addKeyValue("correlationId", MDC.get("correlationId"))
+                .addKeyValue("traceId", MDC.get("traceId"))
+                .addKeyValue("spanId", MDC.get("spanId"))
+                .log();
+
         return currentPropertyCount < maxProperties;
     }
 

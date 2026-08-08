@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   Modal,
-  TextInput
+  TextInput,
+  ScrollView
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -23,6 +24,7 @@ import {
   batchPublishRentCycle,
   batchUnpublishRentCycle,
   recordCashPayment,
+  publishRentCycle,
   RentCycleResponse, 
   PreFlightChecklistResponse 
 } from '@/src/features/finance/api/rentCycle.api';
@@ -85,6 +87,9 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [invoices, setInvoices] = useState<RentCycleResponse[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [publishedCount, setPublishedCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [checklist, setChecklist] = useState<PreFlightChecklistResponse | null>(null);
 
@@ -133,12 +138,18 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (!token || !propertyId) return;
     try {
       setIsLoading(true);
-      const data = await listRentCycles(billingMonth, token);
-      if (data && data.length > 0) {
-        setInvoices(data);
+      const data = await listRentCycles(billingMonth, token, propertyId as string);
+      if (data && data.content && data.content.length > 0) {
+        setInvoices(data.content);
+        setTotalRevenue(data.totalExpectedRevenue || 0);
+        setPublishedCount(data.publishedCount || 0);
+        setPendingCount(data.pendingDraftsCount || 0);
         setHasGenerated(true);
       } else {
         setInvoices([]);
+        setTotalRevenue(0);
+        setPublishedCount(0);
+        setPendingCount(0);
         setHasGenerated(false);
         const flightData = await getPreFlightChecklist(propertyId as string, billingMonth, token);
         setChecklist(flightData);
@@ -154,10 +165,9 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (!token || !propertyId) return;
     try {
       setIsGenerating(true);
-      const generated = await batchGenerateRentCycle(propertyId as string, billingMonth, dueDate, token);
-      setInvoices(generated);
-      setHasGenerated(true);
+      await batchGenerateRentCycle(propertyId as string, billingMonth, dueDate, token);
       showToast("Rent cycle generated successfully!", "success");
+      await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to generate rent cycle.", "error");
     } finally {
@@ -169,9 +179,9 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (!token || !propertyId) return;
     try {
       setIsPublishing(true);
-      const updated = await batchPublishRentCycle(propertyId as string, billingMonth, token);
-      setInvoices(updated);
+      await batchPublishRentCycle(propertyId as string, billingMonth, token);
       showToast("Invoices published to tenants successfully!", "success");
+      await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to publish invoices.", "error");
     } finally {
@@ -179,23 +189,31 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     }
   };
 
+  const handlePublishSingle = async (invoice: RentCycleResponse) => {
+    if (!token) return;
+    try {
+      showToast("Publishing invoice...", "info");
+      await publishRentCycle(invoice.id, token);
+      showToast("Invoice published successfully!", "success");
+      await checkExistingInvoices();
+    } catch (e: any) {
+      showToast(e.message || "Failed to publish invoice.", "error");
+    }
+  };
+
   const handleUnpublish = async () => {
     if (!token || !propertyId) return;
     try {
       setIsUnpublishing(true);
-      const updated = await batchUnpublishRentCycle(propertyId as string, billingMonth, token);
-      setInvoices(updated);
+      await batchUnpublishRentCycle(propertyId as string, billingMonth, token);
       showToast("Invoices reverted to draft successfully!", "success");
+      await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to unpublish invoices.", "error");
     } finally {
       setIsUnpublishing(false);
     }
   };
-
-  const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
-  const publishedCount = invoices.filter(inv => inv.status === 'PUBLISHED' || inv.status === 'PAID' || inv.status === 'OVERDUE').length;
-  const pendingCount = invoices.filter(inv => inv.status === 'PENDING').length;
 
   const renderContent = () => {
     if (!properties || properties.length === 0) {
@@ -353,39 +371,58 @@ export default function RentRollScreen({ token }: { token: string | null }) {
             </GlassCard>
 
             <View style={styles.invoiceList}>
-              {invoices.map((invoice, idx) => (
-                <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
-                  <View style={styles.invoiceHeader}>
-                    <View>
-                      <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
-                      <Text style={{ fontSize: 12, color: Theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
-                    </View>
-                    <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
-                  </View>
-                  
-                  <View style={styles.chargesList}>
-                    {invoice.charges?.map((charge, i) => (
-                      <View key={i} style={styles.chargeRow}>
-                        <Text style={styles.chargeDesc}>{charge.description || charge.chargeType}</Text>
-                        <Text style={styles.chargeAmt}>₹ {charge.amount?.toFixed(2)}</Text>
+              {(() => {
+                const sortedInvoices = [...invoices].sort((a, b) => {
+                  const numA = parseInt(a.unitNumber?.replace(/\D/g, '')) || 0;
+                  const numB = parseInt(b.unitNumber?.replace(/\D/g, '')) || 0;
+                  if (numA !== numB) return numA - numB;
+                  return (a.tenantName || '').localeCompare(b.tenantName || '');
+                });
+                return sortedInvoices.map((invoice, idx) => (
+                  <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
+                    <View style={styles.invoiceHeader}>
+                      <View>
+                        <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
+                        <Text style={{ fontSize: 12, color: Theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
                       </View>
-                    ))}
-                  </View>
-                  
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                    <StatusPill status={invoice.status} />
-                    {invoice.status !== 'PAID' && (
-                      <TouchableOpacity 
-                        style={styles.recordCashBtn} 
-                        onPress={() => handleOpenCashModal(invoice)}
-                      >
-                        <MaterialIcons name="payments" size={16} color={Theme.Colors.primary} />
-                        <Text style={styles.recordCashBtnText}>Record Cash</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </GlassCard>
-              ))}
+                      <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
+                    </View>
+                    
+                    <View style={styles.chargesList}>
+                      {invoice.charges?.map((charge, i) => (
+                        <View key={i} style={styles.chargeRow}>
+                          <Text style={styles.chargeDesc}>{charge.description || charge.chargeType}</Text>
+                          <Text style={styles.chargeAmt}>₹ {charge.amount?.toFixed(2)}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                      <StatusPill status={invoice.status} />
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {invoice.status === 'PENDING' && (
+                          <TouchableOpacity 
+                            style={[styles.recordCashBtn, { marginRight: 8 }]} 
+                            onPress={() => handlePublishSingle(invoice)}
+                          >
+                            <MaterialIcons name="send" size={16} color={Theme.Colors.primary} />
+                            <Text style={styles.recordCashBtnText}>Publish</Text>
+                          </TouchableOpacity>
+                        )}
+                        {invoice.status !== 'PAID' && (
+                          <TouchableOpacity 
+                            style={styles.recordCashBtn} 
+                            onPress={() => handleOpenCashModal(invoice)}
+                          >
+                            <MaterialIcons name="payments" size={16} color={Theme.Colors.primary} />
+                            <Text style={styles.recordCashBtnText}>Record Cash</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  </GlassCard>
+                ));
+              })()}
             </View>
           </View>
         )}
@@ -569,23 +606,40 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     </View>
   );
 
+  const renderDesktopShell = () => (
+    <LinearGradient
+      colors={Theme.Colors.backgroundGradient as [string, string, string]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
+    >
+      <View style={{ flex: 1, width: '100%' }}>
+        <DesktopNavBar 
+          onBack={() => router.push('/expenses')} 
+          backText="Back to Finance & Billing" 
+          properties={properties || []}
+          selectedPropertyId={propertyId}
+          onPropertyChange={(id) => router.replace(`/expenses/rent-roll?propertyId=${id}`)}
+        />
+        <ScrollView contentContainerStyle={styles.desktopScroll} showsVerticalScrollIndicator={false}>
+          {renderContent()}
+        </ScrollView>
+      </View>
+    </LinearGradient>
+  );
+
+  if (isDesktop) {
+    return renderDesktopShell();
+  }
+
   return (
     <View style={{ flex: 1 }}>
-      {!isDesktop && renderGlassyHeader()}
+      {renderGlassyHeader()}
       <PageShell 
         scrollable 
-        edges={isDesktop ? ['top'] : []} 
-        contentContainerStyle={isDesktop ? styles.desktopScroll : [styles.mobileScroll, { paddingTop: 68 + insets.top }]}
+        edges={[]} 
+        contentContainerStyle={[styles.mobileScroll, { paddingTop: 68 + insets.top }]}
       >
-        {isDesktop && (
-          <DesktopNavBar 
-            onBack={() => router.push('/expenses')} 
-            backText="Back to Finance & Billing" 
-            properties={properties || []}
-            selectedPropertyId={propertyId}
-            onPropertyChange={(id) => router.replace(`/expenses/rent-roll?propertyId=${id}`)}
-          />
-        )}
         {renderContent()}
       </PageShell>
     </View>

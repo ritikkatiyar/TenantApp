@@ -1,9 +1,10 @@
 package com.livic.property.facade;
 
 import com.livic.property.dto.PropertySummaryDTO;
-import com.livic.property.dto.UnitSummaryDTO;
 
-import java.time.LocalDate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,21 +13,13 @@ public interface PropertyFacade {
 
     Optional<PropertySummaryDTO> getPropertyById(UUID propertyId);
 
+    Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, Pageable pageable);
+
     List<PropertySummaryDTO> getPropertiesByUserId(UUID userId);
 
     List<PropertySummaryDTO> getPropertiesByAutoBillDayOfMonth(int day);
 
-    Optional<UnitSummaryDTO> getUnitById(UUID unitId);
-
-    List<UnitSummaryDTO> getUnitsByPropertyId(UUID propertyId);
-
-    List<UnitSummaryDTO> getUnitsByFloor(UUID propertyId, int floorNumber);
-
-    boolean isUnitAvailableOnDate(UUID unitId, LocalDate date);
-
     boolean existsPropertyById(UUID propertyId);
-
-    boolean existsUnitById(UUID unitId);
 
     // Analytics Read Methods
     record PropertyOccupancySummaryDTO(UUID propertyId, String propertyName, int totalUnits, int occupiedUnits) {}

@@ -15,7 +15,7 @@ import com.livic.finance.service.interfaces.LeaseCrudService;
 import com.livic.finance.service.interfaces.LeaseService;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.property.domain.UnitTbl;
-import com.livic.property.facade.PropertyFacade;
+import com.livic.property.facade.UnitFacade;
 import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
@@ -39,7 +39,7 @@ import com.livic.property.dto.UnitSummaryDTO;
 public class LeaseServiceImpl implements LeaseService {
 
     private final LeaseCrudService leaseCrudService;
-    private final PropertyFacade propertyFacade;
+    private final UnitFacade unitFacade;
     private final UserFacade userFacade;
     private final AuthFacade authFacade;
     private final UnitBookingCrudService unitBookingCrudService;
@@ -48,12 +48,12 @@ public class LeaseServiceImpl implements LeaseService {
     @Override
     public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId) {
         // 1. Dynamic unit availability safety check
-        boolean available = propertyFacade.isUnitAvailableOnDate(request.unitId(), request.moveInDate());
+        boolean available = unitFacade.isUnitAvailableOnDate(request.unitId(), request.moveInDate());
         if (!available) {
             throw new BusinessException(HttpStatus.CONFLICT, "Unit capacity has been reached for the selected move-in date");
         }
 
-        UnitSummaryDTO unitSummary = propertyFacade.getUnitById(request.unitId())
+        UnitSummaryDTO unitSummary = unitFacade.getUnitById(request.unitId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
         UnitTbl unit = new UnitTbl();
         unit.setId(unitSummary.id());

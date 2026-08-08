@@ -39,6 +39,14 @@ public class UnitCrudServiceImpl extends AbstractCrudService<UnitTbl, UUID, Unit
     }
 
     @Override
+    public long countByPropertyIdIn(List<UUID> propertyIds) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return 0;
+        }
+        return repository.countByPropertyIdIn(propertyIds);
+    }
+
+    @Override
     public void deleteByPropertyId(UUID propertyId) {
         repository.deleteByPropertyId(propertyId);
     }

@@ -3,7 +3,7 @@ import { apiRequest } from '@/src/api/client';
 export interface CreateLeaseRequest {
   userId?: string | null;
   unitId: string;
-  rentAmount?: number;
+  monthlyRentAmount: number;
   securityDeposit: number;
   splitStrategy: 'FULL_UNIT' | 'PER_OCCUPANT' | 'CUSTOM';
   moveInDate: string;
@@ -17,7 +17,7 @@ export interface LeaseResponse {
   userId: string;
   unitId: string;
   unitNumber: string;
-  rentAmount: number;
+  monthlyRentAmount: number;
   securityDeposit: number;
   splitStrategy: string;
   moveInDate: string;

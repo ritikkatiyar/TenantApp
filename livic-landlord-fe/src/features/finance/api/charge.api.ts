@@ -37,24 +37,34 @@ export const createChargeConfig = async (request: ChargeConfigRequest, token: st
     });
 };
 
+export interface ChargeConfigListResponse {
+    content: ChargeConfigResponse[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+}
+
 export const getActiveChargesForProperty = async (propertyId: string, token: string): Promise<ChargeConfigResponse[]> => {
     if (!propertyId || propertyId === 'null' || propertyId === 'undefined') {
         return [];
     }
-    return apiRequest<ChargeConfigResponse[]>(`/api/v1/finance/charge-configs/property/${propertyId}`, {
+    const response = await apiRequest<ChargeConfigListResponse>(`/api/v1/finance/charge-configs/property/${propertyId}?size=2000`, {
         method: 'GET',
         token
     });
+    return response?.content || [];
 };
 
 export const getChargesForProperty = async (propertyId: string, includeInactive: boolean, token: string): Promise<ChargeConfigResponse[]> => {
     if (!propertyId || propertyId === 'null' || propertyId === 'undefined') {
         return [];
     }
-    return apiRequest<ChargeConfigResponse[]>(`/api/v1/finance/charge-configs/property/${propertyId}?includeInactive=${includeInactive}`, {
+    const response = await apiRequest<ChargeConfigListResponse>(`/api/v1/finance/charge-configs/property/${propertyId}?includeInactive=${includeInactive}&size=2000`, {
         method: 'GET',
         token
     });
+    return response?.content || [];
 };
 
 export const deactivateChargeConfig = async (id: string, token: string): Promise<void> => {

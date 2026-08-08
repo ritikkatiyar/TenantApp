@@ -106,6 +106,7 @@ public class AnnouncementIntegrationTest {
                 .userId(tenant.getId())
                 .unit(unit)
                 .status(LeaseStatus.ACTIVE)
+                .monthlyRentAmount(BigDecimal.valueOf(1000.00))
                 .moveInDate(LocalDate.now().minusDays(10))
                 .securityDeposit(BigDecimal.valueOf(30000))
                 .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
