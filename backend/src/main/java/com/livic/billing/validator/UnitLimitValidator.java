@@ -28,10 +28,8 @@ public class UnitLimitValidator implements SubscriptionValidator {
         }
 
         List<PropertySummaryDTO> properties = propertyFacade.getPropertiesByUserId(userId);
-        int currentUnitCount = 0;
-        for (PropertySummaryDTO prop : properties) {
-            currentUnitCount += unitFacade.getUnitsByPropertyId(prop.id()).size();
-        }
+        List<UUID> propertyIds = properties.stream().map(PropertySummaryDTO::id).toList();
+        long currentUnitCount = unitFacade.getTotalUnitsForPropertyIds(propertyIds);
 
         log.info("[UNIT LIMIT CHECK] User: {}, Current Units: {}, Max Allowed: {}", userId, currentUnitCount, maxUnits);
         return currentUnitCount < maxUnits;

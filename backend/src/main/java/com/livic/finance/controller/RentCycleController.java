@@ -105,6 +105,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{id}/mark-paid")
+    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> markPaid(
             @PathVariable UUID id
     ) {

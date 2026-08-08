@@ -18,4 +18,6 @@ public interface UnitFacade {
     boolean isUnitAvailableOnDate(UUID unitId, LocalDate date);
 
     boolean existsUnitById(UUID unitId);
+
+    long getTotalUnitsForPropertyIds(List<UUID> propertyIds);
 }

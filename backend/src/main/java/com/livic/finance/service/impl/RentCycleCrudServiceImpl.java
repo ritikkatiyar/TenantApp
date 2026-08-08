@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.livic.finance.dto.RentCycleDTOs;
+
 @Service
 @Transactional
 public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, UUID, RentCycleRepository> implements RentCycleCrudService {
@@ -88,7 +90,7 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
     }
 
     @Override
-    public List<Object[]> getRentRollMetrics(
+    public RentCycleDTOs.RentRollMetricsDTO getRentRollMetrics(
             UUID propertyId,
             String billingMonth,
             RentCycleStatus statusPending,
@@ -97,7 +99,7 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
             RentCycleStatus statusOverdue,
             RentCycleStatus statusPartiallyPaid
     ) {
-        return repository.getRentRollMetrics(
+        List<Object[]> metrics = repository.getRentRollMetrics(
                 propertyId,
                 billingMonth,
                 statusPending,
@@ -105,6 +107,23 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
                 statusPaid,
                 statusOverdue,
                 statusPartiallyPaid
+        );
+
+        BigDecimal totalExpectedRevenue = BigDecimal.ZERO;
+        long pendingDraftsCount = 0;
+        long publishedCount = 0;
+
+        if (metrics != null && !metrics.isEmpty() && metrics.get(0) != null) {
+            Object[] row = metrics.get(0);
+            totalExpectedRevenue = (BigDecimal) (row[0] != null ? row[0] : BigDecimal.ZERO);
+            pendingDraftsCount = ((Number) (row[1] != null ? row[1] : 0L)).longValue();
+            publishedCount = ((Number) (row[2] != null ? row[2] : 0L)).longValue();
+        }
+
+        return new RentCycleDTOs.RentRollMetricsDTO(
+                totalExpectedRevenue,
+                pendingDraftsCount,
+                publishedCount
         );
     }
 }

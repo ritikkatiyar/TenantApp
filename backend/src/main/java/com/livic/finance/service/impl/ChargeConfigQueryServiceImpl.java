@@ -17,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,13 +34,8 @@ public class ChargeConfigQueryServiceImpl implements ChargeConfigQueryService {
     private final UserFacade userFacade;
 
     @Override
-    public List<ChargeConfigResponse> getChargesForProperty(UUID propertyId, boolean includeInactive, UUID userId) {
-        List<ChargeConfigTbl> configs = new ArrayList<>(includeInactive ? 
-                chargeConfigCrudService.findAllByPropertyId(propertyId) : 
-                chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId));
-
-        boolean hasRentConfig = configs.stream()
-                .anyMatch(c -> c.getChargeCategory() == ChargeCategory.RENT);
+    public Page<ChargeConfigResponse> getChargesForProperty(UUID propertyId, boolean includeInactive, UUID userId, Pageable pageable) {
+        boolean hasRentConfig = chargeConfigCrudService.existsByPropertyIdAndChargeCategory(propertyId, ChargeCategory.RENT);
 
         if (!hasRentConfig) {
             PropertySummaryDTO propSummary = propertyFacade.getPropertyById(propertyId).orElse(null);
@@ -46,15 +43,16 @@ public class ChargeConfigQueryServiceImpl implements ChargeConfigQueryService {
                 UserMode activeMode = userFacade.getActiveModeForUser(userId);
                 if (activeMode == UserMode.RENTAL) {
                     ChargeConfigTbl systemRentConfig = ChargeConfigMapper.createSystemRentConfig(propSummary.id());
-                    systemRentConfig = chargeConfigCrudService.save(systemRentConfig);
-                    configs.add(0, systemRentConfig);
+                    chargeConfigCrudService.save(systemRentConfig);
                 }
             }
         }
 
-        return configs.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        Page<ChargeConfigTbl> configPage = includeInactive ? 
+                chargeConfigCrudService.findAllByPropertyId(propertyId, pageable) : 
+                chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId, pageable);
+
+        return configPage.map(this::mapToResponse);
     }
 
     @Override

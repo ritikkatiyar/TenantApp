@@ -156,7 +156,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
                             .unitId(unitId)
                             .unitName(unitSummary != null ? unitSummary.unitNumber() : entry.getUnit().getUnitNumber())
                             .tenantName(tenantNames)
-                            .floor(unitSummary != null ? unitSummary.floor() : 0)
+                            .floor((unitSummary != null && unitSummary.floor() != null) ? unitSummary.floor() : 0)
                             .enteredValue(entry.getEnteredValue())
                             .isBilled(isBilled)
                             .build();

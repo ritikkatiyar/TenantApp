@@ -12,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,13 +62,14 @@ public class ChargeConfigController {
 
     @GetMapping("/property/{propertyId}")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
-    public ResponseEntity<ApiResponse<List<ChargeConfigResponse>>> getChargesForProperty(
+    public ResponseEntity<ApiResponse<Page<ChargeConfigResponse>>> getChargesForProperty(
             @PathVariable UUID propertyId,
             @RequestParam(required = false, defaultValue = "false") boolean includeInactive,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            Pageable pageable
     ) {
         UUID userId = userDetails != null ? UUID.fromString(userDetails.getId()) : null;
-        List<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive, userId);
+        Page<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive, userId, pageable);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 

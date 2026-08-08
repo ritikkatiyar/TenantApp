@@ -79,4 +79,10 @@ public class RentCycleDTOs {
             long pendingDraftsCount,
             long publishedCount
     ) {}
+
+    public record RentRollMetricsDTO(
+            BigDecimal totalExpectedRevenue,
+            long pendingDraftsCount,
+            long publishedCount
+    ) {}
 }

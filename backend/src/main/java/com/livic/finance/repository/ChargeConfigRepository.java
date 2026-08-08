@@ -4,6 +4,9 @@ import com.livic.finance.domain.ChargeConfigTbl;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.livic.common.domain.ChargeCategory;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +17,12 @@ public interface ChargeConfigRepository extends JpaRepository<ChargeConfigTbl, U
     List<ChargeConfigTbl> findAllByPropertyIdAndIsActiveTrue(UUID propertyId);
 
     List<ChargeConfigTbl> findAllByPropertyId(UUID propertyId);
+
+    Page<ChargeConfigTbl> findAllByPropertyIdAndIsActiveTrue(UUID propertyId, Pageable pageable);
+
+    Page<ChargeConfigTbl> findAllByPropertyId(UUID propertyId, Pageable pageable);
+
+    boolean existsByPropertyIdAndChargeCategory(UUID propertyId, ChargeCategory chargeCategory);
 
     Optional<ChargeConfigTbl> findByIdAndIsActiveTrue(UUID id);
 }

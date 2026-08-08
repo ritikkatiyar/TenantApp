@@ -381,7 +381,7 @@ public class RentCycleServiceImpl implements RentCycleService {
         }
 
         if (targetPropertyId != null) {
-            List<Object[]> metrics = rentCycleCrudService.getRentRollMetrics(
+            RentCycleDTOs.RentRollMetricsDTO metrics = rentCycleCrudService.getRentRollMetrics(
                     targetPropertyId,
                     billingMonth,
                     RentCycleStatus.PENDING,
@@ -390,11 +390,10 @@ public class RentCycleServiceImpl implements RentCycleService {
                     RentCycleStatus.OVERDUE,
                     RentCycleStatus.PARTIALLY_PAID
             );
-            if (metrics != null && !metrics.isEmpty() && metrics.get(0) != null) {
-                Object[] row = metrics.get(0);
-                totalExpectedRevenue = (BigDecimal) (row[0] != null ? row[0] : BigDecimal.ZERO);
-                pendingDraftsCount = ((Number) (row[1] != null ? row[1] : 0L)).longValue();
-                publishedCount = ((Number) (row[2] != null ? row[2] : 0L)).longValue();
+            if (metrics != null) {
+                totalExpectedRevenue = metrics.totalExpectedRevenue();
+                pendingDraftsCount = metrics.pendingDraftsCount();
+                publishedCount = metrics.publishedCount();
             }
         }
 

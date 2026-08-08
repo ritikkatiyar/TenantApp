@@ -52,4 +52,9 @@ public class UnitFacadeImpl implements UnitFacade {
     public boolean existsUnitById(UUID unitId) {
         return unitCrudService.existsById(unitId);
     }
+
+    @Override
+    public long getTotalUnitsForPropertyIds(List<UUID> propertyIds) {
+        return unitCrudService.countByPropertyIdIn(propertyIds);
+    }
 }

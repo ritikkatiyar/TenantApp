@@ -20,5 +20,8 @@ public interface UnitRepository extends JpaRepository<UnitTbl, UUID> {
     @Query("SELECT COALESCE(MAX(u.floor), 0) FROM UnitTbl u WHERE u.property.id = :propertyId")
     int findMaxFloorByPropertyId(@Param("propertyId") UUID propertyId);
 
+    @Query("SELECT COUNT(u) FROM UnitTbl u WHERE u.property.id IN :propertyIds")
+    long countByPropertyIdIn(@Param("propertyIds") List<UUID> propertyIds);
+
     void deleteByPropertyId(UUID propertyId);
 }

@@ -49,6 +49,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -121,6 +122,7 @@ public class RentModelingFixesTest {
         unit.setId(unitId);
         unit.setProperty(property);
         unit.setUnitNumber("101");
+        unit.setFloor(1);
 
         lease = LeaseTbl.builder()
                 .userId(UUID.randomUUID())
