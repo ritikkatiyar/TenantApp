@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -12,7 +12,11 @@ import BottomNavigation from '@/src/components/common/navigation/BottomNavigatio
 import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigation';
 import MobileHeader from '@/src/components/common/navigation/MobileHeader';
 import MobileMoreSheet from '@/src/components/common/navigation/MobileMoreSheet';
-import QRScannerModal from '@/src/components/common/navigation/QRScannerModal';
+// expo-camera is not SSR/web-export safe — crashes `npx expo export --platform web`
+// when imported statically. Lazy-load only on native; resolve to null on web.
+const QRScannerModal = Platform.OS !== 'web'
+  ? lazy(() => import('@/src/components/common/navigation/QRScannerModal'))
+  : () => null;
 import { ScrollProvider } from '@/src/components/common/navigation/ScrollContext';
 import { ScreenWrapper } from '@/src/components/common/layout/ScreenWrapper';
 import { OnboardingGate } from '@/src/components/common/layout/OnboardingGate';
@@ -116,10 +120,12 @@ export default function RootLayout() {
                         visible={moreSheetVisible} 
                         onClose={() => setMoreSheetVisible(false)} 
                       />
-                      <QRScannerModal 
-                        visible={qrModalVisible} 
-                        onClose={() => setQrModalVisible(false)} 
-                      />
+                      <Suspense fallback={null}>
+                        <QRScannerModal 
+                          visible={qrModalVisible} 
+                          onClose={() => setQrModalVisible(false)} 
+                        />
+                      </Suspense>
                     </>
                   )}
                 </View>
