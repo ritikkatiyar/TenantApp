@@ -17,6 +17,7 @@ public final class LeaseMapper {
         return LeaseTbl.builder()
                 .userId(targetUserId)
                 .unit(unit)
+                .monthlyRentAmount(request.monthlyRentAmount())
                 .securityDeposit(request.securityDeposit())
                 .splitStrategy(request.splitStrategy())
                 .moveInDate(request.moveInDate())
@@ -41,7 +42,7 @@ public final class LeaseMapper {
         String unitNumber = lease.getUnit() != null ? lease.getUnit().getUnitNumber() : null;
         String propertyName = (lease.getUnit() != null && lease.getUnit().getProperty() != null) 
                 ? lease.getUnit().getProperty().getName() : null;
-        BigDecimal rentAmount = BigDecimal.ZERO;
+        BigDecimal monthlyRentAmount = lease.getMonthlyRentAmount();
 
         return new LeaseDTOs.LeaseResponse(
                 lease.getId(),
@@ -51,7 +52,7 @@ public final class LeaseMapper {
                 propertyName,
                 tenantName,
                 tenantPhone,
-                rentAmount,
+                monthlyRentAmount,
                 lease.getSecurityDeposit(),
                 lease.getSplitStrategy(),
                 lease.getMoveInDate(),
@@ -75,7 +76,7 @@ public final class LeaseMapper {
                 response.propertyName(),
                 tenantName,
                 tenantPhone,
-                response.rentAmount(),
+                response.monthlyRentAmount(),
                 response.securityDeposit(),
                 response.splitStrategy(),
                 response.moveInDate(),

@@ -15,6 +15,7 @@ import com.livic.property.domain.UnitTbl;
 import com.livic.property.dto.PropertySummaryDTO;
 import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.PropertyFacade;
+import com.livic.property.facade.UnitFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
     private final LeaseCrudService leaseCrudService;
     private final ChargeConfigCrudService chargeConfigCrudService;
     private final PropertyFacade propertyFacade;
+    private final UnitFacade unitFacade;
     private final UserFacade userFacade;
 
     @Override
@@ -49,7 +51,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
             throw new BusinessException("Charge config is not a metered strategy");
         }
 
-        List<UnitSummaryDTO> units = propertyFacade.getUnitsByPropertyId(propertyId);
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
         List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
         Map<UUID, LeaseTbl> unitToLeaseMap = activeLeases.stream()
                 .collect(Collectors.toMap(l -> l.getUnit().getId(), l -> l, (existing, replacement) -> existing));

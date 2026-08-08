@@ -29,4 +29,10 @@ public class RentCycleSpecifications {
                 ? null
                 : cb.equal(root.get("status"), status);
     }
+
+    public static Specification<RentCycleTbl> hasPropertyId(UUID propertyId) {
+        return (root, query, cb) -> propertyId == null
+                ? null
+                : cb.equal(root.get("lease").get("unit").get("property").get("id"), propertyId);
+    }
 }

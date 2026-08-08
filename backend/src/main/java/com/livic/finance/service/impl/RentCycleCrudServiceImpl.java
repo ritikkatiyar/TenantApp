@@ -86,4 +86,25 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
                 pageable
         );
     }
+
+    @Override
+    public List<Object[]> getRentRollMetrics(
+            UUID propertyId,
+            String billingMonth,
+            RentCycleStatus statusPending,
+            RentCycleStatus statusPublished,
+            RentCycleStatus statusPaid,
+            RentCycleStatus statusOverdue,
+            RentCycleStatus statusPartiallyPaid
+    ) {
+        return repository.getRentRollMetrics(
+                propertyId,
+                billingMonth,
+                statusPending,
+                statusPublished,
+                statusPaid,
+                statusOverdue,
+                statusPartiallyPaid
+        );
+    }
 }

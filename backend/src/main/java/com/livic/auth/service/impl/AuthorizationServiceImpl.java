@@ -7,7 +7,7 @@ import com.livic.finance.dto.ChargeConfigDTOs;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.property.dto.UnitSummaryDTO;
-import com.livic.property.facade.PropertyFacade;
+import com.livic.property.facade.UnitFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.util.UUID;
 public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final MembershipCrudService membershipCrudService;
-    private final PropertyFacade propertyFacade;
+    private final UnitFacade unitFacade;
     private final FinanceFacade financeFacade;
 
     @Override
@@ -92,7 +92,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasPermissionByUnitId(UUID unitId, String permissionCode) {
         if (unitId == null) return false;
         try {
-            UnitSummaryDTO u = propertyFacade.getUnitById(unitId).orElse(null);
+            UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
             return u != null && checkPermission(u.propertyId(), permissionCode);
         } catch (Exception e) {
             return false;

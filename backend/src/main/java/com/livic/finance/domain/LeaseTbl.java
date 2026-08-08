@@ -37,6 +37,9 @@ public class LeaseTbl extends BaseEntity {
     @Column(name = "move_out_date")
     private LocalDate moveOutDate;
 
+    @Column(name = "monthly_rent_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal monthlyRentAmount;
+
     @Column(name = "security_deposit", nullable = false, precision = 10, scale = 2)
     private BigDecimal securityDeposit;
 

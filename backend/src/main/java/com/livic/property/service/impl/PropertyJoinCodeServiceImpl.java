@@ -124,6 +124,25 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         // Build a MembershipTbl shell from the DTO for the return contract
         com.livic.auth.domain.MembershipTbl membershipRef = new com.livic.auth.domain.MembershipTbl();
         membershipRef.setId(saved.id());
+        
+        if (saved.userId() != null) {
+            UserTbl uRef = new UserTbl();
+            uRef.setId(saved.userId());
+            membershipRef.setUser(uRef);
+        }
+        
+        if (saved.propertyId() != null) {
+            PropertyTbl pRef = new PropertyTbl();
+            pRef.setId(saved.propertyId());
+            membershipRef.setProperty(pRef);
+        }
+        
+        if (saved.roleCode() != null) {
+            MembershipRoleTbl rRef = new MembershipRoleTbl();
+            rRef.setCode(saved.roleCode());
+            membershipRef.setRole(rRef);
+        }
+        
         return membershipRef;
     }
 

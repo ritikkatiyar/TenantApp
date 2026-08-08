@@ -61,18 +61,56 @@ export const getPreFlightChecklist = async (
   );
 };
 
+export interface RentCycleListResponse {
+  content: RentCycleResponse[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  totalExpectedRevenue: number;
+  pendingDraftsCount: number;
+  publishedCount: number;
+}
+
 export const listRentCycles = async (
   billingMonth: string,
+  token: string,
+  propertyId?: string
+): Promise<RentCycleListResponse> => {
+  let url = `/api/v1/finance/rent-cycles?billingMonth=${billingMonth}&size=20`;
+  if (propertyId) {
+    url += `&propertyId=${propertyId}`;
+  }
+  return await apiRequest<RentCycleListResponse>(url, {
+    method: 'GET',
+    token
+  });
+};
+
+export const publishRentCycle = async (
+  id: string,
   token: string
-): Promise<RentCycleResponse[]> => {
-  const response = await apiRequest<{ content: RentCycleResponse[] }>(
-    `/api/v1/finance/rent-cycles?billingMonth=${billingMonth}`,
+): Promise<RentCycleResponse> => {
+  return await apiRequest<RentCycleResponse>(
+    `/api/v1/finance/rent-cycles/${id}/publish`,
     {
-      method: 'GET',
+      method: 'POST',
       token
     }
   );
-  return response?.content || [];
+};
+
+export const unpublishRentCycle = async (
+  id: string,
+  token: string
+): Promise<RentCycleResponse> => {
+  return await apiRequest<RentCycleResponse>(
+    `/api/v1/finance/rent-cycles/${id}/unpublish`,
+    {
+      method: 'POST',
+      token
+    }
+  );
 };
 
 export const batchPublishRentCycle = async (

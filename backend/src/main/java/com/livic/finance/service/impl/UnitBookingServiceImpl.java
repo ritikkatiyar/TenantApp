@@ -7,7 +7,7 @@ import com.livic.finance.service.interfaces.UnitBookingService;
 import com.livic.payment.dto.PaymentTransactionResponse;
 import com.livic.payment.facade.PaymentFacade;
 import com.livic.property.domain.UnitTbl;
-import com.livic.property.facade.PropertyFacade;
+import com.livic.property.facade.UnitFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import com.livic.finance.mapper.UnitBookingMapper;
@@ -33,7 +33,7 @@ import com.livic.common.domain.UnitBookingStatus;
 public class UnitBookingServiceImpl implements UnitBookingService {
 
     private final UnitBookingCrudService unitBookingCrudService;
-    private final PropertyFacade propertyFacade;
+    private final UnitFacade unitFacade;
     private final PaymentFacade paymentFacade;
     private final AuthorizationService authorizationService;
     private final UserFacade userFacade;
@@ -42,12 +42,12 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     public UnitBookingDTOs.UnitBookingResponse createBooking(UnitBookingDTOs.CreateBookingRequest request) {
         log.info("Processing booking creation for unit: {}, tenant name: {}", request.unitId(), request.prospectiveTenantName());
 
-        boolean available = propertyFacade.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
+        boolean available = unitFacade.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
         if (!available) {
             throw new BusinessException(HttpStatus.CONFLICT, "No vacancy available in this unit on the requested date");
         }
 
-        UnitSummaryDTO unitSummary = propertyFacade.getUnitById(request.unitId())
+        UnitSummaryDTO unitSummary = unitFacade.getUnitById(request.unitId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
         UnitTbl unit = new UnitTbl();
         unit.setId(unitSummary.id());

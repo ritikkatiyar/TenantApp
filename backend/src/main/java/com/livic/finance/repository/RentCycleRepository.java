@@ -41,6 +41,22 @@ public interface RentCycleRepository extends JpaRepository<RentCycleTbl, UUID>, 
             @Param("statusPaid") RentCycleStatus statusPaid
     );
 
+    @Query("SELECT " +
+           "COALESCE(SUM(r.totalAmount), 0), " +
+           "COALESCE(SUM(CASE WHEN r.status = :statusPending THEN 1 ELSE 0 END), 0), " +
+           "COALESCE(SUM(CASE WHEN r.status IN (:statusPublished, :statusPaid, :statusOverdue, :statusPartiallyPaid) THEN 1 ELSE 0 END), 0) " +
+           "FROM RentCycleTbl r JOIN r.lease l JOIN l.unit u " +
+           "WHERE u.property.id = :propertyId AND r.billingMonth = :billingMonth")
+    List<Object[]> getRentRollMetrics(
+            @Param("propertyId") UUID propertyId,
+            @Param("billingMonth") String billingMonth,
+            @Param("statusPending") RentCycleStatus statusPending,
+            @Param("statusPublished") RentCycleStatus statusPublished,
+            @Param("statusPaid") RentCycleStatus statusPaid,
+            @Param("statusOverdue") RentCycleStatus statusOverdue,
+            @Param("statusPartiallyPaid") RentCycleStatus statusPartiallyPaid
+    );
+
     @Query(value = "SELECT new com.livic.finance.dto.DefaulterRecordDTO(" +
            "l.userId, unit.unitNumber, p.name, r.dueDate, r.totalAmount, r.id) " +
            "FROM RentCycleTbl r JOIN r.lease l JOIN l.unit unit JOIN unit.property p " +

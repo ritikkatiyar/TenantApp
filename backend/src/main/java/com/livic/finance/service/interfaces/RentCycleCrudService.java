@@ -24,4 +24,13 @@ public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
 
     RevenueMetricsDTO getRevenueMetrics(Collection<UUID> propertyIds, String billingMonth);
     Page<DefaulterRecordDTO> getDefaulters(Collection<UUID> propertyIds, Pageable pageable);
+    List<Object[]> getRentRollMetrics(
+            UUID propertyId,
+            String billingMonth,
+            com.livic.common.domain.RentCycleStatus statusPending,
+            com.livic.common.domain.RentCycleStatus statusPublished,
+            com.livic.common.domain.RentCycleStatus statusPaid,
+            com.livic.common.domain.RentCycleStatus statusOverdue,
+            com.livic.common.domain.RentCycleStatus statusPartiallyPaid
+    );
 }
