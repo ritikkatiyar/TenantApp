@@ -6,6 +6,9 @@ import com.livic.property.repository.PropertyRepository;
 import com.livic.property.service.interfaces.PropertyCrudService;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -33,9 +36,9 @@ public class PropertyCrudServiceImpl extends AbstractCrudService<PropertyTbl, UU
     }
 
     @Override
-    public org.springframework.data.domain.Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, org.springframework.data.domain.Pageable pageable) {
+    public Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, Pageable pageable) {
         if (propertyIds == null || propertyIds.isEmpty()) {
-            return org.springframework.data.domain.Page.empty(pageable);
+            return Page.empty(pageable);
         }
         return repository.findDistinctByIdIn(propertyIds, pageable);
     }

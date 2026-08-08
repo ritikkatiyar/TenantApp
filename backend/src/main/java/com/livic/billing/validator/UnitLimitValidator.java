@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import org.slf4j.MDC;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -38,9 +40,9 @@ public class UnitLimitValidator implements SubscriptionValidator {
                 .addKeyValue("userId", userId)
                 .addKeyValue("currentUnits", currentUnitCount)
                 .addKeyValue("maxAllowed", maxUnits)
-                .addKeyValue("correlationId", org.slf4j.MDC.get("correlationId"))
-                .addKeyValue("traceId", org.slf4j.MDC.get("traceId"))
-                .addKeyValue("spanId", org.slf4j.MDC.get("spanId"))
+                .addKeyValue("correlationId", MDC.get("correlationId"))
+                .addKeyValue("traceId", MDC.get("traceId"))
+                .addKeyValue("spanId", MDC.get("spanId"))
                 .log();
 
         return currentUnitCount < maxUnits;

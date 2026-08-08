@@ -365,7 +365,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                 .and(RentCycleSpecifications.hasBillingMonth(billingMonth))
                 .and(RentCycleSpecifications.hasStatus(status));
 
-        org.springframework.data.domain.Page<RentCycleTbl> page = rentCycleCrudService.findAll(spec, pageable);
+        Page<RentCycleTbl> page = rentCycleCrudService.findAll(spec, pageable);
         List<RentCycleDTOs.RentCycleResponse> content = toResponses(page.getContent());
 
         BigDecimal totalExpectedRevenue = BigDecimal.ZERO;

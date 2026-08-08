@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.*;
 
 @Service
@@ -34,7 +37,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
     }
 
     @Override
-    public org.springframework.data.domain.Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, org.springframework.data.domain.Pageable pageable) {
+    public Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, Pageable pageable) {
         return propertyQueryService.getPropertiesByUserId(userId, pageable)
                 .map(PropertySummaryDTO::from);
     }

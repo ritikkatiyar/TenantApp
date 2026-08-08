@@ -7,9 +7,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
+import org.slf4j.MDC;
 import org.springframework.data.domain.Pageable;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -32,9 +33,9 @@ public class PropertyLimitValidator implements SubscriptionValidator {
                 .addKeyValue("userId", userId)
                 .addKeyValue("currentProperties", currentPropertyCount)
                 .addKeyValue("maxAllowed", maxProperties)
-                .addKeyValue("correlationId", org.slf4j.MDC.get("correlationId"))
-                .addKeyValue("traceId", org.slf4j.MDC.get("traceId"))
-                .addKeyValue("spanId", org.slf4j.MDC.get("spanId"))
+                .addKeyValue("correlationId", MDC.get("correlationId"))
+                .addKeyValue("traceId", MDC.get("traceId"))
+                .addKeyValue("spanId", MDC.get("spanId"))
                 .log();
 
         return currentPropertyCount < maxProperties;

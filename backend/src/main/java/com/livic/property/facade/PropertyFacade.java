@@ -2,6 +2,9 @@ package com.livic.property.facade;
 
 import com.livic.property.dto.PropertySummaryDTO;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -10,7 +13,7 @@ public interface PropertyFacade {
 
     Optional<PropertySummaryDTO> getPropertyById(UUID propertyId);
 
-    org.springframework.data.domain.Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, org.springframework.data.domain.Pageable pageable);
+    Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, Pageable pageable);
 
     List<PropertySummaryDTO> getPropertiesByUserId(UUID userId);
 
