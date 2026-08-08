@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -12,12 +12,17 @@ import BottomNavigation from '@/src/components/common/navigation/BottomNavigatio
 import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigation';
 import MobileHeader from '@/src/components/common/navigation/MobileHeader';
 import MobileMoreSheet from '@/src/components/common/navigation/MobileMoreSheet';
-import QRScannerModal from '@/src/components/common/navigation/QRScannerModal';
 import { ScrollProvider } from '@/src/components/common/navigation/ScrollContext';
 import { ScreenWrapper } from '@/src/components/common/layout/ScreenWrapper';
 import { OnboardingGate } from '@/src/components/common/layout/OnboardingGate';
 import { useResponsive } from '@/hooks/useResponsive';
 import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
+
+// Lazily load QRScannerModal only on native — expo-camera is not SSR/web-export safe
+// and will crash Expo's static export (`npx expo export --platform web`) if imported statically.
+const QRScannerModal = Platform.OS !== 'web'
+  ? lazy(() => import('@/src/components/common/navigation/QRScannerModal'))
+  : () => null;
 
 const ROUTE_TITLES: Record<string, string> = {
   '/tenant-home': 'My Home',
@@ -116,10 +121,12 @@ export default function RootLayout() {
                         visible={moreSheetVisible} 
                         onClose={() => setMoreSheetVisible(false)} 
                       />
-                      <QRScannerModal 
-                        visible={qrModalVisible} 
-                        onClose={() => setQrModalVisible(false)} 
-                      />
+                      <Suspense fallback={null}>
+                        <QRScannerModal 
+                          visible={qrModalVisible} 
+                          onClose={() => setQrModalVisible(false)} 
+                        />
+                      </Suspense>
                     </>
                   )}
                 </View>
