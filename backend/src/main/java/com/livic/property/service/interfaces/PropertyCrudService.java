@@ -11,4 +11,5 @@ public interface PropertyCrudService extends CrudService<PropertyTbl, UUID> {
     List<PropertyTbl> findPropertiesByOwnerId(UUID userId);
     List<PropertyTbl> findByAutoBillDayOfMonth(Integer autoBillDayOfMonth);
     List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds);
+    org.springframework.data.domain.Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, org.springframework.data.domain.Pageable pageable);
 }

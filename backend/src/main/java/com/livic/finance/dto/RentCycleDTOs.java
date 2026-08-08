@@ -75,9 +75,7 @@ public class RentCycleDTOs {
             int totalPages,
             int size,
             int number,
-            BigDecimal totalExpectedRevenue,
-            long pendingDraftsCount,
-            long publishedCount
+            RentRollMetricsDTO metrics
     ) {}
 
     public record RentRollMetricsDTO(

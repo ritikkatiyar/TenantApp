@@ -18,4 +18,6 @@ public interface PropertyRepository extends JpaRepository<PropertyTbl, UUID> {
     List<PropertyTbl> findByAutoBillDayOfMonth(Integer autoBillDayOfMonth);
 
     List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds);
+
+    org.springframework.data.domain.Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, org.springframework.data.domain.Pageable pageable);
 }

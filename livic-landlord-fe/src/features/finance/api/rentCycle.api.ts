@@ -61,6 +61,19 @@ export const getPreFlightChecklist = async (
   );
 };
 
+export interface BackendRentCycleListResponse {
+  content: RentCycleResponse[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  metrics: {
+    totalExpectedRevenue: number;
+    pendingDraftsCount: number;
+    publishedCount: number;
+  };
+}
+
 export interface RentCycleListResponse {
   content: RentCycleResponse[];
   totalElements: number;
@@ -81,10 +94,20 @@ export const listRentCycles = async (
   if (propertyId) {
     url += `&propertyId=${propertyId}`;
   }
-  return await apiRequest<RentCycleListResponse>(url, {
+  const response = await apiRequest<BackendRentCycleListResponse>(url, {
     method: 'GET',
     token
   });
+  return {
+    content: response.content,
+    totalElements: response.totalElements,
+    totalPages: response.totalPages,
+    size: response.size,
+    number: response.number,
+    totalExpectedRevenue: response.metrics?.totalExpectedRevenue || 0,
+    pendingDraftsCount: response.metrics?.pendingDraftsCount || 0,
+    publishedCount: response.metrics?.publishedCount || 0
+  };
 };
 
 export const publishRentCycle = async (

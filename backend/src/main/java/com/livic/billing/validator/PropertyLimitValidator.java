@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -23,8 +25,18 @@ public class PropertyLimitValidator implements SubscriptionValidator {
             return true; // Unlimited
         }
 
-        int currentPropertyCount = propertyFacade.getPropertiesByUserId(userId).size();
-        log.info("[PROPERTY LIMIT CHECK] User: {}, Current: {}, Max Allowed: {}", userId, currentPropertyCount, maxProperties);
+        long currentPropertyCount = propertyFacade.getPropertiesByUserId(userId, Pageable.unpaged()).getTotalElements();
+        
+        log.atInfo()
+                .setMessage("[PROPERTY LIMIT CHECK]")
+                .addKeyValue("userId", userId)
+                .addKeyValue("currentProperties", currentPropertyCount)
+                .addKeyValue("maxAllowed", maxProperties)
+                .addKeyValue("correlationId", org.slf4j.MDC.get("correlationId"))
+                .addKeyValue("traceId", org.slf4j.MDC.get("traceId"))
+                .addKeyValue("spanId", org.slf4j.MDC.get("spanId"))
+                .log();
+
         return currentPropertyCount < maxProperties;
     }
 

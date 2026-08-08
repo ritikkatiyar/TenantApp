@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.UUID;
 import com.livic.billing.annotation.EnforceSubscription;
@@ -56,11 +58,12 @@ public class PropertyController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
-    public ResponseEntity<ApiResponse<List<PropertyDTOs.PropertyResponse>>> getMyProperties(
-            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+    public ResponseEntity<ApiResponse<Page<PropertyDTOs.PropertyResponse>>> getMyProperties(
+            @AuthenticationPrincipal UserDetailsImpl currentUser,
+            Pageable pageable) {
         UUID userId = UUID.fromString(currentUser.getId());
-        List<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId);
-        return ResponseEntity.ok(ApiResponse.success(properties.stream().map(this::toResponse).toList()));
+        Page<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId, pageable);
+        return ResponseEntity.ok(ApiResponse.success(properties.map(this::toResponse)));
     }
 
     @DeleteMapping("/{propertyId}")

@@ -10,6 +10,8 @@ public interface PropertyFacade {
 
     Optional<PropertySummaryDTO> getPropertyById(UUID propertyId);
 
+    org.springframework.data.domain.Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, org.springframework.data.domain.Pageable pageable);
+
     List<PropertySummaryDTO> getPropertiesByUserId(UUID userId);
 
     List<PropertySummaryDTO> getPropertiesByAutoBillDayOfMonth(int day);

@@ -31,4 +31,12 @@ public class PropertyCrudServiceImpl extends AbstractCrudService<PropertyTbl, UU
     public List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds) {
         return repository.findDistinctByIdIn(propertyIds);
     }
+
+    @Override
+    public org.springframework.data.domain.Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, org.springframework.data.domain.Pageable pageable) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return org.springframework.data.domain.Page.empty(pageable);
+        }
+        return repository.findDistinctByIdIn(propertyIds, pageable);
+    }
 }

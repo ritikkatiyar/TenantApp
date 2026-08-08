@@ -403,9 +403,11 @@ public class RentCycleServiceImpl implements RentCycleService {
                 page.getTotalPages(),
                 page.getSize(),
                 page.getNumber(),
-                totalExpectedRevenue,
-                pendingDraftsCount,
-                publishedCount
+                new RentCycleDTOs.RentRollMetricsDTO(
+                        totalExpectedRevenue,
+                        pendingDraftsCount,
+                        publishedCount
+                )
         );
     }
 

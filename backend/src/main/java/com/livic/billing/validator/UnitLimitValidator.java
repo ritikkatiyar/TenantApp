@@ -4,6 +4,8 @@ import com.livic.billing.annotation.FeatureKey;
 import com.livic.billing.dto.UserSubscriptionContext;
 import com.livic.property.dto.PropertySummaryDTO;
 import com.livic.property.facade.PropertyFacade;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.livic.property.facade.UnitFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +29,20 @@ public class UnitLimitValidator implements SubscriptionValidator {
             return true; // Unlimited
         }
 
-        List<PropertySummaryDTO> properties = propertyFacade.getPropertiesByUserId(userId);
-        List<UUID> propertyIds = properties.stream().map(PropertySummaryDTO::id).toList();
+        Page<PropertySummaryDTO> propertiesPage = propertyFacade.getPropertiesByUserId(userId, Pageable.unpaged());
+        List<UUID> propertyIds = propertiesPage.getContent().stream().map(PropertySummaryDTO::id).toList();
         long currentUnitCount = unitFacade.getTotalUnitsForPropertyIds(propertyIds);
 
-        log.info("[UNIT LIMIT CHECK] User: {}, Current Units: {}, Max Allowed: {}", userId, currentUnitCount, maxUnits);
+        log.atInfo()
+                .setMessage("[UNIT LIMIT CHECK]")
+                .addKeyValue("userId", userId)
+                .addKeyValue("currentUnits", currentUnitCount)
+                .addKeyValue("maxAllowed", maxUnits)
+                .addKeyValue("correlationId", org.slf4j.MDC.get("correlationId"))
+                .addKeyValue("traceId", org.slf4j.MDC.get("traceId"))
+                .addKeyValue("spanId", org.slf4j.MDC.get("spanId"))
+                .log();
+
         return currentUnitCount < maxUnits;
     }
 

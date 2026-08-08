@@ -34,6 +34,12 @@ public class PropertyFacadeImpl implements PropertyFacade {
     }
 
     @Override
+    public org.springframework.data.domain.Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, org.springframework.data.domain.Pageable pageable) {
+        return propertyQueryService.getPropertiesByUserId(userId, pageable)
+                .map(PropertySummaryDTO::from);
+    }
+
+    @Override
     public List<PropertySummaryDTO> getPropertiesByUserId(UUID userId) {
         return propertyQueryService.getPropertiesByUserId(userId).stream()
                 .map(PropertySummaryDTO::from)
