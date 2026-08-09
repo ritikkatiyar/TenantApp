@@ -12,7 +12,6 @@ import com.livic.property.dto.PropertySummaryDTO;
 import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.PropertyFacade;
 import com.livic.property.facade.UnitFacade;
-import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import com.livic.announcement.service.interfaces.AnnouncementCrudService;
@@ -55,8 +54,16 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         announcement = announcementCrudService.save(announcement);
 
-        // Fetch recipients user IDs to trigger notifications
-        List<String> recipientUserIds = getRecipientUserIds(propSummary.id(), request.getTargetType(), request.getTargetValue());
+        // Fetch recipients — pre-fetch all property leases for the optimized path
+        List<LeaseSummaryDTO> allActivePropertyLeases = financeFacade.getActiveLeasesByPropertyId(propSummary.id());
+        Map<UUID, List<LeaseSummaryDTO>> leasesByUnit = allActivePropertyLeases.stream()
+                .filter(l -> l.unitId() != null)
+                .collect(Collectors.groupingBy(LeaseSummaryDTO::unitId));
+        Map<Integer, List<LeaseSummaryDTO>> leasesByFloor = allActivePropertyLeases.stream()
+                .filter(l -> l.floor() != null)
+                .collect(Collectors.groupingBy(LeaseSummaryDTO::floor));
+        List<String> recipientUserIds = getRecipientUserIdsOptimized(
+                request.getTargetType(), request.getTargetValue(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
 
         // Publish Spring Event to trigger Notification module listeners
         AnnouncementBroadcastEvent event = new AnnouncementBroadcastEvent(
@@ -216,70 +223,17 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     @Transactional
     public void markAsRead(UUID announcementId, UUID tenantUserId) {
         AnnouncementTbl announcement = announcementCrudService.findById(announcementId)
-                .orElseThrow(() -> new IllegalArgumentException("Announcement not found with ID: " + announcementId));
-
-        UserSummaryDTO userSummary = userFacade.getUserById(tenantUserId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
-        UserTbl user = new UserTbl();
-        user.setId(userSummary.id());
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Announcement not found"));
 
         boolean alreadyRead = announcementReceiptCrudService.existsByAnnouncementIdAndUserId(announcementId, tenantUserId);
         if (!alreadyRead) {
             AnnouncementReceiptTbl receipt = AnnouncementReceiptTbl.builder()
                     .announcement(announcement)
-                    .user(user)
+                    .userId(tenantUserId)
                     .build();
             announcementReceiptCrudService.save(receipt);
         }
     }
 
-    private List<String> getRecipientUserIds(UUID propertyId, AnnouncementTargetType targetType, String targetValue) {
-        List<String> recipientUserIds = new ArrayList<>();
-
-        if (targetType == AnnouncementTargetType.PROPERTY) {
-            List<LeaseSummaryDTO> activeLeases = financeFacade.getActiveLeasesByPropertyId(propertyId);
-            for (LeaseSummaryDTO lease : activeLeases) {
-                if (lease.userId() != null) {
-                    recipientUserIds.add(lease.userId().toString());
-                }
-            }
-        } else if (targetType == AnnouncementTargetType.FLOOR) {
-            if (targetValue != null) {
-                try {
-                    Integer floorNumber = Integer.valueOf(targetValue);
-                    List<UnitSummaryDTO> unitsOnFloor = unitFacade.getUnitsByPropertyId(propertyId).stream()
-                            .filter(u -> u.floor() != null && u.floor().equals(floorNumber))
-                            .toList();
-                    List<UUID> unitIds = unitsOnFloor.stream().map(UnitSummaryDTO::id).collect(Collectors.toList());
-                    if (!unitIds.isEmpty()) {
-                        financeFacade.getActiveLeasesByUnitIds(unitIds).values().stream()
-                                  .flatMap(List::stream)
-                                  .forEach(lease -> {
-                                      if (lease.userId() != null) {
-                                          recipientUserIds.add(lease.userId().toString());
-                                      }
-                                  });
-                    }
-                } catch (NumberFormatException e) {
-                    log.warn("[AnnouncementService] Invalid floor targetValue '{}' — could not parse as integer", targetValue, e);
-                }
-            }
-        } else if (targetType == AnnouncementTargetType.UNIT) {
-            if (targetValue != null) {
-                try {
-                    UUID unitId = UUID.fromString(targetValue);
-                    List<LeaseSummaryDTO> activeLeases = financeFacade.getActiveLeasesByUnitId(unitId);
-                    for (LeaseSummaryDTO lease : activeLeases) {
-                        if (lease.userId() != null) {
-                            recipientUserIds.add(lease.userId().toString());
-                        }
-                    }
-                } catch (IllegalArgumentException e) {
-                    log.warn("[AnnouncementService] Invalid unit targetValue '{}' — could not parse as UUID", targetValue, e);
-                }
-            }
-        }
-
-        return recipientUserIds.stream().distinct().collect(Collectors.toList());
-    }
 }
+

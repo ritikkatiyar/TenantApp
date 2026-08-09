@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,18 +20,8 @@ public class AnnouncementCrudServiceImpl extends AbstractCrudService<Announcemen
     }
 
     @Override
-    public List<AnnouncementTbl> findNoticesForTenant(UUID propertyId, String floor, String unitId) {
-        return repository.findNoticesForTenant(propertyId, floor, unitId);
-    }
-
-    @Override
     public Page<AnnouncementTbl> findNoticesForTenant(UUID propertyId, String floor, String unitId, Pageable pageable) {
         return repository.findNoticesForTenant(propertyId, floor, unitId, pageable);
-    }
-
-    @Override
-    public List<AnnouncementTbl> findByPropertyId(UUID propertyId) {
-        return repository.findByPropertyId(propertyId);
     }
 
     @Override

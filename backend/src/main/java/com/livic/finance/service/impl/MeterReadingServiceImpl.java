@@ -112,6 +112,11 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         Set<UUID> userIds = activeLeases.stream().map(LeaseTbl::getUserId).collect(Collectors.toSet());
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(userIds);
 
+        Set<UUID> unitIdsInResult = finalEntries.stream().map(MeterReadingTbl::getUnitId).collect(Collectors.toSet());
+        Map<UUID, UnitSummaryDTO> unitMap = unitFacade.getUnitsByPropertyId(propertyId).stream()
+                .filter(u -> unitIdsInResult.contains(u.id()))
+                .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
+
         return finalEntries.stream().map(r -> {
             LeaseTbl lease = unitToLeaseMap.get(r.getUnitId());
             String tenantName = "Vacant";
@@ -124,7 +129,8 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                 }
             }
 
-            String unitName = unitFacade.getUnitById(r.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("N/A");
+            UnitSummaryDTO unit = unitMap.get(r.getUnitId());
+            String unitName = unit != null ? unit.unitNumber() : "N/A";
 
             return MeterReadingResponse.builder()
                     .id(r.getId())
@@ -146,12 +152,17 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         Map<UUID, MeterReadingTbl> existingEntriesMap = existingEntries.stream()
                 .collect(Collectors.toMap(MeterReadingTbl::getUnitId, r -> r));
 
+        List<MeterReadingTbl> toUpdate = new ArrayList<>();
         for (UnitReading entryReq : request.getReadings()) {
             MeterReadingTbl entry = existingEntriesMap.get(entryReq.getUnitId());
             if (entry != null && !Boolean.TRUE.equals(entry.getIsBilled())) {
                 entry.setCurrentReading(entryReq.getCurrentReading());
-                meterReadingCrudService.save(entry);
+                toUpdate.add(entry);
             }
+        }
+
+        if (!toUpdate.isEmpty()) {
+            meterReadingCrudService.saveAll(toUpdate);
         }
     }
 }

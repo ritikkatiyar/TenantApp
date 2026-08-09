@@ -1,5 +1,6 @@
 package com.livic.announcement.repository;
 
+import com.livic.announcement.domain.AnnouncementTargetType;
 import com.livic.announcement.domain.AnnouncementTbl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
