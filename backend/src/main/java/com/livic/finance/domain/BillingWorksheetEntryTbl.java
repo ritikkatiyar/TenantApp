@@ -1,8 +1,6 @@
 package com.livic.finance.domain;
 
 import com.livic.common.domain.BaseEntity;
-import com.livic.property.domain.PropertyTbl;
-import com.livic.property.domain.UnitTbl;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,15 +16,11 @@ import java.util.UUID;
 @Builder
 public class BillingWorksheetEntryTbl extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "property_id", nullable = false)
-    @ToString.Exclude
-    private PropertyTbl property;
+    @Column(name = "property_id", nullable = false)
+    private UUID propertyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "unit_id", nullable = false)
-    @ToString.Exclude
-    private UnitTbl unit;
+    @Column(name = "unit_id", nullable = false)
+    private UUID unitId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "charge_config_id", nullable = false)

@@ -1,8 +1,6 @@
 package com.livic.finance.domain;
 
 import com.livic.common.domain.BaseEntity;
-import com.livic.property.domain.UnitTbl;
-import com.livic.payment.domain.PaymentTransactionTbl;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,10 +17,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UnitBookingTbl extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "unit_id", nullable = false)
-    @ToString.Exclude
-    private UnitTbl unit;
+    @Column(name = "unit_id", nullable = false)
+    private UUID unitId;
 
     @Column(name = "prospective_tenant_user_id")
     private UUID prospectiveTenantUserId;
@@ -45,10 +41,8 @@ public class UnitBookingTbl extends BaseEntity {
     @Column(nullable = false, length = 32)
     private String status; // BOOKED, CONVERTED, FORFEITED, REFUNDED
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_transaction_id")
-    @ToString.Exclude
-    private PaymentTransactionTbl paymentTransaction;
+    @Column(name = "payment_transaction_id")
+    private UUID paymentTransactionId;
 
     @Column(name = "converted_lease_id")
     private UUID convertedLeaseId;

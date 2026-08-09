@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { Alert } from 'react-native';
 
 import SuperAdminLoginScreen from '@/src/features/auth/screens/SuperAdminLoginScreen';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -8,7 +9,7 @@ import type { TokenBundle } from '@/src/types/auth';
 
 export default function LoginRoute() {
   const router = useRouter();
-  const { signIn, setContext } = useAuth();
+  const { signIn, setContext, signOut } = useAuth();
 
   return (
     <SuperAdminLoginScreen
@@ -23,16 +24,16 @@ export default function LoginRoute() {
         setContext(context);
         
         if (context.isTenant && !context.isLandlord) {
-          // Pure tenants shouldn't see the property management onboarding screen
-          router.replace('/tenant-home');
+          // Pure tenants are not allowed to log in to the landlord app
+          await signOut();
+          Alert.alert(
+            'Access Denied',
+            'This application is for Landlords and Property Managers only. Tenants should use the Resident app.'
+          );
         } else if (!preference.onboardingDone) {
           router.replace('/mode-selection');
-        } else if (context.isLandlord && context.isTenant) {
-          router.replace('/tenant-home');
-        } else if (context.isLandlord && !context.isTenant) {
-          router.replace('/command-center');
         } else {
-          // both false, but onboardingDone=true
+          // Landlord / Manager goes directly to command center
           router.replace('/command-center');
         }
       }}

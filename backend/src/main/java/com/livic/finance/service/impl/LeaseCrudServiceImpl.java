@@ -26,7 +26,7 @@ public class LeaseCrudServiceImpl extends AbstractCrudService<LeaseTbl, UUID, Le
 
     @Override
     public Optional<LeaseTbl> findWithUnitAndPropertyById(UUID id) {
-        return repository.findWithUnitAndPropertyById(id);
+        return repository.findById(id);
     }
 
     @Override
@@ -55,32 +55,25 @@ public class LeaseCrudServiceImpl extends AbstractCrudService<LeaseTbl, UUID, Le
     }
 
     @Override
-    public List<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status) {
-        return repository.findActiveOccupanciesByProperty(propertyId, status);
+    public boolean existsByUnitId(UUID unitId) {
+        return repository.existsByUnitId(unitId);
     }
 
     @Override
-    public Page<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status, Pageable pageable) {
-        return repository.findActiveOccupanciesByProperty(propertyId, status, pageable);
+    public List<LeaseTbl> findByUnitIdInAndStatus(Collection<UUID> unitIds, LeaseStatus status) {
+        if (unitIds == null || unitIds.isEmpty()) return List.of();
+        return repository.findByUnitIdInAndStatus(unitIds, status);
     }
 
     @Override
-    public boolean existsByUnit_Id(UUID unitId) {
-        return repository.existsByUnit_Id(unitId);
+    public Page<LeaseTbl> findByUnitIdInAndStatus(Collection<UUID> unitIds, LeaseStatus status, Pageable pageable) {
+        if (unitIds == null || unitIds.isEmpty()) return Page.empty(pageable);
+        return repository.findByUnitIdInAndStatus(unitIds, status, pageable);
     }
 
     @Override
-    public List<LeaseTbl> findByUnit_IdInAndStatus(Collection<UUID> unitIds, LeaseStatus status) {
-        return repository.findByUnit_IdInAndStatus(unitIds, status);
-    }
-
-    @Override
-    public boolean existsByUserIdAndPropertyIdAndStatus(UUID userId, UUID propertyId, LeaseStatus status) {
-        return repository.existsByUserIdAndPropertyIdAndStatus(userId, propertyId, status);
-    }
-
-    @Override
-    public boolean existsByUnit_Property_Id(UUID propertyId) {
-        return repository.existsByUnit_Property_Id(propertyId);
+    public boolean existsByUnitIdIn(Collection<UUID> unitIds) {
+        if (unitIds == null || unitIds.isEmpty()) return false;
+        return repository.existsByUnitIdIn(unitIds);
     }
 }

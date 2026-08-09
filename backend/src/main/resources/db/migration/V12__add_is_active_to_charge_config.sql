@@ -1,2 +1,0 @@
-ALTER TABLE charge_config_tbl
-ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;

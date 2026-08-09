@@ -31,7 +31,7 @@ public interface BillingWorksheetRepository extends JpaRepository<BillingWorkshe
 
     boolean existsByChargeConfigId(UUID chargeConfigId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT e.unit.id, e.enteredValue FROM BillingWorksheetEntryTbl e WHERE e.property.id = :propertyId AND e.chargeConfig.id = :chargeConfigId AND e.billingMonth = (SELECT MAX(e2.billingMonth) FROM BillingWorksheetEntryTbl e2 WHERE e2.unit.id = e.unit.id AND e2.chargeConfig.id = :chargeConfigId AND e2.billingMonth < :billingMonth)")
+    @org.springframework.data.jpa.repository.Query("SELECT e.unitId, e.enteredValue FROM BillingWorksheetEntryTbl e WHERE e.propertyId = :propertyId AND e.chargeConfig.id = :chargeConfigId AND e.billingMonth = (SELECT MAX(e2.billingMonth) FROM BillingWorksheetEntryTbl e2 WHERE e2.unitId = e.unitId AND e2.chargeConfig.id = :chargeConfigId AND e2.billingMonth < :billingMonth)")
     List<Object[]> findLatestValuesForPropertyAndConfig(
             @org.springframework.data.repository.query.Param("propertyId") UUID propertyId, 
             @org.springframework.data.repository.query.Param("chargeConfigId") UUID chargeConfigId, 

@@ -67,7 +67,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Monthly Rent</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                  <Text style={styles.statValue}>{lease?.rentAmount ? `₹${lease.rentAmount.toLocaleString()}` : 'N/A'}</Text>
+                  <Text style={styles.statValue}>{lease?.monthlyRentAmount ? `₹${lease.monthlyRentAmount.toLocaleString()}` : 'N/A'}</Text>
                   <Text style={styles.statSubLabel}> / month</Text>
                 </View>
               </View>
@@ -185,7 +185,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
                   <Text style={styles.modalContractText}>
                     This Residential Lease Agreement (&quot;Agreement&quot;) is executed between Property Owner and Tenant for Unit {lease?.unitId?.substring(0, 8) || '101'}.
                     {"\n\n"}
-                    1. RENT & FEES: The monthly rent of ₹{lease?.rentAmount?.toLocaleString() || '10,000'} is due on or before the 5th of each calendar month.
+                    1. RENT & FEES: The monthly rent of ₹{lease?.monthlyRentAmount?.toLocaleString() || '10,000'} is due on or before the 5th of each calendar month.
                     {"\n\n"}
                     2. SECURITY DEPOSIT: The security deposit of ₹{lease?.securityDeposit?.toLocaleString() || '30,000'} is held securely and refundable upon lease expiration subject to unit inspection.
                     {"\n\n"}

@@ -19,9 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import com.livic.finance.dto.LeaseSummaryDTO;
-import com.livic.finance.facade.FinanceFacade;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -29,7 +26,6 @@ public class UnitQueryServiceImpl implements UnitQueryService {
 
     private final UnitCrudService unitCrudService;
     private final PropertyQueryService propertyQueryService;
-    private final FinanceFacade financeFacade;
 
     @Override
     public UnitTbl getUnitById(UUID id) {
@@ -81,21 +77,5 @@ public class UnitQueryServiceImpl implements UnitQueryService {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
         }
         return unitCrudService.findByPropertyId(propertyId);
-    }
-
-    @Override
-    public List<UnitTbl> getVacatingUnits(UUID propertyId) {
-        if (!propertyQueryService.existsById(propertyId)) {
-            throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found");
-        }
-        List<LeaseSummaryDTO> activeLeases = financeFacade.getActiveLeasesByPropertyId(propertyId);
-        Set<UUID> vacatingUnitIds = activeLeases.stream()
-                .filter(lease -> lease.moveOutDate() != null && lease.unitId() != null)
-                .map(LeaseSummaryDTO::unitId)
-                .collect(Collectors.toSet());
-
-        return unitCrudService.findByPropertyId(propertyId).stream()
-                .filter(unit -> vacatingUnitIds.contains(unit.getId()))
-                .collect(Collectors.toList());
     }
 }

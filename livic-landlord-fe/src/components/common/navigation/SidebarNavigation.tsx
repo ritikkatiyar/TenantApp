@@ -30,8 +30,6 @@ export default function SidebarNavigation() {
   const pathname = usePathname();
   const { signOut, context } = useAuth();
   const { view } = useLocalSearchParams();
-  
-  const isTenantView = context?.isTenant && (!context?.isLandlord || pathname.startsWith('/tenant-'));
 
   const renderSidebarLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, route: Href) => {
     let isActive = false;
@@ -82,28 +80,16 @@ export default function SidebarNavigation() {
       </View>
 
       <ScrollView style={styles.sidebarNavScroll} contentContainerStyle={styles.sidebarNav} showsVerticalScrollIndicator={false}>
-        {!isTenantView ? (
-          <>
-            {renderSidebarLink('dashboard', 'Overview', '/analytics')}
-            {renderSidebarLink('business', 'Portfolio', '/command-center')}
-            {renderSidebarLink('assessment', 'Reports', '/reports')}
-            {renderSidebarLink('groups', 'AI Desk', '/ai')}
-            {renderSidebarLink('description', 'Leases', '/leases' as Href)}
-            {renderSidebarLink('inventory', 'Inventory', '/inventory' as Href)}
-            {renderSidebarLink('build', 'Escalations', '/escalations')}
-            {renderSidebarLink('campaign', 'Announcements', '/announcements')}
-            {renderSidebarLink('account-balance', 'Finance & Billing', '/expenses')}
-            {renderSidebarLink('settings', 'Settings', '/settings')}
-          </>
-        ) : (
-          <>
-            {renderSidebarLink('home', 'Home', '/tenant-home')}
-            {renderSidebarLink('domain', 'Property', '/tenant-property')}
-            {renderSidebarLink('inventory', 'Inventory', '/tenant-inventory' as Href)}
-            {renderSidebarLink('payments', 'Payments', '/tenant-payments')}
-            {renderSidebarLink('support-agent', 'Support', '/tenant-maintenance')}
-          </>
-        )}
+        {renderSidebarLink('dashboard', 'Overview', '/analytics')}
+        {renderSidebarLink('business', 'Portfolio', '/command-center')}
+        {renderSidebarLink('assessment', 'Reports', '/reports')}
+        {renderSidebarLink('groups', 'AI Desk', '/ai')}
+        {renderSidebarLink('description', 'Leases', '/leases' as Href)}
+        {renderSidebarLink('inventory', 'Inventory', '/inventory' as Href)}
+        {renderSidebarLink('build', 'Escalations', '/escalations')}
+        {renderSidebarLink('campaign', 'Announcements', '/announcements')}
+        {renderSidebarLink('account-balance', 'Finance & Billing', '/expenses')}
+        {renderSidebarLink('settings', 'Settings', '/settings')}
       </ScrollView>
 
       <View style={[styles.sidebarFooter, isCollapsed && styles.sidebarFooterCollapsed]}>

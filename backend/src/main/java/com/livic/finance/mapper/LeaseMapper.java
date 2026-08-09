@@ -13,10 +13,10 @@ public final class LeaseMapper {
     private LeaseMapper() {
     }
 
-    public static LeaseTbl toEntity(LeaseDTOs.CreateLeaseRequest request, UnitTbl unit, UUID targetUserId) {
+    public static LeaseTbl toEntity(LeaseDTOs.CreateLeaseRequest request, UUID unitId, UUID targetUserId) {
         return LeaseTbl.builder()
                 .userId(targetUserId)
-                .unit(unit)
+                .unitId(unitId)
                 .monthlyRentAmount(request.monthlyRentAmount())
                 .securityDeposit(request.securityDeposit())
                 .splitStrategy(request.splitStrategy())
@@ -27,32 +27,19 @@ public final class LeaseMapper {
     }
 
     public static LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease) {
-        return toResponse(lease, null);
+        return toResponse(lease, null, null, null, null);
     }
 
-    public static LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease, UserTbl user) {
-        return toResponseWithDetails(
-                lease,
-                user != null ? user.getFullName() : null,
-                user != null ? user.getPhoneNumber() : null
-        );
-    }
-
-    public static LeaseDTOs.LeaseResponse toResponseWithDetails(LeaseTbl lease, String tenantName, String tenantPhone) {
-        String unitNumber = lease.getUnit() != null ? lease.getUnit().getUnitNumber() : null;
-        String propertyName = (lease.getUnit() != null && lease.getUnit().getProperty() != null) 
-                ? lease.getUnit().getProperty().getName() : null;
-        BigDecimal monthlyRentAmount = lease.getMonthlyRentAmount();
-
+    public static LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease, String unitNumber, String propertyName, String tenantName, String tenantPhone) {
         return new LeaseDTOs.LeaseResponse(
                 lease.getId(),
                 lease.getUserId(),
-                lease.getUnit() != null ? lease.getUnit().getId() : null,
+                lease.getUnitId(),
                 unitNumber,
                 propertyName,
                 tenantName,
                 tenantPhone,
-                monthlyRentAmount,
+                lease.getMonthlyRentAmount(),
                 lease.getSecurityDeposit(),
                 lease.getSplitStrategy(),
                 lease.getMoveInDate(),
@@ -61,6 +48,10 @@ public final class LeaseMapper {
                 lease.getCreatedAt(),
                 lease.getUpdatedAt()
         );
+    }
+
+    public static LeaseDTOs.LeaseResponse toResponseWithDetails(LeaseTbl lease, String tenantName, String tenantPhone) {
+        return toResponse(lease, null, null, tenantName, tenantPhone);
     }
     /**
      * Enriches a basic LeaseResponse (returned by the service layer) with user display fields.

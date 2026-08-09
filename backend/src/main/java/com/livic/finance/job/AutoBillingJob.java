@@ -30,6 +30,7 @@ public class AutoBillingJob {
     private final BillingWorksheetService worksheetService;
     private final LeaseRepository leaseRepository;
     private final RentCycleService rentCycleService;
+    private final com.livic.property.facade.UnitFacade unitFacade;
 
     /**
      * Runs at the top of every hour to check for properties that need auto-billing.
@@ -60,7 +61,10 @@ public class AutoBillingJob {
             }
 
             // 2. Generate Rent Cycles for all active leases
-            List<LeaseTbl> activeLeases = leaseRepository.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+            List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+            List<java.util.UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
+            List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
+                    leaseRepository.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
             LocalDate dueDate = LocalDate.now().plusDays(5); // Default due in 5 days
 
             for (LeaseTbl lease : activeLeases) {

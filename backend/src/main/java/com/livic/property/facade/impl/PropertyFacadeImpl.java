@@ -69,7 +69,7 @@ public class PropertyFacadeImpl implements PropertyFacade {
 
         String jpql = "SELECT p.id, p.name, " +
                       "(SELECT COUNT(u) FROM UnitTbl u WHERE u.property.id = p.id), " +
-                      "(SELECT COUNT(l) FROM LeaseTbl l JOIN l.unit u WHERE u.property.id = p.id AND l.status = :statusActive) " +
+                      "(SELECT COUNT(l) FROM LeaseTbl l, UnitTbl u WHERE l.unitId = u.id AND u.property.id = p.id AND l.status = :statusActive) " +
                       "FROM PropertyTbl p WHERE p.id IN :propertyIds";
 
         Query query = entityManager.createQuery(jpql);

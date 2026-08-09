@@ -21,4 +21,6 @@ public interface LeaseQueryService {
     Page<LeaseTbl> findActiveLeasesByProperty(UUID propertyId, Pageable pageable);
     Map<UUID, List<LeaseSummaryDTO>> findActiveLeasesByUnitIds(Collection<UUID> unitIds);
     boolean existsByPropertyId(UUID propertyId);
+    boolean isUnitAvailableOnDate(UUID unitId, java.time.LocalDate date);
+    boolean existsByUserIdAndPropertyIdAndStatus(UUID userId, UUID propertyId, LeaseStatus status);
 }

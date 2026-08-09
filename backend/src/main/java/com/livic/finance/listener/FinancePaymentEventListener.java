@@ -74,7 +74,7 @@ public class FinancePaymentEventListener {
             String description = (isFullPayment ? "Rent Payment (Full)" : "Rent Payment (Partial)") + " via " + event.getGatewayName();
 
             FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-                    .unit(rentCycle.getLease().getUnit())
+                    .unitId(rentCycle.getLease().getUnitId())
                     .lease(rentCycle.getLease())
                     .transactionType(LedgerTransactionType.PAYMENT_RECEIVED)
                     .amount(ledgerAmount)

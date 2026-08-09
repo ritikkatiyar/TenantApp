@@ -12,7 +12,7 @@ import java.util.UUID;
 @Repository
 public interface AnnouncementRepository extends JpaRepository<AnnouncementTbl, UUID> {
 
-    @Query("SELECT a FROM AnnouncementTbl a WHERE a.property.id = :propertyId AND " +
+    @Query("SELECT a FROM AnnouncementTbl a WHERE a.propertyId = :propertyId AND " +
            "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.PROPERTY OR " +
            "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.FLOOR AND a.targetValue = :floor) OR " +
            "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.UNIT AND a.targetValue = :unitId))")
@@ -22,7 +22,7 @@ public interface AnnouncementRepository extends JpaRepository<AnnouncementTbl, U
             @Param("unitId") String unitId
     );
 
-    @Query("SELECT a FROM AnnouncementTbl a WHERE a.property.id = :propertyId AND " +
+    @Query("SELECT a FROM AnnouncementTbl a WHERE a.propertyId = :propertyId AND " +
            "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.PROPERTY OR " +
            "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.FLOOR AND a.targetValue = :floor) OR " +
            "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.UNIT AND a.targetValue = :unitId))")

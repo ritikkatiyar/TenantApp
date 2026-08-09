@@ -50,17 +50,12 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         UserSummaryDTO userSummary = userFacade.getUserById(creatorId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
 
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propSummary.id());
-        UserTbl creator = new UserTbl();
-        creator.setId(userSummary.id());
-
-        AnnouncementTbl announcement = AnnouncementMapper.toEntity(request, property, creator);
+        AnnouncementTbl announcement = AnnouncementMapper.toEntity(request, propSummary.id(), creatorId);
 
         announcement = announcementCrudService.save(announcement);
 
         // Fetch recipients user IDs to trigger notifications
-        List<String> recipientUserIds = getRecipientUserIds(property.getId(), request.getTargetType(), request.getTargetValue());
+        List<String> recipientUserIds = getRecipientUserIds(propSummary.id(), request.getTargetType(), request.getTargetValue());
 
         // Publish Spring Event to trigger Notification module listeners
         AnnouncementBroadcastEvent event = new AnnouncementBroadcastEvent(
@@ -74,7 +69,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         );
         eventPublisher.publishEvent(event);
 
-        return AnnouncementMapper.toResponse(announcement, false, 0L, (long) recipientUserIds.size());
+        return AnnouncementMapper.toResponse(announcement, userSummary.fullName(), false, 0L, (long) recipientUserIds.size());
     }
 
     @Override
@@ -103,11 +98,20 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                     .collect(Collectors.toSet());
         }
 
+        List<UUID> creatorIds = announcements.getContent().stream()
+                .map(AnnouncementTbl::getCreatorId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<UUID, UserSummaryDTO> creatorsMap = creatorIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(new HashSet<>(creatorIds));
+
         final Set<UUID> finalReadAnnouncementIds = readAnnouncementIds;
 
         return announcements.map(announcement -> {
             boolean isRead = finalReadAnnouncementIds.contains(announcement.getId());
-            return AnnouncementMapper.toResponse(announcement, isRead, null, null);
+            UserSummaryDTO creator = creatorsMap.get(announcement.getCreatorId());
+            String creatorName = creator != null ? creator.fullName() : "System";
+            return AnnouncementMapper.toResponse(announcement, creatorName, isRead, null, null);
         });
     }
 
@@ -145,13 +149,22 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 .filter(l -> l.floor() != null)
                 .collect(Collectors.groupingBy(LeaseSummaryDTO::floor));
 
+        List<UUID> creatorIds = announcements.getContent().stream()
+                .map(AnnouncementTbl::getCreatorId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<UUID, UserSummaryDTO> creatorsMap = creatorIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(new HashSet<>(creatorIds));
+
         return announcements.map(announcement -> {
             long readCount = readCountsMap.getOrDefault(announcement.getId(), 0L);
             List<String> recipients = getRecipientUserIdsOptimized(
                     announcement.getTargetType(), announcement.getTargetValue(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
             long totalRecipients = recipients.size();
+            UserSummaryDTO creator = creatorsMap.get(announcement.getCreatorId());
+            String creatorName = creator != null ? creator.fullName() : "System";
 
-            return AnnouncementMapper.toResponse(announcement, false, readCount, totalRecipients);
+            return AnnouncementMapper.toResponse(announcement, creatorName, false, readCount, totalRecipients);
         });
     }
 

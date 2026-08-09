@@ -126,7 +126,7 @@ public class RentModelingFixesTest {
 
         lease = LeaseTbl.builder()
                 .userId(UUID.randomUUID())
-                .unit(unit)
+                .unitId(unitId)
                 .monthlyRentAmount(BigDecimal.valueOf(1500.00))
                 .securityDeposit(BigDecimal.valueOf(3000.00))
                 .splitStrategy(LeaseSplitStrategy.FULL_UNIT)
@@ -136,7 +136,7 @@ public class RentModelingFixesTest {
         lease.setId(leaseId);
 
         rentConfig = ChargeConfigTbl.builder()
-                .property(property)
+                .propertyId(propertyId)
                 .chargeName("Rent Charge")
                 .chargeCategory(ChargeCategory.RENT)
                 .billingFrequency(BillingFrequency.MONTHLY)
@@ -173,7 +173,6 @@ public class RentModelingFixesTest {
             if (c.getId() == null) c.setId(UUID.randomUUID());
             return c;
         });
-        when(chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId)).thenReturn(List.of(rentConfig));
 
         RentCycleDTOs.GenerateRentCycleRequest request = new RentCycleDTOs.GenerateRentCycleRequest(leaseId, "2026-08", LocalDate.now().plusDays(10));
         rentCycleService.generate(request);
@@ -197,7 +196,7 @@ public class RentModelingFixesTest {
 
         when(chargeConfigCrudService.findById(chargeConfigId)).thenReturn(Optional.of(rentConfig));
         when(unitFacade.getUnitsByPropertyId(propertyId)).thenReturn(List.of(UnitSummaryDTO.from(unit)));
-        when(leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE)).thenReturn(List.of(lease));
+        when(leaseQueryService.findActiveLeasesByProperty(propertyId)).thenReturn(List.of(lease));
         when(billingWorksheetCrudService.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(propertyId, chargeConfigId, "2026-08")).thenReturn(List.of());
         when(userFacade.getUsersByIds(any())).thenReturn(Map.of());
         when(rentCycleCrudService.findByPropertyIdAndBillingMonth(propertyId, "2026-08")).thenReturn(List.of());
@@ -250,7 +249,7 @@ public class RentModelingFixesTest {
                 null
         );
 
-        LeaseTbl entity = LeaseMapper.toEntity(request, unit, request.userId());
+        LeaseTbl entity = LeaseMapper.toEntity(request, request.unitId(), request.userId());
         assertEquals(BigDecimal.valueOf(2500.00), entity.getMonthlyRentAmount());
 
         LeaseDTOs.LeaseResponse response = LeaseMapper.toResponseWithDetails(entity, "John Doe", "1234567890");

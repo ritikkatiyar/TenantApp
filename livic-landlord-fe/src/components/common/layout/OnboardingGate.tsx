@@ -71,20 +71,12 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
             }
           }
 
-          if (currentContext.isTenant && !currentContext.isLandlord) {
-            // Pure tenants bypass onboarding
-            if (isMounted) {
-              logger.info('[OnboardingGate] Pure tenant, setting isOnboarded to true');
-              setIsOnboarded(true);
-            }
-          } else {
-            // Check preference for landlords/others
-            logger.info('[OnboardingGate] Fetching user preferences');
-            const pref = await getUserPreference(accessToken);
-            if (isMounted) {
-              logger.info('[OnboardingGate] Setting isOnboarded to', pref.onboardingDone);
-              setIsOnboarded(pref.onboardingDone);
-            }
+          // Check preference for landlords/others
+          logger.info('[OnboardingGate] Fetching user preferences');
+          const pref = await getUserPreference(accessToken);
+          if (isMounted) {
+            logger.info('[OnboardingGate] Setting isOnboarded to', pref.onboardingDone);
+            setIsOnboarded(pref.onboardingDone);
           }
         } catch (error) {
           logger.error('[OnboardingGate] Error during init:', error);

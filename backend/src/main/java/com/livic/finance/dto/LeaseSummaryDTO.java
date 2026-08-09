@@ -15,39 +15,25 @@ public record LeaseSummaryDTO(
         UUID userId,
         String status,
         LocalDate moveInDate,
-        LocalDate moveOutDate
+        LocalDate moveOutDate,
+        java.math.BigDecimal rentAmount
 ) {
-    public static LeaseSummaryDTO from(LeaseTbl lease) {
+    public static LeaseSummaryDTO from(LeaseTbl lease, com.livic.property.dto.UnitSummaryDTO unit) {
         if (lease == null) {
             return null;
         }
-        UUID propId = null;
-        String propName = null;
-        UUID uId = null;
-        String uNum = null;
-        Integer uFloor = null;
-
-        if (lease.getUnit() != null) {
-            uId = lease.getUnit().getId();
-            uNum = lease.getUnit().getUnitNumber();
-            uFloor = lease.getUnit().getFloor();
-            if (lease.getUnit().getProperty() != null) {
-                propId = lease.getUnit().getProperty().getId();
-                propName = lease.getUnit().getProperty().getName();
-            }
-        }
-
         return new LeaseSummaryDTO(
                 lease.getId(),
-                uId,
-                uNum,
-                uFloor,
-                propId,
-                propName,
+                lease.getUnitId(),
+                unit != null ? unit.unitNumber() : null,
+                unit != null ? unit.floor() : null,
+                unit != null ? unit.propertyId() : null,
+                unit != null ? unit.propertyName() : null,
                 lease.getUserId(),
                 lease.getStatus() != null ? lease.getStatus().name() : null,
                 lease.getMoveInDate(),
-                lease.getMoveOutDate()
+                lease.getMoveOutDate(),
+                lease.getMonthlyRentAmount()
         );
     }
 }

@@ -56,6 +56,7 @@ public class MeDTOs {
             String propertyName,
             UUID unitId,
             String unitNumber,
+            java.math.BigDecimal rentAmount,
             String status
     ) {
         public static ActiveLeaseSummary from(LeaseSummaryDTO lease) {
@@ -65,6 +66,7 @@ public class MeDTOs {
                     lease.propertyName(),
                     lease.unitId(),
                     lease.unitNumber(),
+                    lease.rentAmount(),
                     lease.status()
             );
         }

@@ -11,6 +11,7 @@ import com.livic.property.facade.UnitFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import com.livic.finance.mapper.UnitBookingMapper;
+import com.livic.finance.service.interfaces.LeaseQueryService;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ import com.livic.common.domain.UnitBookingStatus;
 public class UnitBookingServiceImpl implements UnitBookingService {
 
     private final UnitBookingCrudService unitBookingCrudService;
+    private final LeaseQueryService leaseQueryService;
     private final UnitFacade unitFacade;
     private final PaymentFacade paymentFacade;
     private final AuthorizationService authorizationService;
@@ -42,19 +44,17 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     public UnitBookingDTOs.UnitBookingResponse createBooking(UnitBookingDTOs.CreateBookingRequest request) {
         log.info("Processing booking creation for unit: {}, tenant name: {}", request.unitId(), request.prospectiveTenantName());
 
-        boolean available = unitFacade.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
+        boolean available = leaseQueryService.isUnitAvailableOnDate(request.unitId(), request.expectedMoveInDate());
         if (!available) {
             throw new BusinessException(HttpStatus.CONFLICT, "No vacancy available in this unit on the requested date");
         }
 
         UnitSummaryDTO unitSummary = unitFacade.getUnitById(request.unitId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
-        UnitTbl unit = new UnitTbl();
-        unit.setId(unitSummary.id());
 
-        UnitBookingTbl booking = UnitBookingMapper.toEntity(request, unit);
+        UnitBookingTbl booking = UnitBookingMapper.toEntity(request, unitSummary.id());
         booking = unitBookingCrudService.save(booking);
-        return UnitBookingMapper.toResponse(booking);
+        return UnitBookingMapper.toResponse(booking, unitSummary.unitNumber());
     }
 
     @Override
@@ -62,13 +62,14 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Processing booking forfeit for ID: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermissionByUnitId(booking.getUnit().getId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermissionByUnitId(booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
         booking.setStatus(UnitBookingStatus.FORFEITED.name());
         booking = unitBookingCrudService.save(booking);
-        return UnitBookingMapper.toResponse(booking);
+        String unitNumber = unitFacade.getUnitById(booking.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("N/A");
+        return UnitBookingMapper.toResponse(booking, unitNumber);
     }
 
     @Override
@@ -76,21 +77,22 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Processing booking refund for ID: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermissionByUnitId(booking.getUnit().getId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermissionByUnitId(booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
         booking.setStatus(UnitBookingStatus.REFUNDED.name());
         booking = unitBookingCrudService.save(booking);
-        return UnitBookingMapper.toResponse(booking);
+        String unitNumber = unitFacade.getUnitById(booking.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("N/A");
+        return UnitBookingMapper.toResponse(booking, unitNumber);
     }
 
     @Override
     public PaymentTransactionResponse initiateTokenOnlinePayment(UUID bookingId, UUID userDetailsId) {
-        log.info("Initiating token online payment for booking: {} by user: {}", bookingId, userDetailsId);
+        log.info("Initiating online token payment for booking: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermissionByUnitId(booking.getUnit().getId(), "LEASE_CREATE")) {
+        if (!authorizationService.hasPermissionByUnitId(booking.getUnitId(), "LEASE_CREATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -113,7 +115,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Recording token cash payment for booking: {} amount: {} by user: {}", bookingId, amount, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermissionByUnitId(booking.getUnit().getId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermissionByUnitId(booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -155,7 +157,12 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     @Transactional(readOnly = true)
     public List<UnitBookingDTOs.UnitBookingResponse> listBookings() {
         return unitBookingCrudService.findAll().stream()
-                .map(UnitBookingMapper::toResponse)
+                .map(booking -> {
+                    String unitNumber = unitFacade.getUnitById(booking.getUnitId())
+                            .map(UnitSummaryDTO::unitNumber)
+                            .orElse("N/A");
+                    return UnitBookingMapper.toResponse(booking, unitNumber);
+                })
                 .collect(Collectors.toList());
     }
 }

@@ -56,12 +56,9 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
 
-        UserTbl recipientRef = new UserTbl();
-        recipientRef.setId(recipient.id());
-
         // Persist an audit log record with PENDING status
         NotificationLogTbl logEntry = NotificationLogTbl.builder()
-                .recipient(recipientRef)
+                .recipientId(recipient.id())
                 .channel(channel)
                 .recipientAddress(address)
                 .title(title)
@@ -110,11 +107,8 @@ public class NotificationServiceImpl implements NotificationService {
             String address = resolveAddress(user, channel);
             if (address == null) continue;
 
-            UserTbl recipientRef = new UserTbl();
-            recipientRef.setId(user.id());
-
             NotificationLogTbl logEntry = NotificationLogTbl.builder()
-                    .recipient(recipientRef)
+                    .recipientId(user.id())
                     .channel(channel)
                     .recipientAddress(address)
                     .title(title)

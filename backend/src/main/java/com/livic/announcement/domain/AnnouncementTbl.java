@@ -1,10 +1,9 @@
 package com.livic.announcement.domain;
 
 import com.livic.common.domain.BaseEntity;
-import com.livic.property.domain.PropertyTbl;
-import com.livic.user.domain.UserTbl;
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "announcement_tbl")
@@ -16,15 +15,11 @@ import lombok.*;
 @ToString(callSuper = true)
 public class AnnouncementTbl extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "property_id", nullable = false)
-    @ToString.Exclude
-    private PropertyTbl property;
+    @Column(name = "property_id", nullable = false)
+    private UUID propertyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creator_id", nullable = false)
-    @ToString.Exclude
-    private UserTbl creator;
+    @Column(name = "creator_id", nullable = false)
+    private UUID creatorId;
 
     @Column(nullable = false)
     private String title;

@@ -61,9 +61,9 @@ export default function SettingsMenuScreen() {
         const today = new Date();
         const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
         const data = await listRentCycles(month, accessToken);
-        if (data) {
-          setPendingCount(data.filter((i: any) => i.status === 'PENDING').length);
-          setPublishedCount(data.filter((i: any) => i.status === 'PUBLISHED').length);
+        if (data && data.content) {
+          setPendingCount(data.content.filter((i: any) => i.status === 'PENDING').length);
+          setPublishedCount(data.content.filter((i: any) => i.status === 'PUBLISHED').length);
         }
       } catch {
         // silent — stats are optional

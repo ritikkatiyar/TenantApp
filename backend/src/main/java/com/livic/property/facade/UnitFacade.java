@@ -15,8 +15,6 @@ public interface UnitFacade {
 
     List<UnitSummaryDTO> getUnitsByFloor(UUID propertyId, int floorNumber);
 
-    boolean isUnitAvailableOnDate(UUID unitId, LocalDate date);
-
     boolean existsUnitById(UUID unitId);
 
     long getTotalUnitsForPropertyIds(List<UUID> propertyIds);

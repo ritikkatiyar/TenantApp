@@ -15,7 +15,6 @@ import com.livic.common.constant.RoleConstants;
 import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
-import com.livic.property.domain.PropertyTbl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -152,14 +151,11 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
             validateActorCanDelegate(propertyId, actorId, targetPerms);
         }
 
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propertyId);
-
         MembershipRoleTbl customRole = MembershipRoleTbl.builder()
                 .code(code)
                 .name(request.name().trim())
                 .description(request.description())
-                .property(property)
+                .propertyId(propertyId)
                 .roleRank(30) // Custom role rank
                 .isActive(true)
                 .build();
@@ -198,15 +194,11 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
                 .toList();
         validateActorCanDelegate(propertyId, actorId, globalPerms);
 
-        // Clone global role into a property-specific one
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propertyId);
-
         MembershipRoleTbl cloned = MembershipRoleTbl.builder()
                 .code(globalRole.getCode())
                 .name(globalRole.getName())
                 .description(globalRole.getDescription())
-                .property(property)
+                .propertyId(propertyId)
                 .roleRank(globalRole.getRoleRank())
                 .isActive(true)
                 .build();

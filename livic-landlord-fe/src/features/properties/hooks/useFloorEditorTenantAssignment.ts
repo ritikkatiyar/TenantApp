@@ -223,7 +223,7 @@ export function useFloorEditorTenantAssignment({
             tenantUserId: targetUser.id,
             tenantName: targetUser.fullName,
             tenantPhone: targetUser.phoneNumber,
-            rentAmount: lease.rentAmount,
+            rentAmount: lease.monthlyRentAmount,
             status: 'ACTIVE',
           }
         ]

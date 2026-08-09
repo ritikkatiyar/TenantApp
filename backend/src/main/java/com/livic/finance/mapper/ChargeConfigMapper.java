@@ -12,9 +12,9 @@ public final class ChargeConfigMapper {
     private ChargeConfigMapper() {
     }
 
-    public static ChargeConfigTbl toEntity(ChargeConfigRequest request, PropertyTbl property) {
+    public static ChargeConfigTbl toEntity(ChargeConfigRequest request, UUID propertyId) {
         return ChargeConfigTbl.builder()
-                .property(property)
+                .propertyId(propertyId)
                 .chargeName(request.getChargeName())
                 .chargeCategory(request.getChargeCategory())
                 .billingFrequency(request.getBillingFrequency())
@@ -30,11 +30,8 @@ public final class ChargeConfigMapper {
     }
 
     public static ChargeConfigTbl createSystemRentConfig(UUID propertyId) {
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propertyId);
-
         return ChargeConfigTbl.builder()
-                .property(property)
+                .propertyId(propertyId)
                 .chargeName("Base Rent")
                 .chargeCategory(com.livic.common.domain.ChargeCategory.RENT)
                 .billingFrequency(com.livic.common.domain.BillingFrequency.MONTHLY)
@@ -64,7 +61,7 @@ public final class ChargeConfigMapper {
     public static ChargeConfigResponse toResponse(ChargeConfigTbl config) {
         return ChargeConfigResponse.builder()
                 .id(config.getId())
-                .propertyId(config.getProperty().getId())
+                .propertyId(config.getPropertyId())
                 .chargeName(config.getChargeName())
                 .chargeCategory(config.getChargeCategory())
                 .billingFrequency(config.getBillingFrequency())

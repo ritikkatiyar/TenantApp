@@ -3,7 +3,6 @@ package com.livic.finance.domain;
 import com.livic.common.domain.BaseEntity;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.domain.LeaseSplitStrategy;
-import com.livic.property.domain.UnitTbl;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -22,10 +21,8 @@ public class LeaseTbl extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "unit_id", nullable = false)
-    @ToString.Exclude
-    private UnitTbl unit;
+    @Column(name = "unit_id", nullable = false)
+    private UUID unitId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

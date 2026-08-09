@@ -104,7 +104,7 @@ public class AnnouncementIntegrationTest {
 
         lease = LeaseTbl.builder()
                 .userId(tenant.getId())
-                .unit(unit)
+                .unitId(unit.getId())
                 .status(LeaseStatus.ACTIVE)
                 .monthlyRentAmount(BigDecimal.valueOf(1000.00))
                 .moveInDate(LocalDate.now().minusDays(10))

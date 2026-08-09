@@ -53,6 +53,7 @@ import com.livic.finance.service.interfaces.UnitBookingCrudService;
 
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
+import com.livic.property.facade.UnitFacade;
 
 @Service
 @RequiredArgsConstructor
@@ -72,6 +73,7 @@ public class RentCycleServiceImpl implements RentCycleService {
     private final ApplicationEventPublisher eventPublisher;
     private final UnitBookingCrudService unitBookingCrudService;
     private final UserFacade userFacade;
+    private final UnitFacade unitFacade;
 
     @Override
     @Transactional
@@ -84,10 +86,13 @@ public class RentCycleServiceImpl implements RentCycleService {
     @Override
     @Transactional
     public List<RentCycleDTOs.RentCycleResponse> batchGenerate(RentCycleDTOs.BatchGenerateRentCycleRequest request) {
-        List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(request.propertyId(), LeaseStatus.ACTIVE);
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(request.propertyId());
+        List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
+        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
+                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
         
         Map<UUID, Integer> roommateCounts = activeLeases.stream()
-                .collect(Collectors.groupingBy(l -> l.getUnit().getId(), Collectors.collectingAndThen(Collectors.toList(), List::size)));
+                .collect(Collectors.groupingBy(LeaseTbl::getUnitId, Collectors.collectingAndThen(Collectors.toList(), List::size)));
 
         List<RentCycleTbl> generatedCycles = new ArrayList<>();
         for (LeaseTbl lease : activeLeases) {
@@ -104,8 +109,11 @@ public class RentCycleServiceImpl implements RentCycleService {
     @Override
     @Transactional(readOnly = true)
     public RentCycleDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth) {
-        List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
-        int totalUnits = activeLeases.size();
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
+        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
+                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
+        int totalUnits = units.size();
         int activeLeasesCount = activeLeases.size();
         
         long meteredTypesCount = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId).stream()
@@ -122,10 +130,10 @@ public class RentCycleServiceImpl implements RentCycleService {
             
             List<MeterReadingTbl> propertyReadings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
             Map<UUID, List<MeterReadingTbl>> readingsByUnit = propertyReadings.stream()
-                    .collect(Collectors.groupingBy(r -> r.getUnit().getId()));
+                    .collect(Collectors.groupingBy(MeterReadingTbl::getUnitId));
 
             for (LeaseTbl lease : activeLeases) {
-                List<MeterReadingTbl> readings = readingsByUnit.getOrDefault(lease.getUnit().getId(), List.of());
+                List<MeterReadingTbl> readings = readingsByUnit.getOrDefault(lease.getUnitId(), List.of());
                 long enteredForLease = readings.stream().filter(r -> r.getCurrentReading() != null).count();
                 meterReadingsEntered += enteredForLease;
             }
@@ -208,7 +216,9 @@ public class RentCycleServiceImpl implements RentCycleService {
         if (existingCycleOpt.isPresent()) {
             cycle = existingCycleOpt.get();
             if (cycle.getStatus() == RentCycleStatus.PAID) {
-                throw new BusinessException(HttpStatus.CONFLICT, "Cannot regenerate a paid rent cycle for unit " + lease.getUnit().getUnitNumber());
+                com.livic.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+                String unitNum = u != null ? u.unitNumber() : "N/A";
+                throw new BusinessException(HttpStatus.CONFLICT, "Cannot regenerate a paid rent cycle for unit " + unitNum);
             }
             previousTotal = cycle.getTotalAmount();
             List<RentCycleChargeTbl> existingCharges = rentCycleChargeCrudService.findByRentCycle_Id(cycle.getId());
@@ -227,10 +237,13 @@ public class RentCycleServiceImpl implements RentCycleService {
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         BigDecimal baseRentAmount = lease.getMonthlyRentAmount() != null ? lease.getMonthlyRentAmount() : BigDecimal.ZERO;
-        List<BillingWorksheetEntryTbl> worksheetEntries = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(
-                lease.getUnit().getProperty().getId(), billingMonthStr);
+        com.livic.property.dto.UnitSummaryDTO unitSummary = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+        UUID propertyId = unitSummary != null ? unitSummary.propertyId() : null;
+
+        List<BillingWorksheetEntryTbl> worksheetEntries = propertyId == null ? List.of() :
+                billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonthStr);
         Optional<BillingWorksheetEntryTbl> rentWorksheetOpt = worksheetEntries.stream()
-                .filter(w -> w.getUnit() != null && w.getUnit().getId().equals(lease.getUnit().getId()))
+                .filter(w -> w.getUnitId() != null && w.getUnitId().equals(lease.getUnitId()))
                 .filter(w -> w.getChargeConfig() != null && w.getChargeConfig().getChargeCategory() == ChargeCategory.RENT)
                 .findFirst();
         if (rentWorksheetOpt.isPresent() && rentWorksheetOpt.get().getEnteredValue() != null) {
@@ -250,18 +263,19 @@ public class RentCycleServiceImpl implements RentCycleService {
         }
 
         int roommateCount = 1;
-        if (roommateCounts != null && roommateCounts.containsKey(lease.getUnit().getId())) {
-            roommateCount = roommateCounts.get(lease.getUnit().getId());
+        if (roommateCounts != null && roommateCounts.containsKey(lease.getUnitId())) {
+            roommateCount = roommateCounts.get(lease.getUnitId());
         } else {
-            roommateCount = Math.max(1, (int) leaseCrudService.countByUnitIdAndStatus(lease.getUnit().getId(), LeaseStatus.ACTIVE));
+            roommateCount = Math.max(1, (int) leaseCrudService.countByUnitIdAndStatus(lease.getUnitId(), LeaseStatus.ACTIVE));
         }
 
-        List<ChargeConfigTbl> activeConfigs = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(lease.getUnit().getProperty().getId());
+        List<ChargeConfigTbl> activeConfigs = propertyId == null ? List.of() :
+                chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId);
         for (ChargeConfigTbl config : activeConfigs) {
             if (config.getChargeCategory() == ChargeCategory.RENT) {
                 continue;
             }
-            CalculationResult result = chargeCalculationService.executeChargePipeline(config, lease.getUnit().getId(), billingMonthStr, false);
+            CalculationResult result = chargeCalculationService.executeChargePipeline(config, lease.getUnitId(), billingMonthStr, false);
 
             BigDecimal chargeAmount = result.amount();
             if (chargeAmount.compareTo(BigDecimal.ZERO) == 0) {
@@ -322,7 +336,7 @@ public class RentCycleServiceImpl implements RentCycleService {
         BigDecimal delta = totalAmount.subtract(previousTotal);
         if (delta.compareTo(BigDecimal.ZERO) != 0) {
             FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-                .unit(lease.getUnit())
+                .unitId(lease.getUnitId())
                 .lease(lease)
                 .transactionType(existingCycleOpt.isPresent() ? LedgerTransactionType.ADJUSTMENT : LedgerTransactionType.INVOICE_GENERATED)
                 .amount(delta)
@@ -375,8 +389,10 @@ public class RentCycleServiceImpl implements RentCycleService {
         UUID targetPropertyId = propertyId;
         if (targetPropertyId == null && leaseId != null) {
             LeaseTbl lease = leaseCrudService.findById(leaseId).orElse(null);
-            if (lease != null && lease.getUnit() != null && lease.getUnit().getProperty() != null) {
-                targetPropertyId = lease.getUnit().getProperty().getId();
+            if (lease != null && lease.getUnitId() != null) {
+                targetPropertyId = unitFacade.getUnitById(lease.getUnitId())
+                        .map(com.livic.property.dto.UnitSummaryDTO::propertyId)
+                        .orElse(null);
             }
         }
 
@@ -446,19 +462,20 @@ public class RentCycleServiceImpl implements RentCycleService {
     public RentCycleDTOs.RentCycleResponse publish(UUID id) {
         RentCycleTbl cycle = rentCycleCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
-
         if (cycle.getStatus() == RentCycleStatus.PENDING) {
             cycle.setStatus(RentCycleStatus.PUBLISHED);
             rentCycleCrudService.save(cycle);
 
-            if (cycle.getLease() != null && cycle.getLease().getUnit() != null) {
-                UUID unitId = cycle.getLease().getUnit().getId();
-                UUID propertyId = cycle.getLease().getUnit().getProperty().getId();
+            if (cycle.getLease() != null && cycle.getLease().getUnitId() != null) {
+                UUID unitId = cycle.getLease().getUnitId();
+                com.livic.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
+                UUID propertyId = u != null ? u.propertyId() : null;
                 String billingMonth = cycle.getBillingMonth();
 
-                List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+                List<BillingWorksheetEntryTbl> worksheets = propertyId == null ? List.of() :
+                        billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
                 List<BillingWorksheetEntryTbl> unitWorksheets = worksheets.stream()
-                        .filter(w -> w.getUnit() != null && w.getUnit().getId().equals(unitId))
+                        .filter(w -> w.getUnitId() != null && w.getUnitId().equals(unitId))
                         .peek(w -> w.setIsBilled(true))
                         .toList();
                 if (!unitWorksheets.isEmpty()) {
@@ -469,9 +486,10 @@ public class RentCycleServiceImpl implements RentCycleService {
                     String[] parts = billingMonth.split("-");
                     int year = Integer.parseInt(parts[0]);
                     int month = Integer.parseInt(parts[1]);
-                    List<MeterReadingTbl> readings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
+                    List<MeterReadingTbl> readings = propertyId == null ? List.of() :
+                            meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
                     List<MeterReadingTbl> unitReadings = readings.stream()
-                            .filter(r -> r.getUnit() != null && r.getUnit().getId().equals(unitId))
+                            .filter(r -> r.getUnitId() != null && r.getUnitId().equals(unitId))
                             .peek(r -> r.setIsBilled(true))
                             .toList();
                     if (!unitReadings.isEmpty()) {
@@ -512,14 +530,16 @@ public class RentCycleServiceImpl implements RentCycleService {
             cycle.setStatus(RentCycleStatus.PENDING);
             rentCycleCrudService.save(cycle);
 
-            if (cycle.getLease() != null && cycle.getLease().getUnit() != null) {
-                UUID unitId = cycle.getLease().getUnit().getId();
-                UUID propertyId = cycle.getLease().getUnit().getProperty().getId();
+            if (cycle.getLease() != null && cycle.getLease().getUnitId() != null) {
+                UUID unitId = cycle.getLease().getUnitId();
+                com.livic.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
+                UUID propertyId = u != null ? u.propertyId() : null;
                 String billingMonth = cycle.getBillingMonth();
 
-                List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+                List<BillingWorksheetEntryTbl> worksheets = propertyId == null ? List.of() :
+                        billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
                 List<BillingWorksheetEntryTbl> unitWorksheets = worksheets.stream()
-                        .filter(w -> w.getUnit() != null && w.getUnit().getId().equals(unitId))
+                        .filter(w -> w.getUnitId() != null && w.getUnitId().equals(unitId))
                         .peek(w -> w.setIsBilled(false))
                         .toList();
                 if (!unitWorksheets.isEmpty()) {
@@ -530,9 +550,10 @@ public class RentCycleServiceImpl implements RentCycleService {
                     String[] parts = billingMonth.split("-");
                     int year = Integer.parseInt(parts[0]);
                     int month = Integer.parseInt(parts[1]);
-                    List<MeterReadingTbl> readings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
+                    List<MeterReadingTbl> readings = propertyId == null ? List.of() :
+                            meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
                     List<MeterReadingTbl> unitReadings = readings.stream()
-                            .filter(r -> r.getUnit() != null && r.getUnit().getId().equals(unitId))
+                            .filter(r -> r.getUnitId() != null && r.getUnitId().equals(unitId))
                             .peek(r -> r.setIsBilled(false))
                             .toList();
                     if (!unitReadings.isEmpty()) {
@@ -553,7 +574,10 @@ public class RentCycleServiceImpl implements RentCycleService {
     @Override
     @Transactional
     public List<RentCycleDTOs.RentCycleResponse> batchPublish(UUID propertyId, String billingMonth) {
-        List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
+        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
+                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
         Set<UUID> activeLeaseIds = activeLeases.stream().map(LeaseTbl::getId).collect(Collectors.toSet());
 
         List<RentCycleTbl> allMonthCycles = rentCycleCrudService.findByBillingMonth(billingMonth);
@@ -574,7 +598,10 @@ public class RentCycleServiceImpl implements RentCycleService {
     @Override
     @Transactional
     public List<RentCycleDTOs.RentCycleResponse> batchUnpublish(UUID propertyId, String billingMonth) {
-        List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
+        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
+                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
         Set<UUID> activeLeaseIds = activeLeases.stream().map(LeaseTbl::getId).collect(Collectors.toSet());
 
         List<RentCycleTbl> allMonthCycles = rentCycleCrudService.findByBillingMonth(billingMonth);
@@ -645,8 +672,13 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     private RentCycleDTOs.RentCycleResponse toResponse(RentCycleTbl cycle, UserSummaryDTO user, List<RentCycleChargeTbl> charges) {
         String tenantName = (user != null && user.fullName() != null) ? user.fullName() : "Unknown Tenant";
-        String unitNumber = (cycle.getLease() != null && cycle.getLease().getUnit() != null)
-                ? cycle.getLease().getUnit().getUnitNumber() : "Vacant";
+        String unitNumber = "Vacant";
+        if (cycle.getLease() != null && cycle.getLease().getUnitId() != null) {
+            com.livic.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(cycle.getLease().getUnitId()).orElse(null);
+            if (u != null) {
+                unitNumber = u.unitNumber();
+            }
+        }
         return RentCycleMapper.toResponse(cycle, tenantName, unitNumber, charges != null ? charges : Collections.emptyList());
     }
 }

@@ -126,7 +126,7 @@ public class GlobalExceptionHandler {
         ApiError apiError = ApiError.of(
                 HttpStatus.NOT_FOUND.value(),
                 HttpStatus.NOT_FOUND.getReasonPhrase(),
-                "Required entity was not found in the database. Please verify referential integrity: " + exception.getMessage(),
+                "The requested resource was not found.",
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
@@ -141,7 +141,7 @@ public class GlobalExceptionHandler {
         ApiError apiError = ApiError.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Unexpected server error: " + exception.getMessage(),
+                "An unexpected server error occurred. Please contact support.",
                 request.getRequestURI()
         );
 

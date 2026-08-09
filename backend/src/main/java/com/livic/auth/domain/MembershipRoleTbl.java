@@ -25,10 +25,8 @@ public class MembershipRoleTbl extends BaseEntity {
     @Column(name = "description")
     private String description;
 
-    @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @jakarta.persistence.JoinColumn(name = "property_id", nullable = true)
-    @ToString.Exclude
-    private com.livic.property.domain.PropertyTbl property;
+    @Column(name = "property_id")
+    private java.util.UUID propertyId;
 
     @Column(name = "role_rank", nullable = false)
     @Builder.Default

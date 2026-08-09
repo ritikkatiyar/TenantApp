@@ -9,6 +9,7 @@ import com.livic.finance.dto.MeterReadingDTOs.*;
 import com.livic.finance.service.MeterReadingService;
 import com.livic.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.finance.service.interfaces.LeaseCrudService;
+import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.MeterReadingCrudService;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.domain.UnitTbl;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 public class MeterReadingServiceImpl implements MeterReadingService {
 
     private final MeterReadingCrudService meterReadingCrudService;
-    private final LeaseCrudService leaseCrudService;
+    private final LeaseQueryService leaseQueryService;
     private final ChargeConfigCrudService chargeConfigCrudService;
     private final PropertyFacade propertyFacade;
     private final UnitFacade unitFacade;
@@ -52,14 +53,14 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         }
 
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+        List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(propertyId);
         Map<UUID, LeaseTbl> unitToLeaseMap = activeLeases.stream()
-                .collect(Collectors.toMap(l -> l.getUnit().getId(), l -> l, (existing, replacement) -> existing));
+                .collect(Collectors.toMap(LeaseTbl::getUnitId, l -> l, (existing, replacement) -> existing));
 
         List<MeterReadingTbl> existingEntries = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 propertyId, chargeConfigId, month, year);
         Map<UUID, MeterReadingTbl> existingEntriesMap = existingEntries.stream()
-                .collect(Collectors.toMap(r -> r.getUnit().getId(), r -> r));
+                .collect(Collectors.toMap(MeterReadingTbl::getUnitId, r -> r));
 
         int previousMonth = month == 1 ? 12 : month - 1;
         int previousYear = month == 1 ? year - 1 : year;
@@ -67,7 +68,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                 propertyId, chargeConfigId, previousMonth, previousYear);
         Map<UUID, BigDecimal> previousReadingsMap = previousReadings.stream()
                 .filter(r -> r.getCurrentReading() != null)
-                .collect(Collectors.toMap(r -> r.getUnit().getId(), MeterReadingTbl::getCurrentReading));
+                .collect(Collectors.toMap(MeterReadingTbl::getUnitId, MeterReadingTbl::getCurrentReading));
 
         List<MeterReadingTbl> finalEntries = new ArrayList<>();
         List<MeterReadingTbl> newEntriesToSave = new ArrayList<>();
@@ -88,15 +89,9 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                     }
                 }
 
-                PropertyTbl propertyRef = new PropertyTbl();
-                propertyRef.setId(property.id());
-
-                UnitTbl unitRef = new UnitTbl();
-                unitRef.setId(unitSummary.id());
-
                 entry = MeterReadingTbl.builder()
-                        .property(propertyRef)
-                        .unit(unitRef)
+                        .propertyId(property.id())
+                        .unitId(unitSummary.id())
                         .chargeConfig(chargeConfig)
                         .billingMonth(month)
                         .billingYear(year)
@@ -118,7 +113,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(userIds);
 
         return finalEntries.stream().map(r -> {
-            LeaseTbl lease = unitToLeaseMap.get(r.getUnit().getId());
+            LeaseTbl lease = unitToLeaseMap.get(r.getUnitId());
             String tenantName = "Vacant";
             if (lease != null) {
                 UserSummaryDTO user = usersMap.get(lease.getUserId());
@@ -129,10 +124,12 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                 }
             }
 
+            String unitName = unitFacade.getUnitById(r.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("N/A");
+
             return MeterReadingResponse.builder()
                     .id(r.getId())
-                    .unitId(r.getUnit().getId())
-                    .unitName(r.getUnit().getUnitNumber())
+                    .unitId(r.getUnitId())
+                    .unitName(unitName)
                     .tenantName(tenantName)
                     .previousReading(r.getPreviousReading())
                     .currentReading(r.getCurrentReading())
@@ -147,7 +144,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         List<MeterReadingTbl> existingEntries = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 request.getPropertyId(), request.getChargeConfigId(), request.getBillingMonth(), request.getBillingYear());
         Map<UUID, MeterReadingTbl> existingEntriesMap = existingEntries.stream()
-                .collect(Collectors.toMap(r -> r.getUnit().getId(), r -> r));
+                .collect(Collectors.toMap(MeterReadingTbl::getUnitId, r -> r));
 
         for (UnitReading entryReq : request.getReadings()) {
             MeterReadingTbl entry = existingEntriesMap.get(entryReq.getUnitId());
