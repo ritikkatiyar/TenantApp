@@ -65,6 +65,7 @@ public class UnitDTOs {
             UUID tenantUserId,
             String tenantName,
             String tenantPhone,
+            java.math.BigDecimal rentAmount,
             String status
     ) {}
 }

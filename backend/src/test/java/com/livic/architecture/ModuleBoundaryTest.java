@@ -129,4 +129,26 @@ class ModuleBoundaryTest {
 
         rule.check(classes);
     }
+
+    @Test
+    @DisplayName("No class in a module's domain package should depend on classes in another module's domain package")
+    void noCrossModuleDomainAccess() {
+        for (String module : MODULES) {
+            String targetDomainPackage = "com.livic." + module + ".domain..";
+
+            ArchRule rule = noClasses()
+                    .that().resideInAPackage("com.livic..domain..")
+                    .and().resideOutsideOfPackage("com.livic." + module + "..")
+                    .and().doNotHaveFullyQualifiedName("com.livic.property.domain.PropertyJoinCodeTbl")
+                    .and().doNotHaveFullyQualifiedName("com.livic.property.domain.PropertyJoinCodeTbl$PropertyJoinCodeTblBuilder")
+                    .and().doNotHaveFullyQualifiedName("com.livic.auth.domain.MembershipTbl")
+                    .and().doNotHaveFullyQualifiedName("com.livic.auth.domain.MembershipTbl$MembershipTblBuilder")
+                    .and().doNotHaveFullyQualifiedName("com.livic.announcement.domain.AnnouncementReceiptTbl")
+                    .and().doNotHaveFullyQualifiedName("com.livic.announcement.domain.AnnouncementReceiptTbl$AnnouncementReceiptTblBuilder")
+                    .should().dependOnClassesThat().resideInAPackage(targetDomainPackage)
+                    .because("Domain entities should not have cross-module dependencies (target module: " + module + ")");
+
+            rule.check(classes);
+        }
+    }
 }

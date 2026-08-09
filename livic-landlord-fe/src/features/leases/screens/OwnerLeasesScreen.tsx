@@ -106,6 +106,7 @@ export default function OwnerLeasesScreen() {
   const [bookingTokenAmount, setBookingTokenAmount] = useState('');
   const [bookingExpectedMoveIn, setBookingExpectedMoveIn] = useState('');
   // 4. Lease conversion form
+  const [convMonthlyRentAmount, setConvMonthlyRentAmount] = useState('');
   const [convSecurityDeposit, setConvSecurityDeposit] = useState('');
   const [convSplitStrategy, setConvSplitStrategy] = useState<'FULL_UNIT' | 'PER_OCCUPANT' | 'CUSTOM'>('FULL_UNIT');
 
@@ -245,8 +246,8 @@ export default function OwnerLeasesScreen() {
   };
 
   const handleConvertBookingToLease = async () => {
-    if (!selectedBookingId || !convSecurityDeposit || !accessToken) {
-      showToast('Please specify the security deposit amount.', 'error');
+    if (!selectedBookingId || !convSecurityDeposit || !convMonthlyRentAmount || !accessToken) {
+      showToast('Please specify the monthly rent and security deposit amounts.', 'error');
       return;
     }
     const booking = bookings.find((b) => b.id === selectedBookingId);
@@ -255,6 +256,7 @@ export default function OwnerLeasesScreen() {
     try {
       await createLease({
         unitId: booking.unitId,
+        monthlyRentAmount: parseFloat(convMonthlyRentAmount),
         securityDeposit: parseFloat(convSecurityDeposit),
         splitStrategy: convSplitStrategy,
         moveInDate: booking.expectedMoveInDate,
@@ -265,6 +267,7 @@ export default function OwnerLeasesScreen() {
       setIsConversionModalVisible(false);
       setSelectedBookingId(null);
       setConvSecurityDeposit('');
+      setConvMonthlyRentAmount('');
       loadScreenData();
     } catch (err: any) {
       showToast(err?.message || 'Failed to convert to active lease.', 'error');
@@ -412,7 +415,7 @@ export default function OwnerLeasesScreen() {
                     <View key={l.id} style={styles.listItem}>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.itemTitle}>Unit {l.unitNumber} · {l.tenantName || 'Potential Tenant'}</Text>
-                        <Text style={styles.itemSub}>{l.tenantPhone || 'No Phone'} · Rent: ₹{l.rentAmount?.toLocaleString()}</Text>
+                        <Text style={styles.itemSub}>{l.tenantPhone || 'No Phone'} · Rent: ₹{l.monthlyRentAmount?.toLocaleString()}</Text>
                         <Text style={styles.itemMeta}>Move-in: {l.moveInDate} {l.moveOutDate ? `· Expected Vacate: ${l.moveOutDate}` : ''}</Text>
                       </View>
                       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
@@ -723,6 +726,16 @@ export default function OwnerLeasesScreen() {
         <View style={styles.modalOverlay}>
           <BlurView intensity={70} tint="light" style={styles.modalContent}>
             <Text style={styles.modalTitle}>Convert Booking to Active Lease</Text>
+
+            <Text style={styles.modalInputLabel}>Monthly Rent Amount *</Text>
+            <TextInput
+              value={convMonthlyRentAmount}
+              onChangeText={setConvMonthlyRentAmount}
+              placeholder="e.g. 8000"
+              keyboardType="numeric"
+              placeholderTextColor="#9ca3af"
+              style={styles.modalInput}
+            />
 
             <Text style={styles.modalInputLabel}>Security Deposit Amount *</Text>
             <TextInput

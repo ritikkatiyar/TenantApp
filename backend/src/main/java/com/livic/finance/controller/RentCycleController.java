@@ -82,7 +82,7 @@ public class RentCycleController {
         return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchUnpublish(propertyId, billingMonth)));
     }
 
-    @GetMapping("/pre-flight")
+    @GetMapping({"/pre-flight", "/preflight"})
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.PreFlightChecklistResponse>> getPreFlightChecklist(
             @RequestParam UUID propertyId,

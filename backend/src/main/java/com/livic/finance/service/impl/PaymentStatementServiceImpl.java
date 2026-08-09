@@ -29,6 +29,8 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
     private final RentCycleCrudService rentCycleCrudService;
     private final RentCycleChargeCrudService rentCycleChargeCrudService;
     private final UserFacade userFacade;
+    private final com.livic.property.facade.UnitFacade unitFacade;
+    private final com.livic.payment.facade.PaymentFacade paymentFacade;
 
     @Override
     public String generateStatementHtml(UUID rentCycleId) {
@@ -41,7 +43,13 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
 
         List<RentCycleChargeTbl> charges = rentCycleChargeCrudService.findByRentCycle_Id(rentCycleId);
 
-        String propertyIdShort = rentCycle.getLease().getUnit().getProperty().getId().toString().substring(0, 5).toUpperCase();
+        UUID unitId = rentCycle.getLease().getUnitId();
+        com.livic.property.dto.UnitSummaryDTO unit = unitFacade.getUnitById(unitId).orElse(null);
+        UUID propertyId = unit != null ? unit.propertyId() : null;
+        String propertyName = unit != null ? unit.propertyName() : "N/A";
+        String unitNumber = unit != null ? unit.unitNumber() : "N/A";
+
+        String propertyIdShort = propertyId != null ? propertyId.toString().substring(0, 5).toUpperCase() : "PROP";
         String rentCycleIdShort = rentCycleId.toString().substring(0, 5).toUpperCase();
         String referenceNumber = String.format("%s-%s", propertyIdShort, rentCycleIdShort);
 
@@ -85,29 +93,31 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         }
 
         String transactionDetailsHtml = "";
-        if (rentCycle.getPaymentTransaction() != null) {
-            com.livic.payment.domain.PaymentTransactionTbl tx = rentCycle.getPaymentTransaction();
-            transactionDetailsHtml = String.format(
-                    "<div class=\"section-title\">Transaction Details</div>" +
-                    "<table class=\"details-table\">" +
-                    "  <tr>" +
-                    "    <td><strong>Payment Method:</strong></td>" +
-                    "    <td>%s</td>" +
-                    "    <td><strong>Transaction Reference ID:</strong></td>" +
-                    "    <td>%s</td>" +
-                    "  </tr>" +
-                    "  <tr>" +
-                    "    <td><strong>Settled At:</strong></td>" +
-                    "    <td>%s</td>" +
-                    "    <td><strong>Amount Settled:</strong></td>" +
-                    "    <td>₹%,.2f</td>" +
-                    "  </tr>" +
-                    "</table>",
-                    tx.getPaymentMethod(),
-                    tx.getGatewayTransactionId() != null ? tx.getGatewayTransactionId() : tx.getId(),
-                    tx.getConfirmedAt() != null ? tx.getConfirmedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) : "N/A",
-                    tx.getAmount()
-            );
+        if (rentCycle.getPaymentTransactionId() != null) {
+            com.livic.payment.dto.PaymentInitiationResponse tx = paymentFacade.getTransactionStatus(rentCycle.getPaymentTransactionId()).orElse(null);
+            if (tx != null) {
+                transactionDetailsHtml = String.format(
+                        "<div class=\"section-title\">Transaction Details</div>" +
+                        "<table class=\"details-table\">" +
+                        "  <tr>" +
+                        "    <td><strong>Payment Method:</strong></td>" +
+                        "    <td>%s</td>" +
+                        "    <td><strong>Transaction Reference ID:</strong></td>" +
+                        "    <td>%s</td>" +
+                        "  </tr>" +
+                        "  <tr>" +
+                        "    <td><strong>Settled At:</strong></td>" +
+                        "    <td>%s</td>" +
+                        "    <td><strong>Amount Settled:</strong></td>" +
+                        "    <td>₹%,.2f</td>" +
+                        "  </tr>" +
+                        "</table>",
+                        tx.getPaymentMethod() != null ? tx.getPaymentMethod() : "N/A",
+                        tx.getGatewayTransactionId() != null ? tx.getGatewayTransactionId() : tx.getTransactionId(),
+                        tx.getCreatedAt() != null ? tx.getCreatedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) : "N/A",
+                        tx.getAmount()
+                );
+            }
         }
 
         String tenantName = tenant != null ? tenant.fullName() : "N/A";
@@ -160,8 +170,8 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
                 "      </td>\n" +
                 "      <td style=\"width: 50%; text-align: right;\">\n" +
                 "        <strong>Property Details:</strong><br>\n" +
-                "        " + rentCycle.getLease().getUnit().getProperty().getName() + "<br>\n" +
-                "        Unit Number: " + rentCycle.getLease().getUnit().getUnitNumber() + "<br>\n" +
+                "        " + propertyName + "<br>\n" +
+                "        Unit Number: " + unitNumber + "<br>\n" +
                 "        Billing Month: " + rentCycle.getBillingMonth() + "\n" +
                 "      </td>\n" +
                 "    </tr>\n" +

@@ -1,23 +1,23 @@
 package com.livic.announcement.mapper;
 
 import com.livic.announcement.domain.AnnouncementTbl;
-import com.livic.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
 import com.livic.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
-import com.livic.property.domain.PropertyTbl;
-import com.livic.user.domain.UserTbl;
+import com.livic.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
+
+import java.util.UUID;
 
 public final class AnnouncementMapper {
 
     private AnnouncementMapper() {
     }
 
-    public static AnnouncementTbl toEntity(CreateAnnouncementRequest request, PropertyTbl property, UserTbl creator) {
+    public static AnnouncementTbl toEntity(CreateAnnouncementRequest request, UUID propertyId, UUID creatorId) {
         if (request == null) {
             return null;
         }
         return AnnouncementTbl.builder()
-                .property(property)
-                .creator(creator)
+                .propertyId(propertyId)
+                .creatorId(creatorId)
                 .title(request.getTitle())
                 .content(request.getContent())
                 .category(request.getCategory())
@@ -28,15 +28,14 @@ public final class AnnouncementMapper {
                 .build();
     }
 
-    public static AnnouncementResponse toResponse(AnnouncementTbl announcement, boolean read, Long readCount, Long totalRecipientsCount) {
+    public static AnnouncementResponse toResponse(AnnouncementTbl announcement, String creatorName, boolean read, Long readCount, Long totalRecipientsCount) {
         if (announcement == null) {
             return null;
         }
-        String creatorName = announcement.getCreator() != null ? announcement.getCreator().getFullName() : "System";
         return AnnouncementResponse.builder()
                 .id(announcement.getId())
-                .propertyId(announcement.getProperty().getId())
-                .creatorId(announcement.getCreator() != null ? announcement.getCreator().getId() : null)
+                .propertyId(announcement.getPropertyId())
+                .creatorId(announcement.getCreatorId())
                 .creatorName(creatorName)
                 .title(announcement.getTitle())
                 .content(announcement.getContent())

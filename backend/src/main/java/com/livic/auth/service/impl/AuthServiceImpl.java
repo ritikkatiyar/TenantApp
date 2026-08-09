@@ -107,7 +107,16 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(HttpStatus.UNAUTHORIZED, "Refresh token expired");
         }
 
-        UserTbl user = stored.getUser();
+        java.util.UUID userId = stored.getUserId();
+        UserSummaryDTO userSummary = userFacade.getUserById(userId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.UNAUTHORIZED, "User not found"));
+        UserTbl user = new UserTbl();
+        user.setId(userSummary.id());
+        user.setAuthUid(userSummary.authUid());
+        user.setFullName(userSummary.fullName());
+        user.setPhoneNumber(userSummary.phoneNumber());
+        user.setGlobalRole(com.livic.common.domain.UserRole.USER);
+
         refreshTokenCrudService.delete(stored);
         return issueTokensForUser(user);
     }
@@ -159,7 +168,7 @@ public class AuthServiceImpl implements AuthService {
         String hash = TokenHasher.sha256Hex(plain);
         Instant exp = Instant.now().plusMillis(jwtProperties.refreshExpirationMs());
         RefreshTokenTbl entity = RefreshTokenTbl.builder()
-                .user(user)
+                .userId(user.getId())
                 .tokenHash(hash)
                 .expiresAt(exp)
                 .revoked(false)

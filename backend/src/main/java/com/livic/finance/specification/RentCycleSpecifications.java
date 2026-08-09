@@ -31,8 +31,16 @@ public class RentCycleSpecifications {
     }
 
     public static Specification<RentCycleTbl> hasPropertyId(UUID propertyId) {
-        return (root, query, cb) -> propertyId == null
-                ? null
-                : cb.equal(root.get("lease").get("unit").get("property").get("id"), propertyId);
+        return (root, query, cb) -> {
+            if (propertyId == null) {
+                return null;
+            }
+            jakarta.persistence.criteria.Subquery<UUID> subquery = query.subquery(UUID.class);
+            jakarta.persistence.criteria.Root<com.livic.property.domain.UnitTbl> unitRoot = subquery.from(com.livic.property.domain.UnitTbl.class);
+            subquery.select(unitRoot.get("id"));
+            subquery.where(cb.equal(unitRoot.get("property").get("id"), propertyId));
+            
+            return cb.in(root.get("lease").get("unitId")).value(subquery);
+        };
     }
 }

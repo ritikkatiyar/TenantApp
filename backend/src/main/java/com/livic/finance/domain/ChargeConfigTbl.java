@@ -4,9 +4,9 @@ import com.livic.common.domain.BaseEntity;
 import com.livic.common.domain.BillingFrequency;
 import com.livic.common.domain.CalculationStrategyType;
 import com.livic.common.domain.ChargeCategory;
-import com.livic.property.domain.PropertyTbl;
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.UUID;
 
 import java.math.BigDecimal;
 
@@ -19,10 +19,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ChargeConfigTbl extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "property_id", nullable = false)
-    @ToString.Exclude
-    private PropertyTbl property;
+    @Column(name = "property_id", nullable = false)
+    private UUID propertyId;
 
     @Column(name = "charge_name", nullable = false, length = 100)
     private String chargeName;

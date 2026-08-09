@@ -2,6 +2,7 @@ package com.livic.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.util.Comparator;
 import java.util.List;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -28,7 +30,7 @@ public class GlobalExceptionHandler {
                 .sorted(Comparator.comparing(FieldErrorDetail::field))
                 .toList();
 
-        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).warn("[VALIDATION FAILED] URI: {}, errors: {}", request.getRequestURI(), fieldErrors);
+        log.warn("[VALIDATION_FAILED] uri={} errors={}", request.getRequestURI(), fieldErrors);
 
         ApiError apiError = ApiError.withFieldErrors(
                 HttpStatus.BAD_REQUEST.value(),
@@ -55,7 +57,7 @@ public class GlobalExceptionHandler {
                 .sorted(Comparator.comparing(FieldErrorDetail::field))
                 .toList();
 
-        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).warn("[CONSTRAINT VIOLATION] URI: {}, errors: {}", request.getRequestURI(), fieldErrors);
+        log.warn("[CONSTRAINT_VIOLATION] uri={} errors={}", request.getRequestURI(), fieldErrors);
 
         ApiError apiError = ApiError.withFieldErrors(
                 HttpStatus.BAD_REQUEST.value(),
@@ -74,8 +76,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         HttpStatus status = exception.getStatus();
-        
-        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).warn("[BUSINESS EXCEPTION] URI: {}, status: {}, message: {}", request.getRequestURI(), status, exception.getMessage());
+        log.warn("[BUSINESS_EXCEPTION] uri={} status={} message={}", request.getRequestURI(), status, exception.getMessage());
 
         ApiError apiError = ApiError.of(
                 status.value(),
@@ -122,11 +123,11 @@ public class GlobalExceptionHandler {
             jakarta.persistence.EntityNotFoundException exception,
             HttpServletRequest request
     ) {
-        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).warn("[ENTITY NOT FOUND] URI: {}, message: {}", request.getRequestURI(), exception.getMessage());
+        log.warn("[ENTITY_NOT_FOUND] uri={} message={}", request.getRequestURI(), exception.getMessage());
         ApiError apiError = ApiError.of(
                 HttpStatus.NOT_FOUND.value(),
                 HttpStatus.NOT_FOUND.getReasonPhrase(),
-                "Required entity was not found in the database. Please verify referential integrity: " + exception.getMessage(),
+                "The requested resource was not found.",
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiError);
@@ -137,11 +138,11 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
     ) {
-        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).error("[UNEXPECTED ERROR] URI: " + request.getRequestURI(), exception);
+        log.error("[UNEXPECTED_ERROR] uri={}", request.getRequestURI(), exception);
         ApiError apiError = ApiError.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Unexpected server error: " + exception.getMessage(),
+                "An unexpected server error occurred. Please contact support.",
                 request.getRequestURI()
         );
 

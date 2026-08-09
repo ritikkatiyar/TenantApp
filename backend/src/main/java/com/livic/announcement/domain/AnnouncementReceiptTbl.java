@@ -1,6 +1,5 @@
 package com.livic.announcement.domain;
 
-import com.livic.user.domain.UserTbl;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -29,10 +28,8 @@ public class AnnouncementReceiptTbl {
     @ToString.Exclude
     private AnnouncementTbl announcement;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
-    private UserTbl user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @CreatedDate
     @Column(name = "read_at", nullable = false, updatable = false)

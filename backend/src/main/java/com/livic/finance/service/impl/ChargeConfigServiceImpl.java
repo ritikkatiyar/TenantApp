@@ -39,9 +39,7 @@ public class ChargeConfigServiceImpl implements ChargeConfigService {
         }
         PropertySummaryDTO propSummary = propertyFacade.getPropertyById(request.getPropertyId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Property not found"));
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propSummary.id());
-        ChargeConfigTbl config = ChargeConfigMapper.toEntity(request, property);
+        ChargeConfigTbl config = ChargeConfigMapper.toEntity(request, propSummary.id());
         chargeConfigCrudService.save(config);
         return ChargeConfigMapper.toResponse(config);
     }

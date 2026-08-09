@@ -336,7 +336,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
             tenantUserId: targetUser.id,
             tenantName: targetUser.fullName,
             tenantPhone: targetUser.phoneNumber,
-            rentAmount: lease.rentAmount,
+            rentAmount: lease.monthlyRentAmount,
             status: 'ACTIVE',
           }
         ]

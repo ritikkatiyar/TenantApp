@@ -65,7 +65,7 @@ public class ChargeConfigQueryServiceImpl implements ChargeConfigQueryService {
     private ChargeConfigResponse mapToResponse(ChargeConfigTbl config) {
         return ChargeConfigResponse.builder()
                 .id(config.getId())
-                .propertyId(config.getProperty().getId())
+                .propertyId(config.getPropertyId())
                 .chargeName(config.getChargeName())
                 .chargeCategory(config.getChargeCategory())
                 .billingFrequency(config.getBillingFrequency())

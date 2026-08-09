@@ -1,9 +1,9 @@
 package com.livic.notification.domain;
 
 import com.livic.common.domain.BaseEntity;
-import com.livic.user.domain.UserTbl;
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "notification_log_tbl")
@@ -15,10 +15,8 @@ import lombok.*;
 @ToString(callSuper = true)
 public class NotificationLogTbl extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recipient_id", nullable = false)
-    @ToString.Exclude
-    private UserTbl recipient;
+    @Column(name = "recipient_id", nullable = false)
+    private UUID recipientId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

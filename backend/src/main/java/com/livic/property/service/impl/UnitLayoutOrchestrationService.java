@@ -44,7 +44,15 @@ public class UnitLayoutOrchestrationService {
     }
 
     public List<UnitDTOs.UnitResponse> getVacatingUnits(UUID propertyId) {
-        List<UnitTbl> units = unitQueryService.getVacatingUnits(propertyId);
+        List<LeaseSummaryDTO> activeLeases = financeFacade.getActiveLeasesByPropertyId(propertyId);
+        Set<UUID> vacatingUnitIds = activeLeases.stream()
+                .filter(lease -> lease.moveOutDate() != null && lease.unitId() != null)
+                .map(LeaseSummaryDTO::unitId)
+                .collect(Collectors.toSet());
+
+        List<UnitTbl> units = unitQueryService.getUnitsByProperty(propertyId).stream()
+                .filter(unit -> vacatingUnitIds.contains(unit.getId()))
+                .collect(Collectors.toList());
         return enrichUnits(units);
     }
 
@@ -114,6 +122,7 @@ public class UnitLayoutOrchestrationService {
                             l.userId(),
                             user != null ? user.fullName() : "Unknown User",
                             user != null ? user.phoneNumber() : "",
+                            l.rentAmount(),
                             l.status() != null ? l.status() : "ACTIVE"
                     );
                 })

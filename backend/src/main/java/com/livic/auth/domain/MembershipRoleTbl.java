@@ -6,6 +6,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "membership_role_tbl")
 @Getter
@@ -25,10 +27,8 @@ public class MembershipRoleTbl extends BaseEntity {
     @Column(name = "description")
     private String description;
 
-    @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @jakarta.persistence.JoinColumn(name = "property_id", nullable = true)
-    @ToString.Exclude
-    private com.livic.property.domain.PropertyTbl property;
+    @Column(name = "property_id")
+    private UUID propertyId;
 
     @Column(name = "role_rank", nullable = false)
     @Builder.Default
@@ -38,5 +38,3 @@ public class MembershipRoleTbl extends BaseEntity {
     @Builder.Default
     private boolean isActive = true;
 }
-
-

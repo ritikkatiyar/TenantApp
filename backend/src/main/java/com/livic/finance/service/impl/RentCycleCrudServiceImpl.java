@@ -3,6 +3,7 @@ package com.livic.finance.service.impl;
 import com.livic.common.domain.RentCycleStatus;
 import com.livic.common.service.impl.AbstractCrudService;
 import com.livic.finance.domain.RentCycleTbl;
+import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.dto.DefaulterRecordDTO;
 import com.livic.finance.dto.RevenueMetricsDTO;
 import com.livic.finance.repository.RentCycleRepository;
@@ -27,8 +28,16 @@ import com.livic.finance.dto.RentCycleDTOs;
 @Transactional
 public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, UUID, RentCycleRepository> implements RentCycleCrudService {
 
-    public RentCycleCrudServiceImpl(RentCycleRepository rentCycleRepository) {
+    private final com.livic.finance.repository.LeaseRepository leaseRepository;
+    private final com.livic.property.facade.UnitFacade unitFacade;
+
+    public RentCycleCrudServiceImpl(
+            RentCycleRepository rentCycleRepository,
+            com.livic.finance.repository.LeaseRepository leaseRepository,
+            com.livic.property.facade.UnitFacade unitFacade) {
         super(rentCycleRepository);
+        this.leaseRepository = leaseRepository;
+        this.unitFacade = unitFacade;
     }
 
     @Override
@@ -53,7 +62,11 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
 
     @Override
     public List<RentCycleTbl> findByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth) {
-        return repository.findByLease_Unit_Property_IdAndBillingMonth(propertyId, billingMonth);
+        List<UUID> leaseIds = getLeaseIdsForProperty(propertyId);
+        if (leaseIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return repository.findByLease_IdInAndBillingMonth(leaseIds, billingMonth);
     }
 
     @Override
@@ -71,7 +84,11 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
         if (propertyIds == null || propertyIds.isEmpty()) {
             return new RevenueMetricsDTO(BigDecimal.ZERO, BigDecimal.ZERO);
         }
-        RevenueMetricsDTO metrics = repository.calculateRevenueMetrics(propertyIds, billingMonth, RentCycleStatus.PAID);
+        List<UUID> leaseIds = getLeaseIdsForProperties(propertyIds);
+        if (leaseIds.isEmpty()) {
+            return new RevenueMetricsDTO(BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+        RevenueMetricsDTO metrics = repository.calculateRevenueMetrics(leaseIds, billingMonth, RentCycleStatus.PAID);
         return metrics != null ? metrics : new RevenueMetricsDTO(BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
@@ -80,13 +97,31 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
         if (propertyIds == null || propertyIds.isEmpty()) {
             return Page.empty(pageable);
         }
-        return repository.findDefaulters(
-                propertyIds,
+        List<UUID> leaseIds = getLeaseIdsForProperties(propertyIds);
+        if (leaseIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        Page<RentCycleTbl> defaulterCycles = repository.findDefaulterCycles(
+                leaseIds,
                 RentCycleStatus.OVERDUE,
                 RentCycleStatus.PENDING,
                 LocalDate.now(),
                 pageable
         );
+        return defaulterCycles.map(cycle -> {
+            LeaseTbl lease = cycle.getLease();
+            com.livic.property.dto.UnitSummaryDTO unitSummary = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+            String unitNumber = unitSummary != null ? unitSummary.unitNumber() : "Vacant";
+            String propertyName = unitSummary != null ? unitSummary.propertyName() : "N/A";
+            return new DefaulterRecordDTO(
+                    lease.getUserId(),
+                    unitNumber,
+                    propertyName,
+                    cycle.getDueDate(),
+                    cycle.getTotalAmount(),
+                    cycle.getId()
+            );
+        });
     }
 
     @Override
@@ -99,8 +134,12 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
             RentCycleStatus statusOverdue,
             RentCycleStatus statusPartiallyPaid
     ) {
+        List<UUID> leaseIds = getLeaseIdsForProperty(propertyId);
+        if (leaseIds.isEmpty()) {
+            return new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
+        }
         List<Object[]> metrics = repository.getRentRollMetrics(
-                propertyId,
+                leaseIds,
                 billingMonth,
                 statusPending,
                 statusPublished,
@@ -125,5 +164,32 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
                 pendingDraftsCount,
                 publishedCount
         );
+    }
+
+    private List<UUID> getLeaseIdsForProperty(UUID propertyId) {
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        if (units.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
+        return leaseRepository.findByUnitIdInAndStatus(unitIds, com.livic.common.domain.LeaseStatus.ACTIVE).stream()
+                .map(LeaseTbl::getId)
+                .toList();
+    }
+
+    private List<UUID> getLeaseIdsForProperties(Collection<UUID> propertyIds) {
+        if (propertyIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<UUID> unitIds = propertyIds.stream()
+                .flatMap(pid -> unitFacade.getUnitsByPropertyId(pid).stream())
+                .map(com.livic.property.dto.UnitSummaryDTO::id)
+                .toList();
+        if (unitIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return leaseRepository.findByUnitIdInAndStatus(unitIds, com.livic.common.domain.LeaseStatus.ACTIVE).stream()
+                .map(LeaseTbl::getId)
+                .toList();
     }
 }

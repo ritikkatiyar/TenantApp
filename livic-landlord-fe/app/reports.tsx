@@ -45,14 +45,8 @@ export default function ReportsRoute() {
     if (!accessToken || !selectedProperty) return;
     try {
       setIsLoading(true);
-      const data = await listRentCycles(billingMonth, accessToken);
-      // Filter list in-memory if needed by property
-      const filtered = data.filter((item: RentCycleResponse) => {
-        // Find matching units under this property.
-        // For standard property filtering support:
-        return true; 
-      });
-      setStatements(filtered);
+      const data = await listRentCycles(billingMonth, accessToken, selectedProperty || undefined);
+      setStatements(data.content || []);
     } catch (err: any) {
       console.warn('[Reports] Error loading statements:', err.message);
     } finally {

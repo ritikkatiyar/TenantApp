@@ -1,6 +1,5 @@
 package com.livic.auth.domain;
 
-import com.livic.user.domain.UserTbl;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,9 +19,8 @@ public class RefreshTokenTbl {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserTbl user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     private String tokenHash;

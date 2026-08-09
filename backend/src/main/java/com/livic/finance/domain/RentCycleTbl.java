@@ -7,6 +7,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "rent_cycle_tbl", uniqueConstraints = {
@@ -45,8 +46,6 @@ public class RentCycleTbl extends BaseEntity {
     @Builder.Default
     private BigDecimal amountPaid = BigDecimal.ZERO;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_transaction_id")
-    @ToString.Exclude
-    private com.livic.payment.domain.PaymentTransactionTbl paymentTransaction;
+    @Column(name = "payment_transaction_id")
+    private UUID paymentTransactionId;
 }

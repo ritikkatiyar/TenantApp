@@ -19,10 +19,8 @@ public interface LeaseCrudService extends CrudService<LeaseTbl, UUID> {
     boolean existsActiveLeaseOnDate(UUID unitId, LeaseStatus status, LocalDate date);
     long countByUnitIdAndStatus(UUID unitId, LeaseStatus status);
     List<LeaseTbl> findByUnitIdAndStatus(UUID unitId, LeaseStatus status);
-    List<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status);
-    Page<LeaseTbl> findActiveOccupanciesByProperty(UUID propertyId, LeaseStatus status, Pageable pageable);
-    boolean existsByUnit_Id(UUID unitId);
-    List<LeaseTbl> findByUnit_IdInAndStatus(Collection<UUID> unitIds, LeaseStatus status);
-    boolean existsByUserIdAndPropertyIdAndStatus(UUID userId, UUID propertyId, LeaseStatus status);
-    boolean existsByUnit_Property_Id(UUID propertyId);
+    List<LeaseTbl> findByUnitIdInAndStatus(Collection<UUID> unitIds, LeaseStatus status);
+    boolean existsByUnitId(UUID unitId);
+    Page<LeaseTbl> findByUnitIdInAndStatus(Collection<UUID> unitIds, LeaseStatus status, Pageable pageable);
+    boolean existsByUnitIdIn(Collection<UUID> unitIds);
 }

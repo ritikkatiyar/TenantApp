@@ -13,6 +13,7 @@ import com.livic.finance.service.BillingWorksheetService;
 import com.livic.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.finance.service.interfaces.LeaseCrudService;
+import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.RentCycleCrudService;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.domain.UnitTbl;
@@ -37,7 +38,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
     private final BillingWorksheetCrudService billingWorksheetCrudService;
     private final UnitFacade unitFacade;
-    private final LeaseCrudService leaseCrudService;
+    private final LeaseQueryService leaseQueryService;
     private final ChargeConfigCrudService chargeConfigCrudService;
     private final RentCycleCrudService rentCycleCrudService;
     private final UserFacade userFacade;
@@ -49,14 +50,14 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
 
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        List<LeaseTbl> activeLeases = leaseCrudService.findActiveOccupanciesByProperty(propertyId, LeaseStatus.ACTIVE);
+        List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(propertyId);
         Map<UUID, List<LeaseTbl>> unitToLeasesMap = activeLeases.stream()
-                .collect(Collectors.groupingBy(l -> l.getUnit().getId()));
+                .collect(Collectors.groupingBy(LeaseTbl::getUnitId));
 
         List<BillingWorksheetEntryTbl> existingEntries = billingWorksheetCrudService.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
                 propertyId, chargeConfigId, billingMonth);
         Map<UUID, BillingWorksheetEntryTbl> existingEntriesMap = existingEntries.stream()
-                .collect(Collectors.toMap(r -> r.getUnit().getId(), r -> r));
+                .collect(Collectors.toMap(BillingWorksheetEntryTbl::getUnitId, r -> r));
 
         List<BillingWorksheetEntryTbl> finalEntries = new ArrayList<>();
         List<BillingWorksheetEntryTbl> toSave = new ArrayList<>();
@@ -96,15 +97,9 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
                     initialValue = chargeConfig.getBaseRate();
                 }
 
-                PropertyTbl property = new PropertyTbl();
-                property.setId(propertyId);
-
-                UnitTbl unit = new UnitTbl();
-                unit.setId(unitSummary.id());
-
                 entry = BillingWorksheetEntryTbl.builder()
-                        .property(property)
-                        .unit(unit)
+                        .propertyId(propertyId)
+                        .unitId(unitSummary.id())
                         .chargeConfig(chargeConfig)
                         .billingMonth(billingMonth)
                         .enteredValue(initialValue)
@@ -136,7 +131,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
 
         return finalEntries.stream()
                 .map(entry -> {
-                    UUID unitId = entry.getUnit().getId();
+                    UUID unitId = entry.getUnitId();
                     UnitSummaryDTO unitSummary = unitSummaryMap.get(unitId);
                     List<LeaseTbl> leases = unitToLeasesMap.get(unitId);
 
@@ -154,7 +149,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
                     return WorksheetEntryResponse.builder()
                             .id(entry.getId())
                             .unitId(unitId)
-                            .unitName(unitSummary != null ? unitSummary.unitNumber() : entry.getUnit().getUnitNumber())
+                            .unitName(unitSummary != null ? unitSummary.unitNumber() : "N/A")
                             .tenantName(tenantNames)
                             .floor((unitSummary != null && unitSummary.floor() != null) ? unitSummary.floor() : 0)
                             .enteredValue(entry.getEnteredValue())
@@ -183,7 +178,7 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
         List<BillingWorksheetEntryTbl> existing = billingWorksheetCrudService.findAllByPropertyIdAndChargeConfigIdAndBillingMonth(
                 request.getPropertyId(), request.getChargeConfigId(), request.getBillingMonth());
         Map<UUID, BillingWorksheetEntryTbl> entryMap = existing.stream()
-                .collect(Collectors.toMap(e -> e.getUnit().getId(), e -> e));
+                .collect(Collectors.toMap(BillingWorksheetEntryTbl::getUnitId, e -> e));
 
         for (UnitEntry item : request.getEntries()) {
             BillingWorksheetEntryTbl entry = entryMap.get(item.getUnitId());

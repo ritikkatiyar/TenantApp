@@ -32,6 +32,7 @@ public class LedgerServiceImpl implements LedgerService {
 
     private final FinanceLedgerCrudService financeLedgerCrudService;
     private final UserFacade userFacade;
+    private final com.livic.property.facade.UnitFacade unitFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -43,6 +44,11 @@ public class LedgerServiceImpl implements LedgerService {
 
         Page<FinanceLedgerTbl> entriesPage = financeLedgerCrudService.findAll(spec, pageable);
 
+        // Fetch units for mapping unit names
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        Map<UUID, com.livic.property.dto.UnitSummaryDTO> unitMap = units.stream()
+                .collect(Collectors.toMap(com.livic.property.dto.UnitSummaryDTO::id, u -> u));
+
         // Batch fetch tenant users to avoid N+1 query
         Set<UUID> userIds = entriesPage.getContent().stream()
                 .map(FinanceLedgerTbl::getLease)
@@ -51,7 +57,7 @@ public class LedgerServiceImpl implements LedgerService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(userIds);
+        Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? java.util.Collections.emptyMap() : userFacade.getUsersByIds(userIds);
 
         // Batch fetch running balances to avoid N+1 query
         List<UUID> entryIds = entriesPage.getContent().stream()
@@ -100,9 +106,17 @@ public class LedgerServiceImpl implements LedgerService {
                 }
             }
 
+            String unitName = "N/A";
+            if (entry.getUnitId() != null) {
+                com.livic.property.dto.UnitSummaryDTO u = unitMap.get(entry.getUnitId());
+                if (u != null) {
+                    unitName = "Apt " + u.unitNumber();
+                }
+            }
+
             return LedgerEntryResponse.builder()
                     .id(entry.getId())
-                    .unitName("Apt " + entry.getUnit().getUnitNumber())
+                    .unitName(unitName)
                     .tenantName(tenantName)
                     .transactionType(entry.getTransactionType())
                     .amount(entry.getAmount())

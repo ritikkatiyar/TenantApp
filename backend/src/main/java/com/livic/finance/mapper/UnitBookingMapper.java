@@ -11,9 +11,9 @@ public final class UnitBookingMapper {
     private UnitBookingMapper() {
     }
 
-    public static UnitBookingTbl toEntity(UnitBookingDTOs.CreateBookingRequest request, UnitTbl unit) {
+    public static UnitBookingTbl toEntity(UnitBookingDTOs.CreateBookingRequest request, java.util.UUID unitId) {
         return UnitBookingTbl.builder()
-                .unit(unit)
+                .unitId(unitId)
                 .prospectiveTenantUserId(request.prospectiveTenantUserId())
                 .prospectiveTenantName(request.prospectiveTenantName())
                 .prospectiveTenantPhone(request.prospectiveTenantPhone())
@@ -24,11 +24,11 @@ public final class UnitBookingMapper {
                 .build();
     }
 
-    public static UnitBookingDTOs.UnitBookingResponse toResponse(UnitBookingTbl booking) {
+    public static UnitBookingDTOs.UnitBookingResponse toResponse(UnitBookingTbl booking, String unitNumber) {
         return new UnitBookingDTOs.UnitBookingResponse(
                 booking.getId(),
-                booking.getUnit().getId(),
-                booking.getUnit().getUnitNumber(),
+                booking.getUnitId(),
+                unitNumber,
                 booking.getProspectiveTenantUserId(),
                 booking.getProspectiveTenantName(),
                 booking.getProspectiveTenantPhone(),
@@ -36,7 +36,7 @@ public final class UnitBookingMapper {
                 booking.getTokenAmount(),
                 booking.getExpectedMoveInDate(),
                 booking.getStatus(),
-                booking.getPaymentTransaction() != null ? booking.getPaymentTransaction().getId() : null,
+                booking.getPaymentTransactionId(),
                 booking.getConvertedLeaseId(),
                 booking.getCreatedAt(),
                 booking.getUpdatedAt()

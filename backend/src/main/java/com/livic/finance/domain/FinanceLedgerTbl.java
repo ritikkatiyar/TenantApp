@@ -2,7 +2,6 @@ package com.livic.finance.domain;
 
 import com.livic.common.domain.BaseEntity;
 import com.livic.common.domain.LedgerTransactionType;
-import com.livic.property.domain.UnitTbl;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,10 +17,8 @@ import java.util.UUID;
 @Builder
 public class FinanceLedgerTbl extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "unit_id", nullable = false)
-    @ToString.Exclude
-    private UnitTbl unit;
+    @Column(name = "unit_id", nullable = false)
+    private UUID unitId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lease_id")

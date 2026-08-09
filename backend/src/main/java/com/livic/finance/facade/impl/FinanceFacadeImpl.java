@@ -24,7 +24,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class FinanceFacadeImpl implements FinanceFacade {
 
@@ -32,6 +31,20 @@ public class FinanceFacadeImpl implements FinanceFacade {
     private final LeaseCrudService leaseCrudService;
     private final RentCycleCrudService rentCycleCrudService;
     private final ChargeConfigQueryService chargeConfigQueryService;
+    private final com.livic.property.facade.UnitFacade unitFacade;
+
+    public FinanceFacadeImpl(
+            LeaseQueryService leaseQueryService,
+            LeaseCrudService leaseCrudService,
+            RentCycleCrudService rentCycleCrudService,
+            ChargeConfigQueryService chargeConfigQueryService,
+            com.livic.property.facade.UnitFacade unitFacade) {
+        this.leaseQueryService = leaseQueryService;
+        this.leaseCrudService = leaseCrudService;
+        this.rentCycleCrudService = rentCycleCrudService;
+        this.chargeConfigQueryService = chargeConfigQueryService;
+        this.unitFacade = unitFacade;
+    }
 
     @Override
     public boolean isUnitOccupiedOnDate(UUID unitId, LocalDate date) {
@@ -41,20 +54,27 @@ public class FinanceFacadeImpl implements FinanceFacade {
     @Override
     public Optional<LeaseSummaryDTO> getActiveLeaseForUser(UUID userId) {
         return leaseQueryService.findByUserIdAndStatus(userId, LeaseStatus.ACTIVE)
-                .map(LeaseSummaryDTO::from);
+                .map(lease -> {
+                    com.livic.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+                    return LeaseSummaryDTO.from(lease, u);
+                });
     }
 
     @Override
     public List<LeaseSummaryDTO> getActiveLeasesByPropertyId(UUID propertyId) {
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        Map<UUID, com.livic.property.dto.UnitSummaryDTO> unitMap = units.stream()
+                .collect(java.util.stream.Collectors.toMap(com.livic.property.dto.UnitSummaryDTO::id, u -> u));
         return leaseQueryService.findActiveLeasesByProperty(propertyId).stream()
-                .map(LeaseSummaryDTO::from)
+                .map(lease -> LeaseSummaryDTO.from(lease, unitMap.get(lease.getUnitId())))
                 .toList();
     }
 
     @Override
     public List<LeaseSummaryDTO> getActiveLeasesByUnitId(UUID unitId) {
+        com.livic.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
         return leaseQueryService.findByUnitIdAndStatus(unitId, LeaseStatus.ACTIVE).stream()
-                .map(LeaseSummaryDTO::from)
+                .map(lease -> LeaseSummaryDTO.from(lease, u))
                 .toList();
     }
 
@@ -79,13 +99,20 @@ public class FinanceFacadeImpl implements FinanceFacade {
     @Override
     public Optional<LeaseSummaryDTO> getLeaseById(UUID leaseId) {
         return leaseCrudService.findById(leaseId)
-                .map(LeaseSummaryDTO::from);
+                .map(lease -> {
+                    com.livic.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+                    return LeaseSummaryDTO.from(lease, u);
+                });
     }
 
     @Override
     public Optional<UUID> getPropertyIdByRentCycleId(UUID rentCycleId) {
         return rentCycleCrudService.findById(rentCycleId)
-                .map(r -> r.getLease().getUnit().getProperty().getId());
+                .map(r -> {
+                    if (r.getLease() == null) return null;
+                    com.livic.property.dto.UnitSummaryDTO u = unitFacade.getUnitById(r.getLease().getUnitId()).orElse(null);
+                    return u != null ? u.propertyId() : null;
+                });
     }
 
     @Override

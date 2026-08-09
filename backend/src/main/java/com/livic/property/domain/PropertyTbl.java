@@ -1,7 +1,6 @@
 package com.livic.property.domain;
 
 import com.livic.common.domain.BaseEntity;
-import com.livic.user.domain.UserTbl;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;

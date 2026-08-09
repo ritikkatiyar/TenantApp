@@ -13,6 +13,7 @@ import com.livic.finance.mapper.LeaseMapper;
 import com.livic.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.finance.service.interfaces.LeaseCrudService;
 import com.livic.finance.service.interfaces.LeaseService;
+import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.property.domain.UnitTbl;
 import com.livic.property.facade.UnitFacade;
@@ -39,6 +40,7 @@ import com.livic.property.dto.UnitSummaryDTO;
 public class LeaseServiceImpl implements LeaseService {
 
     private final LeaseCrudService leaseCrudService;
+    private final LeaseQueryService leaseQueryService;
     private final UnitFacade unitFacade;
     private final UserFacade userFacade;
     private final AuthFacade authFacade;
@@ -48,7 +50,7 @@ public class LeaseServiceImpl implements LeaseService {
     @Override
     public LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId) {
         // 1. Dynamic unit availability safety check
-        boolean available = unitFacade.isUnitAvailableOnDate(request.unitId(), request.moveInDate());
+        boolean available = leaseQueryService.isUnitAvailableOnDate(request.unitId(), request.moveInDate());
         if (!available) {
             throw new BusinessException(HttpStatus.CONFLICT, "Unit capacity has been reached for the selected move-in date");
         }
@@ -73,7 +75,7 @@ public class LeaseServiceImpl implements LeaseService {
             if (!UnitBookingStatus.BOOKED.name().equals(booking.getStatus())) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "Booking is not in BOOKED status");
             }
-            if (booking.getPaymentTransaction() == null) {
+            if (booking.getPaymentTransactionId() == null) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "Token payment has not been collected for this booking");
             }
 
@@ -112,7 +114,7 @@ public class LeaseServiceImpl implements LeaseService {
 
         authFacade.ensureTenantRole(tenant.id(), unitSummary.propertyId(), assignedByUserId);
 
-        LeaseTbl lease = LeaseMapper.toEntity(request, unit, targetUserId);
+        LeaseTbl lease = LeaseMapper.toEntity(request, unitSummary.id(), targetUserId);
         LeaseTbl saved = leaseCrudService.save(lease);
 
         // 3. Mark booking as converted
@@ -127,7 +129,7 @@ public class LeaseServiceImpl implements LeaseService {
         BigDecimal newBalance = currentBalance.add(request.securityDeposit());
 
         FinanceLedgerTbl ledgerEntry = FinanceLedgerTbl.builder()
-                .unit(unit)
+                .unitId(unitSummary.id())
                 .lease(saved)
                 .transactionType(LedgerTransactionType.INVOICE_GENERATED)
                 .amount(request.securityDeposit())
@@ -138,7 +140,7 @@ public class LeaseServiceImpl implements LeaseService {
         financeLedgerCrudService.save(ledgerEntry);
 
         log.info("lease_created leaseId={} userId={} unitId={} status={}",
-                saved.getId(), saved.getUserId(), saved.getUnit().getId(), saved.getStatus());
+                saved.getId(), saved.getUserId(), saved.getUnitId(), saved.getStatus());
         return saved;
     }
 
@@ -154,14 +156,19 @@ public class LeaseServiceImpl implements LeaseService {
         LeaseTbl saved = leaseCrudService.save(lease);
 
         UUID tenantId = saved.getUserId();
-        UUID propertyId = saved.getUnit().getProperty().getId();
+        UUID propertyId = unitFacade.getUnitById(saved.getUnitId())
+                .map(UnitSummaryDTO::propertyId)
+                .orElse(null);
 
         // Check if this tenant has any other active leases in any unit of the same property
-        boolean hasOtherLeases = leaseCrudService.existsByUserIdAndPropertyIdAndStatus(
+        boolean hasOtherLeases = false;
+        if (propertyId != null) {
+            hasOtherLeases = leaseQueryService.existsByUserIdAndPropertyIdAndStatus(
                 tenantId, propertyId, LeaseStatus.ACTIVE
-        );
+            );
+        }
 
-        if (!hasOtherLeases) {
+        if (!hasOtherLeases && propertyId != null) {
             authFacade.removeTenantRole(tenantId, propertyId);
         }
 
