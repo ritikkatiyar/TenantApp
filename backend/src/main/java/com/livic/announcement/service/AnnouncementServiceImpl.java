@@ -5,12 +5,11 @@ import com.livic.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
 import com.livic.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
 import com.livic.announcement.mapper.AnnouncementMapper;
 import com.livic.announcement.service.interfaces.AnnouncementService;
-import com.livic.common.domain.BaseEntity;
 import com.livic.common.event.AnnouncementBroadcastEvent;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
-import com.livic.property.domain.PropertyTbl;
 import com.livic.property.dto.PropertySummaryDTO;
+import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.PropertyFacade;
 import com.livic.property.facade.UnitFacade;
 import com.livic.user.domain.UserTbl;
@@ -19,17 +18,19 @@ import com.livic.user.facade.UserFacade;
 import com.livic.announcement.service.interfaces.AnnouncementCrudService;
 import com.livic.announcement.service.interfaces.AnnouncementReceiptCrudService;
 import com.livic.common.exception.BusinessException;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AnnouncementServiceImpl implements AnnouncementService {
@@ -189,7 +190,9 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                             recipientUserIds.add(lease.userId().toString());
                         }
                     }
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException e) {
+                    log.warn("[AnnouncementService] Invalid floor targetValue '{}' in optimized path — could not parse as integer", targetValue, e);
+                }
             }
         } else if (targetType == AnnouncementTargetType.UNIT) {
             if (targetValue != null) {
@@ -201,7 +204,9 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                             recipientUserIds.add(lease.userId().toString());
                         }
                     }
-                } catch (IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException e) {
+                    log.warn("[AnnouncementService] Invalid unit targetValue '{}' in optimized path — could not parse as UUID", targetValue, e);
+                }
             }
         }
         return recipientUserIds.stream().distinct().collect(Collectors.toList());
@@ -242,10 +247,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             if (targetValue != null) {
                 try {
                     Integer floorNumber = Integer.valueOf(targetValue);
-                    List<com.livic.property.dto.UnitSummaryDTO> unitsOnFloor = unitFacade.getUnitsByPropertyId(propertyId).stream()
+                    List<UnitSummaryDTO> unitsOnFloor = unitFacade.getUnitsByPropertyId(propertyId).stream()
                             .filter(u -> u.floor() != null && u.floor().equals(floorNumber))
                             .toList();
-                    List<UUID> unitIds = unitsOnFloor.stream().map(com.livic.property.dto.UnitSummaryDTO::id).collect(Collectors.toList());
+                    List<UUID> unitIds = unitsOnFloor.stream().map(UnitSummaryDTO::id).collect(Collectors.toList());
                     if (!unitIds.isEmpty()) {
                         financeFacade.getActiveLeasesByUnitIds(unitIds).values().stream()
                                   .flatMap(List::stream)
@@ -255,7 +260,9 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                                       }
                                   });
                     }
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException e) {
+                    log.warn("[AnnouncementService] Invalid floor targetValue '{}' — could not parse as integer", targetValue, e);
+                }
             }
         } else if (targetType == AnnouncementTargetType.UNIT) {
             if (targetValue != null) {
@@ -267,7 +274,9 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                             recipientUserIds.add(lease.userId().toString());
                         }
                     }
-                } catch (IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException e) {
+                    log.warn("[AnnouncementService] Invalid unit targetValue '{}' — could not parse as UUID", targetValue, e);
+                }
             }
         }
 

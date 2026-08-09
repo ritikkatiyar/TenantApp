@@ -1,17 +1,17 @@
 package com.livic.announcement.mapper;
 
 import com.livic.announcement.domain.AnnouncementTbl;
-import com.livic.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
 import com.livic.announcement.dto.AnnouncementDTOs.AnnouncementResponse;
-import com.livic.property.domain.PropertyTbl;
-import com.livic.user.domain.UserTbl;
+import com.livic.announcement.dto.AnnouncementDTOs.CreateAnnouncementRequest;
+
+import java.util.UUID;
 
 public final class AnnouncementMapper {
 
     private AnnouncementMapper() {
     }
 
-    public static AnnouncementTbl toEntity(CreateAnnouncementRequest request, java.util.UUID propertyId, java.util.UUID creatorId) {
+    public static AnnouncementTbl toEntity(CreateAnnouncementRequest request, UUID propertyId, UUID creatorId) {
         if (request == null) {
             return null;
         }
