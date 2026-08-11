@@ -42,8 +42,11 @@ public class AnnouncementTbl extends BaseEntity {
     @Builder.Default
     private AnnouncementTargetType targetType = AnnouncementTargetType.PROPERTY;
 
-    @Column(name = "target_value")
-    private String targetValue;
+    @Column(name = "target_floor_number")
+    private Integer targetFloorNumber;
+
+    @Column(name = "target_unit_id")
+    private UUID targetUnitId;
 
     @Column(columnDefinition = "JSON")
     private String metadata;

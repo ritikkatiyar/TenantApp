@@ -63,7 +63,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 .filter(l -> l.floor() != null)
                 .collect(Collectors.groupingBy(LeaseSummaryDTO::floor));
         List<String> recipientUserIds = getRecipientUserIdsOptimized(
-                request.getTargetType(), request.getTargetValue(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
+                request.getTargetType(), request.getTargetFloorNumber(), request.getTargetUnitId(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
 
         // Publish Spring Event to trigger Notification module listeners
         AnnouncementBroadcastEvent event = new AnnouncementBroadcastEvent(
@@ -90,10 +90,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         }
 
         UUID propertyId = activeLease.propertyId();
-        String floorStr = activeLease.floor() != null ? String.valueOf(activeLease.floor()) : "0";
-        String unitIdStr = activeLease.unitId() != null ? activeLease.unitId().toString() : "";
+        Integer floor = activeLease.floor() != null ? activeLease.floor() : 0;
+        UUID unitId = activeLease.unitId();
 
-        Page<AnnouncementTbl> announcements = announcementCrudService.findNoticesForTenant(propertyId, floorStr, unitIdStr, pageable);
+        Page<AnnouncementTbl> announcements = announcementCrudService.findNoticesForTenant(propertyId, floor, unitId, pageable);
 
         // Fetch receipts in bulk for the current page's announcements to avoid N+1 queries in loop
         List<UUID> announcementIds = announcements.getContent().stream().map(AnnouncementTbl::getId).toList();
@@ -167,7 +167,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         return announcements.map(announcement -> {
             long readCount = readCountsMap.getOrDefault(announcement.getId(), 0L);
             List<String> recipients = getRecipientUserIdsOptimized(
-                    announcement.getTargetType(), announcement.getTargetValue(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
+                    announcement.getTargetType(), announcement.getTargetFloorNumber(), announcement.getTargetUnitId(), allActivePropertyLeases, leasesByUnit, leasesByFloor);
             long totalRecipients = recipients.size();
             UserSummaryDTO creator = creatorsMap.get(announcement.getCreatorId());
             String creatorName = creator != null ? creator.fullName() : "System";
@@ -176,7 +176,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         });
     }
 
-    private List<String> getRecipientUserIdsOptimized(AnnouncementTargetType targetType, String targetValue, 
+    private List<String> getRecipientUserIdsOptimized(AnnouncementTargetType targetType, Integer targetFloorNumber, UUID targetUnitId, 
                                                       List<LeaseSummaryDTO> allActivePropertyLeases, 
                                                       Map<UUID, List<LeaseSummaryDTO>> leasesByUnit, 
                                                       Map<Integer, List<LeaseSummaryDTO>> leasesByFloor) {
@@ -188,31 +188,21 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 }
             }
         } else if (targetType == AnnouncementTargetType.FLOOR) {
-            if (targetValue != null) {
-                try {
-                    Integer floorNumber = Integer.valueOf(targetValue);
-                    List<LeaseSummaryDTO> floorLeases = leasesByFloor.getOrDefault(floorNumber, List.of());
-                    for (LeaseSummaryDTO lease : floorLeases) {
-                        if (lease.userId() != null) {
-                            recipientUserIds.add(lease.userId().toString());
-                        }
+            if (targetFloorNumber != null) {
+                List<LeaseSummaryDTO> floorLeases = leasesByFloor.getOrDefault(targetFloorNumber, List.of());
+                for (LeaseSummaryDTO lease : floorLeases) {
+                    if (lease.userId() != null) {
+                        recipientUserIds.add(lease.userId().toString());
                     }
-                } catch (NumberFormatException e) {
-                    log.warn("[AnnouncementService] Invalid floor targetValue '{}' in optimized path — could not parse as integer", targetValue, e);
                 }
             }
         } else if (targetType == AnnouncementTargetType.UNIT) {
-            if (targetValue != null) {
-                try {
-                    UUID unitId = UUID.fromString(targetValue);
-                    List<LeaseSummaryDTO> unitLeases = leasesByUnit.getOrDefault(unitId, List.of());
-                    for (LeaseSummaryDTO lease : unitLeases) {
-                        if (lease.userId() != null) {
-                            recipientUserIds.add(lease.userId().toString());
-                        }
+            if (targetUnitId != null) {
+                List<LeaseSummaryDTO> unitLeases = leasesByUnit.getOrDefault(targetUnitId, List.of());
+                for (LeaseSummaryDTO lease : unitLeases) {
+                    if (lease.userId() != null) {
+                        recipientUserIds.add(lease.userId().toString());
                     }
-                } catch (IllegalArgumentException e) {
-                    log.warn("[AnnouncementService] Invalid unit targetValue '{}' in optimized path — could not parse as UUID", targetValue, e);
                 }
             }
         }

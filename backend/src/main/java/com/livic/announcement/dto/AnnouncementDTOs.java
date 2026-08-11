@@ -34,7 +34,9 @@ public class AnnouncementDTOs {
 
         @NotNull(message = "Target type is required") private AnnouncementTargetType targetType;
 
-        private String targetValue;
+        private Integer targetFloorNumber;
+
+        private UUID targetUnitId;
 
         private String metadata;
     }
@@ -53,7 +55,8 @@ public class AnnouncementDTOs {
         private AnnouncementCategory category;
         private AnnouncementSeverity severity;
         private AnnouncementTargetType targetType;
-        private String targetValue;
+        private Integer targetFloorNumber;
+        private UUID targetUnitId;
         private String metadata;
         private LocalDateTime createdAt;
         private boolean read;

@@ -20,7 +20,7 @@ public class AnnouncementCrudServiceImpl extends AbstractCrudService<Announcemen
     }
 
     @Override
-    public Page<AnnouncementTbl> findNoticesForTenant(UUID propertyId, String floor, String unitId, Pageable pageable) {
+    public Page<AnnouncementTbl> findNoticesForTenant(UUID propertyId, Integer floor, UUID unitId, Pageable pageable) {
         return repository.findNoticesForTenant(propertyId, floor, unitId, pageable);
     }
 

@@ -3,16 +3,20 @@ import { apiRequest } from '@/src/api/client';
 export interface MaintenanceTicket {
   id: string;
   ticketNumber: string;
-  tenantId: string;
-  leaseId: string;
+  tenantId?: string | null;
+  leaseId?: string | null;
   propertyId: string;
-  unitId: string;
+  unitId?: string | null;
   title: string;
   description: string;
   category: string;
   priority: string;
   status: string;
-  assignedTechnicianName?: string | null;
+  scope: string;
+  escalationStatus: string;
+  escalationLevel: number;
+  assignedContactName: string;
+  assignedContactPhone?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,8 +27,11 @@ export interface CreateTicketRequest {
   category: string;
   priority?: string;
   propertyId: string;
-  unitId: string;
-  leaseId: string;
+  unitId?: string | null;
+  leaseId?: string | null;
+  scope?: string;
+  assignedContactName?: string;
+  assignedContactPhone?: string;
 }
 
 export interface TicketHealthStats {
@@ -34,7 +41,7 @@ export interface TicketHealthStats {
 }
 
 export function getMaintenanceTickets(token: string): Promise<MaintenanceTicket[]> {
-  return apiRequest<any>('/api/v1/properties/maintenance-tickets', {
+  return apiRequest<any>('/api/v1/issues', {
     method: 'GET',
     token,
   }).then((res) => {
@@ -45,16 +52,33 @@ export function getMaintenanceTickets(token: string): Promise<MaintenanceTicket[
 }
 
 export function createMaintenanceTicket(token: string, data: CreateTicketRequest): Promise<MaintenanceTicket> {
-  return apiRequest<MaintenanceTicket>('/api/v1/properties/maintenance-tickets', {
+  const payload = {
+    ...data,
+    scope: data.scope || 'UNIT',
+    assignedContactName: data.assignedContactName || 'Tenant Support',
+    assignedContactPhone: data.assignedContactPhone || '',
+    priority: data.priority || 'STANDARD',
+  };
+  return apiRequest<MaintenanceTicket>('/api/v1/issues', {
     method: 'POST',
     token,
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 }
 
 export function getTicketHealthStats(token: string): Promise<TicketHealthStats> {
-  return apiRequest<TicketHealthStats>('/api/v1/properties/maintenance-tickets/health-stats', {
+  return apiRequest<any>('/api/v1/issues', {
     method: 'GET',
     token,
+  }).then((res) => {
+    const tickets = Array.isArray(res) ? res : (res && Array.isArray(res.content) ? res.content : []);
+    const totalTickets = tickets.length;
+    const pendingCount = tickets.filter((t: any) => t.status === 'OPEN' || t.status === 'IN_PROGRESS' || t.status === 'PENDING').length;
+    const resolvedCount = tickets.filter((t: any) => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
+    return {
+      totalTickets,
+      pendingCount,
+      resolvedCount,
+    };
   });
 }

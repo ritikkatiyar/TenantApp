@@ -16,12 +16,12 @@ public interface AnnouncementRepository extends JpaRepository<AnnouncementTbl, U
 
     @Query("SELECT a FROM AnnouncementTbl a WHERE a.propertyId = :propertyId AND " +
            "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.PROPERTY OR " +
-           "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.FLOOR AND a.targetValue = :floor) OR " +
-           "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.UNIT AND a.targetValue = :unitId))")
+           "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.FLOOR AND a.targetFloorNumber = :floor) OR " +
+           "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.UNIT AND a.targetUnitId = :unitId))")
     Page<AnnouncementTbl> findNoticesForTenant(
             @Param("propertyId") UUID propertyId,
-            @Param("floor") String floor,
-            @Param("unitId") String unitId,
+            @Param("floor") Integer floor,
+            @Param("unitId") UUID unitId,
             Pageable pageable
     );
 

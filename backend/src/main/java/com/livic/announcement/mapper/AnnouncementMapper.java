@@ -23,7 +23,8 @@ public final class AnnouncementMapper {
                 .category(request.getCategory())
                 .severity(request.getSeverity())
                 .targetType(request.getTargetType())
-                .targetValue(request.getTargetValue())
+                .targetFloorNumber(request.getTargetFloorNumber())
+                .targetUnitId(request.getTargetUnitId())
                 .metadata(request.getMetadata())
                 .build();
     }
@@ -42,7 +43,8 @@ public final class AnnouncementMapper {
                 .category(announcement.getCategory())
                 .severity(announcement.getSeverity())
                 .targetType(announcement.getTargetType())
-                .targetValue(announcement.getTargetValue())
+                .targetFloorNumber(announcement.getTargetFloorNumber())
+                .targetUnitId(announcement.getTargetUnitId())
                 .metadata(announcement.getMetadata())
                 .createdAt(announcement.getCreatedAt())
                 .read(read)

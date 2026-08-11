@@ -108,6 +108,20 @@ export function useAnnouncementAdmin({
 
     setSendingBroadcast(true);
     try {
+      let targetFloorNumber: number | null = null;
+      let targetUnitId: string | null = null;
+
+      if (broadcastTargetType === 'FLOOR') {
+        const parsedFloor = parseInt(broadcastTargetValue.trim(), 10);
+        if (isNaN(parsedFloor)) {
+          Alert.alert('Validation', 'Please enter a valid floor number.');
+          return;
+        }
+        targetFloorNumber = parsedFloor;
+      } else if (broadcastTargetType === 'UNIT') {
+        targetUnitId = broadcastTargetValue.trim();
+      }
+
       await createAnnouncement(accessToken, {
         propertyId: selectedPropertyId,
         title: broadcastTitle.trim(),
@@ -115,7 +129,8 @@ export function useAnnouncementAdmin({
         category: broadcastCategory,
         severity: broadcastSeverity,
         targetType: broadcastTargetType,
-        targetValue: broadcastTargetType !== 'PROPERTY' ? broadcastTargetValue.trim() : undefined,
+        targetFloorNumber,
+        targetUnitId,
       });
 
       Alert.alert('Success', 'Announcement broadcasted successfully.');
