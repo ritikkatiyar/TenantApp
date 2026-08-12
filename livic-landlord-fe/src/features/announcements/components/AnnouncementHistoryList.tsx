@@ -92,7 +92,10 @@ export function AnnouncementHistoryList({
                       <View style={{ flex: 1 }}>
                         <Text style={styles.historyTitle}>{item.title}</Text>
                         <Text style={styles.historyMeta}>
-                          {item.category} • {item.targetType} {item.targetValue ? `(${item.targetValue})` : ''}
+                          {item.category} • {item.targetType} {
+                            item.targetType === 'FLOOR' && item.targetFloorNumber != null ? `(Floor ${item.targetFloorNumber})` :
+                            item.targetType === 'UNIT' && item.targetUnitId != null ? `(Unit ${item.targetUnitId})` : ''
+                          }
                         </Text>
                       </View>
                     </View>

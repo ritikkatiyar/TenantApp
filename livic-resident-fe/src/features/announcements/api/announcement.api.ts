@@ -11,7 +11,8 @@ export interface Announcement {
   category: 'GENERAL' | 'MAINTENANCE' | 'EMERGENCY' | 'BILLING' | 'EVENT';
   severity: 'INFO' | 'WARNING' | 'CRITICAL';
   targetType: 'PROPERTY' | 'FLOOR' | 'UNIT';
-  targetValue?: string;
+  targetFloorNumber?: number | null;
+  targetUnitId?: string | null;
   metadata?: string;
   createdAt: string;
   read: boolean;
@@ -47,7 +48,8 @@ export function createAnnouncement(
     category: string;
     severity: string;
     targetType: string;
-    targetValue?: string;
+    targetFloorNumber?: number | null;
+    targetUnitId?: string | null;
     metadata?: string;
   }
 ): Promise<Announcement> {

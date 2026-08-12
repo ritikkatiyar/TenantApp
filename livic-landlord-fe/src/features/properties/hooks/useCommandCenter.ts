@@ -61,6 +61,20 @@ export function useCommandCenter({
     logger.debug('[Broadcast] Validation passed, starting send...');
     setSendingBroadcast(true);
     try {
+      let targetFloorNumber: number | null = null;
+      let targetUnitId: string | null = null;
+
+      if (broadcastTargetType === 'FLOOR') {
+        const parsedFloor = parseInt(broadcastTargetValue.trim(), 10);
+        if (isNaN(parsedFloor)) {
+          Alert.alert('Validation', 'Please enter a valid floor number.');
+          return;
+        }
+        targetFloorNumber = parsedFloor;
+      } else if (broadcastTargetType === 'UNIT') {
+        targetUnitId = broadcastTargetValue.trim();
+      }
+
       const payload = {
         propertyId: selectedPropertyForBroadcast.id,
         title: broadcastTitle,
@@ -68,7 +82,8 @@ export function useCommandCenter({
         category: broadcastCategory,
         severity: broadcastSeverity,
         targetType: broadcastTargetType,
-        targetValue: broadcastTargetType !== 'PROPERTY' ? broadcastTargetValue : undefined,
+        targetFloorNumber,
+        targetUnitId,
       };
       logger.debug('[Broadcast] Payload:', payload);
       logger.debug('[Broadcast] Calling createAnnouncement...');

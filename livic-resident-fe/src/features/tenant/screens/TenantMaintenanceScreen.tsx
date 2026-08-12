@@ -58,9 +58,9 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
       description,
       category,
       priority,
-      propertyId: 'prop-demo-id',
-      unitId: 'unit-demo-id',
-      leaseId: 'lease-demo-id'
+      propertyId: '00000000-0000-0000-0000-000000000000',
+      unitId: '00000000-0000-0000-0000-000000000000',
+      leaseId: '00000000-0000-0000-0000-000000000000'
     };
 
     createMaintenanceTicket(token, payload)

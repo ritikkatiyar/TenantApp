@@ -155,7 +155,7 @@ public class AnnouncementIntegrationTest {
                 .category(AnnouncementCategory.GENERAL)
                 .severity(AnnouncementSeverity.WARNING)
                 .targetType(AnnouncementTargetType.UNIT)
-                .targetValue(unit.getId().toString())
+                .targetUnitId(unit.getId())
                 .build();
         announcementService.createAnnouncement(unitRequest, landlord.getId());
 
@@ -167,7 +167,7 @@ public class AnnouncementIntegrationTest {
                 .category(AnnouncementCategory.MAINTENANCE)
                 .severity(AnnouncementSeverity.INFO)
                 .targetType(AnnouncementTargetType.FLOOR)
-                .targetValue("2")
+                .targetFloorNumber(2)
                 .build();
         announcementService.createAnnouncement(floorRequest, landlord.getId());
 
