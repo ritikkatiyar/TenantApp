@@ -1,5 +1,6 @@
 package com.livic.announcement.service;
 
+import com.livic.announcement.domain.AnnouncementTargetType;
 import com.livic.announcement.domain.AnnouncementTbl;
 import com.livic.announcement.repository.AnnouncementRepository;
 import com.livic.announcement.service.interfaces.AnnouncementCrudService;
@@ -21,7 +22,11 @@ public class AnnouncementCrudServiceImpl extends AbstractCrudService<Announcemen
 
     @Override
     public Page<AnnouncementTbl> findNoticesForTenant(UUID propertyId, Integer floor, UUID unitId, Pageable pageable) {
-        return repository.findNoticesForTenant(propertyId, floor, unitId, pageable);
+        return repository.findNoticesForTenant(
+            propertyId, floor, unitId,
+            AnnouncementTargetType.PROPERTY, AnnouncementTargetType.FLOOR, AnnouncementTargetType.UNIT,
+            pageable
+        );
     }
 
     @Override

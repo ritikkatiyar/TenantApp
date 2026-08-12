@@ -15,13 +15,16 @@ import java.util.UUID;
 public interface AnnouncementRepository extends JpaRepository<AnnouncementTbl, UUID> {
 
     @Query("SELECT a FROM AnnouncementTbl a WHERE a.propertyId = :propertyId AND " +
-           "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.PROPERTY OR " +
-           "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.FLOOR AND a.targetFloorNumber = :floor) OR " +
-           "(a.targetType = com.livic.announcement.domain.AnnouncementTargetType.UNIT AND a.targetUnitId = :unitId))")
+           "(a.targetType = :propType OR " +
+           "(a.targetType = :floorType AND a.targetFloorNumber = :floor) OR " +
+           "(a.targetType = :unitType AND a.targetUnitId = :unitId))")
     Page<AnnouncementTbl> findNoticesForTenant(
             @Param("propertyId") UUID propertyId,
             @Param("floor") Integer floor,
             @Param("unitId") UUID unitId,
+            @Param("propType") AnnouncementTargetType propType,
+            @Param("floorType") AnnouncementTargetType floorType,
+            @Param("unitType") AnnouncementTargetType unitType,
             Pageable pageable
     );
 
