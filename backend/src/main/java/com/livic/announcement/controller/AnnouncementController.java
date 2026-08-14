@@ -21,7 +21,7 @@ import org.springframework.data.web.PageableDefault;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/announcements")
+@RequestMapping("/api/v1/announcement/announcements")
 @RequiredArgsConstructor
 public class AnnouncementController {
 
