@@ -15,6 +15,7 @@ export function useIssues(token: string | null) {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [priorityFilter, setPriorityFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [propertyFilter, setPropertyFilter] = useState<string | null>(null);
 
   const fetchIssues = useCallback(async () => {
     if (!token) return;
@@ -38,6 +39,11 @@ export function useIssues(token: string | null) {
   // Clientside filtering & search on fetched page for immediate responsive feedback
   const filteredIssues = useMemo(() => {
     return issues.filter(issue => {
+      // 0. Property Match
+      if (propertyFilter && issue.propertyId !== propertyFilter) {
+        return false;
+      }
+
       // 1. Search Query Match
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -70,18 +76,22 @@ export function useIssues(token: string | null) {
 
       return true;
     });
-  }, [issues, searchQuery, statusFilter, priorityFilter, categoryFilter]);
+  }, [issues, propertyFilter, searchQuery, statusFilter, priorityFilter, categoryFilter]);
 
-  // Summary counts for metrics dashboard
+  // Summary counts for metrics dashboard (scoped to current property selection if active)
   const metrics = useMemo(() => {
-    const total = issues.length;
-    const open = issues.filter(i => i.status === 'OPEN').length;
-    const inProgress = issues.filter(i => i.status === 'IN_PROGRESS').length;
-    const escalated = issues.filter(i => i.escalationStatus === 'ESCALATED').length;
-    const resolved = issues.filter(i => i.status === 'RESOLVED' || i.status === 'CLOSED').length;
+    const scopedIssues = propertyFilter 
+      ? issues.filter(i => i.propertyId === propertyFilter) 
+      : issues;
+
+    const total = scopedIssues.length;
+    const open = scopedIssues.filter(i => i.status === 'OPEN').length;
+    const inProgress = scopedIssues.filter(i => i.status === 'IN_PROGRESS').length;
+    const escalated = scopedIssues.filter(i => i.escalationStatus === 'ESCALATED').length;
+    const resolved = scopedIssues.filter(i => i.status === 'RESOLVED' || i.status === 'CLOSED').length;
 
     return { total, open, inProgress, escalated, resolved };
-  }, [issues]);
+  }, [issues, propertyFilter]);
 
   return {
     issues: filteredIssues,
@@ -99,6 +109,8 @@ export function useIssues(token: string | null) {
     setPriorityFilter,
     categoryFilter,
     setCategoryFilter,
+    propertyFilter,
+    setPropertyFilter,
     metrics,
     refresh: fetchIssues
   };

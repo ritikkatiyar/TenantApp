@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
 import {
   IssueResponse,
@@ -126,28 +127,28 @@ export default function IssueDetailModal({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'URGENT':
-        return { bg: '#FEE2E2', text: '#EF4444' };
+        return { bg: '#fee2e2', text: '#ef4444' };
       case 'HIGH':
-        return { bg: '#FFEDD5', text: '#F97316' };
+        return { bg: '#fef3c7', text: '#d97706' };
       case 'STANDARD':
-        return { bg: '#E0F2FE', text: '#0284C7' };
+        return { bg: '#e0f2fe', text: '#0284c7' };
       default:
-        return { bg: '#F3F4F6', text: '#6B7280' };
+        return { bg: '#f3f4f6', text: '#4b5563' };
     }
   };
 
   const getStatusColor = (status: string, escStatus?: string) => {
     if (escStatus === 'ESCALATED') {
-      return { bg: '#FEE2E2', text: '#EF4444', label: 'ESCALATED' };
+      return { bg: '#fee2e2', text: '#ef4444', label: 'ESCALATED' };
     }
     switch (status) {
       case 'RESOLVED':
       case 'CLOSED':
-        return { bg: '#D1FAE5', text: '#10B981', label: status };
+        return { bg: '#d1fae5', text: '#059669', label: status };
       case 'IN_PROGRESS':
-        return { bg: '#FEF3C7', text: '#D97706', label: 'IN PROGRESS' };
+        return { bg: '#fef3c7', text: '#d97706', label: 'IN PROGRESS' };
       default:
-        return { bg: '#E0F2FE', text: '#0284C7', label: 'OPEN' };
+        return { bg: '#e0f2fe', text: '#0284c7', label: 'OPEN' };
     }
   };
 
@@ -156,11 +157,11 @@ export default function IssueDetailModal({
       case 'CREATION':
         return <MaterialIcons name="add-circle" size={18} color="#006875" />;
       case 'STATUS_CHANGE':
-        return <MaterialIcons name="swap-horiz" size={18} color="#D97706" />;
+        return <MaterialIcons name="swap-horiz" size={18} color="#d97706" />;
       case 'ESCALATION':
-        return <MaterialIcons name="report-problem" size={18} color="#EF4444" />;
+        return <MaterialIcons name="report-problem" size={18} color="#ef4444" />;
       default:
-        return <MaterialIcons name="comment" size={18} color="#6B7280" />;
+        return <MaterialIcons name="comment" size={18} color="#6b7a7d" />;
     }
   };
 
@@ -178,19 +179,24 @@ export default function IssueDetailModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFillObject} />
         
-        <View style={[styles.modalContent, isDesktop && styles.desktopModal]}>
+        <LinearGradient
+          colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.modalContent, isDesktop && styles.desktopModal]}
+        >
           {/* Header */}
           <View style={styles.modalHeader}>
-            <View>
+            <View style={{ flex: 1, marginRight: 12 }}>
               <Text style={styles.ticketNum}>{issue?.ticketNumber || 'Loading...'}</Text>
               <Text style={styles.modalTitle} numberOfLines={1}>
                 {issue?.title || 'Ticket Details'}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color="#6b7a7d" />
+              <MaterialIcons name="close" size={24} color="#151d1e" />
             </TouchableOpacity>
           </View>
 
@@ -228,8 +234,8 @@ export default function IssueDetailModal({
                       {issue.priority}
                     </Text>
                   </View>
-                  <View style={[styles.badge, { backgroundColor: '#F3F4F6' }]}>
-                    <Text style={[styles.badgeText, { color: '#4B5563' }]}>{issue.category}</Text>
+                  <View style={[styles.badge, { backgroundColor: 'rgba(255, 255, 255, 0.55)' }]}>
+                    <Text style={[styles.badgeText, { color: '#006875' }]}>{issue.category}</Text>
                   </View>
                 </View>
               )}
@@ -295,7 +301,7 @@ export default function IssueDetailModal({
                       <TextInput
                         style={styles.escalateInput}
                         placeholder="Reason for escalation..."
-                        placeholderTextColor="#9ba9ab"
+                        placeholderTextColor="#6b7a7d"
                         value={escalateReason}
                         onChangeText={setEscalateReason}
                       />
@@ -355,7 +361,7 @@ export default function IssueDetailModal({
               <TextInput
                 style={styles.commentInput}
                 placeholder="Write a reply..."
-                placeholderTextColor="#9ba9ab"
+                placeholderTextColor="#6b7a7d"
                 value={commentText}
                 onChangeText={setCommentText}
                 multiline
@@ -373,7 +379,7 @@ export default function IssueDetailModal({
               </TouchableOpacity>
             </View>
           )}
-        </View>
+        </LinearGradient>
       </View>
     </Modal>
   );
@@ -384,20 +390,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    padding: 20
+    padding: 24
   },
   modalContent: {
     width: '100%',
     maxHeight: '85%',
-    backgroundColor: '#fff',
-    borderRadius: 24,
+    borderRadius: 32,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.75)',
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8
+    shadowRadius: 20,
+    elevation: 10
   },
   desktopModal: {
     width: 600
@@ -409,18 +415,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f4f5'
+    borderBottomColor: 'rgba(0, 104, 117, 0.1)'
   },
   ticketNum: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#006875',
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '900',
     color: '#151d1e',
     marginTop: 2
   },
@@ -443,58 +449,61 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12
+    borderRadius: 10
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '800',
     textTransform: 'uppercase'
   },
   infoCard: {
-    backgroundColor: '#f7fafb',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderRadius: 20,
     padding: 16,
     marginBottom: 20
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '700',
     color: '#006875',
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
   descriptionText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#2e3a3c',
-    lineHeight: 22
+    lineHeight: 20
   },
   metaGrid: {
     flexDirection: 'row',
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e0e8ea',
+    borderTopColor: 'rgba(0, 104, 117, 0.1)',
     gap: 24
   },
   metaItem: {
     flex: 1
   },
   metaLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6b7a7d',
-    marginBottom: 2
+    marginBottom: 2,
+    fontWeight: '600'
   },
   metaValue: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '800',
     color: '#151d1e'
   },
   actionsContainer: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e0e8ea',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderRadius: 20,
     padding: 16,
     marginBottom: 20
   },
@@ -514,26 +523,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#006875'
   },
   btnResolve: {
-    backgroundColor: '#10B981'
+    backgroundColor: '#059669'
   },
   btnEscalate: {
-    backgroundColor: '#EF4444'
+    backgroundColor: '#ef4444'
   },
   actionBtnText: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#fff'
   },
   escalateInputContainer: {
     marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e0e8ea',
+    borderTopColor: 'rgba(0, 104, 117, 0.1)',
     paddingTop: 12
   },
   escalateInput: {
-    backgroundColor: '#f7fafb',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
-    borderColor: '#cedadb',
+    borderColor: 'rgba(0, 104, 117, 0.1)',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -553,17 +562,17 @@ const styles = StyleSheet.create({
   cancelBtnText: {
     fontSize: 13,
     color: '#6b7a7d',
-    fontWeight: '500'
+    fontWeight: '700'
   },
   confirmEscalateBtn: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#ef4444',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10
   },
   confirmEscalateText: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#fff'
   },
   timelineSection: {
@@ -581,19 +590,21 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#f0f4f5',
+    backgroundColor: 'rgba(255,255,255,0.7)',
     justifyContent: 'center',
     alignItems: 'center'
   },
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#f0f4f5',
+    backgroundColor: 'rgba(0,104,117,0.1)',
     marginTop: 4
   },
   timelineContent: {
     flex: 1,
-    backgroundColor: '#f7fafb',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
     borderRadius: 12,
     padding: 12
   },
@@ -604,12 +615,13 @@ const styles = StyleSheet.create({
   },
   authorName: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#151d1e'
   },
   timelineDate: {
     fontSize: 11,
-    color: '#6b7a7d'
+    color: '#6b7a7d',
+    fontWeight: '600'
   },
   timelineBody: {
     fontSize: 13,
@@ -627,16 +639,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f0f4f5',
-    backgroundColor: '#fff',
+    borderTopColor: 'rgba(0, 104, 117, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
     alignItems: 'center',
     gap: 12
   },
   commentInput: {
     flex: 1,
-    backgroundColor: '#f7fafb',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
     borderWidth: 1,
-    borderColor: '#cedadb',
+    borderColor: 'rgba(0, 104, 117, 0.15)',
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -653,6 +665,6 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   sendButtonDisabled: {
-    backgroundColor: '#cedadb'
+    backgroundColor: 'rgba(0, 104, 117, 0.15)'
   }
 });
