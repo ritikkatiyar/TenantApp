@@ -116,8 +116,6 @@ export default function EscalationsScreen() {
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
         {isDesktop ? (
           <DesktopNavBar
-            onBack={() => router.push('/settings')}
-            backText="Back to Settings"
             properties={properties || []}
             selectedPropertyId={propertyFilter}
             onPropertyChange={setPropertyFilter}
