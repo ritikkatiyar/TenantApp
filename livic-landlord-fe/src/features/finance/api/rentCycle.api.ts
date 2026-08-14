@@ -175,9 +175,10 @@ export const batchPublishRentCycle = async (
   token: string
 ): Promise<BatchPublishResult> => {
   return await apiRequest<BatchPublishResult>(
-    `/api/v1/finance/rent-cycles/batch-publish?propertyId=${propertyId}&billingMonth=${billingMonth}`,
+    '/api/v1/finance/rent-cycles/batch-publish',
     {
       method: 'POST',
+      body: JSON.stringify({ propertyId, billingMonth }),
       token
     }
   );
@@ -189,9 +190,10 @@ export const batchUnpublishRentCycle = async (
   token: string
 ): Promise<BatchUnpublishResult> => {
   return await apiRequest<BatchUnpublishResult>(
-    `/api/v1/finance/rent-cycles/batch-unpublish?propertyId=${propertyId}&billingMonth=${billingMonth}`,
+    '/api/v1/finance/rent-cycles/batch-unpublish',
     {
       method: 'POST',
+      body: JSON.stringify({ propertyId, billingMonth }),
       token
     }
   );

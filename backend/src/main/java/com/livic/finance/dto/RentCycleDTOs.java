@@ -116,4 +116,14 @@ public class RentCycleDTOs {
             List<RentCycleResponse> succeeded,
             List<BatchUnpublishFailure> failed
     ) {}
+
+    public record BatchPublishRentCycleRequest(
+            @NotNull UUID propertyId,
+            @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth
+    ) {}
+
+    public record BatchUnpublishRentCycleRequest(
+            @NotNull UUID propertyId,
+            @NotNull @Pattern(regexp = "\\d{4}-\\d{2}", message = "billingMonth must use yyyy-MM") String billingMonth
+    ) {}
 }

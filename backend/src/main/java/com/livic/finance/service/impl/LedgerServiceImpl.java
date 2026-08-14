@@ -6,6 +6,8 @@ import com.livic.finance.dto.LedgerDTOs.LedgerEntryResponse;
 import com.livic.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.finance.specification.FinanceLedgerSpecifications;
 import com.livic.finance.service.interfaces.LedgerService;
+import com.livic.property.dto.UnitSummaryDTO;
+import com.livic.property.facade.UnitFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,7 +35,7 @@ public class LedgerServiceImpl implements LedgerService {
 
     private final FinanceLedgerCrudService financeLedgerCrudService;
     private final UserFacade userFacade;
-    private final com.livic.property.facade.UnitFacade unitFacade;
+    private final UnitFacade unitFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -46,9 +49,9 @@ public class LedgerServiceImpl implements LedgerService {
         Page<FinanceLedgerTbl> entriesPage = financeLedgerCrudService.findAll(spec, pageable);
 
         // Fetch units for mapping unit names
-        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        Map<UUID, com.livic.property.dto.UnitSummaryDTO> unitMap = units.stream()
-                .collect(Collectors.toMap(com.livic.property.dto.UnitSummaryDTO::id, u -> u));
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        Map<UUID, UnitSummaryDTO> unitMap = units.stream()
+                .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
         // Batch fetch tenant users to avoid N+1 query
         Set<UUID> userIds = entriesPage.getContent().stream()
@@ -58,14 +61,14 @@ public class LedgerServiceImpl implements LedgerService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? java.util.Collections.emptyMap() : userFacade.getUsersByIds(userIds);
+        Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(userIds);
 
         // Batch fetch running balances to avoid N+1 query
         List<UUID> entryIds = entriesPage.getContent().stream()
                 .map(FinanceLedgerTbl::getId)
                 .collect(Collectors.toList());
 
-        Map<UUID, BigDecimal> runningBalancesMap = java.util.Collections.emptyMap();
+        Map<UUID, BigDecimal> runningBalancesMap = Collections.emptyMap();
         if (!entryIds.isEmpty()) {
             runningBalancesMap = financeLedgerCrudService.getRunningBalancesForEntries(entryIds).stream()
                     .filter(row -> row[0] != null)
@@ -109,7 +112,7 @@ public class LedgerServiceImpl implements LedgerService {
 
             String unitName = "N/A";
             if (entry.getUnitId() != null) {
-                com.livic.property.dto.UnitSummaryDTO u = unitMap.get(entry.getUnitId());
+                UnitSummaryDTO u = unitMap.get(entry.getUnitId());
                 if (u != null) {
                     unitName = "Apt " + u.unitNumber();
                 }
