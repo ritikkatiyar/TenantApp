@@ -1,4 +1,4 @@
-import React, { useState , useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -7,7 +7,8 @@ import {
   ScrollView,
   ActivityIndicator,
   Animated,
-  useWindowDimensions
+  useWindowDimensions,
+  TextInput
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,7 +43,20 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const { user, accessToken } = useAuth();
-  const { properties, isLoading, error, refreshProperties, deleteProperty, togglePropertyActive } = useProperties();
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
+  const { properties, isLoading, error, refreshProperties, deleteProperty, togglePropertyActive } = useProperties(debouncedSearchQuery);
   const { showToast } = useToast();
   const { handleScroll: handleNavScroll } = useScrollNav();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -167,7 +181,13 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
         <View style={styles.mobileSearchRow}>
           <BlurView intensity={50} tint="light" style={styles.mobileSearchBox}>
             <MaterialIcons name="search" size={18} color="#6b7a7d" />
-            <Text style={styles.mobileSearchText}>Search portfolio...</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search portfolio..."
+              placeholderTextColor="#6b7a7d"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
           </BlurView>
           <BlurView intensity={50} tint="light" style={styles.mobileFilterButtonWrapper}>
             <TouchableOpacity style={styles.mobileFilterButton}>
@@ -213,7 +233,13 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               <>
                 <BlurView intensity={50} tint="light" style={styles.searchBox}>
                   <MaterialIcons name="search" size={22} color="#6b7a7d" />
-                  <Text style={styles.searchPlaceholder}>Search portfolio...</Text>
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search portfolio..."
+                    placeholderTextColor="#6b7a7d"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
                 </BlurView>
                 <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
               </>
@@ -687,6 +713,13 @@ const styles = StyleSheet.create({
   mobileSearchText: {
     fontSize: 15,
     color: '#6b7a7d',
+  },
+  searchInput: {
+    flex: 1,
+    height: '100%',
+    fontSize: 15,
+    color: '#151d1e',
+    padding: 0,
   },
   mobileFilterButtonWrapper: {
     width: 50,

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
+import org.springframework.data.web.PageableDefault;
 import java.util.UUID;
 import com.livic.billing.annotation.EnforceSubscription;
 import com.livic.billing.annotation.FeatureKey;
@@ -60,9 +61,10 @@ public class PropertyController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'USER')")
     public ResponseEntity<ApiResponse<Page<PropertyDTOs.PropertyResponse>>> getMyProperties(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
-            Pageable pageable) {
+            @RequestParam(required = false) String search,
+            @PageableDefault(size = 20) Pageable pageable) {
         UUID userId = UUID.fromString(currentUser.getId());
-        Page<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId, pageable);
+        Page<PropertyTbl> properties = propertyQueryService.getPropertiesByUserId(userId, search, pageable);
         return ResponseEntity.ok(ApiResponse.success(properties.map(this::toResponse)));
     }
 

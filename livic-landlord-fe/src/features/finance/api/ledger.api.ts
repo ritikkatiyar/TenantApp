@@ -47,7 +47,8 @@ export const getLedgerForProperty = async (
   page: number = 0,
   size: number = 20,
   fromDate?: string,
-  toDate?: string
+  toDate?: string,
+  search?: string
 ): Promise<PaginatedResponse<LedgerEntryResponse>> => {
   let url = `/api/v1/finance/ledger?propertyId=${propertyId}&page=${page}&size=${size}`;
   if (fromDate) {
@@ -55,6 +56,9 @@ export const getLedgerForProperty = async (
   }
   if (toDate) {
     url += `&toDate=${encodeURIComponent(toDate)}`;
+  }
+  if (search) {
+    url += `&search=${encodeURIComponent(search)}`;
   }
   return await apiRequest<PaginatedResponse<LedgerEntryResponse>>(
     url,

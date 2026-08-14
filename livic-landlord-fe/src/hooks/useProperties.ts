@@ -6,7 +6,7 @@ import type { PropertyResponse } from '@/src/types/property';
 import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
 
-export function useProperties() {
+export function useProperties(search?: string) {
   const { user, accessToken } = useAuth();
   const [properties, setProperties] = useState<PropertyResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +18,7 @@ export function useProperties() {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await getMyProperties(accessToken);
+      const data = await getMyProperties(accessToken, search);
       setProperties(data);
     } catch (err) {
       setError(formatErrorMessage(err));
@@ -26,7 +26,7 @@ export function useProperties() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, accessToken]);
+  }, [user?.id, accessToken, search]);
 
   useEffect(() => {
     fetchProperties();

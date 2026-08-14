@@ -6,6 +6,8 @@ import com.livic.finance.dto.LedgerDTOs.LedgerEntryResponse;
 import com.livic.finance.service.interfaces.FinanceLedgerCrudService;
 import com.livic.finance.specification.FinanceLedgerSpecifications;
 import com.livic.finance.service.interfaces.LedgerService;
+import com.livic.property.dto.UnitSummaryDTO;
+import com.livic.property.facade.UnitFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,22 +35,23 @@ public class LedgerServiceImpl implements LedgerService {
 
     private final FinanceLedgerCrudService financeLedgerCrudService;
     private final UserFacade userFacade;
-    private final com.livic.property.facade.UnitFacade unitFacade;
+    private final UnitFacade unitFacade;
 
     @Override
     @Transactional(readOnly = true)
-    public Page<LedgerEntryResponse> getLedgerForProperty(UUID propertyId, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable) {
+    public Page<LedgerEntryResponse> getLedgerForProperty(UUID propertyId, String search, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable) {
         Specification<FinanceLedgerTbl> spec = Specification
                 .where(FinanceLedgerSpecifications.hasPropertyId(propertyId))
                 .and(FinanceLedgerSpecifications.createdAfter(fromDate))
-                .and(FinanceLedgerSpecifications.createdBefore(toDate));
+                .and(FinanceLedgerSpecifications.createdBefore(toDate))
+                .and(FinanceLedgerSpecifications.searchStringFields(search));
 
         Page<FinanceLedgerTbl> entriesPage = financeLedgerCrudService.findAll(spec, pageable);
 
         // Fetch units for mapping unit names
-        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        Map<UUID, com.livic.property.dto.UnitSummaryDTO> unitMap = units.stream()
-                .collect(Collectors.toMap(com.livic.property.dto.UnitSummaryDTO::id, u -> u));
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        Map<UUID, UnitSummaryDTO> unitMap = units.stream()
+                .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
         // Batch fetch tenant users to avoid N+1 query
         Set<UUID> userIds = entriesPage.getContent().stream()
@@ -57,28 +61,20 @@ public class LedgerServiceImpl implements LedgerService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? java.util.Collections.emptyMap() : userFacade.getUsersByIds(userIds);
+        Map<UUID, UserSummaryDTO> usersMap = userIds.isEmpty() ? Collections.emptyMap() : userFacade.getUsersByIds(userIds);
 
         // Batch fetch running balances to avoid N+1 query
         List<UUID> entryIds = entriesPage.getContent().stream()
                 .map(FinanceLedgerTbl::getId)
                 .collect(Collectors.toList());
 
-        Map<UUID, BigDecimal> runningBalancesMap = java.util.Collections.emptyMap();
+        Map<UUID, BigDecimal> runningBalancesMap = Collections.emptyMap();
         if (!entryIds.isEmpty()) {
             runningBalancesMap = financeLedgerCrudService.getRunningBalancesForEntries(entryIds).stream()
                     .filter(row -> row[0] != null)
                     .collect(Collectors.toMap(
-                            row -> {
-                                if (row[0] instanceof UUID) return (UUID) row[0];
-                                return UUID.fromString(row[0].toString());
-                            },
-                            row -> {
-                                if (row[1] == null) return BigDecimal.ZERO;
-                                if (row[1] instanceof BigDecimal) return (BigDecimal) row[1];
-                                if (row[1] instanceof Number) return BigDecimal.valueOf(((Number) row[1]).doubleValue());
-                                return new BigDecimal(row[1].toString());
-                            },
+                            row -> toUuid(row[0]),
+                            row -> toBigDecimal(row[1]),
                             (existing, replacement) -> existing
                     ));
         }
@@ -108,7 +104,7 @@ public class LedgerServiceImpl implements LedgerService {
 
             String unitName = "N/A";
             if (entry.getUnitId() != null) {
-                com.livic.property.dto.UnitSummaryDTO u = unitMap.get(entry.getUnitId());
+                UnitSummaryDTO u = unitMap.get(entry.getUnitId());
                 if (u != null) {
                     unitName = "Apt " + u.unitNumber();
                 }
@@ -126,5 +122,25 @@ public class LedgerServiceImpl implements LedgerService {
                     .createdAt(entry.getCreatedAt())
                     .build();
         });
+    }
+
+    private UUID toUuid(Object obj) {
+        if (obj instanceof UUID) {
+            return (UUID) obj;
+        }
+        return UUID.fromString(obj.toString());
+    }
+
+    private BigDecimal toBigDecimal(Object obj) {
+        if (obj == null) {
+            return BigDecimal.ZERO;
+        }
+        if (obj instanceof BigDecimal) {
+            return (BigDecimal) obj;
+        }
+        if (obj instanceof Number) {
+            return BigDecimal.valueOf(((Number) obj).doubleValue());
+        }
+        return new BigDecimal(obj.toString());
     }
 }

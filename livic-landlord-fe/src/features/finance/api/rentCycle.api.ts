@@ -23,6 +23,39 @@ export interface RentCycleResponse {
   charges: ChargeResponse[];
 }
 
+export interface BatchGenerateFailure {
+  leaseId: string;
+  unitNumber: string | null;
+  reason: string;
+}
+
+export interface BatchGenerateResult {
+  succeeded: RentCycleResponse[];
+  failed: BatchGenerateFailure[];
+}
+
+export interface BatchPublishFailure {
+  rentCycleId: string;
+  unitNumber: string | null;
+  reason: string;
+}
+
+export interface BatchPublishResult {
+  succeeded: RentCycleResponse[];
+  failed: BatchPublishFailure[];
+}
+
+export interface BatchUnpublishFailure {
+  rentCycleId: string;
+  unitNumber: string | null;
+  reason: string;
+}
+
+export interface BatchUnpublishResult {
+  succeeded: RentCycleResponse[];
+  failed: BatchUnpublishFailure[];
+}
+
 export interface PreFlightChecklistResponse {
   totalUnits: number;
   activeLeases: number;
@@ -36,8 +69,8 @@ export const batchGenerateRentCycle = async (
   billingMonth: string,
   dueDate: string,
   token: string
-): Promise<RentCycleResponse[]> => {
-  return await apiRequest<RentCycleResponse[]>(
+): Promise<BatchGenerateResult> => {
+  return await apiRequest<BatchGenerateResult>(
     '/api/v1/finance/rent-cycles/batch-generate',
     {
       method: 'POST',
@@ -140,11 +173,12 @@ export const batchPublishRentCycle = async (
   propertyId: string,
   billingMonth: string,
   token: string
-): Promise<RentCycleResponse[]> => {
-  return await apiRequest<RentCycleResponse[]>(
-    `/api/v1/finance/rent-cycles/batch-publish?propertyId=${propertyId}&billingMonth=${billingMonth}`,
+): Promise<BatchPublishResult> => {
+  return await apiRequest<BatchPublishResult>(
+    '/api/v1/finance/rent-cycles/batch-publish',
     {
       method: 'POST',
+      body: JSON.stringify({ propertyId, billingMonth }),
       token
     }
   );
@@ -154,11 +188,12 @@ export const batchUnpublishRentCycle = async (
   propertyId: string,
   billingMonth: string,
   token: string
-): Promise<RentCycleResponse[]> => {
-  return await apiRequest<RentCycleResponse[]>(
-    `/api/v1/finance/rent-cycles/batch-unpublish?propertyId=${propertyId}&billingMonth=${billingMonth}`,
+): Promise<BatchUnpublishResult> => {
+  return await apiRequest<BatchUnpublishResult>(
+    '/api/v1/finance/rent-cycles/batch-unpublish',
     {
       method: 'POST',
+      body: JSON.stringify({ propertyId, billingMonth }),
       token
     }
   );

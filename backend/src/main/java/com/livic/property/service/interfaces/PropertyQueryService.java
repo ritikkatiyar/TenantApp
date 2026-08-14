@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public interface PropertyQueryService {
     Page<PropertyTbl> getPropertiesByUserId(UUID userId, Pageable pageable);
+    Page<PropertyTbl> getPropertiesByUserId(UUID userId, String search, Pageable pageable);
     List<PropertyTbl> getPropertiesByUserId(UUID userId);
     List<PropertyTbl> getPropertiesByIds(Collection<UUID> propertyIds);
     PropertyTbl getPropertyById(UUID propertyId);

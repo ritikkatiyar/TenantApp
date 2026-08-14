@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -165,8 +166,18 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (!token || !propertyId) return;
     try {
       setIsGenerating(true);
-      await batchGenerateRentCycle(propertyId as string, billingMonth, dueDate, token);
-      showToast("Rent cycle generated successfully!", "success");
+      const res = await batchGenerateRentCycle(propertyId as string, billingMonth, dueDate, token);
+      const total = res.succeeded.length + res.failed.length;
+      if (res.failed.length === 0) {
+        showToast(`All ${res.succeeded.length} rent cycles generated successfully!`, "success");
+      } else {
+        const failedDetails = res.failed.map(f => `Unit ${f.unitNumber || 'N/A'}: ${f.reason}`).join('\n');
+        Alert.alert(
+          'Generation Completed with Failures',
+          `${res.succeeded.length} of ${total} rent cycles generated successfully, ${res.failed.length} failed.\n\nFailures:\n${failedDetails}`,
+          [{ text: 'OK' }]
+        );
+      }
       await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to generate rent cycle.", "error");
@@ -179,8 +190,18 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (!token || !propertyId) return;
     try {
       setIsPublishing(true);
-      await batchPublishRentCycle(propertyId as string, billingMonth, token);
-      showToast("Invoices published to tenants successfully!", "success");
+      const res = await batchPublishRentCycle(propertyId as string, billingMonth, token);
+      const total = res.succeeded.length + res.failed.length;
+      if (res.failed.length === 0) {
+        showToast("Invoices published to tenants successfully!", "success");
+      } else {
+        const failedDetails = res.failed.map(f => `Unit ${f.unitNumber || 'N/A'}: ${f.reason}`).join('\n');
+        Alert.alert(
+          'Publishing Completed with Failures',
+          `${res.succeeded.length} of ${total} invoices published successfully, ${res.failed.length} failed.\n\nFailures:\n${failedDetails}`,
+          [{ text: 'OK' }]
+        );
+      }
       await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to publish invoices.", "error");
@@ -205,8 +226,18 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (!token || !propertyId) return;
     try {
       setIsUnpublishing(true);
-      await batchUnpublishRentCycle(propertyId as string, billingMonth, token);
-      showToast("Invoices reverted to draft successfully!", "success");
+      const res = await batchUnpublishRentCycle(propertyId as string, billingMonth, token);
+      const total = res.succeeded.length + res.failed.length;
+      if (res.failed.length === 0) {
+        showToast("Invoices reverted to draft successfully!", "success");
+      } else {
+        const failedDetails = res.failed.map(f => `Unit ${f.unitNumber || 'N/A'}: ${f.reason}`).join('\n');
+        Alert.alert(
+          'Revert Completed with Failures',
+          `${res.succeeded.length} of ${total} invoices reverted successfully, ${res.failed.length} failed.\n\nFailures:\n${failedDetails}`,
+          [{ text: 'OK' }]
+        );
+      }
       await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to unpublish invoices.", "error");

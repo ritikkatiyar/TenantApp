@@ -1,6 +1,13 @@
 package com.livic.finance.specification;
 
 import com.livic.finance.domain.FinanceLedgerTbl;
+import com.livic.finance.domain.LeaseTbl;
+import com.livic.property.domain.UnitTbl;
+import com.livic.user.domain.UserTbl;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
@@ -36,5 +43,33 @@ public class FinanceLedgerSpecifications {
         return (root, query, cb) -> toDate == null
                 ? null
                 : cb.lessThanOrEqualTo(root.get("createdAt"), toDate);
+    }
+
+    public static Specification<FinanceLedgerTbl> searchStringFields(String search) {
+        return (root, query, cb) -> {
+            if (search == null || search.trim().isEmpty()) {
+                return null;
+            }
+            String pattern = "%" + search.trim().toLowerCase() + "%";
+
+            Subquery<UUID> unitSubquery = query.subquery(UUID.class);
+            Root<UnitTbl> unitRoot = unitSubquery.from(UnitTbl.class);
+            unitSubquery.select(unitRoot.get("id"));
+            unitSubquery.where(cb.like(cb.lower(unitRoot.get("unitNumber")), pattern));
+
+            Subquery<UUID> userSubquery = query.subquery(UUID.class);
+            Root<UserTbl> userRoot = userSubquery.from(UserTbl.class);
+            userSubquery.select(userRoot.get("id"));
+            userSubquery.where(cb.like(cb.lower(userRoot.get("fullName")), pattern));
+
+            Join<FinanceLedgerTbl, LeaseTbl> leaseJoin = root.join("lease", JoinType.LEFT);
+
+            return cb.or(
+                    cb.like(cb.lower(root.get("description")), pattern),
+                    cb.like(cb.lower(root.get("transactionType").as(String.class)), pattern),
+                    cb.in(root.get("unitId")).value(unitSubquery),
+                    cb.in(leaseJoin.get("userId")).value(userSubquery)
+            );
+        };
     }
 }

@@ -22,7 +22,7 @@ export interface Announcement {
 
 export function getAnnouncements(token: string, propertyId?: string): Promise<Announcement[]> {
   const query = propertyId ? `?propertyId=${propertyId}` : '';
-  return apiRequest<any>(`/api/v1/announcements${query}`, {
+  return apiRequest<any>(`/api/v1/announcement/announcements${query}`, {
     method: 'GET',
     token,
   }).then((res) => {
@@ -33,7 +33,7 @@ export function getAnnouncements(token: string, propertyId?: string): Promise<An
 }
 
 export function markAnnouncementRead(token: string, id: string): Promise<void> {
-  return apiRequest<void>(`/api/v1/announcements/${id}/read`, {
+  return apiRequest<void>(`/api/v1/announcement/announcements/${id}/read`, {
     method: 'POST',
     token,
   });
@@ -54,7 +54,7 @@ export function createAnnouncement(
   }
 ): Promise<Announcement> {
   logger.debug('[Announcement API] createAnnouncement called with:', body);
-  return apiRequest<Announcement>('/api/v1/announcements', {
+  return apiRequest<Announcement>('/api/v1/announcement/announcements', {
     method: 'POST',
     token,
     body: JSON.stringify(body),

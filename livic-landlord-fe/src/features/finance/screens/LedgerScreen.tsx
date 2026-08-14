@@ -35,9 +35,20 @@ export default function LedgerScreen({ token }: { token: string | null }) {
   const { showToast } = useToast();
 
   const [ledger, setLedger] = useState<LedgerEntryResponse[]>([]);
-  const [filteredLedger, setFilteredLedger] = useState<LedgerEntryResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedSearchQuery]);
 
   // Pagination and Date Filter States
   const [page, setPage] = useState(0);
@@ -76,35 +87,21 @@ export default function LedgerScreen({ token }: { token: string | null }) {
         }
       }
 
-      const data = await getLedgerForProperty(propertyId, token, page, 20, validatedFrom, validatedTo);
+      const data = await getLedgerForProperty(propertyId, token, page, 20, validatedFrom, validatedTo, debouncedSearchQuery);
       setLedger(data.content);
-      setFilteredLedger(data.content);
       setTotalPages(data.totalPages);
     } catch (error: any) {
       showToast(error.message || 'Failed to load ledger', 'error');
     } finally {
       setIsLoading(false);
     }
-  }, [propertyId, token, page, fromDate, toDate, showToast]);
+  }, [propertyId, token, page, fromDate, toDate, debouncedSearchQuery, showToast]);
 
   useEffect(() => {
     fetchLedger();
   }, [fetchLedger]);
 
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredLedger(ledger);
-      return;
-    }
-    const q = searchQuery.toLowerCase();
-    const filtered = ledger.filter(item => 
-      item.unitName.toLowerCase().includes(q) || 
-      item.tenantName.toLowerCase().includes(q) || 
-      item.description.toLowerCase().includes(q) || 
-      item.transactionType.toLowerCase().includes(q)
-    );
-    setFilteredLedger(filtered);
-  }, [searchQuery, ledger]);
+  // Local filtering removed in favor of server-side search
 
   const handleApplyFilters = () => {
     setPage(0);
@@ -284,7 +281,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
       return <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />;
     }
 
-    if (filteredLedger.length === 0) {
+    if (ledger.length === 0) {
       return (
         <BlurView intensity={40} tint="light" style={styles.emptyCard}>
           <MaterialIcons name="account-balance" size={48} color="#6b7a7d" style={{ marginBottom: 12 }} />
@@ -307,7 +304,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
             <Text style={[styles.th, { flex: 1.3, textAlign: 'right' }]}>BALANCE</Text>
           </View>
 
-          {filteredLedger.map((item) => {
+          {ledger.map((item) => {
             const colors = getTransactionTypeColor(item.transactionType);
             const isPayment = item.amount < 0;
             return (
@@ -356,7 +353,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
     return (
       <View style={styles.listContainer}>
-        {filteredLedger.map((item) => {
+        {ledger.map((item) => {
           const colors = getTransactionTypeColor(item.transactionType);
           const isPayment = item.amount < 0;
           return (

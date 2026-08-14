@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,7 +67,7 @@ public class ChargeConfigController {
             @PathVariable UUID propertyId,
             @RequestParam(required = false, defaultValue = "false") boolean includeInactive,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            Pageable pageable
+            @PageableDefault(size = 20) Pageable pageable
     ) {
         UUID userId = userDetails != null ? UUID.fromString(userDetails.getId()) : null;
         Page<ChargeConfigResponse> responses = chargeConfigQueryService.getChargesForProperty(propertyId, includeInactive, userId, pageable);

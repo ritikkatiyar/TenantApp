@@ -41,7 +41,7 @@ public class RentCycleController {
 
     @PostMapping("/batch-generate")
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
-    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchGenerate(
+    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchGenerateResult>> batchGenerate(
             @Valid @RequestBody RentCycleDTOs.BatchGenerateRentCycleRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -65,21 +65,19 @@ public class RentCycleController {
     }
 
     @PostMapping("/batch-publish")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
-    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchPublish(
-            @RequestParam UUID propertyId,
-            @RequestParam String billingMonth
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
+    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchPublishResult>> batchPublish(
+            @Valid @RequestBody RentCycleDTOs.RentCyclePropertyBillingMonthRequest request
     ) {
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchPublish(propertyId, billingMonth)));
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchPublish(request.propertyId(), request.billingMonth())));
     }
 
     @PostMapping("/batch-unpublish")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
-    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchUnpublish(
-            @RequestParam UUID propertyId,
-            @RequestParam String billingMonth
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
+    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchUnpublishResult>> batchUnpublish(
+            @Valid @RequestBody RentCycleDTOs.RentCyclePropertyBillingMonthRequest request
     ) {
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchUnpublish(propertyId, billingMonth)));
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchUnpublish(request.propertyId(), request.billingMonth())));
     }
 
     @GetMapping({"/pre-flight", "/preflight"})
