@@ -39,6 +39,8 @@ module/
   3. `property` - Real Estate / Asset Management (Properties, Units, Layouts, Property Roles).
   4. `finance` - Tenancy & Financials (Leases, Rent Cycles, Expenses, Splits).
   5. `common` / `config` - Cross-cutting concerns.
+  6. `announcement` - Targeted announcements/broadcasts to properties, floors, or units.
+  7. `notification` - Multi-channel alert delivery (Email, Push, WhatsApp).
 * No direct repository access across modules
 * Modules communicate ONLY via service interfaces
 * Controllers must remain thin
