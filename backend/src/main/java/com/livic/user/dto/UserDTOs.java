@@ -56,4 +56,9 @@ public class UserDTOs {
     public record UpdateTenantProfileRequest(
             String phone
     ) {}
+
+    public record RegisterDeviceTokenRequest(
+            @jakarta.validation.constraints.NotBlank String expoPushToken,
+            @jakarta.validation.constraints.NotNull com.livic.user.domain.DevicePlatform platform
+    ) {}
 }

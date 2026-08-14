@@ -9,11 +9,15 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import java.time.LocalDate;
+import com.livic.finance.domain.LeaseTbl;
+import com.livic.finance.domain.RentCycleTbl;
 
 public interface RentCycleService {
     RentCycleDTOs.RentCycleResponse generate(RentCycleDTOs.GenerateRentCycleRequest request);
 
-    List<RentCycleDTOs.RentCycleResponse> batchGenerate(RentCycleDTOs.BatchGenerateRentCycleRequest request);
+    RentCycleDTOs.BatchGenerateResult batchGenerate(RentCycleDTOs.BatchGenerateRentCycleRequest request);
 
     RentCycleDTOs.PreFlightChecklistResponse getPreFlightChecklist(UUID propertyId, String billingMonth);
 
@@ -25,11 +29,17 @@ public interface RentCycleService {
 
     RentCycleDTOs.RentCycleResponse unpublish(UUID id);
 
-    List<RentCycleDTOs.RentCycleResponse> batchPublish(UUID propertyId, String billingMonth);
+    RentCycleDTOs.BatchPublishResult batchPublish(UUID propertyId, String billingMonth);
 
-    List<RentCycleDTOs.RentCycleResponse> batchUnpublish(UUID propertyId, String billingMonth);
+    RentCycleDTOs.BatchUnpublishResult batchUnpublish(UUID propertyId, String billingMonth);
 
     PaymentInitiationResponse initiateOnlinePayment(UUID rentCycleId, UUID payerUserId);
 
     PaymentInitiationResponse recordCashPayment(UUID rentCycleId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy);
+
+    RentCycleTbl generateSingleInTransaction(LeaseTbl lease, String billingMonth, LocalDate dueDate, Map<UUID, Integer> roommateCounts);
+
+    RentCycleDTOs.RentCycleResponse publishSingleInTransaction(UUID id);
+
+    RentCycleDTOs.RentCycleResponse unpublishSingleInTransaction(UUID id);
 }

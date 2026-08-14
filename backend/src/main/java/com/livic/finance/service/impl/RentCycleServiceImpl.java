@@ -60,6 +60,13 @@ import com.livic.property.facade.UnitFacade;
 @Slf4j
 public class RentCycleServiceImpl implements RentCycleService {
 
+    private RentCycleService self;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setSelf(@org.springframework.context.annotation.Lazy RentCycleService self) {
+        this.self = self;
+    }
+
     private final RentCycleCrudService rentCycleCrudService;
     private final RentCycleChargeCrudService rentCycleChargeCrudService;
     private final LeaseQueryService leaseQueryService;
@@ -84,9 +91,9 @@ public class RentCycleServiceImpl implements RentCycleService {
     }
 
     @Override
-    @Transactional
-    public List<RentCycleDTOs.RentCycleResponse> batchGenerate(RentCycleDTOs.BatchGenerateRentCycleRequest request) {
+    public RentCycleDTOs.BatchGenerateResult batchGenerate(RentCycleDTOs.BatchGenerateRentCycleRequest request) {
         List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(request.propertyId());
+        Map<UUID, String> unitNumbers = units.stream().collect(Collectors.toMap(com.livic.property.dto.UnitSummaryDTO::id, com.livic.property.dto.UnitSummaryDTO::unitNumber, (a, b) -> a));
         List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
         List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
                 leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
@@ -94,16 +101,24 @@ public class RentCycleServiceImpl implements RentCycleService {
         Map<UUID, Integer> roommateCounts = activeLeases.stream()
                 .collect(Collectors.groupingBy(LeaseTbl::getUnitId, Collectors.collectingAndThen(Collectors.toList(), List::size)));
 
-        List<RentCycleTbl> generatedCycles = new ArrayList<>();
+        List<RentCycleTbl> successes = new ArrayList<>();
+        List<RentCycleDTOs.BatchGenerateFailure> failures = new ArrayList<>();
+
         for (LeaseTbl lease : activeLeases) {
-            RentCycleTbl cycle = processLeaseGeneration(lease, request.billingMonth(), request.dueDate(), roommateCounts);
-            generatedCycles.add(cycle);
+            String unitNum = unitNumbers.get(lease.getUnitId());
+            try {
+                RentCycleTbl cycle = self.generateSingleInTransaction(lease, request.billingMonth(), request.dueDate(), roommateCounts);
+                successes.add(cycle);
+            } catch (Exception e) {
+                log.error("[RentCycleServiceImpl] Failed to generate rent cycle for lease ID: {}, unit: {}", lease.getId(), unitNum, e);
+                failures.add(new RentCycleDTOs.BatchGenerateFailure(lease.getId(), unitNum, e.getMessage()));
+            }
         }
         
-        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>(toResponses(generatedCycles));
-        responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
+        List<RentCycleDTOs.RentCycleResponse> succeededResponses = new ArrayList<>(toResponses(successes));
+        succeededResponses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
                 .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
-        return responses;
+        return new RentCycleDTOs.BatchGenerateResult(succeededResponses, failures);
     }
 
     @Override
@@ -572,9 +587,9 @@ public class RentCycleServiceImpl implements RentCycleService {
     }
 
     @Override
-    @Transactional
-    public List<RentCycleDTOs.RentCycleResponse> batchPublish(UUID propertyId, String billingMonth) {
+    public RentCycleDTOs.BatchPublishResult batchPublish(UUID propertyId, String billingMonth) {
         List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        Map<UUID, String> unitNumbers = units.stream().collect(Collectors.toMap(com.livic.property.dto.UnitSummaryDTO::id, com.livic.property.dto.UnitSummaryDTO::unitNumber, (a, b) -> a));
         List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
         List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
                 leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
@@ -582,47 +597,59 @@ public class RentCycleServiceImpl implements RentCycleService {
 
         List<RentCycleTbl> allMonthCycles = rentCycleCrudService.findByBillingMonth(billingMonth);
         List<RentCycleTbl> propertyCycles = allMonthCycles.stream()
-                .filter(c -> activeLeaseIds.contains(c.getLease().getId()))
+                .filter(c -> c.getLease() != null && activeLeaseIds.contains(c.getLease().getId()))
                 .toList();
 
-        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>();
-        for (RentCycleTbl cycle : propertyCycles) {
-            responses.add(publish(cycle.getId()));
-        }
-
-        responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
-                .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
-        return responses;
-    }
-
-    @Override
-    @Transactional
-    public List<RentCycleDTOs.RentCycleResponse> batchUnpublish(UUID propertyId, String billingMonth) {
-        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
-        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
-                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
-        Set<UUID> activeLeaseIds = activeLeases.stream().map(LeaseTbl::getId).collect(Collectors.toSet());
-
-        List<RentCycleTbl> allMonthCycles = rentCycleCrudService.findByBillingMonth(billingMonth);
-        List<RentCycleTbl> propertyCycles = allMonthCycles.stream()
-                .filter(c -> activeLeaseIds.contains(c.getLease().getId()))
-                .toList();
+        List<RentCycleDTOs.RentCycleResponse> succeeded = new ArrayList<>();
+        List<RentCycleDTOs.BatchPublishFailure> failed = new ArrayList<>();
 
         for (RentCycleTbl cycle : propertyCycles) {
-            if (cycle.getStatus() == RentCycleStatus.PAID) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot unpublish bills because some tenants have already paid.");
+            String unitNum = (cycle.getLease() != null) ? unitNumbers.get(cycle.getLease().getUnitId()) : null;
+            try {
+                RentCycleDTOs.RentCycleResponse res = self.publishSingleInTransaction(cycle.getId());
+                succeeded.add(res);
+            } catch (Exception e) {
+                log.error("[RentCycleServiceImpl] Failed to publish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
+                failed.add(new RentCycleDTOs.BatchPublishFailure(cycle.getId(), unitNum, e.getMessage()));
             }
         }
 
-        List<RentCycleDTOs.RentCycleResponse> responses = new ArrayList<>();
+        succeeded.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
+                .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
+        return new RentCycleDTOs.BatchPublishResult(succeeded, failed);
+    }
+
+    @Override
+    public RentCycleDTOs.BatchUnpublishResult batchUnpublish(UUID propertyId, String billingMonth) {
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        Map<UUID, String> unitNumbers = units.stream().collect(Collectors.toMap(com.livic.property.dto.UnitSummaryDTO::id, com.livic.property.dto.UnitSummaryDTO::unitNumber, (a, b) -> a));
+        List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
+        List<LeaseTbl> activeLeases = unitIds.isEmpty() ? List.of() :
+                leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE);
+        Set<UUID> activeLeaseIds = activeLeases.stream().map(LeaseTbl::getId).collect(Collectors.toSet());
+
+        List<RentCycleTbl> allMonthCycles = rentCycleCrudService.findByBillingMonth(billingMonth);
+        List<RentCycleTbl> propertyCycles = allMonthCycles.stream()
+                .filter(c -> c.getLease() != null && activeLeaseIds.contains(c.getLease().getId()))
+                .toList();
+
+        List<RentCycleDTOs.RentCycleResponse> succeeded = new ArrayList<>();
+        List<RentCycleDTOs.BatchUnpublishFailure> failed = new ArrayList<>();
+
         for (RentCycleTbl cycle : propertyCycles) {
-            responses.add(unpublish(cycle.getId()));
+            String unitNum = (cycle.getLease() != null) ? unitNumbers.get(cycle.getLease().getUnitId()) : null;
+            try {
+                RentCycleDTOs.RentCycleResponse res = self.unpublishSingleInTransaction(cycle.getId());
+                succeeded.add(res);
+            } catch (Exception e) {
+                log.error("[RentCycleServiceImpl] Failed to unpublish rent cycle: {}, unit: {}", cycle.getId(), unitNum, e);
+                failed.add(new RentCycleDTOs.BatchUnpublishFailure(cycle.getId(), unitNum, e.getMessage()));
+            }
         }
 
-        responses.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
+        succeeded.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
                 .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
-        return responses;
+        return new RentCycleDTOs.BatchUnpublishResult(succeeded, failed);
     }
 
     private List<RentCycleDTOs.RentCycleResponse> toResponses(List<RentCycleTbl> cycles) {
@@ -680,5 +707,23 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
         return RentCycleMapper.toResponse(cycle, tenantName, unitNumber, charges != null ? charges : Collections.emptyList());
+    }
+
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public RentCycleTbl generateSingleInTransaction(LeaseTbl lease, String billingMonth, LocalDate dueDate, Map<UUID, Integer> roommateCounts) {
+        return processLeaseGeneration(lease, billingMonth, dueDate, roommateCounts);
+    }
+
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public RentCycleDTOs.RentCycleResponse publishSingleInTransaction(UUID id) {
+        return publish(id);
+    }
+
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public RentCycleDTOs.RentCycleResponse unpublishSingleInTransaction(UUID id) {
+        return unpublish(id);
     }
 }

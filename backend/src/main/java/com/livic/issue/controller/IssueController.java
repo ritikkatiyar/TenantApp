@@ -46,7 +46,7 @@ public class IssueController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<IssueResponse>>> listIssues(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 15) Pageable pageable
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 20) Pageable pageable
     ) {
         UUID callerUserId = UUID.fromString(currentUser.getId());
         Page<IssueResponse> response = issueService.listIssues(callerUserId, pageable);

@@ -41,7 +41,7 @@ public class RentCycleController {
 
     @PostMapping("/batch-generate")
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
-    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchGenerate(
+    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchGenerateResult>> batchGenerate(
             @Valid @RequestBody RentCycleDTOs.BatchGenerateRentCycleRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -66,7 +66,7 @@ public class RentCycleController {
 
     @PostMapping("/batch-publish")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
-    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchPublish(
+    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchPublishResult>> batchPublish(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth
     ) {
@@ -75,7 +75,7 @@ public class RentCycleController {
 
     @PostMapping("/batch-unpublish")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_EDIT')")
-    public ResponseEntity<ApiResponse<List<RentCycleDTOs.RentCycleResponse>>> batchUnpublish(
+    public ResponseEntity<ApiResponse<RentCycleDTOs.BatchUnpublishResult>> batchUnpublish(
             @RequestParam UUID propertyId,
             @RequestParam String billingMonth
     ) {

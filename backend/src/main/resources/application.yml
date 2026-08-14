@@ -23,6 +23,10 @@ spring:
           preferred_uuid_jdbc_type: CHAR
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
 
   flyway:
     enabled: true
@@ -72,4 +76,20 @@ razorpay:
   key-id: ${RAZORPAY_KEY_ID:mock-key-id}
   key-secret: ${RAZORPAY_KEY_SECRET:mock-key-secret}
   webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:mock-webhook-secret}
+
+email:
+  enabled: ${EMAIL_ENABLED:false}
+  host: ${EMAIL_HOST:localhost}
+  port: ${EMAIL_PORT:587}
+  username: ${EMAIL_USERNAME:mock-email-user}
+  password: ${EMAIL_PASSWORD:mock-email-pass}
+  from-address: ${EMAIL_FROM_ADDRESS:no-reply@livic.com}
+
+whatsapp:
+  enabled: ${WHATSAPP_ENABLED:false}
+  phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:mock-phone-id}
+  access-token: ${WHATSAPP_ACCESS_TOKEN:mock-token}
+
+push:
+  enabled: ${PUSH_ENABLED:false}
 

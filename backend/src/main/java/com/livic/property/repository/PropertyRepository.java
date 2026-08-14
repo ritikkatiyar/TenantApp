@@ -24,4 +24,14 @@ public interface PropertyRepository extends JpaRepository<PropertyTbl, UUID> {
     List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds);
 
     Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, Pageable pageable);
+
+    @Query("SELECT DISTINCT p FROM PropertyTbl p WHERE p.id IN :propertyIds AND (" +
+           "LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(p.address) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(p.city) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "(p.landmark IS NOT NULL AND LOWER(p.landmark) LIKE LOWER(CONCAT('%', :search, '%'))))")
+    Page<PropertyTbl> findDistinctByIdInAndSearch(
+            @Param("propertyIds") Collection<UUID> propertyIds,
+            @Param("search") String search,
+            Pageable pageable);
 }

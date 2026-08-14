@@ -3,6 +3,8 @@ package com.livic.notification.service.impl;
 import com.livic.notification.domain.NotificationChannel;
 import com.livic.notification.service.NotificationChannelSender;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class ConsoleNotificationSender implements NotificationChannelSender {
 
     @Override

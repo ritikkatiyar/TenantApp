@@ -27,6 +27,11 @@ public class PropertyQueryServiceImpl implements PropertyQueryService {
 
     @Override
     public Page<PropertyTbl> getPropertiesByUserId(UUID userId, Pageable pageable) {
+        return getPropertiesByUserId(userId, null, pageable);
+    }
+
+    @Override
+    public Page<PropertyTbl> getPropertiesByUserId(UUID userId, String search, Pageable pageable) {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
         List<UUID> propertyIds = memberships.stream()
                 .filter(m -> m.roleCode() == null || !"PROPERTY_TENANT".equals(m.roleCode()))
@@ -34,7 +39,10 @@ public class PropertyQueryServiceImpl implements PropertyQueryService {
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .toList();
-        return propertyCrudService.findDistinctByIdIn(propertyIds, pageable);
+        if (search == null || search.trim().isEmpty()) {
+            return propertyCrudService.findDistinctByIdIn(propertyIds, pageable);
+        }
+        return propertyCrudService.findDistinctByIdInAndSearch(propertyIds, search, pageable);
     }
 
     @Override

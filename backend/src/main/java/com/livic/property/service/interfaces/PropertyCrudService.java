@@ -15,4 +15,5 @@ public interface PropertyCrudService extends CrudService<PropertyTbl, UUID> {
     List<PropertyTbl> findByAutoBillDayOfMonth(Integer autoBillDayOfMonth);
     List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds);
     Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, Pageable pageable);
+    Page<PropertyTbl> findDistinctByIdInAndSearch(Collection<UUID> propertyIds, String search, Pageable pageable);
 }

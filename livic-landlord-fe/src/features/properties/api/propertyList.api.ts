@@ -9,8 +9,11 @@ export interface PropertyListResponse {
   number: number;
 }
 
-export async function getMyProperties(token: string): Promise<PropertyResponse[]> {
-  const response = await apiRequest<PropertyListResponse>(`/api/v1/properties?size=2000`, {
+export async function getMyProperties(token: string, search?: string): Promise<PropertyResponse[]> {
+  const url = search
+    ? `/api/v1/properties?size=20&search=${encodeURIComponent(search)}`
+    : `/api/v1/properties?size=20`;
+  const response = await apiRequest<PropertyListResponse>(url, {
     method: 'GET',
     token,
   });

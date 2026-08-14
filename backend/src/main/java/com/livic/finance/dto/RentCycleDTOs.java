@@ -83,4 +83,37 @@ public class RentCycleDTOs {
             long pendingDraftsCount,
             long publishedCount
     ) {}
+
+    public record BatchGenerateFailure(
+            UUID leaseId,
+            String unitNumber,
+            String reason
+    ) {}
+
+    public record BatchGenerateResult(
+            List<RentCycleResponse> succeeded,
+            List<BatchGenerateFailure> failed
+    ) {}
+
+    public record BatchPublishFailure(
+            UUID rentCycleId,
+            String unitNumber,
+            String reason
+    ) {}
+
+    public record BatchPublishResult(
+            List<RentCycleResponse> succeeded,
+            List<BatchPublishFailure> failed
+    ) {}
+
+    public record BatchUnpublishFailure(
+            UUID rentCycleId,
+            String unitNumber,
+            String reason
+    ) {}
+
+    public record BatchUnpublishResult(
+            List<RentCycleResponse> succeeded,
+            List<BatchUnpublishFailure> failed
+    ) {}
 }

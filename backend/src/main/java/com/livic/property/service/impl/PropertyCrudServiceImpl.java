@@ -42,4 +42,12 @@ public class PropertyCrudServiceImpl extends AbstractCrudService<PropertyTbl, UU
         }
         return repository.findDistinctByIdIn(propertyIds, pageable);
     }
+
+    @Override
+    public Page<PropertyTbl> findDistinctByIdInAndSearch(Collection<UUID> propertyIds, String search, Pageable pageable) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return repository.findDistinctByIdInAndSearch(propertyIds, search, pageable);
+    }
 }

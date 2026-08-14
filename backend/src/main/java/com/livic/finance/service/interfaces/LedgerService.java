@@ -8,5 +8,5 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface LedgerService {
-    Page<LedgerEntryResponse> getLedgerForProperty(UUID propertyId, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+    Page<LedgerEntryResponse> getLedgerForProperty(UUID propertyId, String search, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 }

@@ -49,23 +49,12 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
 
-        // Resolve recipient contact address based on channel
-        String address = resolveAddress(recipient, channel);
-        if (address == null) {
+        // Resolve recipient contact addresses based on channel
+        List<String> addresses = resolveAddresses(recipient, channel);
+        if (addresses.isEmpty()) {
             log.warn("[NotificationService] No {} contact on record for user {}. Skipping.", channel, recipientUserId);
             return;
         }
-
-        // Persist an audit log record with PENDING status
-        NotificationLogTbl logEntry = NotificationLogTbl.builder()
-                .recipientId(recipient.id())
-                .channel(channel)
-                .recipientAddress(address)
-                .title(title)
-                .body(body)
-                .status(NotificationStatus.PENDING)
-                .build();
-        notificationLogCrudService.save(logEntry);
 
         // Resolve the first matching strategy sender (Strategy Pattern)
         NotificationChannelSender sender = senders.stream()
@@ -73,16 +62,29 @@ public class NotificationServiceImpl implements NotificationService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No sender found for channel: " + channel));
 
-        // Dispatch and update audit log status
-        try {
-            sender.send(address, title, body);
-            logEntry.setStatus(NotificationStatus.SENT);
-        } catch (Exception e) {
-            log.error("[NotificationService] Failed to send {} notification to {}: {}", channel, address, e.getMessage());
-            logEntry.setStatus(NotificationStatus.FAILED);
-            logEntry.setErrorMessage(e.getMessage());
-        } finally {
+        for (String address : addresses) {
+            // Persist an audit log record with PENDING status
+            NotificationLogTbl logEntry = NotificationLogTbl.builder()
+                    .recipientId(recipient.id())
+                    .channel(channel)
+                    .recipientAddress(address)
+                    .title(title)
+                    .body(body)
+                    .status(NotificationStatus.PENDING)
+                    .build();
             notificationLogCrudService.save(logEntry);
+
+            // Dispatch and update audit log status
+            try {
+                sender.send(address, title, body);
+                logEntry.setStatus(NotificationStatus.SENT);
+            } catch (Exception e) {
+                log.error("[NotificationService] Failed to send {} notification to {}: {}", channel, address, e.getMessage());
+                logEntry.setStatus(NotificationStatus.FAILED);
+                logEntry.setErrorMessage(e.getMessage());
+            } finally {
+                notificationLogCrudService.save(logEntry);
+            }
         }
     }
 
@@ -104,18 +106,20 @@ public class NotificationServiceImpl implements NotificationService {
         for (UUID uuid : uuids) {
             UserSummaryDTO user = recipients.get(uuid);
             if (user == null) continue;
-            String address = resolveAddress(user, channel);
-            if (address == null) continue;
+            List<String> addresses = resolveAddresses(user, channel);
+            if (addresses.isEmpty()) continue;
 
-            NotificationLogTbl logEntry = NotificationLogTbl.builder()
-                    .recipientId(user.id())
-                    .channel(channel)
-                    .recipientAddress(address)
-                    .title(title)
-                    .body(body)
-                    .status(NotificationStatus.PENDING)
-                    .build();
-            logs.add(logEntry);
+            for (String address : addresses) {
+                NotificationLogTbl logEntry = NotificationLogTbl.builder()
+                        .recipientId(user.id())
+                        .channel(channel)
+                        .recipientAddress(address)
+                        .title(title)
+                        .body(body)
+                        .status(NotificationStatus.PENDING)
+                        .build();
+                logs.add(logEntry);
+            }
         }
 
         if (logs.isEmpty()) return;
@@ -141,11 +145,11 @@ public class NotificationServiceImpl implements NotificationService {
         notificationLogCrudService.saveAll(logs);
     }
 
-    private String resolveAddress(UserSummaryDTO user, NotificationChannel channel) {
+    private List<String> resolveAddresses(UserSummaryDTO user, NotificationChannel channel) {
         return switch (channel) {
-            case EMAIL -> user.authUid();
-            case WHATSAPP, SMS -> user.phoneNumber();
-            case PUSH -> null;
+            case EMAIL -> (user.authUid() != null && !user.authUid().isBlank()) ? List.of(user.authUid()) : List.of();
+            case WHATSAPP, SMS -> (user.phoneNumber() != null && !user.phoneNumber().isBlank()) ? List.of(user.phoneNumber()) : List.of();
+            case PUSH -> userFacade.getActiveDeviceTokens(user.id());
         };
     }
 }

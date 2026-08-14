@@ -36,11 +36,12 @@ public class LedgerServiceImpl implements LedgerService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<LedgerEntryResponse> getLedgerForProperty(UUID propertyId, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable) {
+    public Page<LedgerEntryResponse> getLedgerForProperty(UUID propertyId, String search, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable) {
         Specification<FinanceLedgerTbl> spec = Specification
                 .where(FinanceLedgerSpecifications.hasPropertyId(propertyId))
                 .and(FinanceLedgerSpecifications.createdAfter(fromDate))
-                .and(FinanceLedgerSpecifications.createdBefore(toDate));
+                .and(FinanceLedgerSpecifications.createdBefore(toDate))
+                .and(FinanceLedgerSpecifications.searchStringFields(search));
 
         Page<FinanceLedgerTbl> entriesPage = financeLedgerCrudService.findAll(spec, pageable);
 

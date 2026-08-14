@@ -30,10 +30,11 @@ public class LedgerController {
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<Page<LedgerEntryResponse>>> getLedgerForProperty(
             @RequestParam UUID propertyId,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 20) Pageable pageable) {
-        Page<LedgerEntryResponse> ledger = ledgerService.getLedgerForProperty(propertyId, fromDate, toDate, pageable);
+        Page<LedgerEntryResponse> ledger = ledgerService.getLedgerForProperty(propertyId, search, fromDate, toDate, pageable);
         return ResponseEntity.ok(ApiResponse.success(ledger));
     }
 }

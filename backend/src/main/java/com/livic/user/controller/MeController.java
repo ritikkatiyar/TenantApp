@@ -22,6 +22,7 @@ public class MeController {
     private final MeService meService;
     private final UserQueryService userQueryService;
     private final UserService userService;
+    private final com.livic.user.facade.UserFacade userFacade;
 
     @GetMapping("/me/context")
     public ResponseEntity<ApiResponse<MeDTOs.MyContextResponse>> getContext(
@@ -50,5 +51,15 @@ public class MeController {
         return ResponseEntity.ok(ApiResponse.success(
                 userService.updateTenantProfile(userQueryService.getUserById(userId), request)
         ));
+    }
+
+    @PostMapping("/me/device-token")
+    public ResponseEntity<ApiResponse<Void>> registerDeviceToken(
+            @AuthenticationPrincipal UserDetailsImpl currentUser,
+            @jakarta.validation.Valid @RequestBody UserDTOs.RegisterDeviceTokenRequest request
+    ) {
+        UUID userId = UUID.fromString(currentUser.getId());
+        userFacade.registerDeviceToken(userId, request.expoPushToken(), request.platform());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

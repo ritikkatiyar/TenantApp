@@ -25,4 +25,8 @@ public interface UserFacade {
     UserSummaryDTO createUser(String email, String fullName, String phoneNumber, String password);
 
     UserMode getActiveModeForUser(UUID userId);
+
+    void registerDeviceToken(UUID userId, String expoPushToken, com.livic.user.domain.DevicePlatform platform);
+
+    java.util.List<String> getActiveDeviceTokens(UUID userId);
 }

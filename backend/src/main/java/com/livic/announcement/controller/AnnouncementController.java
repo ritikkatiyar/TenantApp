@@ -41,7 +41,7 @@ public class AnnouncementController {
     public ResponseEntity<ApiResponse<Page<AnnouncementResponse>>> getAnnouncements(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) UUID propertyId,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 15) Pageable pageable) {
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC, size = 20) Pageable pageable) {
 
         UUID userId = UUID.fromString(currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success(announcementService.getAnnouncements(userId, propertyId, pageable)));
