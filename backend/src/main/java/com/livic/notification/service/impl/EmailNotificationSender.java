@@ -2,16 +2,15 @@ package com.livic.notification.service.impl;
 
 import com.livic.notification.config.EmailProperties;
 import com.livic.notification.domain.NotificationChannel;
+import com.livic.notification.exception.NotificationSendException;
 import com.livic.notification.service.NotificationChannelSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
-
-import java.util.Properties;
 
 @Component
 @Order(1)
@@ -21,6 +20,7 @@ import java.util.Properties;
 public class EmailNotificationSender implements NotificationChannelSender {
 
     private final EmailProperties emailProperties;
+    private final JavaMailSender mailSender;
 
     @Override
     public boolean supports(NotificationChannel channel) {
@@ -31,18 +31,6 @@ public class EmailNotificationSender implements NotificationChannelSender {
     public void send(String recipientAddress, String title, String body) {
         log.info("[EmailNotificationSender] Attempting to send email to {}", recipientAddress);
         try {
-            JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-            mailSender.setHost(emailProperties.getHost());
-            mailSender.setPort(emailProperties.getPort());
-            mailSender.setUsername(emailProperties.getUsername());
-            mailSender.setPassword(emailProperties.getPassword());
-
-            Properties props = mailSender.getJavaMailProperties();
-            props.put("mail.transport.protocol", "smtp");
-            props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.debug", "false");
-
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(emailProperties.getFromAddress());
             message.setTo(recipientAddress);
@@ -52,8 +40,8 @@ public class EmailNotificationSender implements NotificationChannelSender {
             mailSender.send(message);
             log.info("[EmailNotificationSender] Email sent successfully to {}", recipientAddress);
         } catch (Exception e) {
-            log.error("[EmailNotificationSender] Failed to send email to {}: {}", recipientAddress, e.getMessage());
-            throw new RuntimeException("Email delivery failed: " + e.getMessage(), e);
+            log.error("[EmailNotificationSender] Failed to send email to {}: {}", recipientAddress, e.getMessage(), e);
+            throw new NotificationSendException("Email delivery failed: " + e.getMessage(), e);
         }
     }
 }

@@ -67,7 +67,7 @@ public class RentCycleController {
     @PostMapping("/batch-publish")
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.BatchPublishResult>> batchPublish(
-            @Valid @RequestBody RentCycleDTOs.BatchPublishRentCycleRequest request
+            @Valid @RequestBody RentCycleDTOs.RentCyclePropertyBillingMonthRequest request
     ) {
         return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchPublish(request.propertyId(), request.billingMonth())));
     }
@@ -75,7 +75,7 @@ public class RentCycleController {
     @PostMapping("/batch-unpublish")
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.BatchUnpublishResult>> batchUnpublish(
-            @Valid @RequestBody RentCycleDTOs.BatchUnpublishRentCycleRequest request
+            @Valid @RequestBody RentCycleDTOs.RentCyclePropertyBillingMonthRequest request
     ) {
         return ResponseEntity.ok(ApiResponse.success(rentCycleService.batchUnpublish(request.propertyId(), request.billingMonth())));
     }

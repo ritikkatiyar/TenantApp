@@ -73,16 +73,8 @@ public class LedgerServiceImpl implements LedgerService {
             runningBalancesMap = financeLedgerCrudService.getRunningBalancesForEntries(entryIds).stream()
                     .filter(row -> row[0] != null)
                     .collect(Collectors.toMap(
-                            row -> {
-                                if (row[0] instanceof UUID) return (UUID) row[0];
-                                return UUID.fromString(row[0].toString());
-                            },
-                            row -> {
-                                if (row[1] == null) return BigDecimal.ZERO;
-                                if (row[1] instanceof BigDecimal) return (BigDecimal) row[1];
-                                if (row[1] instanceof Number) return BigDecimal.valueOf(((Number) row[1]).doubleValue());
-                                return new BigDecimal(row[1].toString());
-                            },
+                            row -> toUuid(row[0]),
+                            row -> toBigDecimal(row[1]),
                             (existing, replacement) -> existing
                     ));
         }
@@ -130,5 +122,25 @@ public class LedgerServiceImpl implements LedgerService {
                     .createdAt(entry.getCreatedAt())
                     .build();
         });
+    }
+
+    private UUID toUuid(Object obj) {
+        if (obj instanceof UUID) {
+            return (UUID) obj;
+        }
+        return UUID.fromString(obj.toString());
+    }
+
+    private BigDecimal toBigDecimal(Object obj) {
+        if (obj == null) {
+            return BigDecimal.ZERO;
+        }
+        if (obj instanceof BigDecimal) {
+            return (BigDecimal) obj;
+        }
+        if (obj instanceof Number) {
+            return BigDecimal.valueOf(((Number) obj).doubleValue());
+        }
+        return new BigDecimal(obj.toString());
     }
 }
