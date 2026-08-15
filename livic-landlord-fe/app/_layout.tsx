@@ -68,8 +68,10 @@ export default function RootLayout() {
 
   const [moreSheetVisible, setMoreSheetVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (Platform.OS === 'web') {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -111,6 +113,7 @@ export default function RootLayout() {
   const hideNavigation = pathname === '/login' || pathname === '/signup';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
+  const showDesktop = mounted && isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
   return (
@@ -119,10 +122,10 @@ export default function RootLayout() {
         <ToastProvider>
           <AuthProvider>
             <ScrollProvider>
-              <View style={{ flex: 1, flexDirection: isDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
-                {isDesktop && !hideNavigation && <SidebarNavigation />}
+              <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
+                {showDesktop && !hideNavigation && <SidebarNavigation />}
                 <View style={{ flex: 1 }}>
-                  {!isDesktop && !hideHeader && (
+                  {!showDesktop && !hideHeader && (
                     <MobileHeader 
                       title={getHeaderTitle(pathname)} 
                       onMenuPress={() => setMoreSheetVisible(true)} 
@@ -141,12 +144,12 @@ export default function RootLayout() {
                         <Stack.Screen name="analytics" />
                         <Stack.Screen name="reports" />
                         <Stack.Screen name="billing" />
-                        <Stack.Screen name="expenses" />
+                        <Stack.Screen name="expenses/index" />
                         <Stack.Screen name="leases" />
                         <Stack.Screen name="inventory" />
                         <Stack.Screen name="create-expense" />
                         <Stack.Screen name="properties/create" />
-                        <Stack.Screen name="properties/[id]" />
+                        <Stack.Screen name="properties/[id]/index" />
                         <Stack.Screen name="properties/[id]/meter-readings" />
                         <Stack.Screen name="escalations" />
                         <Stack.Screen name="announcements" />
@@ -155,7 +158,7 @@ export default function RootLayout() {
                     </OnboardingGate>
                   </ScreenWrapper>
                   
-                  {!isDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
+                  {!showDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
                     <>
                       <BottomNavigation 
                         onMorePress={() => setMoreSheetVisible(true)} 
