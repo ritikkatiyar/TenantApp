@@ -27,6 +27,6 @@ public class MembershipTbl extends BaseEntity {
     @ToString.Exclude
     private MembershipRoleTbl role;
     
-    @Column(name = "assigned_by")
-    private UUID assignedBy;
+    @Column(name = "assigned_by_id")
+    private UUID assignedById;
 }

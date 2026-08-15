@@ -1,25 +1,25 @@
 package com.livic.auth.service.impl;
 
-import com.livic.auth.domain.MembershipTbl;
 import com.livic.auth.domain.MembershipRoleTbl;
-import com.livic.auth.service.interfaces.MembershipRoleCrudService;
+import com.livic.auth.domain.MembershipTbl;
 import com.livic.auth.service.interfaces.MembershipCrudService;
+import com.livic.auth.service.interfaces.MembershipRoleCrudService;
 import com.livic.auth.service.interfaces.MembershipService;
-import com.livic.user.dto.UserSummaryDTO;
-import com.livic.user.facade.UserFacade;
 import com.livic.common.exception.BusinessException;
-
+import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class MembershipServiceImpl implements MembershipService {
 
     private final MembershipCrudService membershipCrudService;
@@ -29,8 +29,9 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     @Transactional
     public void ensureTenantRole(UUID tenantId, UUID propertyId, UUID assignedByUserId) {
-        if (membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(tenantId, propertyId, "PROPERTY_TENANT")) {
-            return; // Already has tenant role here
+        List<MembershipTbl> existing = membershipCrudService.findByUserIdAndPropertyId(tenantId, propertyId);
+        if (existing.stream().anyMatch(m -> "PROPERTY_TENANT".equals(m.getRole().getCode()))) {
+            return;
         }
 
         userFacade.getUserById(tenantId)
@@ -43,7 +44,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .userId(tenantId)
                 .propertyId(propertyId)
                 .role(tenantRole)
-                .assignedBy(assignedByUserId)
+                .assignedById(assignedByUserId)
                 .build();
         
         membershipCrudService.save(membership);
@@ -78,7 +79,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .userId(ownerId)
                 .propertyId(propertyId)
                 .role(ownerRole)
-                .assignedBy(ownerId)
+                .assignedById(ownerId)
                 .build();
         
         membershipCrudService.save(membership);
@@ -107,7 +108,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .userId(userId)
                 .propertyId(propertyId)
                 .role(role)
-                .assignedBy(assignedByUserId)
+                .assignedById(assignedByUserId)
                 .build();
                 
         return membershipCrudService.save(membership);
@@ -118,45 +119,47 @@ public class MembershipServiceImpl implements MembershipService {
     public void removeRole(UUID propertyId, UUID membershipId) {
         MembershipTbl membership = membershipCrudService.findById(membershipId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Membership not found"));
-                
-        if (membership.getPropertyId() == null || !membership.getPropertyId().equals(propertyId)) {
+        
+        if (!propertyId.equals(membership.getPropertyId())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Membership does not belong to this property");
         }
-        
+
         if ("PROPERTY_OWNER".equals(membership.getRole().getCode())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot remove PROPERTY_OWNER membership. Use ownership transfer.");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot remove the PROPERTY_OWNER role directly. Use ownership transfer.");
         }
-        
+
         membershipCrudService.delete(membership);
     }
 
     @Override
     @Transactional
     public void transferOwnership(UUID propertyId, UUID currentOwnerId, UUID toUserId) {
+        userFacade.getUserById(toUserId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Target owner user not found"));
+
+        MembershipRoleTbl ownerRole = membershipRoleCrudService.findByCode("PROPERTY_OWNER")
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "PROPERTY_OWNER role not found"));
+        MembershipRoleTbl managerRole = membershipRoleCrudService.findByCode("PROPERTY_MANAGER")
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "PROPERTY_MANAGER role not found"));
+
+        // Demote current owner
         List<MembershipTbl> currentOwnerMemberships = membershipCrudService.findByUserIdAndPropertyId(currentOwnerId, propertyId);
         MembershipTbl currentOwnerMembership = currentOwnerMemberships.stream()
                 .filter(m -> "PROPERTY_OWNER".equals(m.getRole().getCode()))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException(HttpStatus.FORBIDDEN, "Current user is not the owner"));
-                
-        userFacade.getUserById(toUserId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "New owner user not found"));
-        MembershipRoleTbl ownerRole = membershipRoleCrudService.findByCode("PROPERTY_OWNER")
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Owner role not found"));
-        MembershipRoleTbl managerRole = membershipRoleCrudService.findByCode("PROPERTY_MANAGER")
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Manager role not found"));
-                
-        // Demote current owner to manager
+                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Current user is not the property owner"));
+
         currentOwnerMembership.setRole(managerRole);
         membershipCrudService.save(currentOwnerMembership);
-        
-        // Check if new owner already has a role
-        List<MembershipTbl> targetUserMemberships = membershipCrudService.findByUserIdAndPropertyId(toUserId, propertyId);
-        boolean targetHasOwner = targetUserMemberships.stream().anyMatch(m -> "PROPERTY_OWNER".equals(m.getRole().getCode()));
-        
-        if (!targetHasOwner) {
-            // Promote or create owner membership for new owner
-            java.util.Optional<MembershipTbl> managerOrCaretakerMembership = targetUserMemberships.stream()
+
+        // Promote or add new owner
+        List<MembershipTbl> toUserMemberships = membershipCrudService.findByUserIdAndPropertyId(toUserId, propertyId);
+        Optional<MembershipTbl> toUserOwnerMembership = toUserMemberships.stream()
+                .filter(m -> "PROPERTY_OWNER".equals(m.getRole().getCode()))
+                .findFirst();
+
+        if (toUserOwnerMembership.isEmpty()) {
+            Optional<MembershipTbl> managerOrCaretakerMembership = toUserMemberships.stream()
                     .filter(m -> !m.getRole().getCode().equals("PROPERTY_TENANT"))
                     .findFirst();
                     
@@ -168,7 +171,7 @@ public class MembershipServiceImpl implements MembershipService {
                         .userId(toUserId)
                         .propertyId(propertyId)
                         .role(ownerRole)
-                        .assignedBy(currentOwnerId)
+                        .assignedById(currentOwnerId)
                         .build();
                 membershipCrudService.save(newMembership);
             }

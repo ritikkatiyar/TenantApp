@@ -16,6 +16,8 @@ import com.livic.auth.service.interfaces.PropertyRoleService;
 import com.livic.auth.service.interfaces.RolePermissionCrudService;
 import com.livic.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,14 +42,14 @@ public class AuthFacadeImpl implements AuthFacade {
     @Override
     public List<MembershipSummaryDTO> getMembershipsByUserId(UUID userId) {
         return membershipQueryService.getMembershipsByUserId(userId).stream()
-                .map(MembershipMapper::toSummary)
+                .map(MembershipMapper::toResponse)
                 .toList();
     }
 
     @Override
     public List<MembershipSummaryDTO> getMembershipsByPropertyId(UUID propertyId) {
         return membershipQueryService.getMembershipsByPropertyId(propertyId).stream()
-                .map(MembershipMapper::toSummary)
+                .map(MembershipMapper::toResponse)
                 .toList();
     }
 
@@ -89,7 +91,7 @@ public class AuthFacadeImpl implements AuthFacade {
     @Transactional
     public MembershipSummaryDTO assignRole(UUID propertyId, UUID userId, String roleCode, UUID assignedByUserId) {
         MembershipTbl membership = membershipService.assignRole(propertyId, userId, roleCode, assignedByUserId);
-        return MembershipMapper.toSummary(membership);
+        return MembershipMapper.toResponse(membership);
     }
 
     @Override
@@ -153,8 +155,8 @@ public class AuthFacadeImpl implements AuthFacade {
     }
 
     @Override
-    public List<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId) {
-        return propertyRoleService.getPropertyRoles(propertyId);
+    public Page<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId, Pageable pageable) {
+        return propertyRoleService.getPropertyRoles(propertyId, pageable);
     }
 
     @Override

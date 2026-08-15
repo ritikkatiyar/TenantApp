@@ -77,7 +77,7 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
     @Transactional(readOnly = true)
     public Page<PropertyJoinCodeDTOs.JoinCodeResponse> getPropertyJoinCodes(UUID propertyId, Pageable pageable) {
         Page<PropertyJoinCodeTbl> page = propertyJoinCodeCrudService.findByPropertyId(propertyId, pageable);
-        Map<UUID, RoleDTOs.RoleResponse> roleMap = authFacade.getPropertyRoles(propertyId).stream()
+        Map<UUID, RoleDTOs.RoleResponse> roleMap = authFacade.getPropertyRoles(propertyId, Pageable.unpaged()).stream()
                 .collect(Collectors.toMap(RoleDTOs.RoleResponse::id, r -> r, (r1, r2) -> r1));
 
         return page.map(jc -> {

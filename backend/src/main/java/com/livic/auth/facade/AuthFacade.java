@@ -2,6 +2,8 @@ package com.livic.auth.facade;
 
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.dto.RoleDTOs;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,7 +40,7 @@ public interface AuthFacade {
 
     void validateCanDelegateRole(UUID actorId, UUID propertyId, String roleCode, String actorGlobalRole);
 
-    List<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId);
+    Page<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId, Pageable pageable);
 
     void toggleRoleActive(UUID propertyId, String roleCode, boolean active, UUID actorId);
 

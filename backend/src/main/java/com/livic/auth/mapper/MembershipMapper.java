@@ -9,11 +9,11 @@ public class MembershipMapper {
         // Private constructor to prevent instantiation
     }
 
-    public static MembershipSummaryDTO toSummary(MembershipTbl m) {
-        return toSummary(m, null);
+    public static MembershipSummaryDTO toResponse(MembershipTbl m) {
+        return toResponse(m, null);
     }
 
-    public static MembershipSummaryDTO toSummary(MembershipTbl m, String propertyName) {
+    public static MembershipSummaryDTO toResponse(MembershipTbl m, String propertyName) {
         if (m == null) {
             return null;
         }
