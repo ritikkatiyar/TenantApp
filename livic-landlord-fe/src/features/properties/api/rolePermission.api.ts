@@ -30,11 +30,20 @@ export interface JoinCodeResultResponse {
   membershipId: string;
 }
 
-export function getPropertyRoles(token: string, propertyId: string): Promise<RoleResponse[]> {
-  return apiRequest<RoleResponse[]>(`/api/v1/properties/${propertyId}/roles`, {
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export async function getPropertyRoles(token: string, propertyId: string): Promise<RoleResponse[]> {
+  const res = await apiRequest<PageResponse<RoleResponse>>(`/api/v1/properties/${propertyId}/roles`, {
     method: 'GET',
     token,
   });
+  return res?.content || [];
 }
 
 export function toggleRoleActive(token: string, propertyId: string, roleCode: string, active: boolean): Promise<void> {
@@ -68,11 +77,12 @@ export function generateJoinCode(token: string, propertyId: string, roleCode: st
   });
 }
 
-export function getPropertyJoinCodes(token: string, propertyId: string): Promise<JoinCodeResponse[]> {
-  return apiRequest<JoinCodeResponse[]>(`/api/v1/properties/${propertyId}/join-codes`, {
+export async function getPropertyJoinCodes(token: string, propertyId: string): Promise<JoinCodeResponse[]> {
+  const res = await apiRequest<PageResponse<JoinCodeResponse>>(`/api/v1/properties/${propertyId}/join-codes`, {
     method: 'GET',
     token,
   });
+  return res?.content || [];
 }
 
 export function validateAndApplyJoinCode(token: string, code: string): Promise<JoinCodeResultResponse> {
