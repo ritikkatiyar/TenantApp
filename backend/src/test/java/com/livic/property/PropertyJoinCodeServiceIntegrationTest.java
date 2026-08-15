@@ -1,7 +1,6 @@
 package com.livic.property;
 
-import com.livic.auth.domain.MembershipRoleTbl;
-import com.livic.auth.domain.MembershipTbl;
+import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.repository.MembershipRepository;
 import com.livic.auth.repository.MembershipRoleRepository;
 import com.livic.auth.service.interfaces.MembershipService;
@@ -9,6 +8,7 @@ import com.livic.common.domain.UserRole;
 import com.livic.common.exception.BusinessException;
 import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.domain.PropertyTbl;
+import com.livic.property.dto.PropertyJoinCodeDTOs;
 import com.livic.property.repository.PropertyJoinCodeRepository;
 import com.livic.property.repository.PropertyRepository;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
@@ -107,7 +107,7 @@ public class PropertyJoinCodeServiceIntegrationTest {
     @Test
     public void testLandlordCanGenerateJoinCodeAndStaffCanApply() {
         // Act - Landlord generates caretaker join code
-        PropertyJoinCodeTbl joinCode = propertyJoinCodeService.generateJoinCode(
+        PropertyJoinCodeDTOs.JoinCodeResponse joinCode = propertyJoinCodeService.generateJoinCode(
                 property.getId(),
                 RoleConstants.PROPERTY_CARETAKER,
                 1,
@@ -115,24 +115,24 @@ public class PropertyJoinCodeServiceIntegrationTest {
         );
 
         assertNotNull(joinCode);
-        assertNotNull(joinCode.getCode());
+        assertNotNull(joinCode.code());
         assertTrue(joinCode.isActive());
-        assertEquals(RoleConstants.PROPERTY_CARETAKER, joinCode.getRole().getCode());
+        assertEquals(RoleConstants.PROPERTY_CARETAKER, joinCode.roleCode());
 
         // Act - New caretaker applies join code
-        MembershipTbl membership = propertyJoinCodeService.validateAndApplyJoinCode(
-                joinCode.getCode(),
+        MembershipSummaryDTO membership = propertyJoinCodeService.validateAndApplyJoinCode(
+                joinCode.code(),
                 newStaff.getId()
         );
 
         // Assert - Membership created successfully
         assertNotNull(membership);
-        assertEquals(newStaff.getId(), membership.getUser().getId());
-        assertEquals(property.getId(), membership.getProperty().getId());
-        assertEquals(RoleConstants.PROPERTY_CARETAKER, membership.getRole().getCode());
+        assertEquals(newStaff.getId(), membership.userId());
+        assertEquals(property.getId(), membership.propertyId());
+        assertEquals(RoleConstants.PROPERTY_CARETAKER, membership.roleCode());
 
         // Assert - Join code usage tracked
-        PropertyJoinCodeTbl updatedCode = propertyJoinCodeRepository.findById(joinCode.getId()).orElseThrow();
+        PropertyJoinCodeTbl updatedCode = propertyJoinCodeRepository.findById(joinCode.id()).orElseThrow();
         assertEquals(1, updatedCode.getUsesCount());
         assertFalse(updatedCode.isActive(), "Single use code should be deactivated after use");
     }

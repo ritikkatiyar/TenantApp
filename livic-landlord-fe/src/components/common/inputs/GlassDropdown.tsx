@@ -107,7 +107,8 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
                   <ScrollView 
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={Platform.OS === 'web'}
+                    showsVerticalScrollIndicator={false}
+                    showsHorizontalScrollIndicator={false}
                   >
                     {options.map((option, idx) => {
                       const isSelected = option.value === value;

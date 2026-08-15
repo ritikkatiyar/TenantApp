@@ -2,7 +2,6 @@ package com.livic.property.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
-import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.dto.PropertyJoinCodeDTOs;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
 import jakarta.validation.Valid;
@@ -30,22 +29,20 @@ public class PropertyJoinCodeController {
             @Valid @RequestBody PropertyJoinCodeDTOs.GenerateJoinCodeRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID actorId = UUID.fromString(currentUser.getId());
-        PropertyJoinCodeTbl created = propertyJoinCodeService.generateJoinCode(
+        PropertyJoinCodeDTOs.JoinCodeResponse created = propertyJoinCodeService.generateJoinCode(
                 propertyId, 
                 request.roleCode(), 
                 request.maxUses(), 
                 actorId
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(toResponse(created)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));
     }
 
     @GetMapping("/{propertyId}/join-codes")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'MANAGE_STAFF')")
     public ResponseEntity<ApiResponse<List<PropertyJoinCodeDTOs.JoinCodeResponse>>> getPropertyJoinCodes(
             @PathVariable UUID propertyId) {
-        List<PropertyJoinCodeDTOs.JoinCodeResponse> responses = propertyJoinCodeService.getPropertyJoinCodes(propertyId).stream()
-                .map(this::toResponse)
-                .toList();
+        List<PropertyJoinCodeDTOs.JoinCodeResponse> responses = propertyJoinCodeService.getPropertyJoinCodes(propertyId);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
@@ -57,18 +54,5 @@ public class PropertyJoinCodeController {
         return ResponseEntity.ok(ApiResponse.success(
                 propertyJoinCodeService.validateAndApplyJoinCodeResult(request.code(), userId)
         ));
-    }
-
-    private PropertyJoinCodeDTOs.JoinCodeResponse toResponse(PropertyJoinCodeTbl jc) {
-        return new PropertyJoinCodeDTOs.JoinCodeResponse(
-                jc.getId(),
-                jc.getCode(),
-                jc.getRole().getCode(),
-                jc.getRole().getName(),
-                jc.getMaxUses(),
-                jc.getUsesCount(),
-                jc.isActive(),
-                jc.getExpiresAt()
-        );
     }
 }

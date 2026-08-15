@@ -127,7 +127,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             try {
               await verifyPayment({
                 razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id || options.order_id || res.gatewaySubscriptionId,
+                razorpayOrderId: response.razorpay_order_id || options.order_id || res.gatewayTransactionId,
                 razorpaySignature: response.razorpay_signature,
               }, token);
               Alert.alert('Success!', `Subscribed to ${planKey} plan successfully!`, [
@@ -146,12 +146,12 @@ export default function BillingScreen({ token }: BillingScreenProps) {
           },
         };
 
-        if (res.gatewaySubscriptionId && !res.gatewaySubscriptionId.startsWith('order_rzp_test_')) {
-          options.order_id = res.gatewaySubscriptionId;
+        if (res.gatewayTransactionId && !res.gatewayTransactionId.startsWith('order_rzp_test_')) {
+          options.order_id = res.gatewayTransactionId;
         } else {
           options.amount = Math.round(finalAmount * 100);
           options.currency = 'INR';
-          options.order_id = res.gatewaySubscriptionId;
+          options.order_id = res.gatewayTransactionId;
         }
 
         const rzp = new window.Razorpay(options);

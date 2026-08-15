@@ -1,12 +1,11 @@
 package com.livic.property.domain;
 
 import com.livic.common.domain.BaseEntity;
-import com.livic.auth.domain.MembershipRoleTbl;
-import com.livic.user.domain.UserTbl;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "property_join_code_tbl")
@@ -23,18 +22,14 @@ public class PropertyJoinCodeTbl extends BaseEntity {
     @ToString.Exclude
     private PropertyTbl property;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    @ToString.Exclude
-    private MembershipRoleTbl role;
+    @Column(name = "role_id", nullable = false)
+    private UUID roleId;
 
     @Column(name = "code", nullable = false, unique = true)
     private String code;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    @ToString.Exclude
-    private UserTbl createdBy;
+    @Column(name = "created_by", nullable = false)
+    private UUID createdBy;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

@@ -5,8 +5,6 @@ import com.livic.auth.domain.MembershipRoleTbl;
 import com.livic.auth.service.interfaces.MembershipRoleCrudService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.auth.service.interfaces.MembershipService;
-import com.livic.property.domain.PropertyTbl;
-import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import com.livic.common.exception.BusinessException;
@@ -35,27 +33,17 @@ public class MembershipServiceImpl implements MembershipService {
             return; // Already has tenant role here
         }
 
-        UserSummaryDTO tenantSummary = userFacade.getUserById(tenantId)
+        userFacade.getUserById(tenantId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Tenant user not found"));
-        UserTbl tenant = new UserTbl();
-        tenant.setId(tenantSummary.id());
-        
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propertyId);
-        UserTbl assigner = null;
-        if (assignedByUserId != null) {
-            assigner = new UserTbl();
-            assigner.setId(assignedByUserId);
-        }
-        
+
         MembershipRoleTbl tenantRole = membershipRoleCrudService.findByCode("PROPERTY_TENANT")
                 .orElseThrow(() -> new RuntimeException("PROPERTY_TENANT role not found"));
 
         MembershipTbl membership = MembershipTbl.builder()
-                .user(tenant)
-                .property(property)
+                .userId(tenantId)
+                .propertyId(propertyId)
                 .role(tenantRole)
-                .assignedBy(assigner)
+                .assignedBy(assignedByUserId)
                 .build();
         
         membershipCrudService.save(membership);
@@ -80,21 +68,17 @@ public class MembershipServiceImpl implements MembershipService {
     @Override
     @Transactional
     public void createOwnerMembership(UUID propertyId, UUID ownerId) {
-        UserSummaryDTO ownerSummary = userFacade.getUserById(ownerId)
+        userFacade.getUserById(ownerId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Owner user not found"));
-        UserTbl owner = new UserTbl();
-        owner.setId(ownerSummary.id());
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propertyId);
         
         MembershipRoleTbl ownerRole = membershipRoleCrudService.findByCode("PROPERTY_OWNER")
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "PROPERTY_OWNER role not found"));
 
         MembershipTbl membership = MembershipTbl.builder()
-                .user(owner)
-                .property(property)
+                .userId(ownerId)
+                .propertyId(propertyId)
                 .role(ownerRole)
-                .assignedBy(owner)
+                .assignedBy(ownerId)
                 .build();
         
         membershipCrudService.save(membership);
@@ -114,25 +98,16 @@ public class MembershipServiceImpl implements MembershipService {
             throw new BusinessException(HttpStatus.CONFLICT, "User already has this role on the property");
         }
         
-        UserSummaryDTO userSummary = userFacade.getUserById(userId)
+        userFacade.getUserById(userId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
-        UserTbl user = new UserTbl();
-        user.setId(userSummary.id());
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propertyId);
         MembershipRoleTbl role = membershipRoleCrudService.findByCode(roleCode)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found"));
-        UserTbl assigner = null;
-        if (assignedByUserId != null) {
-            assigner = new UserTbl();
-            assigner.setId(assignedByUserId);
-        }
         
         MembershipTbl membership = MembershipTbl.builder()
-                .user(user)
-                .property(property)
+                .userId(userId)
+                .propertyId(propertyId)
                 .role(role)
-                .assignedBy(assigner)
+                .assignedBy(assignedByUserId)
                 .build();
                 
         return membershipCrudService.save(membership);
@@ -144,7 +119,7 @@ public class MembershipServiceImpl implements MembershipService {
         MembershipTbl membership = membershipCrudService.findById(membershipId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Membership not found"));
                 
-        if (!membership.getProperty().getId().equals(propertyId)) {
+        if (membership.getPropertyId() == null || !membership.getPropertyId().equals(propertyId)) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Membership does not belong to this property");
         }
         
@@ -164,12 +139,8 @@ public class MembershipServiceImpl implements MembershipService {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(HttpStatus.FORBIDDEN, "Current user is not the owner"));
                 
-        UserSummaryDTO newOwnerSummary = userFacade.getUserById(toUserId)
+        userFacade.getUserById(toUserId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "New owner user not found"));
-        UserTbl newOwner = new UserTbl();
-        newOwner.setId(newOwnerSummary.id());
-        PropertyTbl property = new PropertyTbl();
-        property.setId(propertyId);
         MembershipRoleTbl ownerRole = membershipRoleCrudService.findByCode("PROPERTY_OWNER")
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Owner role not found"));
         MembershipRoleTbl managerRole = membershipRoleCrudService.findByCode("PROPERTY_MANAGER")
@@ -193,13 +164,11 @@ public class MembershipServiceImpl implements MembershipService {
                 managerOrCaretakerMembership.get().setRole(ownerRole);
                 membershipCrudService.save(managerOrCaretakerMembership.get());
             } else {
-                UserTbl assignerRef = new UserTbl();
-                assignerRef.setId(currentOwnerId);
                 MembershipTbl newMembership = MembershipTbl.builder()
-                        .user(newOwner)
-                        .property(property)
+                        .userId(toUserId)
+                        .propertyId(propertyId)
                         .role(ownerRole)
-                        .assignedBy(assignerRef)
+                        .assignedBy(currentOwnerId)
                         .build();
                 membershipCrudService.save(newMembership);
             }

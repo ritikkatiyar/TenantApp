@@ -33,6 +33,12 @@ public interface AuthFacade {
 
     MembershipRoleTbl getRoleForProperty(String roleCode, UUID propertyId);
 
+    RoleDTOs.RoleResponse getRoleResponseForProperty(String roleCode, UUID propertyId);
+
+    RoleDTOs.RoleResponse getRoleById(UUID roleId);
+
+    MembershipSummaryDTO assignRoleById(UUID propertyId, UUID userId, UUID roleId, UUID assignedByUserId);
+
     void validateCanDelegateRole(UUID actorId, UUID propertyId, String roleCode, String actorGlobalRole);
 
     List<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId);

@@ -16,15 +16,13 @@ public record MembershipSummaryDTO(
         if (m == null) {
             return null;
         }
-        UUID propId = m.getProperty() != null ? m.getProperty().getId() : null;
-        String propName = m.getProperty() != null ? m.getProperty().getName() : null;
         String rCode = m.getRole() != null ? m.getRole().getCode() : null;
         String rName = m.getRole() != null ? m.getRole().getName() : null;
         return new MembershipSummaryDTO(
                 m.getId(),
-                propId,
-                propName,
-                m.getUser() != null ? m.getUser().getId() : null,
+                m.getPropertyId(),
+                null,
+                m.getUserId(),
                 rCode,
                 rName
         );

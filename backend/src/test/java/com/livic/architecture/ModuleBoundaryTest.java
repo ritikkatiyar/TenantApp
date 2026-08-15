@@ -111,6 +111,17 @@ class ModuleBoundaryTest {
     }
 
     @Test
+    @DisplayName("Auth module internal service implementations must not be accessed from outside auth module")
+    void strictAuthServiceBoundaryEnforcement() {
+        ArchRule rule = noClasses()
+                .that().resideOutsideOfPackage("com.livic.auth..")
+                .should().dependOnClassesThat().resideInAPackage("com.livic.auth.service.impl..")
+                .because("Outside modules must access auth capabilities strictly through com.livic.auth.facade, AuthorizationService, or DTOs");
+
+        rule.check(classes);
+    }
+
+    @Test
     @DisplayName("User facade package boundary check")
     void userFacadePackageStructure() {
         ArchRule rule = noClasses()
@@ -149,12 +160,6 @@ class ModuleBoundaryTest {
             ArchRule rule = noClasses()
                     .that().resideInAPackage("com.livic..domain..")
                     .and().resideOutsideOfPackage("com.livic." + module + "..")
-                    .and().doNotHaveFullyQualifiedName("com.livic.property.domain.PropertyJoinCodeTbl")
-                    .and().doNotHaveFullyQualifiedName("com.livic.property.domain.PropertyJoinCodeTbl$PropertyJoinCodeTblBuilder")
-                    .and().doNotHaveFullyQualifiedName("com.livic.auth.domain.MembershipTbl")
-                    .and().doNotHaveFullyQualifiedName("com.livic.auth.domain.MembershipTbl$MembershipTblBuilder")
-                    .and().doNotHaveFullyQualifiedName("com.livic.announcement.domain.AnnouncementReceiptTbl")
-                    .and().doNotHaveFullyQualifiedName("com.livic.announcement.domain.AnnouncementReceiptTbl$AnnouncementReceiptTblBuilder")
                     .should().dependOnClassesThat().resideInAPackage(targetDomainPackage)
                     .because("Domain entities should not have cross-module dependencies (target module: " + module + ")");
 
@@ -198,19 +203,6 @@ class ModuleBoundaryTest {
                                 }
                             }
                             return false;
-                        }
-                    })
-                    // … excluding known bridge/association entities that are exempted by architectural decision
-                    // (same entities already excluded in noCrossModuleDomainAccess — pre-standard JPA relations
-                    //  that require a dedicated migration to UUID columns; new code must NOT add to this list)
-                    .and(new DescribedPredicate<>("are not in a known exempted bridge entity") {
-                        private static final Set<String> EXEMPTED_OWNERS = Set.of(
-                                "com.livic.auth.domain.MembershipTbl",
-                                "com.livic.property.domain.PropertyJoinCodeTbl"
-                        );
-                        @Override
-                        public boolean test(JavaField field) {
-                            return !EXEMPTED_OWNERS.contains(field.getOwner().getName());
                         }
                     })
                     // … should NOT resolve to a class living in a DIFFERENT module's domain package

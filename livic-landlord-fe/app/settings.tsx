@@ -1,21 +1,43 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView, ActivityIndicator, Alert, Modal, TextInput, Switch, Clipboard, Platform, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  TextInput,
+  Switch,
+  Clipboard,
+  Platform,
+} from 'react-native';
+import { MaterialIcons, Ionicons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
-import { getPropertyRoles, toggleRoleActive, updateRolePermissions, createCustomRole, generateJoinCode, getPropertyJoinCodes, RoleResponse, JoinCodeResponse } from '@/src/features/properties/api/rolePermission.api';
+import {
+  getPropertyRoles,
+  toggleRoleActive,
+  updateRolePermissions,
+  createCustomRole,
+  generateJoinCode,
+  getPropertyJoinCodes,
+  RoleResponse,
+  JoinCodeResponse,
+} from '@/src/features/properties/api/rolePermission.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-
+import { PageShell } from '@/src/components/common/layout/PageShell';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { StatusPill } from '@/src/components/common/display/StatusPill';
+import { EmptyState } from '@/src/components/common/display/EmptyState';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
-import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
-
-const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
+import { useResponsive } from '@/hooks/useResponsive';
 
 const ALL_PERMISSIONS = [
   { code: 'PROPERTY_VIEW', name: 'View Property', description: 'Can view property details and announcements', category: 'Property' },
@@ -28,7 +50,7 @@ const ALL_PERMISSIONS = [
   { code: 'EXPENSE_APPROVE', name: 'Approve Expenses', description: 'Can approve and publish expenses to tenants', category: 'Expenses' },
   { code: 'PAYMENT_VIEW', name: 'View Payments', description: 'Can view rent and invoice payment history', category: 'Payments' },
   { code: 'ANNOUNCEMENT_CREATE', name: 'Broadcast Notices', description: 'Can post notice board announcements to tenants', category: 'Announcements' },
-  { code: 'MANAGE_STAFF', name: 'Manage Staff', description: 'Can manage other staff roles and invite codes', category: 'Staff' }
+  { code: 'MANAGE_STAFF', name: 'Manage Staff', description: 'Can manage other staff roles and invite codes', category: 'Staff' },
 ];
 
 export default function SystemPreferencesRoute() {
@@ -38,20 +60,23 @@ export default function SystemPreferencesRoute() {
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   const { accessToken, context } = useAuth();
   const { showToast } = useToast();
-  const { handleScroll } = useScrollNav();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
 
-  const [activeTab, setActiveTab] = useState<'roles' | 'invites'>('roles');
-
+  const [activeTab, setActiveTab] = useState<'roles' | 'invites' | 'preferences'>('roles');
   const [loading, setLoading] = useState(true);
 
   // Core Data
   const [roles, setRoles] = useState<RoleResponse[]>([]);
   const [invites, setInvites] = useState<JoinCodeResponse[]>([]);
-
-  // Current User Context Info
   const [currentUserRole, setCurrentUserRole] = useState<RoleResponse | null>(null);
+
+  // System Preferences State
+  const [autoInvoiceDay, setAutoInvoiceDay] = useState('1st of Month');
+  const [enableWhatsappAlerts, setEnableWhatsappAlerts] = useState(true);
+  const [enableEmailAlerts, setEnableEmailAlerts] = useState(true);
+  const [enableLateFee, setEnableLateFee] = useState(true);
+  const [lateFeeGraceDays, setLateFeeGraceDays] = useState('5');
+  const [lateFeeAmount, setLateFeeAmount] = useState('500');
 
   // Edit Role Modal State
   const [selectedRole, setSelectedRole] = useState<RoleResponse | null>(null);
@@ -89,16 +114,15 @@ export default function SystemPreferencesRoute() {
       setLoading(true);
       const [fetchedRoles, fetchedInvites] = await Promise.all([
         getPropertyRoles(accessToken!, propertyId as string),
-        getPropertyJoinCodes(accessToken!, propertyId as string)
+        getPropertyJoinCodes(accessToken!, propertyId as string),
       ]);
 
-      setRoles(fetchedRoles);
-      setInvites(fetchedInvites);
+      setRoles(fetchedRoles || []);
+      setInvites(fetchedInvites || []);
 
-      // Determine current user's role on this property
-      const myMembership = context?.managedProperties.find(m => m.propertyId === propertyId);
+      const myMembership = context?.managedProperties.find((m) => m.propertyId === propertyId);
       if (myMembership) {
-        const found = fetchedRoles.find(r => r.code === myMembership.membershipRoleCode);
+        const found = (fetchedRoles || []).find((r) => r.code === myMembership.membershipRoleCode);
         if (found) {
           setCurrentUserRole(found);
         }
@@ -118,29 +142,26 @@ export default function SystemPreferencesRoute() {
     return currentRank;
   };
 
-  // Checks if current user is allowed to modify the target role
   const canModifyRole = (targetRole: RoleResponse) => {
     if (!currentUserRole) return false;
     const myRank = getRoleRank(currentUserRole.code, currentUserRole.roleRank);
     const targetRank = getRoleRank(targetRole.code, targetRole.roleRank);
-
-    // Only allow editing if actor has strictly higher rank
     return myRank > targetRank;
   };
 
-  // Checks if current user has the permission to delegate it
   const canDelegatePermission = (permissionCode: string) => {
     if (!currentUserRole) return false;
-    if (currentUserRole.code === 'PROPERTY_OWNER') return true; // Owner possesses all
+    if (currentUserRole.code === 'PROPERTY_OWNER') return true;
     return currentUserRole.permissionCodes.includes(permissionCode);
   };
 
   const handleToggleRoleActive = async (role: RoleResponse, value: boolean) => {
     try {
       await toggleRoleActive(accessToken!, propertyId as string, role.code, value);
+      showToast(`Role ${role.name} ${value ? 'enabled' : 'disabled'}`, 'success');
       loadData();
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to update role status');
+      showToast(err.message || 'Failed to update role status', 'error');
     }
   };
 
@@ -150,10 +171,9 @@ export default function SystemPreferencesRoute() {
   };
 
   const handleTogglePermission = (code: string) => {
-    if (!canDelegatePermission(code)) return; // Cannot add/remove if user doesn't possess it
-
+    if (!canDelegatePermission(code)) return;
     if (editingPermissions.includes(code)) {
-      setEditingPermissions(editingPermissions.filter(p => p !== code));
+      setEditingPermissions(editingPermissions.filter((p) => p !== code));
     } else {
       setEditingPermissions([...editingPermissions, code]);
     }
@@ -166,9 +186,9 @@ export default function SystemPreferencesRoute() {
       await updateRolePermissions(accessToken!, propertyId as string, selectedRole.code, editingPermissions);
       setSelectedRole(null);
       loadData();
-      Alert.alert('Success', 'Permissions updated successfully');
+      showToast('Permissions matrix updated successfully', 'success');
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to update permissions');
+      showToast(err.message || 'Failed to update permissions', 'error');
     } finally {
       setSavingPermissions(false);
     }
@@ -176,7 +196,7 @@ export default function SystemPreferencesRoute() {
 
   const handleCreateCustomRole = async () => {
     if (!newRoleName.trim()) {
-      Alert.alert('Validation', 'Name is required');
+      showToast('Please enter a role name', 'error');
       return;
     }
 
@@ -185,7 +205,7 @@ export default function SystemPreferencesRoute() {
       await createCustomRole(accessToken!, propertyId as string, {
         name: newRoleName,
         description: newRoleDesc,
-        permissionCodes: newRolePerms
+        permissionCodes: newRolePerms,
       });
 
       setCustomRoleModalVisible(false);
@@ -193,9 +213,9 @@ export default function SystemPreferencesRoute() {
       setNewRoleDesc('');
       setNewRolePerms([]);
       loadData();
-      Alert.alert('Success', 'Custom role created successfully');
+      showToast('Custom role created successfully', 'success');
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to create role');
+      showToast(err.message || 'Failed to create role', 'error');
     } finally {
       setCreatingRole(false);
     }
@@ -203,12 +223,12 @@ export default function SystemPreferencesRoute() {
 
   const handleGenerateInvite = async () => {
     if (!selectedInviteRole) {
-      Alert.alert('Validation', 'Please select a role');
+      showToast('Please select a target role', 'error');
       return;
     }
-    const maxUses = parseInt(inviteMaxUses);
+    const maxUses = parseInt(inviteMaxUses, 10);
     if (isNaN(maxUses) || maxUses <= 0) {
-      Alert.alert('Validation', 'Max uses must be at least 1');
+      showToast('Max uses must be at least 1', 'error');
       return;
     }
 
@@ -219,619 +239,1103 @@ export default function SystemPreferencesRoute() {
       setSelectedInviteRole('');
       setInviteMaxUses('1');
       loadData();
-      Alert.alert('Invite Code Generated', `Share code: ${codeRes.code}`, [
-        { text: 'Copy Code', onPress: () => Clipboard.setString(codeRes.code) },
-        { text: 'OK' }
-      ]);
+      showToast(`Invite code generated: ${codeRes.code}`, 'success');
+      Clipboard.setString(codeRes.code);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to generate code');
+      showToast(err.message || 'Failed to generate code', 'error');
     } finally {
       setGeneratingInvite(false);
     }
   };
 
-  const renderRoleCard = ({ item }: { item: RoleResponse }) => {
-    const isOwner = item.code === 'PROPERTY_OWNER';
-    const isTenant = item.code === 'PROPERTY_TENANT';
-    const canEdit = canModifyRole(item) && !isOwner;
-
-    return (
-      <BlurView intensity={65} tint="light" style={styles.glassCard}>
-        <View style={styles.roleCardHeader}>
-          <View style={styles.roleTitleGroup}>
-            <Text style={styles.roleName}>{item.name}</Text>
-            {item.propertyId && (
-              <View style={styles.customBadge}>
-                <Text style={styles.customBadgeText}>Custom</Text>
-              </View>
-            )}
-          </View>
-          {!isOwner && !isTenant && (
-            <Switch
-              value={item.isActive}
-              onValueChange={(val) => handleToggleRoleActive(item, val)}
-              disabled={!canEdit}
-              trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
-              thumbColor={item.isActive ? '#00d4ff' : '#6b7a7d'}
-            />
-          )}
-        </View>
-        <Text style={styles.roleDesc}>{item.description || 'No description provided.'}</Text>
-        
-        <View style={styles.roleCardFooter}>
-          <View style={styles.permissionBadge}>
-            <MaterialIcons name="security" size={14} color="#006875" />
-            <Text style={styles.permissionBadgeText}>{item.permissionCodes.length} Permissions</Text>
-          </View>
-          <TouchableOpacity 
-            style={[styles.editPermissionsBtn, !canEdit && styles.editPermissionsBtnDisabled]}
-            disabled={!canEdit}
-            onPress={() => handleOpenEditPermissions(item)}
-          >
-            <Text style={styles.editPermissionsBtnText}>
-              {canEdit ? 'Configure' : 'View-Only'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </BlurView>
-    );
-  };
-
-  const renderInviteCard = ({ item }: { item: JoinCodeResponse }) => {
-    const expiresDate = item.expiresAt ? new Date(item.expiresAt).toLocaleDateString() : 'Never';
-    return (
-      <BlurView intensity={65} tint="light" style={styles.glassCard}>
-        <View style={styles.inviteCardHeader}>
-          <Text style={styles.inviteCode}>{item.code}</Text>
-          <View style={[styles.statusTag, item.isActive ? styles.statusTagActive : styles.statusTagInactive]}>
-            <Text style={item.isActive ? styles.statusTagTextActive : styles.statusTagTextInactive}>
-              {item.isActive ? 'ACTIVE' : 'INACTIVE'}
-            </Text>
-          </View>
-        </View>
-        
-        <View style={styles.inviteMetaGrid}>
-          <View style={styles.inviteMetaItem}>
-            <Text style={styles.inviteMetaLabel}>ROLE GRANTED</Text>
-            <Text style={styles.inviteMetaValue}>{item.roleName}</Text>
-          </View>
-          <View style={styles.inviteMetaItem}>
-            <Text style={styles.inviteMetaLabel}>USES LIMIT</Text>
-            <Text style={styles.inviteMetaValue}>{item.usesCount} / {item.maxUses}</Text>
-          </View>
-          <View style={styles.inviteMetaItem}>
-            <Text style={styles.inviteMetaLabel}>EXPIRY DATE</Text>
-            <Text style={styles.inviteMetaValue}>{expiresDate}</Text>
-          </View>
-        </View>
-
-        {item.isActive && (
-          <TouchableOpacity 
-            style={styles.copyBtn} 
-            onPress={() => {
-              Clipboard.setString(item.code);
-              Alert.alert('Copied', 'Code copied to clipboard');
-            }}
-          >
-            <MaterialIcons name="content-copy" size={16} color="#006875" />
-            <Text style={styles.copyBtnText}>Copy Invitation Code</Text>
-          </TouchableOpacity>
-        )}
-      </BlurView>
-    );
-  };
-
-  const ModalContainer = ({ children }: { children: React.ReactNode }) => {
-    if (isDesktop) {
-      return (
-        <View style={styles.modalOverlay}>
-          <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
-          <View style={[styles.modalPopup, { width: 650, maxHeight: '85%', padding: 0, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.8)' }]}>
-            <LinearGradient colors={LUMINOUS_BACKGROUND} style={StyleSheet.absoluteFillObject} />
-            {children}
-          </View>
-        </View>
-      );
-    } else {
-      return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
-          <LinearGradient colors={LUMINOUS_BACKGROUND} style={StyleSheet.absoluteFillObject} />
-          {children}
-        </SafeAreaView>
-      );
-    }
-  };
-
   return (
-    <SafeAreaView style={styles.container} edges={isDesktop ? ['top'] : []}>
-      <LinearGradient colors={LUMINOUS_BACKGROUND} style={StyleSheet.absoluteFillObject} />
-      
-      {/* Header */}
+    <PageShell
+      scrollable
+      edges={isDesktop ? ['top'] : []}
+      contentContainerStyle={[styles.container, isDesktop && styles.containerDesktop]}
+    >
+      {/* Top Desktop Navigation */}
       {isDesktop && (
-        <DesktopNavBar 
+        <DesktopNavBar
+          title="Settings & System Hub"
           properties={properties || []}
           selectedPropertyId={propertyId}
           onPropertyChange={(id) => router.replace(`/settings?propertyId=${id}`)}
         />
       )}
 
-        <ScrollView
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: isDesktop ? 40 : 20, paddingTop: isDesktop ? 24 : 12, paddingBottom: 100 }}
-        >
-          <View style={isDesktop ? { maxWidth: 1080, alignSelf: 'center', width: '100%' } : { width: '100%' }}>
-            
-            {/* Title Header */}
-            {isDesktop && (
-              <View style={{ marginBottom: 32 }}>
-                <Text style={{ fontSize: 32, fontWeight: '800', color: '#151d1e', lineHeight: 38, letterSpacing: -0.5 }}>
-                  System & Team Settings
-                </Text>
-                <Text style={{ fontSize: 14, color: '#6b7a7d', marginTop: 4, fontWeight: '500', lineHeight: 20 }}>
-                  Manage property roles, staff invite permissions, system parameters & subscription billing
-                </Text>
-              </View>
-            )}
+      {/* Main Title Section */}
+      <View style={styles.heroSection}>
+        <View>
+          <Text style={styles.heroTitle}>System & Team Hub</Text>
+          <Text style={styles.heroSubtitle}>
+            Configure property role matrices, staff onboarding keys, automated invoices & subscriptions
+          </Text>
+        </View>
 
-            {/* Zero Property Warning Banner */}
-            {!propertiesLoading && properties.length === 0 && (
-              <BlurView intensity={60} tint="light" style={{ padding: 24, borderRadius: 20, marginBottom: 24, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.7)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                  <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                    <MaterialIcons name="business" size={26} color="#006875" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 2 }}>No Property Created Yet</Text>
-                    <Text style={{ fontSize: 13, color: '#6b7a7d', lineHeight: 18 }}>Property roles and team permissions require an active property context. Create your first property to start configuring staff roles.</Text>
-                  </View>
-                </View>
-                <TouchableOpacity 
-                  style={{ borderRadius: 100, overflow: 'hidden' }}
-                  onPress={() => router.push('/properties/create')}
-                >
-                  <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 20, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <MaterialIcons name="add" size={18} color="#fff" />
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>CREATE PROPERTY</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </BlurView>
-            )}
-
-            {/* Hub Menu Grid */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => {
-                  if (properties.length === 0) {
-                    showToast('Please create a property first to configure team roles.', 'error');
-                    router.push('/properties/create');
-                    return;
-                  }
-                  setActiveTab('roles');
-                }}
-                style={{ flex: 1, minWidth: isDesktop ? 220 : '100%', opacity: properties.length === 0 ? 0.6 : 1 }}
-              >
-                <BlurView intensity={60} tint="light" style={{ padding: 20, borderRadius: 20, borderWidth: 1.5, borderColor: activeTab === 'roles' && properties.length > 0 ? '#006875' : 'rgba(255,255,255,0.7)', backgroundColor: activeTab === 'roles' && properties.length > 0 ? 'rgba(0,104,117,0.06)' : 'rgba(255,255,255,0.5)' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(8, 145, 178, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                      <MaterialIcons name="admin-panel-settings" size={24} color="#0891b2" />
-                    </View>
-                    <View style={{ backgroundColor: 'rgba(8, 145, 178, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#0891b2' }}>{roles.length} Roles</Text>
-                    </View>
-                  </View>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 4 }}>Team Roles & Permissions</Text>
-                  <Text style={{ fontSize: 12, color: '#6b7a7d', lineHeight: 17 }}>Define custom staff roles & fine-grained permission matrices.</Text>
-                </BlurView>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => {
-                  if (properties.length === 0) {
-                    showToast('Please create a property first to generate invite codes.', 'error');
-                    router.push('/properties/create');
-                    return;
-                  }
-                  setActiveTab('invites');
-                }}
-                style={{ flex: 1, minWidth: isDesktop ? 220 : '100%', opacity: properties.length === 0 ? 0.6 : 1 }}
-              >
-                <BlurView intensity={60} tint="light" style={{ padding: 20, borderRadius: 20, borderWidth: 1.5, borderColor: activeTab === 'invites' && properties.length > 0 ? '#006875' : 'rgba(255,255,255,0.7)', backgroundColor: activeTab === 'invites' && properties.length > 0 ? 'rgba(0,104,117,0.06)' : 'rgba(255,255,255,0.5)' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(0, 212, 255, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                      <MaterialIcons name="vpn-key" size={24} color="#0072ff" />
-                    </View>
-                    <View style={{ backgroundColor: 'rgba(0, 212, 255, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#0072ff' }}>{invites.length} Codes</Text>
-                    </View>
-                  </View>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 4 }}>Staff Join Codes</Text>
-                  <Text style={{ fontSize: 12, color: '#6b7a7d', lineHeight: 17 }}>Generate single-use invite keys to onboard managers & staff.</Text>
-                </BlurView>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => {
-                  if (properties.length === 0) {
-                    showToast('Please create a property first to configure system preferences.', 'error');
-                    router.push('/properties/create');
-                    return;
-                  }
-                  showToast('System defaults & notification settings configured.', 'info');
-                }}
-                style={{ flex: 1, minWidth: isDesktop ? 220 : '100%', opacity: properties.length === 0 ? 0.6 : 1 }}
-              >
-                <BlurView intensity={60} tint="light" style={{ padding: 20, borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)', backgroundColor: 'rgba(255,255,255,0.5)' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(139, 92, 246, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                      <MaterialIcons name="tune" size={24} color="#8b5cf6" />
-                    </View>
-                    <View style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#8b5cf6' }}>Active</Text>
-                    </View>
-                  </View>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 4 }}>System Preferences</Text>
-                  <Text style={{ fontSize: 12, color: '#6b7a7d', lineHeight: 17 }}>Notifications defaults, auto-invoicing rules & localizations.</Text>
-                </BlurView>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => router.push('/billing' as any)}
-                style={{ flex: 1, minWidth: isDesktop ? 220 : '100%' }}
-              >
-                <BlurView intensity={60} tint="light" style={{ padding: 20, borderRadius: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)', backgroundColor: 'rgba(255,255,255,0.5)' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(236, 72, 153, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                      <MaterialIcons name="credit-card" size={24} color="#ec4899" />
-                    </View>
-                    <View style={{ backgroundColor: 'rgba(236, 72, 153, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#ec4899' }}>SaaS Plan</Text>
-                    </View>
-                  </View>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 4 }}>Subscription & Billing</Text>
-                  <Text style={{ fontSize: 12, color: '#6b7a7d', lineHeight: 17 }}>Manage plan tier, Razorpay gateway & AI credit wallet.</Text>
-                </BlurView>
-              </TouchableOpacity>
-            </View>
-
-            {/* Active Content Section */}
-            {propertiesLoading || loading ? (
-              <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
-                <ActivityIndicator size="large" color="#006875" />
-              </View>
-            ) : properties.length > 0 ? (
-              <View style={{ flex: 1 }}>
-                {activeTab === 'roles' ? (
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                      <Text style={{ fontSize: 18, fontWeight: '800', color: '#163235' }}>Property Roles & Permission Matrix</Text>
-                      {currentUserRole?.code === 'PROPERTY_OWNER' && (
-                        <TouchableOpacity style={{ borderRadius: 100, overflow: 'hidden' }} onPress={() => {
-                          setNewRolePerms([...currentUserRole.permissionCodes]);
-                          setCustomRoleModalVisible(true);
-                        }}>
-                          <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 20, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <MaterialIcons name="add" size={18} color="#fff" />
-                            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>CREATE ROLE</Text>
-                          </LinearGradient>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                    <FlatList
-                      data={roles}
-                      renderItem={renderRoleCard}
-                      keyExtractor={item => item.id}
-                      scrollEnabled={false}
-                    />
-                  </View>
-                ) : (
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                      <Text style={{ fontSize: 18, fontWeight: '800', color: '#163235' }}>Active Staff Invite Codes</Text>
-                      <TouchableOpacity style={{ borderRadius: 100, overflow: 'hidden' }} onPress={() => setInviteModalVisible(true)}>
-                        <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 20, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <MaterialIcons name="vpn-key" size={18} color="#fff" />
-                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 }}>GENERATE INVITE</Text>
-                        </LinearGradient>
-                      </TouchableOpacity>
-                    </View>
-                    <FlatList
-                      data={invites}
-                      renderItem={renderInviteCard}
-                      keyExtractor={item => item.id}
-                      scrollEnabled={false}
-                      ListEmptyComponent={
-                        <Text style={styles.emptyText}>No invite codes generated yet.</Text>
-                      }
-                    />
-                  </View>
-                )}
-              </View>
-            ) : null}
-          </View>
-        </ScrollView>
-
-      {/* Permissions Editor Modal */}
-      <Modal visible={selectedRole !== null} animationType={isDesktop ? "fade" : "slide"} transparent={isDesktop}>
-        <ModalContainer>
-          
-          <View style={styles.modalHeader}>
-            <View>
-              <Text style={styles.modalTitle}>{selectedRole?.name}</Text>
-              <Text style={styles.modalSubtitle}>Configure Assigned System Permissions</Text>
-            </View>
-            <TouchableOpacity onPress={() => setSelectedRole(null)} style={styles.closeBtn}>
-              <MaterialIcons name="close" size={24} color="#163235" />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView contentContainerStyle={styles.modalScroll}>
-            {Object.entries(
-              ALL_PERMISSIONS.reduce((acc, curr) => {
-                if (!acc[curr.category]) acc[curr.category] = [];
-                acc[curr.category].push(curr);
-                return acc;
-              }, {} as Record<string, typeof ALL_PERMISSIONS>)
-            ).map(([category, items]) => (
-              <View key={category} style={styles.permissionCategoryGroup}>
-                <Text style={styles.categoryTitle}>{category.toUpperCase()}</Text>
-                {items.map(item => {
-                  const isChecked = editingPermissions.includes(item.code);
-                  const isDelegatable = canDelegatePermission(item.code);
-                  
-                  return (
-                    <TouchableOpacity 
-                      key={item.code} 
-                      style={[styles.permissionRow, !isDelegatable && styles.permissionRowDisabled]}
-                      onPress={() => handleTogglePermission(item.code)}
-                      disabled={!isDelegatable}
-                    >
-                      <View style={styles.permissionInfo}>
-                        <Text style={[styles.permissionName, !isDelegatable && styles.permissionTextDisabled]}>{item.name}</Text>
-                        <Text style={styles.permissionDesc}>{item.description}</Text>
-                      </View>
-                      <MaterialIcons 
-                        name={isChecked ? "check-box" : "check-box-outline-blank"} 
-                        size={24} 
-                        color={isChecked ? "#006875" : (isDelegatable ? "rgba(0, 104, 117, 0.3)" : "rgba(107, 122, 125, 0.2)")} 
-                      />
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ))}
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSavePermissions} disabled={savingPermissions}>
+        {currentUserRole?.code === 'PROPERTY_OWNER' && (
+          <View style={styles.heroActions}>
+            <TouchableOpacity
+              style={styles.actionPillBtn}
+              onPress={() => {
+                if (activeTab === 'invites') {
+                  setInviteModalVisible(true);
+                } else {
+                  setNewRolePerms(currentUserRole ? [...currentUserRole.permissionCodes] : []);
+                  setCustomRoleModalVisible(true);
+                }
+              }}
+              activeOpacity={0.8}
+            >
               <LinearGradient
                 colors={['#00d4ff', '#0072ff']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.saveBtnGradient}
+                style={styles.actionPillGradient}
               >
-                {savingPermissions ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>SAVE CONFIGURATION</Text>}
+                <MaterialIcons name={activeTab === 'invites' ? 'vpn-key' : 'add'} size={18} color="#fff" />
+                <Text style={styles.actionPillText}>
+                  {activeTab === 'invites' ? 'GENERATE INVITE' : 'CREATE ROLE'}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
-        </ModalContainer>
+        )}
+      </View>
+
+      {/* Hub Menu Cards Grid */}
+      <View style={styles.hubGrid}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setActiveTab('roles')}
+          style={styles.hubCardTouch}
+        >
+          <GlassCard style={[styles.hubCard, activeTab === 'roles' && styles.hubCardActive]}>
+            <View style={styles.hubCardHeader}>
+              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(8, 145, 178, 0.12)' }]}>
+                <MaterialIcons name="admin-panel-settings" size={24} color="#0891b2" />
+              </View>
+              <View style={styles.hubBadge}>
+                <Text style={[styles.hubBadgeText, { color: '#0891b2' }]}>{roles.length} Roles</Text>
+              </View>
+            </View>
+            <Text style={styles.hubCardTitle}>Roles & Permissions</Text>
+            <Text style={styles.hubCardDesc}>Custom staff roles & fine-grained permission matrix.</Text>
+          </GlassCard>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setActiveTab('invites')}
+          style={styles.hubCardTouch}
+        >
+          <GlassCard style={[styles.hubCard, activeTab === 'invites' && styles.hubCardActive]}>
+            <View style={styles.hubCardHeader}>
+              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(0, 104, 117, 0.12)' }]}>
+                <MaterialIcons name="vpn-key" size={24} color="#006875" />
+              </View>
+              <View style={styles.hubBadge}>
+                <Text style={[styles.hubBadgeText, { color: '#006875' }]}>{invites.length} Codes</Text>
+              </View>
+            </View>
+            <Text style={styles.hubCardTitle}>Staff Join Keys</Text>
+            <Text style={styles.hubCardDesc}>Single-use onboarding keys for managers & caretakers.</Text>
+          </GlassCard>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setActiveTab('preferences')}
+          style={styles.hubCardTouch}
+        >
+          <GlassCard style={[styles.hubCard, activeTab === 'preferences' && styles.hubCardActive]}>
+            <View style={styles.hubCardHeader}>
+              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
+                <MaterialIcons name="tune" size={24} color="#8b5cf6" />
+              </View>
+              <View style={styles.hubBadge}>
+                <Text style={[styles.hubBadgeText, { color: '#8b5cf6' }]}>Automations</Text>
+              </View>
+            </View>
+            <Text style={styles.hubCardTitle}>System Preferences</Text>
+            <Text style={styles.hubCardDesc}>Auto-invoicing cycles, WhatsApp notifications & late fees.</Text>
+          </GlassCard>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.push('/billing' as any)}
+          style={styles.hubCardTouch}
+        >
+          <GlassCard style={styles.hubCard}>
+            <View style={styles.hubCardHeader}>
+              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(236, 72, 153, 0.12)' }]}>
+                <MaterialIcons name="credit-card" size={24} color="#ec4899" />
+              </View>
+              <View style={styles.hubBadge}>
+                <Text style={[styles.hubBadgeText, { color: '#ec4899' }]}>SaaS Tier</Text>
+              </View>
+            </View>
+            <Text style={styles.hubCardTitle}>Subscription & Plan</Text>
+            <Text style={styles.hubCardDesc}>Active tier, Razorpay gateway status & AI credit wallet.</Text>
+          </GlassCard>
+        </TouchableOpacity>
+      </View>
+
+      {/* Main Tab Content */}
+      {loading ? (
+        <View style={styles.centerLoading}>
+          <ActivityIndicator size="large" color="#006875" />
+          <Text style={styles.loadingSub}>Loading system preferences...</Text>
+        </View>
+      ) : activeTab === 'roles' ? (
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <View>
+              <Text style={styles.sectionTitle}>Property Role Hierarchy</Text>
+              <Text style={styles.sectionSub}>Staff roles configured for this property context</Text>
+            </View>
+          </View>
+
+          <View style={styles.rolesGrid}>
+            {roles.map((item) => {
+              const isOwner = item.code === 'PROPERTY_OWNER';
+              const isTenant = item.code === 'PROPERTY_TENANT';
+              const canEdit = canModifyRole(item) && !isOwner;
+
+              return (
+                <GlassCard key={item.id} style={styles.roleCard}>
+                  <View style={styles.roleCardTop}>
+                    <View style={styles.roleTitleGroup}>
+                      <Text style={styles.roleName}>{item.name}</Text>
+                      {item.propertyId ? (
+                        <View style={styles.customRolePill}>
+                          <Text style={styles.customRolePillText}>Custom</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.systemRolePill}>
+                          <Text style={styles.systemRolePillText}>System Default</Text>
+                        </View>
+                      )}
+                    </View>
+                    {!isOwner && !isTenant && (
+                      <Switch
+                        value={item.isActive}
+                        onValueChange={(val) => handleToggleRoleActive(item, val)}
+                        disabled={!canEdit}
+                        trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
+                        thumbColor={item.isActive ? '#00d4ff' : '#9ca3af'}
+                      />
+                    )}
+                  </View>
+
+                  <Text style={styles.roleDesc}>{item.description || 'No description provided.'}</Text>
+
+                  <View style={styles.roleCardBottom}>
+                    <View style={styles.permCountTag}>
+                      <MaterialIcons name="shield" size={14} color="#006875" />
+                      <Text style={styles.permCountText}>{item.permissionCodes.length} Permissions</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.configureBtn, !canEdit && styles.configureBtnDisabled]}
+                      disabled={!canEdit}
+                      onPress={() => handleOpenEditPermissions(item)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.configureBtnText, !canEdit && styles.configureBtnTextDisabled]}>
+                        {canEdit ? 'Configure Matrix' : 'View Only'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </GlassCard>
+              );
+            })}
+          </View>
+        </View>
+      ) : activeTab === 'invites' ? (
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <View>
+              <Text style={styles.sectionTitle}>Active Staff Join Codes</Text>
+              <Text style={styles.sectionSub}>Direct onboarding tokens for team members</Text>
+            </View>
+          </View>
+
+          {invites.length > 0 ? (
+            <View style={styles.invitesGrid}>
+              {invites.map((item) => {
+                const expiresDate = item.expiresAt ? new Date(item.expiresAt).toLocaleDateString() : 'Never';
+                return (
+                  <GlassCard key={item.id} style={styles.inviteCard}>
+                    <View style={styles.inviteCardHeader}>
+                      <View style={styles.codeCapsule}>
+                        <MaterialIcons name="key" size={16} color="#006875" />
+                        <Text style={styles.inviteCode}>{item.code}</Text>
+                      </View>
+                      <StatusPill status={item.isActive ? 'ACTIVE' : 'EXPIRED'} />
+                    </View>
+
+                    <View style={styles.inviteMetaRow}>
+                      <View style={styles.inviteMetaCol}>
+                        <Text style={styles.inviteMetaLabel}>TARGET ROLE</Text>
+                        <Text style={styles.inviteMetaVal}>{item.roleName}</Text>
+                      </View>
+                      <View style={styles.inviteMetaCol}>
+                        <Text style={styles.inviteMetaLabel}>USES COUNT</Text>
+                        <Text style={styles.inviteMetaVal}>
+                          {item.usesCount} / {item.maxUses}
+                        </Text>
+                      </View>
+                      <View style={styles.inviteMetaCol}>
+                        <Text style={styles.inviteMetaLabel}>EXPIRES</Text>
+                        <Text style={styles.inviteMetaVal}>{expiresDate}</Text>
+                      </View>
+                    </View>
+
+                    {item.isActive && (
+                      <TouchableOpacity
+                        style={styles.copyKeyBtn}
+                        onPress={() => {
+                          Clipboard.setString(item.code);
+                          showToast('Invitation code copied to clipboard!', 'success');
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <MaterialIcons name="content-copy" size={16} color="#006875" />
+                        <Text style={styles.copyKeyBtnText}>Copy Invitation Code</Text>
+                      </TouchableOpacity>
+                    )}
+                  </GlassCard>
+                );
+              })}
+            </View>
+          ) : (
+            <EmptyState
+              title="No Invite Codes Active"
+              description="Generate a join code to onboard managers or staff to this property."
+              iconName="vpn-key"
+            />
+          )}
+        </View>
+      ) : (
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <View>
+              <Text style={styles.sectionTitle}>Automation & Preference Rules</Text>
+              <Text style={styles.sectionSub}>Configure invoicing triggers and alert preferences</Text>
+            </View>
+          </View>
+
+          <View style={styles.prefGrid}>
+            <GlassCard style={styles.prefCard}>
+              <View style={styles.prefCardHeader}>
+                <MaterialIcons name="receipt-long" size={22} color="#006875" />
+                <Text style={styles.prefCardTitle}>Billing Automation</Text>
+              </View>
+              <View style={styles.prefItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.prefItemName}>Automated Rent Roll Invoicing</Text>
+                  <Text style={styles.prefItemDesc}>Automatically compile charges on the 1st of every month</Text>
+                </View>
+                <View style={styles.prefBadgeActive}>
+                  <Text style={styles.prefBadgeText}>{autoInvoiceDay}</Text>
+                </View>
+              </View>
+              <View style={styles.prefItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.prefItemName}>Late Payment Penalty</Text>
+                  <Text style={styles.prefItemDesc}>Apply flat fine after grace period expires</Text>
+                </View>
+                <Switch
+                  value={enableLateFee}
+                  onValueChange={setEnableLateFee}
+                  trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
+                  thumbColor={enableLateFee ? '#00d4ff' : '#9ca3af'}
+                />
+              </View>
+            </GlassCard>
+
+            <GlassCard style={styles.prefCard}>
+              <View style={styles.prefCardHeader}>
+                <MaterialIcons name="notifications-active" size={22} color="#0891b2" />
+                <Text style={styles.prefCardTitle}>Communication Channels</Text>
+              </View>
+              <View style={styles.prefItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.prefItemName}>WhatsApp Payment Reminders</Text>
+                  <Text style={styles.prefItemDesc}>Send WhatsApp invoice summaries to tenants</Text>
+                </View>
+                <Switch
+                  value={enableWhatsappAlerts}
+                  onValueChange={setEnableWhatsappAlerts}
+                  trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
+                  thumbColor={enableWhatsappAlerts ? '#00d4ff' : '#9ca3af'}
+                />
+              </View>
+              <View style={styles.prefItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.prefItemName}>Email Notifications</Text>
+                  <Text style={styles.prefItemDesc}>Dispatch monthly PDF statement receipts via email</Text>
+                </View>
+                <Switch
+                  value={enableEmailAlerts}
+                  onValueChange={setEnableEmailAlerts}
+                  trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
+                  thumbColor={enableEmailAlerts ? '#00d4ff' : '#9ca3af'}
+                />
+              </View>
+            </GlassCard>
+          </View>
+        </View>
+      )}
+
+      {/* Permissions Matrix Modal */}
+      <Modal visible={selectedRole !== null} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>{selectedRole?.name}</Text>
+                <Text style={styles.modalSub}>Configure assigned permission matrix</Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedRole(null)} style={styles.closeIconBtn}>
+                <MaterialIcons name="close" size={22} color="#151d1e" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              {Object.entries(
+                ALL_PERMISSIONS.reduce((acc, curr) => {
+                  if (!acc[curr.category]) acc[curr.category] = [];
+                  acc[curr.category].push(curr);
+                  return acc;
+                }, {} as Record<string, typeof ALL_PERMISSIONS>)
+              ).map(([category, items]) => (
+                <View key={category} style={styles.categoryBlock}>
+                  <Text style={styles.categoryHeading}>{category.toUpperCase()}</Text>
+                  {items.map((item) => {
+                    const isChecked = editingPermissions.includes(item.code);
+                    const isDelegatable = canDelegatePermission(item.code);
+
+                    return (
+                      <TouchableOpacity
+                        key={item.code}
+                        style={[styles.permCheckRow, !isDelegatable && styles.permCheckRowDisabled]}
+                        onPress={() => handleTogglePermission(item.code)}
+                        disabled={!isDelegatable}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.permCheckInfo}>
+                          <Text style={[styles.permCheckName, !isDelegatable && styles.permCheckNameDisabled]}>
+                            {item.name}
+                          </Text>
+                          <Text style={styles.permCheckDesc}>{item.description}</Text>
+                        </View>
+                        <MaterialIcons
+                          name={isChecked ? 'check-box' : 'check-box-outline-blank'}
+                          size={24}
+                          color={isChecked ? '#006875' : isDelegatable ? 'rgba(0, 104, 117, 0.3)' : 'rgba(107, 122, 125, 0.2)'}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalPrimaryBtn}
+                onPress={handleSavePermissions}
+                disabled={savingPermissions}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.modalBtnGradient}
+                >
+                  {savingPermissions ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.modalBtnText}>SAVE PERMISSIONS MATRIX</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* Create Custom Role Modal */}
-      <Modal visible={customRoleModalVisible} animationType={isDesktop ? "fade" : "slide"} transparent={isDesktop}>
-        <ModalContainer>
-          
-          <View style={styles.modalHeader}>
-            <View>
-              <Text style={styles.modalTitle}>Create Custom Role</Text>
-              <Text style={styles.modalSubtitle}>Define role parameters and delegation subset</Text>
+      <Modal visible={customRoleModalVisible} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Create Custom Role</Text>
+                <Text style={styles.modalSub}>Define role parameters & permission scope</Text>
+              </View>
+              <TouchableOpacity onPress={() => setCustomRoleModalVisible(false)} style={styles.closeIconBtn}>
+                <MaterialIcons name="close" size={22} color="#151d1e" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => setCustomRoleModalVisible(false)} style={styles.closeBtn}>
-              <MaterialIcons name="close" size={24} color="#163235" />
-            </TouchableOpacity>
-          </View>
 
-          <ScrollView contentContainerStyle={styles.modalScroll}>
-            <Text style={styles.fieldLabel}>ROLE DISPLAY NAME</Text>
-            <TextInput
-              style={styles.fieldInput}
-              placeholder="e.g. Assistant Caretaker"
-              placeholderTextColor="#6b7a7d"
-              value={newRoleName}
-              onChangeText={setNewRoleName}
-            />
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              <Text style={styles.inputLabel}>ROLE NAME</Text>
+              <TextInput
+                style={styles.modalTextInput}
+                placeholder="e.g. Senior Floor Manager"
+                placeholderTextColor="#6b7a7d"
+                value={newRoleName}
+                onChangeText={setNewRoleName}
+              />
 
+              <Text style={styles.inputLabel}>DESCRIPTION</Text>
+              <TextInput
+                style={[styles.modalTextInput, { height: 70, paddingTop: 10 }]}
+                placeholder="Describe role responsibilities..."
+                placeholderTextColor="#6b7a7d"
+                value={newRoleDesc}
+                onChangeText={setNewRoleDesc}
+                multiline
+              />
 
+              <Text style={[styles.categoryHeading, { marginTop: 16 }]}>DELEGATED PERMISSIONS</Text>
+              {ALL_PERMISSIONS.filter((p) => canDelegatePermission(p.code)).map((p) => {
+                const isChecked = newRolePerms.includes(p.code);
+                return (
+                  <TouchableOpacity
+                    key={p.code}
+                    style={styles.permCheckRow}
+                    onPress={() => {
+                      if (isChecked) {
+                        setNewRolePerms(newRolePerms.filter((code) => code !== p.code));
+                      } else {
+                        setNewRolePerms([...newRolePerms, p.code]);
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.permCheckInfo}>
+                      <Text style={styles.permCheckName}>{p.name}</Text>
+                      <Text style={styles.permCheckDesc}>{p.description}</Text>
+                    </View>
+                    <MaterialIcons
+                      name={isChecked ? 'check-box' : 'check-box-outline-blank'}
+                      size={24}
+                      color={isChecked ? '#006875' : 'rgba(0, 104, 117, 0.3)'}
+                    />
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
-            <Text style={styles.fieldLabel}>DESCRIPTION</Text>
-            <TextInput
-              style={[styles.fieldInput, { height: 80, paddingTop: 12 }]}
-              placeholder="Provide a brief description of the role's purpose..."
-              placeholderTextColor="#6b7a7d"
-              value={newRoleDesc}
-              onChangeText={setNewRoleDesc}
-              multiline
-            />
-
-            <Text style={[styles.categoryTitle, { marginTop: 24, marginBottom: 4 }]}>DELEGATED PERMISSIONS</Text>
-            <Text style={{ fontSize: 12, color: '#6b7a7d', marginBottom: 16 }}>
-              You can only delegate permissions that your own role currently possesses.
-            </Text>
-
-            {ALL_PERMISSIONS.filter(p => canDelegatePermission(p.code)).map(p => {
-              const isChecked = newRolePerms.includes(p.code);
-              return (
-                <TouchableOpacity 
-                  key={p.code} 
-                  style={styles.permissionRow} 
-                  onPress={() => {
-                    if (isChecked) {
-                      setNewRolePerms(newRolePerms.filter(code => code !== p.code));
-                    } else {
-                      setNewRolePerms([...newRolePerms, p.code]);
-                    }
-                  }}
-                >
-                  <View style={styles.permissionInfo}>
-                    <Text style={styles.permissionName}>{p.name}</Text>
-                    <Text style={styles.permissionDesc}>{p.description}</Text>
-                  </View>
-                  <MaterialIcons 
-                    name={isChecked ? "check-box" : "check-box-outline-blank"} 
-                    size={24} 
-                    color={isChecked ? "#006875" : "rgba(0, 104, 117, 0.3)"} 
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleCreateCustomRole} disabled={creatingRole}>
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.saveBtnGradient}
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalPrimaryBtn}
+                onPress={handleCreateCustomRole}
+                disabled={creatingRole}
+                activeOpacity={0.8}
               >
-                {creatingRole ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>CREATE CUSTOM ROLE</Text>}
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.modalBtnGradient}
+                >
+                  {creatingRole ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalBtnText}>CREATE ROLE</Text>}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
-        </ModalContainer>
+        </View>
       </Modal>
 
       {/* Generate Invite Code Modal */}
       <Modal visible={inviteModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
-          <View style={styles.modalPopup}>
-            <View style={styles.modalPopupHeader}>
-              <Text style={styles.popupTitle}>Generate Invite Code</Text>
-              <TouchableOpacity onPress={() => setInviteModalVisible(false)}>
-                <MaterialIcons name="close" size={22} color="#163235" />
+          <View style={[styles.modalCard, { maxHeight: 420 }]}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Generate Staff Join Code</Text>
+                <Text style={styles.modalSub}>Create a single-use token for onboarding</Text>
+              </View>
+              <TouchableOpacity onPress={() => setInviteModalVisible(false)} style={styles.closeIconBtn}>
+                <MaterialIcons name="close" size={22} color="#151d1e" />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.fieldLabel}>SELECT TARGET ROLE</Text>
-            <View style={styles.roleOptionsRow}>
-              {roles.filter(r => r.isActive && canModifyRole(r)).map(r => (
-                <TouchableOpacity 
-                  key={r.code}
-                  style={[styles.roleChip, selectedInviteRole === r.code && styles.roleChipActive]}
-                  onPress={() => setSelectedInviteRole(r.code)}
-                >
-                  <Text style={[styles.roleChipText, selectedInviteRole === r.code && styles.roleChipTextActive]}>
-                    {r.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <View style={{ padding: 24 }}>
+              <Text style={styles.inputLabel}>SELECT ROLE TO GRANT</Text>
+              <View style={styles.roleChipsRow}>
+                {roles
+                  .filter((r) => r.isActive && canModifyRole(r))
+                  .map((r) => (
+                    <TouchableOpacity
+                      key={r.code}
+                      style={[styles.roleSelectChip, selectedInviteRole === r.code && styles.roleSelectChipActive]}
+                      onPress={() => setSelectedInviteRole(r.code)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.roleSelectChipText,
+                          selectedInviteRole === r.code && styles.roleSelectChipTextActive,
+                        ]}
+                      >
+                        {r.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+              </View>
 
-            <Text style={[styles.fieldLabel, { marginTop: 16 }]}>MAX USES</Text>
-            <TextInput
-              style={styles.fieldInput}
-              keyboardType="number-pad"
-              value={inviteMaxUses}
-              onChangeText={setInviteMaxUses}
-              placeholder="e.g. 1"
-              placeholderTextColor="#6b7a7d"
-            />
+              <Text style={[styles.inputLabel, { marginTop: 16 }]}>MAX USES</Text>
+              <TextInput
+                style={styles.modalTextInput}
+                keyboardType="number-pad"
+                value={inviteMaxUses}
+                onChangeText={setInviteMaxUses}
+                placeholder="1"
+                placeholderTextColor="#6b7a7d"
+              />
 
-            <TouchableOpacity 
-              style={[styles.saveBtn, { marginTop: 24 }]} 
-              onPress={handleGenerateInvite} 
-              disabled={generatingInvite || !selectedInviteRole}
-            >
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.saveBtnGradient}
+              <TouchableOpacity
+                style={[styles.modalPrimaryBtn, { marginTop: 16 }]}
+                onPress={handleGenerateInvite}
+                disabled={generatingInvite || !selectedInviteRole}
+                activeOpacity={0.8}
               >
-                {generatingInvite ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>GENERATE CODE</Text>}
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.modalBtnGradient}
+                >
+                  {generatingInvite ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.modalBtnText}>GENERATE & COPY CODE</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </PageShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16 },
-  backBtn: { padding: 4, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.4)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)' },
-  title: { fontSize: 20, fontWeight: '800', color: '#163235', letterSpacing: 0.5 },
-  tabContainer: { flexDirection: 'row', borderBottomWidth: 1.5, borderBottomColor: 'rgba(0, 104, 117, 0.1)' },
-  tab: { flex: 1, paddingVertical: 16, alignItems: 'center' },
-  tabActive: { borderBottomWidth: 3, borderBottomColor: '#006875' },
-  tabText: { fontSize: 14, fontWeight: '700', color: '#6b7a7d', letterSpacing: 0.5 },
-  tabTextActive: { color: '#006875' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  list: { padding: 20 },
-  createRoleBtn: { borderRadius: 100, overflow: 'hidden', marginBottom: 20, shadowColor: '#0072ff', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 4 },
-  btnGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 },
-  createRoleBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '800', letterSpacing: 1 },
-  glassCard: { backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)', overflow: 'hidden' },
-  roleCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  roleTitleGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  roleName: { fontSize: 16, fontWeight: '800', color: '#163235' },
-  customBadge: { backgroundColor: 'rgba(0, 104, 117, 0.08)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.15)' },
-  customBadgeText: { fontSize: 9, fontWeight: '800', color: '#006875', letterSpacing: 0.5 },
-  roleDesc: { fontSize: 13, color: '#6b7a7d', lineHeight: 18, fontWeight: '500' },
-  roleCardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0, 104, 117, 0.08)' },
-  permissionBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0, 104, 117, 0.05)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  permissionBadgeText: { fontSize: 11, fontWeight: '700', color: '#006875' },
-  editPermissionsBtn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 100, backgroundColor: 'rgba(0, 104, 117, 0.06)', borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.12)' },
-  editPermissionsBtnDisabled: { backgroundColor: 'rgba(0,0,0,0.03)', borderColor: 'rgba(0,0,0,0.05)' },
-  editPermissionsBtnText: { fontSize: 12, fontWeight: '700', color: '#006875', letterSpacing: 0.5 },
-  inviteCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  inviteCode: { fontSize: 16, fontWeight: '800', color: '#163235', letterSpacing: 1 },
-  statusTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  statusTagActive: { backgroundColor: 'rgba(16, 185, 129, 0.1)' },
-  statusTagInactive: { backgroundColor: 'rgba(239, 68, 68, 0.1)' },
-  statusTagTextActive: { fontSize: 9, fontWeight: '800', color: '#10b981', letterSpacing: 0.5 },
-  statusTagTextInactive: { fontSize: 9, fontWeight: '800', color: '#ef4444', letterSpacing: 0.5 },
-  inviteMetaGrid: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-  inviteMetaItem: { flex: 1, backgroundColor: 'rgba(255,255,255,0.4)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)' },
-  inviteMetaLabel: { fontSize: 9, fontWeight: '700', color: '#6b7a7d', marginBottom: 4, letterSpacing: 0.8 },
-  inviteMetaValue: { fontSize: 12, fontWeight: '800', color: '#163235' },
-  copyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderStyle: 'dashed', borderWidth: 1.5, borderColor: '#006875', borderRadius: 12, paddingVertical: 12, backgroundColor: 'rgba(0, 104, 117, 0.03)' },
-  copyBtnText: { fontSize: 13, fontWeight: '700', color: '#006875' },
-  emptyText: { textAlign: 'center', color: '#6b7a7d', marginTop: 40, fontWeight: '600' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, paddingVertical: 18, borderBottomWidth: 1.5, borderBottomColor: 'rgba(0, 104, 117, 0.1)' },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#163235' },
-  modalSubtitle: { fontSize: 12, color: '#6b7a7d', marginTop: 2, fontWeight: '600' },
-  closeBtn: { padding: 4, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.04)' },
-  modalScroll: { padding: 20 },
-  permissionCategoryGroup: { marginBottom: 24 },
-  categoryTitle: { fontSize: 12, fontWeight: '800', color: '#6b7a7d', marginBottom: 12, letterSpacing: 1.2 },
-  permissionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: 'rgba(0, 104, 117, 0.05)' },
-  permissionRowDisabled: { opacity: 0.4 },
-  permissionInfo: { flex: 1, paddingRight: 16 },
-  permissionName: { fontSize: 14, fontWeight: '700', color: '#163235' },
-  permissionTextDisabled: { color: '#6b7a7d' },
-  permissionDesc: { fontSize: 12, color: '#6b7a7d', marginTop: 3, lineHeight: 16, fontWeight: '500' },
-  modalFooter: { padding: 20, borderTopWidth: 1.5, borderTopColor: 'rgba(0, 104, 117, 0.1)', backgroundColor: 'transparent' },
-  saveBtn: { borderRadius: 100, overflow: 'hidden', shadowColor: '#0072ff', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 4 },
-  saveBtnGradient: { alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
-  saveBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '800', letterSpacing: 1.2 },
-  fieldLabel: { fontSize: 10, fontWeight: '800', color: '#6b7a7d', marginBottom: 8, letterSpacing: 1.2 },
-  fieldInput: { borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.2)', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14, color: '#163235', backgroundColor: 'rgba(255,255,255,0.5)', marginBottom: 20, fontWeight: '600' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalPopup: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
-  modalPopupHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  popupTitle: { fontSize: 18, fontWeight: '800', color: '#163235' },
-  roleOptionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  roleChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: 'rgba(0, 104, 117, 0.2)', backgroundColor: 'rgba(0,104,117,0.03)' },
-  roleChipActive: { borderColor: '#006875', backgroundColor: 'rgba(0,104,117,0.08)' },
-  roleChipText: { fontSize: 12, fontWeight: '700', color: '#6b7a7d' },
-  roleChipTextActive: { color: '#006875' }
+  container: {
+    padding: Theme.Spacing.containerPadding,
+    paddingTop: Platform.OS === 'web' ? 24 : 88,
+  },
+  containerDesktop: {
+    paddingTop: 24,
+  },
+  heroSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginBottom: 24,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#151d1e',
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: '#6b7a7d',
+    marginTop: 4,
+    maxWidth: 600,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  actionPillBtn: {
+    borderRadius: 100,
+    overflow: 'hidden',
+    shadowColor: '#0072ff',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  actionPillGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  actionPillText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  hubGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginBottom: 28,
+  },
+  hubCardTouch: {
+    flex: 1,
+    minWidth: 240,
+  },
+  hubCard: {
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+  },
+  hubCardActive: {
+    borderColor: '#006875',
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+  },
+  hubCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  hubIconHalo: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hubBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  hubBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  hubCardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#151d1e',
+    marginBottom: 4,
+  },
+  hubCardDesc: {
+    fontSize: 12,
+    color: '#6b7a7d',
+    lineHeight: 17,
+  },
+  sectionContainer: {
+    flex: 1,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  sectionSub: {
+    fontSize: 13,
+    color: '#6b7a7d',
+    marginTop: 2,
+  },
+  rolesGrid: {
+    gap: 14,
+  },
+  roleCard: {
+    padding: 20,
+    borderRadius: 18,
+  },
+  roleCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  roleTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  roleName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  customRolePill: {
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.2)',
+  },
+  customRolePillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#006875',
+  },
+  systemRolePill: {
+    backgroundColor: 'rgba(107, 122, 125, 0.08)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(107, 122, 125, 0.2)',
+  },
+  systemRolePillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6b7a7d',
+  },
+  roleDesc: {
+    fontSize: 13,
+    color: '#6b7a7d',
+    lineHeight: 19,
+  },
+  roleCardBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  permCountTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 104, 117, 0.06)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  permCountText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#006875',
+  },
+  configureBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  configureBtnDisabled: {
+    backgroundColor: '#f8fafc',
+  },
+  configureBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#006875',
+  },
+  configureBtnTextDisabled: {
+    color: '#9ca3af',
+  },
+  invitesGrid: {
+    gap: 14,
+  },
+  inviteCard: {
+    padding: 20,
+    borderRadius: 18,
+  },
+  inviteCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  codeCapsule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.2)',
+  },
+  inviteCode: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#006875',
+    letterSpacing: 1.5,
+  },
+  inviteMetaRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  inviteMetaCol: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  inviteMetaLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#6b7a7d',
+    marginBottom: 4,
+    letterSpacing: 0.8,
+  },
+  inviteMetaVal: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  copyKeyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.3)',
+  },
+  copyKeyBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#006875',
+  },
+  prefGrid: {
+    gap: 16,
+  },
+  prefCard: {
+    padding: 22,
+    borderRadius: 20,
+  },
+  prefCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  prefCardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  prefItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  prefItemName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#151d1e',
+  },
+  prefItemDesc: {
+    fontSize: 12,
+    color: '#6b7a7d',
+    marginTop: 2,
+  },
+  prefBadgeActive: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 104, 117, 0.2)',
+  },
+  prefBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#006875',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 640,
+    maxHeight: '85%',
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#151d1e',
+  },
+  modalSub: {
+    fontSize: 12,
+    color: '#6b7a7d',
+    marginTop: 2,
+  },
+  closeIconBtn: {
+    padding: 6,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+  },
+  modalBody: {
+    padding: 24,
+  },
+  categoryBlock: {
+    marginBottom: 20,
+  },
+  categoryHeading: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6b7a7d',
+    letterSpacing: 1.1,
+    marginBottom: 10,
+  },
+  permCheckRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.04)',
+  },
+  permCheckRowDisabled: {
+    opacity: 0.4,
+  },
+  permCheckInfo: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  permCheckName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#151d1e',
+  },
+  permCheckNameDisabled: {
+    color: '#9ca3af',
+  },
+  permCheckDesc: {
+    fontSize: 12,
+    color: '#6b7a7d',
+    marginTop: 2,
+  },
+  inputLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    color: '#6b7a7d',
+    marginBottom: 6,
+  },
+  modalTextInput: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#151d1e',
+    backgroundColor: '#f8fafc',
+    marginBottom: 16,
+    outlineWidth: 0,
+  },
+  roleChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  roleSelectChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+  },
+  roleSelectChipActive: {
+    borderColor: '#006875',
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+  },
+  roleSelectChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6b7a7d',
+  },
+  roleSelectChipTextActive: {
+    color: '#006875',
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  modalPrimaryBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  modalBtnGradient: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+  },
+  modalBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  centerLoading: {
+    padding: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingSub: {
+    marginTop: 12,
+    fontSize: 13,
+    color: '#6b7a7d',
+  },
 });

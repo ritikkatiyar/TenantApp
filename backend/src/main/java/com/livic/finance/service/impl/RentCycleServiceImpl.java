@@ -381,8 +381,8 @@ public class RentCycleServiceImpl implements RentCycleService {
 
     @Override
     @Transactional(readOnly = true)
-    public RentCycleDTOs.RentCycleListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, RentCycleStatus status, Pageable pageable) {
-        if (leaseId == null && currentUserId != null) {
+    public RentCycleDTOs.RentCycleListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, RentCycleStatus status, String search, Pageable pageable) {
+        if (propertyId == null && leaseId == null && currentUserId != null) {
             leaseId = leaseQueryService.findByUserIdAndStatus(currentUserId, com.livic.common.domain.LeaseStatus.ACTIVE)
                     .map(LeaseTbl::getId)
                     .orElse(null);
@@ -392,7 +392,8 @@ public class RentCycleServiceImpl implements RentCycleService {
                 .where(RentCycleSpecifications.hasPropertyId(propertyId))
                 .and(RentCycleSpecifications.hasLeaseId(leaseId))
                 .and(RentCycleSpecifications.hasBillingMonth(billingMonth))
-                .and(RentCycleSpecifications.hasStatus(status));
+                .and(RentCycleSpecifications.hasStatus(status))
+                .and(RentCycleSpecifications.matchesSearch(search));
 
         Page<RentCycleTbl> page = rentCycleCrudService.findAll(spec, pageable);
         List<RentCycleDTOs.RentCycleResponse> content = toResponses(page.getContent());

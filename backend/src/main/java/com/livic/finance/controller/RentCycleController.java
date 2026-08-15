@@ -96,10 +96,11 @@ public class RentCycleController {
             @RequestParam(required = false) UUID leaseId,
             @RequestParam(required = false) String billingMonth,
             @RequestParam(required = false) RentCycleStatus status,
+            @RequestParam(required = false) String search,
             @PageableDefault(sort = "dueDate", direction = Sort.Direction.DESC, size = 20) Pageable pageable
     ) {
         UUID currentUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
-        return ResponseEntity.ok(ApiResponse.success(rentCycleService.list(currentUserId, propertyId, leaseId, billingMonth, status, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(rentCycleService.list(currentUserId, propertyId, leaseId, billingMonth, status, search, pageable)));
     }
 
     @PostMapping("/{id}/mark-paid")

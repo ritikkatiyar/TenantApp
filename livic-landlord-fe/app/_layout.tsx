@@ -75,6 +75,36 @@ export default function RootLayout() {
       link.rel = 'stylesheet';
       link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Manrope:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&family=Hanken+Grotesk:wght@400;600;700;800&display=swap';
       document.head.appendChild(link);
+
+      const style = document.createElement('style');
+      style.textContent = `
+        input, textarea, select {
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        input:focus, textarea:focus, select:focus {
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        *:focus {
+          outline: none !important;
+        }
+        ::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: rgba(0, 104, 117, 0.15);
+          border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 104, 117, 0.35);
+        }
+      `;
+      document.head.appendChild(style);
     }
   }, []);
 
@@ -106,14 +136,7 @@ export default function RootLayout() {
                         <Stack.Screen name="signup" />
                         <Stack.Screen name="onboarding" />
                         <Stack.Screen name="command-center" />
-                        <Stack.Screen 
-                          name="ai" 
-                          options={{ 
-                            presentation: 'transparentModal',
-                            animation: 'fade',
-                            contentStyle: { backgroundColor: 'transparent' }
-                          }} 
-                        />
+                        <Stack.Screen name="ai" />
                         <Stack.Screen name="admin" />
                         <Stack.Screen name="analytics" />
                         <Stack.Screen name="reports" />

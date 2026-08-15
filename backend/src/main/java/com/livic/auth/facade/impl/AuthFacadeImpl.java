@@ -75,7 +75,7 @@ public class AuthFacadeImpl implements AuthFacade {
     @Override
     public boolean existsByUserIdAndPropertyId(UUID userId, UUID propertyId) {
         return membershipQueryService.getMembershipsByUserId(userId).stream()
-                .anyMatch(m -> m.getProperty() != null && propertyId.equals(m.getProperty().getId()));
+                .anyMatch(m -> propertyId.equals(m.getPropertyId()));
     }
 
     @Override
@@ -107,6 +107,49 @@ public class AuthFacadeImpl implements AuthFacade {
         return membershipRoleCrudService.findByCodeAndPropertyId(roleCode, propertyId)
                 .or(() -> membershipRoleCrudService.findByCodeAndPropertyIdIsNull(roleCode))
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found: " + roleCode));
+    }
+
+    @Override
+    public RoleDTOs.RoleResponse getRoleResponseForProperty(String roleCode, UUID propertyId) {
+        MembershipRoleTbl role = getRoleForProperty(roleCode, propertyId);
+        List<String> perms = rolePermissionCrudService.findByRoleId(role.getId()).stream()
+                .map(rp -> rp.getPermission().getCode())
+                .toList();
+        return new RoleDTOs.RoleResponse(
+                role.getId(),
+                role.getCode(),
+                role.getName(),
+                role.getDescription(),
+                role.getRoleRank(),
+                role.isActive(),
+                perms
+        );
+    }
+
+    @Override
+    public RoleDTOs.RoleResponse getRoleById(UUID roleId) {
+        MembershipRoleTbl role = membershipRoleCrudService.findById(roleId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found"));
+        List<String> perms = rolePermissionCrudService.findByRoleId(role.getId()).stream()
+                .map(rp -> rp.getPermission().getCode())
+                .toList();
+        return new RoleDTOs.RoleResponse(
+                role.getId(),
+                role.getCode(),
+                role.getName(),
+                role.getDescription(),
+                role.getRoleRank(),
+                role.isActive(),
+                perms
+        );
+    }
+
+    @Override
+    @Transactional
+    public MembershipSummaryDTO assignRoleById(UUID propertyId, UUID userId, UUID roleId, UUID assignedByUserId) {
+        MembershipRoleTbl role = membershipRoleCrudService.findById(roleId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found"));
+        return assignRole(propertyId, userId, role.getCode(), assignedByUserId);
     }
 
     @Override

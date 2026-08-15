@@ -16,9 +16,6 @@ import java.util.UUID;
 
 @Repository
 public interface PropertyRepository extends JpaRepository<PropertyTbl, UUID> {
-    @Query("SELECT m.property FROM MembershipTbl m WHERE m.user.id = :userId AND m.role.code IN ('PROPERTY_OWNER', 'SOCIETY_MANAGER')")
-    List<PropertyTbl> findPropertiesByOwnerId(@Param("userId") UUID userId);
-
     List<PropertyTbl> findByAutoBillDayOfMonth(Integer autoBillDayOfMonth);
 
     List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds);

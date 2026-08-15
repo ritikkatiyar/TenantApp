@@ -277,23 +277,44 @@ export default function OwnerLeasesScreen() {
   // ─── Rendering Helpers ───────────────────────────────────────────────────────
   const filteredLeases = useMemo(() => {
     if (!Array.isArray(leases)) return [];
-    return leases.filter((lease) => {
-      const q = searchQuery.toLowerCase();
-      const matchesSearch = `${lease.unitNumber || ''} ${lease.tenantName || ''} ${lease.tenantPhone || ''}`
-        .toLowerCase()
-        .includes(q);
-      return matchesSearch;
-    });
+    return leases
+      .filter((lease) => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase().trim();
+        return (
+          (lease.unitNumber && lease.unitNumber.toLowerCase().includes(q)) ||
+          (lease.tenantName && lease.tenantName.toLowerCase().includes(q)) ||
+          (lease.tenantPhone && lease.tenantPhone.toLowerCase().includes(q)) ||
+          (lease.status && lease.status.toLowerCase().includes(q))
+        );
+      })
+      .sort((a, b) =>
+        (a.unitNumber || '').localeCompare(b.unitNumber || '', undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      );
   }, [leases, searchQuery]);
 
   const filteredBookings = useMemo(() => {
     if (!Array.isArray(bookings)) return [];
-    return bookings.filter((b) => {
-      const q = searchQuery.toLowerCase();
-      return `${b.unitNumber || ''} ${b.prospectiveTenantName || ''} ${b.prospectiveTenantPhone || ''}`
-        .toLowerCase()
-        .includes(q);
-    });
+    return bookings
+      .filter((b) => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase().trim();
+        return (
+          (b.unitNumber && b.unitNumber.toLowerCase().includes(q)) ||
+          (b.prospectiveTenantName && b.prospectiveTenantName.toLowerCase().includes(q)) ||
+          (b.prospectiveTenantPhone && b.prospectiveTenantPhone.toLowerCase().includes(q)) ||
+          (b.status && b.status.toLowerCase().includes(q))
+        );
+      })
+      .sort((a, b) =>
+        (a.unitNumber || '').localeCompare(b.unitNumber || '', undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      );
   }, [bookings, searchQuery]);
 
   const openInventory = (lease: LeaseResponse) => {

@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -192,7 +193,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 14,
     borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', paddingHorizontal: 12, gap: 8,
   },
-  searchInput: { flex: 1, fontSize: 14, color: '#0b1c30' },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#0b1c30',
+    outlineWidth: 0,
+  },
   desktopSearchRow: { marginBottom: 4 },
 
   tabBar: { flexDirection: 'row', gap: 8 },
