@@ -50,13 +50,29 @@ export function getActiveLease(token: string): Promise<LeaseResponse | null> {
   });
 }
 
-export function listActiveLeasesByProperty(propertyId: string, token: string): Promise<LeaseResponse[]> {
-  return apiRequest<LeaseResponse[]>(`/api/v1/finance/leases?propertyId=${propertyId}`, {
-    method: 'GET',
-    token,
-  }).catch((err) => {
-    console.warn('[Lease API] Failed to list active leases:', err.message);
-    return [];
-  });
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export async function listActiveLeasesByProperty(
+  propertyId: string,
+  token: string,
+  page = 0,
+  size = 20
+): Promise<PageResponse<LeaseResponse>> {
+  try {
+    const res = await apiRequest<PageResponse<LeaseResponse>>(`/api/v1/finance/leases?propertyId=${propertyId}&page=${page}&size=${size}`, {
+      method: 'GET',
+      token,
+    });
+    return res || { content: [], totalElements: 0, totalPages: 0, size: 20, number: 0 };
+  } catch (err: any) {
+    console.warn('[Lease API] Failed to list active leases:', err?.message);
+    return { content: [], totalElements: 0, totalPages: 0, size: 20, number: 0 };
+  }
 }
 

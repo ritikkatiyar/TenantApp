@@ -8,9 +8,12 @@ import { DesktopRegistryRow, MobileInventoryCard } from './InventoryCardComponen
 
 interface InventoryRegistryViewProps {
   items: InventoryItem[];
+  totalCount?: number;
+  stats?: Array<{ label: string; value: string; helper: string; icon: string }>;
   isDesktop: boolean;
   serviceOnly: boolean;
   onToggleService: () => void;
+  onAddItem?: () => void;
 }
 
 const STAT_GRAD: [string, string][] = [
@@ -23,19 +26,25 @@ const STAT_COLORS = ['#0891b2', '#dc2626', '#4f46e5', '#059669'];
 
 export function InventoryRegistryView({
   items,
+  totalCount,
+  stats,
   isDesktop,
   serviceOnly,
   onToggleService,
+  onAddItem,
 }: InventoryRegistryViewProps) {
+  const displayStats = stats && stats.length > 0 ? stats : inventoryStats;
+  const count = totalCount !== undefined ? totalCount : items.length;
+
   return (
     <View style={styles.sectionStack}>
       <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>
-        {inventoryStats.map((stat, i) => (
+        {displayStats.map((stat, i) => (
           <BlurView key={stat.label} intensity={55} tint="light" style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
-            <LinearGradient colors={STAT_GRAD[i]} style={styles.statIconCircle}>
+            <LinearGradient colors={STAT_GRAD[i % STAT_GRAD.length]} style={styles.statIconCircle}>
               <MaterialIcons name={stat.icon as any} size={18} color="#fff" />
             </LinearGradient>
-            <Text style={[styles.statValue, { color: STAT_COLORS[i] }]}>{stat.value}</Text>
+            <Text style={[styles.statValue, { color: STAT_COLORS[i % STAT_COLORS.length] }]}>{stat.value}</Text>
             <Text style={styles.statLabel}>{stat.label}</Text>
             <Text style={styles.statHelper}>{stat.helper}</Text>
           </BlurView>
@@ -46,7 +55,7 @@ export function InventoryRegistryView({
         <View style={[styles.panelHeader, !isDesktop && styles.panelHeaderMobile]}>
           <View>
             <Text style={styles.panelTitle}>Itemized Registry</Text>
-            <Text style={styles.panelSub}>{items.length} of {inventoryItems.length} assets</Text>
+            <Text style={styles.panelSub}>{items.length} of {count} assets</Text>
           </View>
           <View style={styles.panelActions}>
             <TouchableOpacity
@@ -59,13 +68,34 @@ export function InventoryRegistryView({
               <MaterialIcons name="handyman" size={14} color={serviceOnly ? '#fff' : '#6b7280'} />
               <Text style={[styles.filterPillText, serviceOnly && styles.filterPillTextActive]}>Service Due</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <MaterialIcons name="download" size={18} color="#849495" />
-            </TouchableOpacity>
+            {onAddItem && (
+              <TouchableOpacity style={styles.addSmallBtn} onPress={onAddItem}>
+                <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.addSmallBtnInner}>
+                  <MaterialIcons name="add" size={16} color="#fff" />
+                  <Text style={styles.addSmallBtnText}>Add Item</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
-        {isDesktop ? (
+        {items.length === 0 ? (
+          <View style={styles.emptyState}>
+            <LinearGradient colors={['rgba(8,145,178,0.1)', 'rgba(0,114,255,0.1)']} style={styles.emptyIconCircle}>
+              <MaterialIcons name="inventory-2" size={32} color="#0891b2" />
+            </LinearGradient>
+            <Text style={styles.emptyTitle}>No Inventory Items Tracked</Text>
+            <Text style={styles.emptySubtitle}>Add furniture, appliances, HVAC or fixtures to track asset value and condition evidence.</Text>
+            {onAddItem && (
+              <TouchableOpacity style={styles.emptyAddBtn} onPress={onAddItem}>
+                <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.addSmallBtnInner}>
+                  <MaterialIcons name="add" size={16} color="#fff" />
+                  <Text style={styles.addSmallBtnText}>Add First Item</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : isDesktop ? (
           <View style={styles.tableContainer}>
             <View style={styles.tableHeaderRow}>
               {['Item', 'Category', 'Location', 'Condition', 'Status', 'Value', ''].map((h, i) => (
@@ -117,4 +147,12 @@ const styles = StyleSheet.create({
   tableCell: { flex: 1, justifyContent: 'center' },
   itemCell: { flex: 2.2, flexDirection: 'row', alignItems: 'center', gap: 12 },
   cardList: { padding: 14, gap: 12 },
+  addSmallBtn: { borderRadius: 12, overflow: 'hidden' },
+  addSmallBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8 },
+  addSmallBtnText: { color: '#fff', fontSize: 12, fontWeight: '800', fontFamily: 'Inter' },
+  emptyState: { padding: 48, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  emptyIconCircle: { width: 64, height: 64, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
+  emptySubtitle: { fontSize: 13, color: '#6b7280', textAlign: 'center', maxWidth: 400, lineHeight: 19, fontFamily: 'Inter' },
+  emptyAddBtn: { marginTop: 8, borderRadius: 12, overflow: 'hidden' },
 });

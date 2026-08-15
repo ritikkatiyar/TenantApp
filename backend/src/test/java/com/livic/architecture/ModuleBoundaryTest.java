@@ -25,7 +25,7 @@ class ModuleBoundaryTest {
     private static JavaClasses classes;
 
     private static final String[] MODULES = {
-            "auth", "user", "property", "finance", "billing", "payment", "notification", "announcement", "analytics", "issue"
+            "auth", "user", "property", "finance", "billing", "payment", "notification", "announcement", "analytics", "issue", "storage", "inventory"
     };
 
     @BeforeAll
@@ -147,6 +147,38 @@ class ModuleBoundaryTest {
         ArchRule rule = noClasses()
                 .that().resideInAPackage("com.livic.auth.facade..")
                 .should().dependOnClassesThat().resideInAnyPackage("com.livic.finance..", "com.livic.billing..");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Storage module internal services must not be accessed from outside storage module")
+    void strictStorageFacadeEnforcement() {
+        ArchRule rule = noClasses()
+                .that().resideOutsideOfPackage("com.livic.storage..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.livic.storage.service.interfaces..",
+                        "com.livic.storage.service.impl..",
+                        "com.livic.storage.repository..",
+                        "com.livic.storage.domain.."
+                )
+                .because("Outside modules must access the storage module strictly through com.livic.storage.facade or DTOs");
+
+        rule.check(classes);
+    }
+
+    @Test
+    @DisplayName("Inventory module internal services must not be accessed from outside inventory module")
+    void strictInventoryFacadeEnforcement() {
+        ArchRule rule = noClasses()
+                .that().resideOutsideOfPackage("com.livic.inventory..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.livic.inventory.service.interfaces..",
+                        "com.livic.inventory.service.impl..",
+                        "com.livic.inventory.repository..",
+                        "com.livic.inventory.domain.."
+                )
+                .because("Outside modules must access the inventory module strictly through com.livic.inventory.facade or DTOs");
 
         rule.check(classes);
     }
