@@ -93,3 +93,12 @@ whatsapp:
 push:
   enabled: ${PUSH_ENABLED:false}
 
+storage:
+  provider: ${STORAGE_PROVIDER:CLOUDINARY}
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:demo}
+    api-key: ${CLOUDINARY_API_KEY:mock-key}
+    api-secret: ${CLOUDINARY_API_SECRET:mock-secret}
+    folder-prefix: ${CLOUDINARY_FOLDER_PREFIX:livic}
+
+

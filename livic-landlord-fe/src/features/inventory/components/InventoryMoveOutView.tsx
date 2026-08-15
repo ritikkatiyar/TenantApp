@@ -3,25 +3,30 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { verificationItems } from '@/src/features/inventory/mockInventoryData';
+import { type VerificationItem } from '@/src/features/inventory/mockInventoryData';
 import { VerificationCard, SummaryLine } from './InventoryCardComponents';
+import { formatCurrency } from '@/src/utils/formatters';
 
 interface InventoryMoveOutViewProps {
+  items?: VerificationItem[];
+  leaseId?: string;
   isDesktop: boolean;
   securityDeposit: number;
   totalDeductions: number;
   netRefund: number;
+  onRefresh?: () => void;
 }
 
-const formatCurrency = (amount: number) =>
-  `Rs. ${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-
 export function InventoryMoveOutView({
+  items = [],
+  leaseId,
   isDesktop,
   securityDeposit,
   totalDeductions,
   netRefund,
 }: InventoryMoveOutViewProps) {
+  const hasItems = items.length > 0;
+
   return (
     <View style={styles.sectionStack}>
       <BlurView intensity={35} tint="light" style={styles.moveBanner}>
@@ -32,18 +37,30 @@ export function InventoryMoveOutView({
         />
         <View style={styles.moveBannerContent}>
           <Text style={styles.moveBannerKicker}>MOVE-OUT INSPECTION</Text>
-          <Text style={styles.moveBannerTitle}>Alex Rivera</Text>
-          <Text style={styles.moveBannerMeta}>Lease #L-7142 · Unit 302-A · Move-out Jul 28, 2026</Text>
+          <Text style={styles.moveBannerTitle}>Return Verification & Settlement</Text>
+          <Text style={styles.moveBannerMeta}>{leaseId ? `Lease #${leaseId}` : 'Inspect return conditions and compute deductions'}</Text>
         </View>
         <View style={styles.moveOutDatePill}>
           <MaterialIcons name="event" size={16} color="#fff" />
-          <Text style={styles.moveOutDateText}>Jul 28, 2026</Text>
+          <Text style={styles.moveOutDateText}>{hasItems ? 'Inspection Active' : 'No Assets Bound'}</Text>
         </View>
       </BlurView>
 
       <View style={[styles.workflowGrid, isDesktop && styles.workflowGridDesktop]}>
         <View style={styles.workflowMain}>
-          {verificationItems.map(item => <VerificationCard key={item.id} item={item} />)}
+          {!hasItems ? (
+            <View style={styles.emptyCard}>
+              <LinearGradient colors={['rgba(220,38,38,0.1)', 'rgba(217,119,6,0.1)']} style={styles.emptyIconCircle}>
+                <MaterialIcons name="receipt-long" size={32} color="#dc2626" />
+              </LinearGradient>
+              <Text style={styles.emptyTitle}>No Move-In Assets Bound to this Lease</Text>
+              <Text style={styles.emptySubtitle}>
+                No physical items were assigned to this lease on move-in. Full deposit refund is ready for settlement.
+              </Text>
+            </View>
+          ) : (
+            items.map((item) => <VerificationCard key={item.id} item={item} />)
+          )}
         </View>
 
         <BlurView intensity={65} tint="light" style={styles.rail}>
@@ -54,9 +71,9 @@ export function InventoryMoveOutView({
             <Text style={styles.panelTitle}>Settlement</Text>
           </View>
           <View style={styles.railBody}>
-            <SummaryLine label="Security Deposit"  value={formatCurrency(securityDeposit)} bold />
+            <SummaryLine label="Security Deposit" value={formatCurrency(securityDeposit)} bold />
             <View style={styles.railDivider} />
-            {verificationItems.filter(i => i.deduction > 0).map(i => (
+            {items.filter(i => (i.deduction || 0) > 0).map(i => (
               <SummaryLine key={i.id} label={i.name} value={`-${formatCurrency(i.deduction)}`} danger />
             ))}
             <SummaryLine label="Total Deductions" value={`-${formatCurrency(totalDeductions)}`} danger bold />
@@ -75,9 +92,6 @@ export function InventoryMoveOutView({
               <Text style={styles.primaryWideBtnText}>Confirm & Settle</Text>
               <MaterialIcons name="send" size={16} color="#fff" />
             </LinearGradient>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.ghostWideBtn, styles.ghostWideBtnDanger]}>
-            <Text style={[styles.ghostWideBtnText, { color: '#dc2626' }]}>Dispute Settlement</Text>
           </TouchableOpacity>
         </BlurView>
       </View>
@@ -98,6 +112,15 @@ const styles = StyleSheet.create({
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   workflowMain: { flex: 1.9, gap: 12 },
   panelTitle: { fontSize: 18, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
+
+  emptyCard: {
+    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.35)', padding: 40, alignItems: 'center', justifyContent: 'center', gap: 10,
+  },
+  emptyIconCircle: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
+  emptyTitle: { fontSize: 17, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
+  emptySubtitle: { fontSize: 13, color: '#6b7280', textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
+
   rail: { flex: 1, minWidth: 260, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.35)', padding: 16, gap: 14, overflow: 'hidden' },
   railHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   railIconCircle: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
@@ -109,7 +132,4 @@ const styles = StyleSheet.create({
   primaryWideBtn: { borderRadius: 14, overflow: 'hidden' },
   primaryWideBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
   primaryWideBtnText: { color: '#fff', fontSize: 14, fontWeight: '800', fontFamily: 'Inter' },
-  ghostWideBtn: { borderRadius: 14, borderWidth: 1, borderColor: 'rgba(0,0,0,0.12)', paddingVertical: 13, alignItems: 'center' },
-  ghostWideBtnDanger: { borderColor: 'rgba(220,38,38,0.3)' },
-  ghostWideBtnText: { fontSize: 13, fontWeight: '700', color: '#5b6b6d', fontFamily: 'Inter' },
 });
