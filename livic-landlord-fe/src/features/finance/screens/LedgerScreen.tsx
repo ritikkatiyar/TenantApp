@@ -514,7 +514,12 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 16
   },
-  searchInput: { flex: 1, color: '#151d1e', fontSize: 14 },
+  searchInput: {
+    flex: 1,
+    color: '#151d1e',
+    fontSize: 14,
+    outlineWidth: 0,
+  },
 
   // Date filter styles
   filtersContainer: {

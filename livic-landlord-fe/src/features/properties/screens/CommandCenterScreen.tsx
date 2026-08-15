@@ -720,6 +720,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#151d1e',
     padding: 0,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    outlineWidth: 0,
   },
   mobileFilterButtonWrapper: {
     width: 50,

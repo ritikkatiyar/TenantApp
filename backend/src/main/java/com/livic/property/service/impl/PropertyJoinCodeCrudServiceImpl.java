@@ -4,6 +4,8 @@ import com.livic.common.service.impl.AbstractCrudService;
 import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.repository.PropertyJoinCodeRepository;
 import com.livic.property.service.interfaces.PropertyJoinCodeCrudService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,5 +27,10 @@ public class PropertyJoinCodeCrudServiceImpl extends AbstractCrudService<Propert
     @Override
     public List<PropertyJoinCodeTbl> findByPropertyId(UUID propertyId) {
         return repository.findByPropertyId(propertyId);
+    }
+
+    @Override
+    public Page<PropertyJoinCodeTbl> findByPropertyId(UUID propertyId, Pageable pageable) {
+        return repository.findByPropertyId(propertyId, pageable);
     }
 }

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PropertyCrudService extends CrudService<PropertyTbl, UUID> {
-    List<PropertyTbl> findPropertiesByOwnerId(UUID userId);
     List<PropertyTbl> findByAutoBillDayOfMonth(Integer autoBillDayOfMonth);
     List<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds);
     Page<PropertyTbl> findDistinctByIdIn(Collection<UUID> propertyIds, Pageable pageable);

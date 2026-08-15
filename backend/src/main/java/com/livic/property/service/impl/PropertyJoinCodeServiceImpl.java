@@ -1,29 +1,31 @@
 package com.livic.property.service.impl;
 
-import com.livic.auth.domain.MembershipRoleTbl;
-import com.livic.auth.domain.MembershipTbl;
 import com.livic.auth.dto.MembershipSummaryDTO;
+import com.livic.auth.dto.RoleDTOs;
 import com.livic.auth.facade.AuthFacade;
 import com.livic.common.exception.BusinessException;
 import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.dto.PropertyJoinCodeDTOs;
+import com.livic.property.mapper.PropertyJoinCodeMapper;
 import com.livic.property.service.interfaces.PropertyJoinCodeCrudService;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
 import com.livic.property.service.interfaces.PropertyQueryService;
-import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -40,12 +42,12 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
     private final UserFacade userFacade;
 
     @Override
-    public PropertyJoinCodeTbl generateJoinCode(UUID propertyId, String roleCode, int maxUses, UUID actorId) {
+    public PropertyJoinCodeDTOs.JoinCodeResponse generateJoinCode(UUID propertyId, String roleCode, int maxUses, UUID actorId) {
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
         UserSummaryDTO actor = userFacade.getUserById(actorId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Actor user not found"));
 
-        MembershipRoleTbl role = authFacade.getRoleForProperty(roleCode, propertyId);
+        RoleDTOs.RoleResponse role = authFacade.getRoleResponseForProperty(roleCode, propertyId);
 
         if (!role.isActive()) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot generate join code for an inactive role.");
@@ -56,31 +58,38 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
 
         String code = generateRandomCode(property.getName(), roleCode);
 
-        UserTbl actorRef = new UserTbl();
-        actorRef.setId(actor.id());
-
         PropertyJoinCodeTbl joinCode = PropertyJoinCodeTbl.builder()
                 .property(property)
-                .role(role)
+                .roleId(role.id())
                 .code(code)
-                .createdBy(actorRef)
+                .createdBy(actor.id())
                 .maxUses(maxUses)
                 .usesCount(0)
                 .isActive(true)
                 .expiresAt(Instant.now().plusSeconds(172800)) // 48 hours
                 .build();
 
-        return propertyJoinCodeCrudService.save(joinCode);
+        PropertyJoinCodeTbl saved = propertyJoinCodeCrudService.save(joinCode);
+        return PropertyJoinCodeMapper.toResponse(saved, role.code(), role.name());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<PropertyJoinCodeTbl> getPropertyJoinCodes(UUID propertyId) {
-        return propertyJoinCodeCrudService.findByPropertyId(propertyId);
+    public Page<PropertyJoinCodeDTOs.JoinCodeResponse> getPropertyJoinCodes(UUID propertyId, Pageable pageable) {
+        Page<PropertyJoinCodeTbl> page = propertyJoinCodeCrudService.findByPropertyId(propertyId, pageable);
+        Map<UUID, RoleDTOs.RoleResponse> roleMap = authFacade.getPropertyRoles(propertyId, Pageable.unpaged()).stream()
+                .collect(Collectors.toMap(RoleDTOs.RoleResponse::id, r -> r, (r1, r2) -> r1));
+
+        return page.map(jc -> {
+            RoleDTOs.RoleResponse role = roleMap.get(jc.getRoleId());
+            String rCode = role != null ? role.code() : "";
+            String rName = role != null ? role.name() : "";
+            return PropertyJoinCodeMapper.toResponse(jc, rCode, rName);
+        });
     }
 
     @Override
-    public MembershipTbl validateAndApplyJoinCode(String code, UUID userId) {
+    public PropertyJoinCodeDTOs.JoinCodeResultResponse validateAndApplyJoinCode(String code, UUID userId) {
         String cleanCode = code != null ? code.trim().toUpperCase() : "";
 
         PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findByCode(cleanCode)
@@ -103,14 +112,13 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         }
 
         PropertyTbl property = joinCode.getProperty();
-        MembershipRoleTbl role = joinCode.getRole();
+        RoleDTOs.RoleResponse role = authFacade.getRoleById(joinCode.getRoleId());
 
-        if (authFacade.existsByUserIdAndPropertyIdAndRoleCode(userId, property.getId(), role.getCode())) {
+        if (authFacade.existsByUserIdAndPropertyIdAndRoleCode(userId, property.getId(), role.code())) {
             throw new BusinessException(HttpStatus.CONFLICT, "You are already a member of this property with this role.");
         }
 
-        UUID createdByUserId = joinCode.getCreatedBy() != null ? joinCode.getCreatedBy().getId() : null;
-        MembershipSummaryDTO saved = authFacade.assignRole(property.getId(), userId, role.getCode(), createdByUserId);
+        MembershipSummaryDTO saved = authFacade.assignRole(property.getId(), userId, role.code(), joinCode.getCreatedBy());
 
         joinCode.setUsesCount(joinCode.getUsesCount() + 1);
         if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
@@ -119,79 +127,12 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         propertyJoinCodeCrudService.save(joinCode);
 
         log.info("join_code_applied userId={} propertyId={} roleCode={} code={}",
-                userId, property.getId(), role.getCode(), cleanCode);
+                userId, property.getId(), role.code(), cleanCode);
 
-        // Build a MembershipTbl shell from the DTO for the return contract
-        com.livic.auth.domain.MembershipTbl membershipRef = new com.livic.auth.domain.MembershipTbl();
-        membershipRef.setId(saved.id());
-        
-        if (saved.userId() != null) {
-            UserTbl uRef = new UserTbl();
-            uRef.setId(saved.userId());
-            membershipRef.setUser(uRef);
-        }
-        
-        if (saved.propertyId() != null) {
-            PropertyTbl pRef = new PropertyTbl();
-            pRef.setId(saved.propertyId());
-            membershipRef.setProperty(pRef);
-        }
-        
-        if (saved.roleCode() != null) {
-            MembershipRoleTbl rRef = new MembershipRoleTbl();
-            rRef.setCode(saved.roleCode());
-            membershipRef.setRole(rRef);
-        }
-        
-        return membershipRef;
-    }
-
-    @Override
-    public PropertyJoinCodeDTOs.JoinCodeResultResponse validateAndApplyJoinCodeResult(String code, UUID userId) {
-        String cleanCode = code != null ? code.trim().toUpperCase() : "";
-
-        PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findByCode(cleanCode)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Invalid join code."));
-
-        if (!joinCode.isActive()) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code is inactive.");
-        }
-
-        if (joinCode.getExpiresAt().isBefore(Instant.now())) {
-            joinCode.setActive(false);
-            propertyJoinCodeCrudService.save(joinCode);
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has expired.");
-        }
-
-        if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
-            joinCode.setActive(false);
-            propertyJoinCodeCrudService.save(joinCode);
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has reached its maximum uses.");
-        }
-
-        PropertyTbl property = joinCode.getProperty();
-        MembershipRoleTbl role = joinCode.getRole();
-
-        if (authFacade.existsByUserIdAndPropertyIdAndRoleCode(userId, property.getId(), role.getCode())) {
-            throw new BusinessException(HttpStatus.CONFLICT, "You are already a member of this property with this role.");
-        }
-
-        UUID createdByUserId = joinCode.getCreatedBy() != null ? joinCode.getCreatedBy().getId() : null;
-        MembershipSummaryDTO saved = authFacade.assignRole(property.getId(), userId, role.getCode(), createdByUserId);
-
-        joinCode.setUsesCount(joinCode.getUsesCount() + 1);
-        if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
-            joinCode.setActive(false);
-        }
-        propertyJoinCodeCrudService.save(joinCode);
-
-        log.info("join_code_applied userId={} propertyId={} roleCode={} code={}",
-                userId, property.getId(), role.getCode(), cleanCode);
-
-        return new PropertyJoinCodeDTOs.JoinCodeResultResponse(
+        return PropertyJoinCodeMapper.toResultResponse(
                 property.getId(),
                 property.getName(),
-                role.getCode(),
+                role.code(),
                 saved.id()
         );
     }

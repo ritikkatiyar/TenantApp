@@ -94,6 +94,16 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [checklist, setChecklist] = useState<PreFlightChecklistResponse | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   const [selectedInvoice, setSelectedInvoice] = useState<RentCycleResponse | null>(null);
   const [cashAmount, setCashAmount] = useState<string>('');
   const [cashNote, setCashNote] = useState<string>('');
@@ -133,13 +143,13 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (token && propertyId) {
       checkExistingInvoices();
     }
-  }, [billingMonth, token, propertyId]);
+  }, [billingMonth, token, propertyId, debouncedSearchQuery]);
 
   const checkExistingInvoices = async () => {
     if (!token || !propertyId) return;
     try {
       setIsLoading(true);
-      const data = await listRentCycles(billingMonth, token, propertyId as string);
+      const data = await listRentCycles(billingMonth, token, propertyId as string, 0, 100, undefined, debouncedSearchQuery);
       if (data && data.content && data.content.length > 0) {
         setInvoices(data.content);
         setTotalRevenue(data.totalExpectedRevenue || 0);
@@ -400,6 +410,22 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                 />
               )}
             </GlassCard>
+
+            <View style={styles.searchBox}>
+              <MaterialIcons name="search" size={20} color="#6b7a7d" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by Unit, Tenant name, or Phone..."
+                placeholderTextColor="#6b7a7d"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <MaterialIcons name="close" size={20} color="#6b7a7d" />
+                </TouchableOpacity>
+              )}
+            </View>
 
             <View style={styles.invoiceList}>
               {(() => {
@@ -941,5 +967,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#16a34a',
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+    gap: 8,
+    marginVertical: 16,
+    width: '100%',
+  },
+  searchInput: {
+    flex: 1,
+    color: '#151d1e',
+    fontSize: 14,
+    outlineWidth: 0,
   },
 });

@@ -20,16 +20,16 @@ public interface MembershipRepository extends JpaRepository<MembershipTbl, UUID>
     
     boolean existsByUserIdAndPropertyId(UUID userId, UUID propertyId);
 
-    @Query("SELECT p.code FROM MembershipTbl m JOIN RolePermissionTbl rp ON m.role.id = rp.role.id JOIN PermissionTbl p ON rp.permission.id = p.id WHERE m.user.id = :userId AND m.property.id = :propertyId")
+    @Query("SELECT p.code FROM MembershipTbl m JOIN RolePermissionTbl rp ON m.role.id = rp.role.id JOIN PermissionTbl p ON rp.permission.id = p.id WHERE m.userId = :userId AND m.propertyId = :propertyId")
     Set<String> findPermissionCodesByUserIdAndPropertyId(@Param("userId") UUID userId, @Param("propertyId") UUID propertyId);
 
-    @Query("SELECT COUNT(m) > 0 FROM MembershipTbl m WHERE m.user.id = :userId AND m.property.id = :propertyId AND m.role.code = :roleCode")
+    @Query("SELECT COUNT(m) > 0 FROM MembershipTbl m WHERE m.userId = :userId AND m.propertyId = :propertyId AND m.role.code = :roleCode")
     boolean existsByUserIdAndPropertyIdAndRoleCode(@Param("userId") UUID userId, @Param("propertyId") UUID propertyId, @Param("roleCode") String roleCode);
 
-    @Query("SELECT DISTINCT m.property.id FROM MembershipTbl m WHERE m.user.id = :userId AND m.property IS NOT NULL")
+    @Query("SELECT DISTINCT m.propertyId FROM MembershipTbl m WHERE m.userId = :userId AND m.propertyId IS NOT NULL")
     List<UUID> findPropertyIdsByUserId(@Param("userId") UUID userId);
 
-    @Query("SELECT m FROM MembershipTbl m WHERE m.property.id = :propertyId AND m.role.code = :roleCode")
+    @Query("SELECT m FROM MembershipTbl m WHERE m.propertyId = :propertyId AND m.role.code = :roleCode")
     List<MembershipTbl> findByPropertyIdAndRoleCode(@Param("propertyId") UUID propertyId, @Param("roleCode") String roleCode);
 
     void deleteByPropertyId(UUID propertyId);

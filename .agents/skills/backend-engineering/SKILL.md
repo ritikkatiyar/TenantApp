@@ -34,13 +34,17 @@ module/
 
 * **Bounded Contexts Only**: Modules must be organized by Domain (Bounded Contexts), NOT by individual database tables (Entity Services).
 * Approved Top-Level Modules:
-  1. `auth` - Identity & Access Management (Logins, Tokens).
+  1. `auth` - Identity & Access Management (Logins, Tokens, Memberships, Roles & Permissions).
   2. `user` - Core User Profile and Global Roles.
-  3. `property` - Real Estate / Asset Management (Properties, Units, Layouts, Property Roles).
+  3. `property` - Real Estate / Asset Management (Properties, Units, Layouts, Property Join Codes).
   4. `finance` - Tenancy & Financials (Leases, Rent Cycles, Expenses, Splits).
   5. `common` / `config` - Cross-cutting concerns.
   6. `announcement` - Targeted announcements/broadcasts to properties, floors, or units.
   7. `notification` - Multi-channel alert delivery (Email, Push, WhatsApp).
+  8. `billing` - Landlord SaaS subscriptions, plan tiers, feature limits, and quota enforcement.
+  9. `payment` - Payment gateway integrations (Razorpay, Stripe, PayPal), payment initiation, webhooks, and ledger transactions.
+  10. `issue` - Maintenance tickets, issue reporting, priority triage, and resolution workflows.
+  11. `analytics` - Business intelligence, revenue metrics, occupancy rates, and operational reporting.
 * No direct repository access across modules
 * Modules communicate ONLY via service interfaces
 * Controllers must remain thin

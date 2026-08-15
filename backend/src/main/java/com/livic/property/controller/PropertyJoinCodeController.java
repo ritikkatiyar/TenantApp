@@ -2,18 +2,19 @@ package com.livic.property.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
-import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.dto.PropertyJoinCodeDTOs;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -30,22 +31,21 @@ public class PropertyJoinCodeController {
             @Valid @RequestBody PropertyJoinCodeDTOs.GenerateJoinCodeRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID actorId = UUID.fromString(currentUser.getId());
-        PropertyJoinCodeTbl created = propertyJoinCodeService.generateJoinCode(
+        PropertyJoinCodeDTOs.JoinCodeResponse created = propertyJoinCodeService.generateJoinCode(
                 propertyId, 
                 request.roleCode(), 
                 request.maxUses(), 
                 actorId
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(toResponse(created)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(created));
     }
 
     @GetMapping("/{propertyId}/join-codes")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'MANAGE_STAFF')")
-    public ResponseEntity<ApiResponse<List<PropertyJoinCodeDTOs.JoinCodeResponse>>> getPropertyJoinCodes(
-            @PathVariable UUID propertyId) {
-        List<PropertyJoinCodeDTOs.JoinCodeResponse> responses = propertyJoinCodeService.getPropertyJoinCodes(propertyId).stream()
-                .map(this::toResponse)
-                .toList();
+    public ResponseEntity<ApiResponse<Page<PropertyJoinCodeDTOs.JoinCodeResponse>>> getPropertyJoinCodes(
+            @PathVariable UUID propertyId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<PropertyJoinCodeDTOs.JoinCodeResponse> responses = propertyJoinCodeService.getPropertyJoinCodes(propertyId, pageable);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
@@ -55,20 +55,7 @@ public class PropertyJoinCodeController {
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
         return ResponseEntity.ok(ApiResponse.success(
-                propertyJoinCodeService.validateAndApplyJoinCodeResult(request.code(), userId)
+                propertyJoinCodeService.validateAndApplyJoinCode(request.code(), userId)
         ));
-    }
-
-    private PropertyJoinCodeDTOs.JoinCodeResponse toResponse(PropertyJoinCodeTbl jc) {
-        return new PropertyJoinCodeDTOs.JoinCodeResponse(
-                jc.getId(),
-                jc.getCode(),
-                jc.getRole().getCode(),
-                jc.getRole().getName(),
-                jc.getMaxUses(),
-                jc.getUsesCount(),
-                jc.isActive(),
-                jc.getExpiresAt()
-        );
     }
 }

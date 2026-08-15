@@ -43,4 +43,31 @@ public class RentCycleSpecifications {
             return cb.in(root.get("lease").get("unitId")).value(subquery);
         };
     }
+
+    public static Specification<RentCycleTbl> matchesSearch(String search) {
+        return (root, query, cb) -> {
+            if (search == null || search.trim().isEmpty()) {
+                return null;
+            }
+            String searchPattern = "%" + search.trim().toLowerCase() + "%";
+
+            jakarta.persistence.criteria.Subquery<UUID> unitSubquery = query.subquery(UUID.class);
+            jakarta.persistence.criteria.Root<com.livic.property.domain.UnitTbl> unitRoot = unitSubquery.from(com.livic.property.domain.UnitTbl.class);
+            unitSubquery.select(unitRoot.get("id"));
+            unitSubquery.where(cb.like(cb.lower(unitRoot.get("unitNumber")), searchPattern));
+
+            jakarta.persistence.criteria.Subquery<UUID> userSubquery = query.subquery(UUID.class);
+            jakarta.persistence.criteria.Root<com.livic.user.domain.UserTbl> userRoot = userSubquery.from(com.livic.user.domain.UserTbl.class);
+            userSubquery.select(userRoot.get("id"));
+            userSubquery.where(cb.or(
+                    cb.like(cb.lower(userRoot.get("fullName")), searchPattern),
+                    cb.like(cb.lower(userRoot.get("phoneNumber")), searchPattern)
+            ));
+
+            return cb.or(
+                    cb.in(root.get("lease").get("unitId")).value(unitSubquery),
+                    cb.in(root.get("lease").get("userId")).value(userSubquery)
+            );
+        };
+    }
 }

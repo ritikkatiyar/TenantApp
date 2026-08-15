@@ -8,7 +8,8 @@ import {
   TextInput,
   ActivityIndicator,
   useWindowDimensions,
-  Animated
+  Animated,
+  Platform
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -456,7 +457,8 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: '#151d1e',
-    fontSize: 14
+    fontSize: 14,
+    outlineWidth: 0,
   },
   filtersContainer: {
     flexDirection: 'row',

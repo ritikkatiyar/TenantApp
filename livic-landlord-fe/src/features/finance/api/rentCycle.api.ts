@@ -121,25 +121,34 @@ export interface RentCycleListResponse {
 export const listRentCycles = async (
   billingMonth: string,
   token: string,
-  propertyId?: string
+  propertyId?: string,
+  page: number = 0,
+  size: number = 20,
+  status?: string,
+  search?: string
 ): Promise<RentCycleListResponse> => {
-  let url = `/api/v1/finance/rent-cycles?billingMonth=${billingMonth}&size=20`;
-  if (propertyId) {
-    url += `&propertyId=${propertyId}`;
-  }
+  const params = new URLSearchParams();
+  if (billingMonth) params.append('billingMonth', billingMonth);
+  if (propertyId && propertyId !== 'ALL') params.append('propertyId', propertyId);
+  if (status && status !== 'ALL') params.append('status', status);
+  if (search && search.trim()) params.append('search', search.trim());
+  params.append('page', String(page));
+  params.append('size', String(size));
+
+  const url = `/api/v1/finance/rent-cycles?${params.toString()}`;
   const response = await apiRequest<BackendRentCycleListResponse>(url, {
     method: 'GET',
     token
   });
   return {
-    content: response.content,
-    totalElements: response.totalElements,
-    totalPages: response.totalPages,
-    size: response.size,
-    number: response.number,
-    totalExpectedRevenue: response.metrics?.totalExpectedRevenue || 0,
-    pendingDraftsCount: response.metrics?.pendingDraftsCount || 0,
-    publishedCount: response.metrics?.publishedCount || 0
+    content: response?.content || [],
+    totalElements: response?.totalElements || 0,
+    totalPages: response?.totalPages || 0,
+    size: response?.size || size,
+    number: response?.number || page,
+    totalExpectedRevenue: response?.metrics?.totalExpectedRevenue || 0,
+    pendingDraftsCount: response?.metrics?.pendingDraftsCount || 0,
+    publishedCount: response?.metrics?.publishedCount || 0
   };
 };
 

@@ -40,7 +40,7 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId) {
+    public org.springframework.data.domain.Page<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId, org.springframework.data.domain.Pageable pageable) {
         List<MembershipRoleTbl> globalRoles = membershipRoleCrudService.findByPropertyIdIsNull();
         List<MembershipRoleTbl> propertyRoles = membershipRoleCrudService.findByPropertyId(propertyId);
 
@@ -65,21 +65,23 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
 
         final Map<UUID, List<String>> finalRolePermissionsMap = rolePermissionsMap;
 
-        return rolesMap.values().stream()
+        List<RoleDTOs.RoleResponse> allResponses = rolesMap.values().stream()
                 .map(role -> {
                     List<String> perms = finalRolePermissionsMap.getOrDefault(role.getId(), List.of());
-                    return new RoleDTOs.RoleResponse(
-                            role.getId(),
-                            role.getCode(),
-                            role.getName(),
-                            role.getDescription(),
-                            role.getRoleRank(),
-                            role.isActive(),
-                            perms
-                    );
+                    return com.livic.auth.mapper.RoleMapper.toRoleResponse(role, perms);
                 })
                 .sorted(Comparator.comparingInt(RoleDTOs.RoleResponse::roleRank).reversed())
                 .toList();
+
+        if (pageable == null || pageable.isUnpaged()) {
+            return new org.springframework.data.domain.PageImpl<>(allResponses, pageable != null ? pageable : org.springframework.data.domain.Pageable.unpaged(), allResponses.size());
+        }
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), allResponses.size());
+        List<RoleDTOs.RoleResponse> pageContent = start > allResponses.size() ? List.of() : allResponses.subList(start, end);
+
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, allResponses.size());
     }
 
     @Override
@@ -126,7 +128,7 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
 
     @Override
     @Transactional
-    public MembershipRoleTbl createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId) {
+    public RoleDTOs.RoleResponse createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId) {
         String normalizedName = request.name().trim().replaceAll("[^a-zA-Z0-9\\s]", "").replaceAll("\\s+", "_").toUpperCase();
         if (normalizedName.isEmpty()) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Role name cannot contain only special characters.");
@@ -172,7 +174,7 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
                 .toList();
         rolePermissionCrudService.saveAll(mappings);
 
-        return savedRole;
+        return com.livic.auth.mapper.RoleMapper.toRoleResponse(savedRole, targetPerms);
     }
 
     /**

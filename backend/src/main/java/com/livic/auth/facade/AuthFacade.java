@@ -1,8 +1,9 @@
 package com.livic.auth.facade;
 
-import com.livic.auth.domain.MembershipRoleTbl;
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.dto.RoleDTOs;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,15 +32,19 @@ public interface AuthFacade {
 
     void transferOwnership(UUID propertyId, UUID currentOwnerId, UUID toUserId);
 
-    MembershipRoleTbl getRoleForProperty(String roleCode, UUID propertyId);
+    RoleDTOs.RoleResponse getRoleResponseForProperty(String roleCode, UUID propertyId);
+
+    RoleDTOs.RoleResponse getRoleById(UUID roleId);
+
+    MembershipSummaryDTO assignRoleById(UUID propertyId, UUID userId, UUID roleId, UUID assignedByUserId);
 
     void validateCanDelegateRole(UUID actorId, UUID propertyId, String roleCode, String actorGlobalRole);
 
-    List<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId);
+    Page<RoleDTOs.RoleResponse> getPropertyRoles(UUID propertyId, Pageable pageable);
 
     void toggleRoleActive(UUID propertyId, String roleCode, boolean active, UUID actorId);
 
     void updateRolePermissions(UUID propertyId, String roleCode, List<String> permissionCodes, UUID actorId);
 
-    MembershipRoleTbl createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId);
+    RoleDTOs.RoleResponse createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId);
 }

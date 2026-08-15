@@ -55,10 +55,14 @@ export type TopUpRequestPayload = {
 };
 
 export type SubscriptionResponse = {
-  subscriptionId: string;
-  gatewaySubscriptionId: string;
-  checkoutUrl: string;
+  transactionId: string;
+  gatewayName: string;
+  gatewayTransactionId: string;
+  amount: number;
+  currency: string;
   status: string;
+  paymentMethod?: string;
+  createdAt: string;
 };
 
 export type PaymentIntentResponse = {

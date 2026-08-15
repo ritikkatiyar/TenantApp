@@ -21,11 +21,6 @@ public class PropertyCrudServiceImpl extends AbstractCrudService<PropertyTbl, UU
     }
 
     @Override
-    public List<PropertyTbl> findPropertiesByOwnerId(UUID userId) {
-        return repository.findPropertiesByOwnerId(userId);
-    }
-
-    @Override
     public List<PropertyTbl> findByAutoBillDayOfMonth(Integer autoBillDayOfMonth) {
         return repository.findByAutoBillDayOfMonth(autoBillDayOfMonth);
     }

@@ -13,13 +13,23 @@ export function useInventory() {
   const [query, setQuery] = useState('');
   const [serviceOnly, setServiceOnly] = useState(false);
 
-  const filteredItems = useMemo(() =>
-    inventoryItems.filter(item => {
-      const matchQ = `${item.name} ${item.location} ${item.category} ${item.serial}`
-        .toLowerCase().includes(query.trim().toLowerCase());
-      return matchQ && (!serviceOnly || item.status === 'Service Due');
-    }),
-  [query, serviceOnly]);
+  const filteredItems = useMemo(
+    () =>
+      [...inventoryItems]
+        .filter((item) => {
+          const matchQ = `${item.name} ${item.location} ${item.category} ${item.serial}`
+            .toLowerCase()
+            .includes(query.trim().toLowerCase());
+          return matchQ && (!serviceOnly || item.status === 'Service Due');
+        })
+        .sort((a, b) =>
+          (a.location || '').localeCompare(b.location || '', undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          })
+        ),
+    [query, serviceOnly]
+  );
 
   const totalDeductions = verificationItems.reduce((s, i) => s + i.deduction, 0);
   const securityDeposit = 30000;
