@@ -126,7 +126,7 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
 
     @Override
     @Transactional
-    public MembershipRoleTbl createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId) {
+    public RoleDTOs.RoleResponse createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId) {
         String normalizedName = request.name().trim().replaceAll("[^a-zA-Z0-9\\s]", "").replaceAll("\\s+", "_").toUpperCase();
         if (normalizedName.isEmpty()) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Role name cannot contain only special characters.");
@@ -172,7 +172,7 @@ public class PropertyRoleServiceImpl implements PropertyRoleService {
                 .toList();
         rolePermissionCrudService.saveAll(mappings);
 
-        return savedRole;
+        return com.livic.auth.mapper.RoleMapper.toRoleResponse(savedRole, targetPerms);
     }
 
     /**

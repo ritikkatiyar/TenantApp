@@ -1,6 +1,5 @@
 package com.livic.property.controller;
 
-import com.livic.auth.domain.MembershipRoleTbl;
 import com.livic.auth.dto.RoleDTOs;
 import com.livic.auth.facade.AuthFacade;
 import com.livic.auth.principal.UserDetailsImpl;
@@ -61,17 +60,7 @@ public class PropertyRoleController {
             @Valid @RequestBody RoleDTOs.CreateCustomRoleRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID actorId = UUID.fromString(currentUser.getId());
-        MembershipRoleTbl created = authFacade.createCustomRole(propertyId, request, actorId);
-        
-        RoleDTOs.RoleResponse response = new RoleDTOs.RoleResponse(
-                created.getId(),
-                created.getCode(),
-                created.getName(),
-                created.getDescription(),
-                created.getRoleRank(),
-                created.isActive(),
-                request.permissionCodes() != null ? request.permissionCodes() : List.of()
-        );
+        RoleDTOs.RoleResponse response = authFacade.createCustomRole(propertyId, request, actorId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 }

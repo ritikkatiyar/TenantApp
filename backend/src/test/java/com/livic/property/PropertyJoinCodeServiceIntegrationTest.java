@@ -120,16 +120,16 @@ public class PropertyJoinCodeServiceIntegrationTest {
         assertEquals(RoleConstants.PROPERTY_CARETAKER, joinCode.roleCode());
 
         // Act - New caretaker applies join code
-        MembershipSummaryDTO membership = propertyJoinCodeService.validateAndApplyJoinCode(
+        PropertyJoinCodeDTOs.JoinCodeResultResponse result = propertyJoinCodeService.validateAndApplyJoinCode(
                 joinCode.code(),
                 newStaff.getId()
         );
 
         // Assert - Membership created successfully
-        assertNotNull(membership);
-        assertEquals(newStaff.getId(), membership.userId());
-        assertEquals(property.getId(), membership.propertyId());
-        assertEquals(RoleConstants.PROPERTY_CARETAKER, membership.roleCode());
+        assertNotNull(result);
+        assertEquals(property.getId(), result.propertyId());
+        assertEquals(RoleConstants.PROPERTY_CARETAKER, result.roleCode());
+        assertNotNull(result.membershipId());
 
         // Assert - Join code usage tracked
         PropertyJoinCodeTbl updatedCode = propertyJoinCodeRepository.findById(joinCode.id()).orElseThrow();

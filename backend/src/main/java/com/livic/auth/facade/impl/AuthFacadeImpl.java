@@ -5,6 +5,8 @@ import com.livic.auth.domain.MembershipTbl;
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.dto.RoleDTOs;
 import com.livic.auth.facade.AuthFacade;
+import com.livic.auth.mapper.MembershipMapper;
+import com.livic.auth.mapper.RoleMapper;
 import com.livic.auth.service.interfaces.AuthService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.auth.service.interfaces.MembershipQueryService;
@@ -38,14 +40,14 @@ public class AuthFacadeImpl implements AuthFacade {
     @Override
     public List<MembershipSummaryDTO> getMembershipsByUserId(UUID userId) {
         return membershipQueryService.getMembershipsByUserId(userId).stream()
-                .map(MembershipSummaryDTO::from)
+                .map(MembershipMapper::toSummary)
                 .toList();
     }
 
     @Override
     public List<MembershipSummaryDTO> getMembershipsByPropertyId(UUID propertyId) {
         return membershipQueryService.getMembershipsByPropertyId(propertyId).stream()
-                .map(MembershipSummaryDTO::from)
+                .map(MembershipMapper::toSummary)
                 .toList();
     }
 
@@ -87,7 +89,7 @@ public class AuthFacadeImpl implements AuthFacade {
     @Transactional
     public MembershipSummaryDTO assignRole(UUID propertyId, UUID userId, String roleCode, UUID assignedByUserId) {
         MembershipTbl membership = membershipService.assignRole(propertyId, userId, roleCode, assignedByUserId);
-        return MembershipSummaryDTO.from(membership);
+        return MembershipMapper.toSummary(membership);
     }
 
     @Override
@@ -102,46 +104,31 @@ public class AuthFacadeImpl implements AuthFacade {
         membershipService.transferOwnership(propertyId, currentOwnerId, toUserId);
     }
 
-    @Override
-    public MembershipRoleTbl getRoleForProperty(String roleCode, UUID propertyId) {
+    private MembershipRoleTbl findRoleEntityForProperty(String roleCode, UUID propertyId) {
         return membershipRoleCrudService.findByCodeAndPropertyId(roleCode, propertyId)
                 .or(() -> membershipRoleCrudService.findByCodeAndPropertyIdIsNull(roleCode))
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found: " + roleCode));
     }
 
-    @Override
-    public RoleDTOs.RoleResponse getRoleResponseForProperty(String roleCode, UUID propertyId) {
-        MembershipRoleTbl role = getRoleForProperty(roleCode, propertyId);
-        List<String> perms = rolePermissionCrudService.findByRoleId(role.getId()).stream()
+    private List<String> getPermissionCodesForRole(UUID roleId) {
+        return rolePermissionCrudService.findByRoleId(roleId).stream()
                 .map(rp -> rp.getPermission().getCode())
                 .toList();
-        return new RoleDTOs.RoleResponse(
-                role.getId(),
-                role.getCode(),
-                role.getName(),
-                role.getDescription(),
-                role.getRoleRank(),
-                role.isActive(),
-                perms
-        );
+    }
+
+    @Override
+    public RoleDTOs.RoleResponse getRoleResponseForProperty(String roleCode, UUID propertyId) {
+        MembershipRoleTbl role = findRoleEntityForProperty(roleCode, propertyId);
+        List<String> perms = getPermissionCodesForRole(role.getId());
+        return RoleMapper.toRoleResponse(role, perms);
     }
 
     @Override
     public RoleDTOs.RoleResponse getRoleById(UUID roleId) {
         MembershipRoleTbl role = membershipRoleCrudService.findById(roleId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found"));
-        List<String> perms = rolePermissionCrudService.findByRoleId(role.getId()).stream()
-                .map(rp -> rp.getPermission().getCode())
-                .toList();
-        return new RoleDTOs.RoleResponse(
-                role.getId(),
-                role.getCode(),
-                role.getName(),
-                role.getDescription(),
-                role.getRoleRank(),
-                role.isActive(),
-                perms
-        );
+        List<String> perms = getPermissionCodesForRole(role.getId());
+        return RoleMapper.toRoleResponse(role, perms);
     }
 
     @Override
@@ -155,10 +142,8 @@ public class AuthFacadeImpl implements AuthFacade {
     @Override
     public void validateCanDelegateRole(UUID actorId, UUID propertyId, String roleCode, String actorGlobalRole) {
         if (!"SUPER_ADMIN".equals(actorGlobalRole != null ? actorGlobalRole : "")) {
-            MembershipRoleTbl role = getRoleForProperty(roleCode, propertyId);
-            List<String> targetPerms = rolePermissionCrudService.findByRoleId(role.getId()).stream()
-                    .map(rp -> rp.getPermission().getCode())
-                    .toList();
+            MembershipRoleTbl role = findRoleEntityForProperty(roleCode, propertyId);
+            List<String> targetPerms = getPermissionCodesForRole(role.getId());
             Set<String> actorPerms = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(actorId, propertyId);
             if (!actorPerms.containsAll(targetPerms)) {
                 throw new BusinessException(HttpStatus.FORBIDDEN,
@@ -186,7 +171,7 @@ public class AuthFacadeImpl implements AuthFacade {
 
     @Override
     @Transactional
-    public MembershipRoleTbl createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId) {
+    public RoleDTOs.RoleResponse createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId) {
         return propertyRoleService.createCustomRole(propertyId, request, actorId);
     }
 }

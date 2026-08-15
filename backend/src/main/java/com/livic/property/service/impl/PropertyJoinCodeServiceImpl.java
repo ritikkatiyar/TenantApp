@@ -7,6 +7,7 @@ import com.livic.common.exception.BusinessException;
 import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.dto.PropertyJoinCodeDTOs;
+import com.livic.property.mapper.PropertyJoinCodeMapper;
 import com.livic.property.service.interfaces.PropertyJoinCodeCrudService;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
 import com.livic.property.service.interfaces.PropertyQueryService;
@@ -14,13 +15,14 @@ import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -68,44 +70,26 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
                 .build();
 
         PropertyJoinCodeTbl saved = propertyJoinCodeCrudService.save(joinCode);
-        return new PropertyJoinCodeDTOs.JoinCodeResponse(
-                saved.getId(),
-                saved.getCode(),
-                role.code(),
-                role.name(),
-                saved.getMaxUses(),
-                saved.getUsesCount(),
-                saved.isActive(),
-                saved.getExpiresAt()
-        );
+        return PropertyJoinCodeMapper.toResponse(saved, role.code(), role.name());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<PropertyJoinCodeDTOs.JoinCodeResponse> getPropertyJoinCodes(UUID propertyId) {
-        List<PropertyJoinCodeTbl> codes = propertyJoinCodeCrudService.findByPropertyId(propertyId);
+    public Page<PropertyJoinCodeDTOs.JoinCodeResponse> getPropertyJoinCodes(UUID propertyId, Pageable pageable) {
+        Page<PropertyJoinCodeTbl> page = propertyJoinCodeCrudService.findByPropertyId(propertyId, pageable);
         Map<UUID, RoleDTOs.RoleResponse> roleMap = authFacade.getPropertyRoles(propertyId).stream()
                 .collect(Collectors.toMap(RoleDTOs.RoleResponse::id, r -> r, (r1, r2) -> r1));
 
-        return codes.stream().map(jc -> {
+        return page.map(jc -> {
             RoleDTOs.RoleResponse role = roleMap.get(jc.getRoleId());
             String rCode = role != null ? role.code() : "";
             String rName = role != null ? role.name() : "";
-            return new PropertyJoinCodeDTOs.JoinCodeResponse(
-                    jc.getId(),
-                    jc.getCode(),
-                    rCode,
-                    rName,
-                    jc.getMaxUses(),
-                    jc.getUsesCount(),
-                    jc.isActive(),
-                    jc.getExpiresAt()
-            );
-        }).toList();
+            return PropertyJoinCodeMapper.toResponse(jc, rCode, rName);
+        });
     }
 
     @Override
-    public MembershipSummaryDTO validateAndApplyJoinCode(String code, UUID userId) {
+    public PropertyJoinCodeDTOs.JoinCodeResultResponse validateAndApplyJoinCode(String code, UUID userId) {
         String cleanCode = code != null ? code.trim().toUpperCase() : "";
 
         PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findByCode(cleanCode)
@@ -145,51 +129,7 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
         log.info("join_code_applied userId={} propertyId={} roleCode={} code={}",
                 userId, property.getId(), role.code(), cleanCode);
 
-        return saved;
-    }
-
-    @Override
-    public PropertyJoinCodeDTOs.JoinCodeResultResponse validateAndApplyJoinCodeResult(String code, UUID userId) {
-        String cleanCode = code != null ? code.trim().toUpperCase() : "";
-
-        PropertyJoinCodeTbl joinCode = propertyJoinCodeCrudService.findByCode(cleanCode)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Invalid join code."));
-
-        if (!joinCode.isActive()) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code is inactive.");
-        }
-
-        if (joinCode.getExpiresAt().isBefore(Instant.now())) {
-            joinCode.setActive(false);
-            propertyJoinCodeCrudService.save(joinCode);
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has expired.");
-        }
-
-        if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
-            joinCode.setActive(false);
-            propertyJoinCodeCrudService.save(joinCode);
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Join code has reached its maximum uses.");
-        }
-
-        PropertyTbl property = joinCode.getProperty();
-        RoleDTOs.RoleResponse role = authFacade.getRoleById(joinCode.getRoleId());
-
-        if (authFacade.existsByUserIdAndPropertyIdAndRoleCode(userId, property.getId(), role.code())) {
-            throw new BusinessException(HttpStatus.CONFLICT, "You are already a member of this property with this role.");
-        }
-
-        MembershipSummaryDTO saved = authFacade.assignRole(property.getId(), userId, role.code(), joinCode.getCreatedBy());
-
-        joinCode.setUsesCount(joinCode.getUsesCount() + 1);
-        if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {
-            joinCode.setActive(false);
-        }
-        propertyJoinCodeCrudService.save(joinCode);
-
-        log.info("join_code_applied userId={} propertyId={} roleCode={} code={}",
-                userId, property.getId(), role.code(), cleanCode);
-
-        return new PropertyJoinCodeDTOs.JoinCodeResultResponse(
+        return PropertyJoinCodeMapper.toResultResponse(
                 property.getId(),
                 property.getName(),
                 role.code(),

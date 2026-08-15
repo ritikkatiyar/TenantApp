@@ -1,6 +1,5 @@
 package com.livic.auth.facade;
 
-import com.livic.auth.domain.MembershipRoleTbl;
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.dto.RoleDTOs;
 
@@ -31,8 +30,6 @@ public interface AuthFacade {
 
     void transferOwnership(UUID propertyId, UUID currentOwnerId, UUID toUserId);
 
-    MembershipRoleTbl getRoleForProperty(String roleCode, UUID propertyId);
-
     RoleDTOs.RoleResponse getRoleResponseForProperty(String roleCode, UUID propertyId);
 
     RoleDTOs.RoleResponse getRoleById(UUID roleId);
@@ -47,5 +44,5 @@ public interface AuthFacade {
 
     void updateRolePermissions(UUID propertyId, String roleCode, List<String> permissionCodes, UUID actorId);
 
-    MembershipRoleTbl createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId);
+    RoleDTOs.RoleResponse createCustomRole(UUID propertyId, RoleDTOs.CreateCustomRoleRequest request, UUID actorId);
 }
