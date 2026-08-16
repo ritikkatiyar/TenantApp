@@ -13,5 +13,4 @@ public interface AuthorizationService {
     boolean hasPermissionByAssignmentId(UUID assignmentId, String permissionCode);
     boolean hasPermissionByItemId(UUID itemId, String permissionCode);
     boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode);
-    boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode);
 }

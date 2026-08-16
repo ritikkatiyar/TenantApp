@@ -3,7 +3,6 @@ package com.livic.auth.service.impl;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
-import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
@@ -156,19 +155,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                     .orElse(false);
         } catch (Exception e) {
             log.error("Error checking permission for rentCycleId {}: {}", rentCycleId, e.getMessage(), e);
-            return false;
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode) {
-        if (chargeConfigId == null) return false;
-        try {
-            ChargeConfigResponse c = financeFacade.getChargeConfigById(chargeConfigId);
-            return checkPermission(c.getPropertyId(), permissionCode);
-        } catch (Exception e) {
-            log.error("Error checking permission for chargeConfigId {}: {}", chargeConfigId, e.getMessage(), e);
             return false;
         }
     }

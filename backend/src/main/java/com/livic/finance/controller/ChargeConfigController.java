@@ -34,28 +34,28 @@ public class ChargeConfigController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@financeAuthorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<ChargeConfigResponse>> updateChargeConfig(@PathVariable UUID id, @RequestBody ChargeConfigRequest request) {
         ChargeConfigResponse response = chargeConfigService.updateChargeConfig(id, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@financeAuthorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<Void>> deactivateChargeConfig(@PathVariable UUID id) {
         chargeConfigService.deactivateChargeConfig(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/{id}/reactivate")
-    @PreAuthorize("@authorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@financeAuthorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<Void>> reactivateChargeConfig(@PathVariable UUID id) {
         chargeConfigService.reactivateChargeConfig(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @DeleteMapping("/{id}/permanent")
-    @PreAuthorize("@authorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@financeAuthorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<Void>> deleteChargeConfigPermanently(@PathVariable UUID id) {
         chargeConfigService.deleteChargeConfigPermanently(id);
         return ResponseEntity.ok(ApiResponse.success(null));
@@ -75,7 +75,7 @@ public class ChargeConfigController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_VIEW')")
+    @PreAuthorize("@financeAuthorizationService.hasPermissionByChargeConfigId(#id, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<ChargeConfigResponse>> getChargeConfigById(@PathVariable UUID id) {
         ChargeConfigResponse response = chargeConfigQueryService.getChargeConfigById(id);
         return ResponseEntity.ok(ApiResponse.success(response));
