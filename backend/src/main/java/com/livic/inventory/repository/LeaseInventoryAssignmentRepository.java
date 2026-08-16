@@ -24,8 +24,6 @@ public interface LeaseInventoryAssignmentRepository extends JpaRepository<LeaseI
 
     List<LeaseInventoryAssignmentTbl> findAllByLeaseIdIn(Collection<UUID> leaseIds);
 
-    List<LeaseInventoryAssignmentTbl> findAllByItemId(UUID itemId);
-
     Page<LeaseInventoryAssignmentTbl> findAllByItemId(UUID itemId, Pageable pageable);
 
     @Query("SELECT a FROM LeaseInventoryAssignmentTbl a WHERE a.itemId = :itemId AND a.returnedAt IS NULL")

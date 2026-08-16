@@ -7,7 +7,7 @@ import com.livic.inventory.domain.enums.InventoryCategory;
 import com.livic.inventory.domain.enums.InventoryCondition;
 import com.livic.inventory.domain.enums.InventoryScope;
 import com.livic.inventory.dto.InventoryDTOs;
-import com.livic.inventory.facade.InventoryFacade.InventoryPropertyMetricsDTO;
+import com.livic.inventory.dto.InventoryPropertyMetricsDTO;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;

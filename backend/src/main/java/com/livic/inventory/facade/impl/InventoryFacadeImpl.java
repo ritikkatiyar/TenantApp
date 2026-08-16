@@ -2,6 +2,7 @@ package com.livic.inventory.facade.impl;
 
 import com.livic.inventory.domain.LeaseInventoryAssignmentTbl;
 import com.livic.inventory.domain.enums.InventoryStatus;
+import com.livic.inventory.dto.InventoryPropertyMetricsDTO;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.inventory.mapper.InventoryMapper;
 import com.livic.inventory.repository.InventoryItemRepository;

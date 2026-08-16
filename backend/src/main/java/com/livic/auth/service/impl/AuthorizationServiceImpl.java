@@ -41,7 +41,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasAnyPermission(UUID propertyId, String... permissionCodes) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
-        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
+        if (isUserGloballyAuthorized(currentUser)) return true;
 
         UUID userId = UUID.fromString(currentUser.getId());
         Set<String> userPermissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
@@ -68,7 +68,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasAnyRole(UUID propertyId, String... roleCodes) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
-        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
+        if (isUserGloballyAuthorized(currentUser)) return true;
 
         UUID userId = UUID.fromString(currentUser.getId());
         
@@ -160,12 +160,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }
     }
 
+    private boolean isUserGloballyAuthorized(UserDetailsImpl currentUser) {
+        return currentUser != null && (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN"));
+    }
+
     private boolean checkPermission(UUID propertyId, String permissionCode) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) {
             return false;
         }
-        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) {
+        if (isUserGloballyAuthorized(currentUser)) {
             return true;
         }
 
