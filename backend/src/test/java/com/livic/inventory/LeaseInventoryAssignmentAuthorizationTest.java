@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -188,7 +189,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
         assertThat(preAuthCreate).isNotNull();
         assertThat(preAuthCreate.value()).isEqualTo("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')");
 
-        Method getAssignments = clazz.getMethod("getAssignments", UUID.class);
+        Method getAssignments = clazz.getMethod("getAssignments", UUID.class, Pageable.class);
         PreAuthorize preAuthGet = getAssignments.getAnnotation(PreAuthorize.class);
         assertThat(preAuthGet).isNotNull();
         assertThat(preAuthGet.value()).isEqualTo("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')");
@@ -207,5 +208,10 @@ class LeaseInventoryAssignmentAuthorizationTest {
         PreAuthorize preAuthApprove = approveDeductions.getAnnotation(PreAuthorize.class);
         assertThat(preAuthApprove).isNotNull();
         assertThat(preAuthApprove.value()).isEqualTo("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')");
+
+        Method getChecklist = clazz.getMethod("getVerificationChecklist", UUID.class, Pageable.class);
+        PreAuthorize preAuthGetChecklist = getChecklist.getAnnotation(PreAuthorize.class);
+        assertThat(preAuthGetChecklist).isNotNull();
+        assertThat(preAuthGetChecklist.value()).isEqualTo("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')");
     }
 }

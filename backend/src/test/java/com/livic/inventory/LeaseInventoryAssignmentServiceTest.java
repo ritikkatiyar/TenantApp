@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
@@ -94,7 +96,18 @@ class LeaseInventoryAssignmentServiceTest {
                 ))
         );
 
-        when(assignmentRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
+        LeaseInventoryAssignmentTbl assignment = LeaseInventoryAssignmentTbl.builder()
+                .id(UUID.randomUUID())
+                .leaseId(leaseId)
+                .itemId(itemId)
+                .conditionAtAssignment(InventoryCondition.EXCELLENT)
+                .assignedAt(Instant.now())
+                .deductionApprovalStatus(DeductionApprovalStatus.NONE)
+                .build();
+
+        when(assignmentRepository.saveAll(any())).thenReturn(List.of(assignment));
+        when(assignmentRepository.findAllByLeaseId(eq(leaseId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(assignment)));
 
         List<InventoryDTOs.AssignmentItemResponse> result = assignmentService.createAssignments(leaseId, request, userId);
 

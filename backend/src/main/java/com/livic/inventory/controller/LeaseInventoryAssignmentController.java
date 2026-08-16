@@ -6,6 +6,9 @@ import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.service.interfaces.LeaseInventoryAssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,9 +44,10 @@ public class LeaseInventoryAssignmentController {
 
     @GetMapping("/leases/{leaseId}/assignments")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
-    public ResponseEntity<ApiResponse<List<InventoryDTOs.AssignmentItemResponse>>> getAssignments(
-            @PathVariable UUID leaseId) {
-        List<InventoryDTOs.AssignmentItemResponse> response = assignmentService.getAssignmentsForLease(leaseId);
+    public ResponseEntity<ApiResponse<Page<InventoryDTOs.AssignmentItemResponse>>> getAssignments(
+            @PathVariable UUID leaseId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<InventoryDTOs.AssignmentItemResponse> response = assignmentService.getAssignmentsForLease(leaseId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -86,9 +90,10 @@ public class LeaseInventoryAssignmentController {
 
     @GetMapping("/leases/{leaseId}/verification-checklist")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
-    public ResponseEntity<ApiResponse<List<InventoryDTOs.VerificationItemResponse>>> getVerificationChecklist(
-            @PathVariable UUID leaseId) {
-        List<InventoryDTOs.VerificationItemResponse> response = assignmentService.getVerificationChecklistForLease(leaseId);
+    public ResponseEntity<ApiResponse<Page<InventoryDTOs.VerificationItemResponse>>> getVerificationChecklist(
+            @PathVariable UUID leaseId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<InventoryDTOs.VerificationItemResponse> response = assignmentService.getVerificationChecklistForLease(leaseId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

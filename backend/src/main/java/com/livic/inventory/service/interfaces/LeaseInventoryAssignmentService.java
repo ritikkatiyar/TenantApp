@@ -1,6 +1,8 @@
 package com.livic.inventory.service.interfaces;
 
 import com.livic.inventory.dto.InventoryDTOs;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -11,6 +13,8 @@ public interface LeaseInventoryAssignmentService {
 
     List<InventoryDTOs.AssignmentItemResponse> getAssignmentsForLease(UUID leaseId);
 
+    Page<InventoryDTOs.AssignmentItemResponse> getAssignmentsForLease(UUID leaseId, Pageable pageable);
+
     List<InventoryDTOs.VerificationItemResponse> generateMoveOutChecklist(UUID leaseId, InventoryDTOs.MoveOutChecklistRequest request, UUID userId);
 
     InventoryDTOs.VerificationItemResponse verifyReturn(UUID assignmentId, InventoryDTOs.ReturnVerificationRequest request, UUID userId);
@@ -18,4 +22,6 @@ public interface LeaseInventoryAssignmentService {
     List<InventoryDTOs.VerificationItemResponse> approveDeductions(UUID leaseId, InventoryDTOs.ApproveDeductionsRequest request, UUID userId);
 
     List<InventoryDTOs.VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId);
+
+    Page<InventoryDTOs.VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId, Pageable pageable);
 }

@@ -12,11 +12,14 @@ import com.livic.inventory.mapper.InventoryMapper;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.repository.LeaseInventoryAssignmentRepository;
 import com.livic.inventory.service.interfaces.LeaseInventoryAssignmentService;
-import com.livic.storage.dto.OwnerModule;
 import com.livic.storage.dto.MediaDTOs;
+import com.livic.storage.dto.OwnerModule;
 import com.livic.storage.facade.StorageFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -109,19 +111,25 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
     @Override
     @Transactional(readOnly = true)
     public List<InventoryDTOs.AssignmentItemResponse> getAssignmentsForLease(UUID leaseId) {
-        List<LeaseInventoryAssignmentTbl> assignments = assignmentRepository.findAllByLeaseId(leaseId);
-        if (assignments.isEmpty()) {
-            return List.of();
+        return getAssignmentsForLease(leaseId, Pageable.unpaged()).getContent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<InventoryDTOs.AssignmentItemResponse> getAssignmentsForLease(UUID leaseId, Pageable pageable) {
+        Page<LeaseInventoryAssignmentTbl> page = assignmentRepository.findAllByLeaseId(leaseId, pageable);
+        if (page == null || page.isEmpty()) {
+            return Page.empty(pageable);
         }
 
-        Set<UUID> itemIds = assignments.stream().map(LeaseInventoryAssignmentTbl::getItemId).collect(Collectors.toSet());
+        Set<UUID> itemIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getItemId).collect(Collectors.toSet());
         List<InventoryItemTbl> items = inventoryItemRepository.findAllByIdIn(itemIds);
         Map<UUID, InventoryItemTbl> itemMap = items.stream().collect(Collectors.toMap(InventoryItemTbl::getId, Function.identity()));
 
-        Set<UUID> assignmentIds = assignments.stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
+        Set<UUID> assignmentIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
         Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, assignmentIds);
 
-        return assignments.stream()
+        List<InventoryDTOs.AssignmentItemResponse> dtoList = page.getContent().stream()
                 .map(a -> {
                     InventoryItemTbl item = itemMap.get(a.getItemId());
                     if (item == null) return null;
@@ -130,8 +138,10 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
                     String img = (media != null && !media.isEmpty()) ? media.get(0).url() : null;
                     return InventoryMapper.toAssignmentResponse(item, a, null, img, photoCount);
                 })
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 
     @Override
@@ -222,19 +232,25 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
     @Override
     @Transactional(readOnly = true)
     public List<InventoryDTOs.VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId) {
-        List<LeaseInventoryAssignmentTbl> assignments = assignmentRepository.findAllByLeaseId(leaseId);
-        if (assignments.isEmpty()) {
-            return List.of();
+        return getVerificationChecklistForLease(leaseId, Pageable.unpaged()).getContent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<InventoryDTOs.VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId, Pageable pageable) {
+        Page<LeaseInventoryAssignmentTbl> page = assignmentRepository.findAllByLeaseId(leaseId, pageable);
+        if (page == null || page.isEmpty()) {
+            return Page.empty(pageable);
         }
 
-        Set<UUID> itemIds = assignments.stream().map(LeaseInventoryAssignmentTbl::getItemId).collect(Collectors.toSet());
+        Set<UUID> itemIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getItemId).collect(Collectors.toSet());
         List<InventoryItemTbl> items = inventoryItemRepository.findAllByIdIn(itemIds);
         Map<UUID, InventoryItemTbl> itemMap = items.stream().collect(Collectors.toMap(InventoryItemTbl::getId, Function.identity()));
 
-        Set<UUID> assignmentIds = assignments.stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
+        Set<UUID> assignmentIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
         Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, assignmentIds);
 
-        return assignments.stream()
+        List<InventoryDTOs.VerificationItemResponse> dtoList = page.getContent().stream()
                 .map(a -> {
                     InventoryItemTbl item = itemMap.get(a.getItemId());
                     if (item == null) return null;
@@ -253,7 +269,9 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
 
                     return InventoryMapper.toVerificationResponse(a, item, null, moveInPhoto, returnPhoto);
                 })
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 }

@@ -170,14 +170,28 @@ export async function getInventoryStats(
   });
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
 export async function getLeaseAssignments(
   leaseId: string,
-  token: string
+  token: string,
+  page = 0,
+  size = 50
 ): Promise<AssignmentItemDTO[]> {
-  return apiRequest<AssignmentItemDTO[]>(`/api/v1/inventory/leases/${leaseId}/assignments`, {
-    method: 'GET',
-    token,
-  });
+  const res = await apiRequest<PageResponse<AssignmentItemDTO> | AssignmentItemDTO[]>(
+    `/api/v1/inventory/leases/${leaseId}/assignments?page=${page}&size=${size}`,
+    {
+      method: 'GET',
+      token,
+    }
+  );
+  return Array.isArray(res) ? res : (res?.content ?? []);
 }
 
 export async function createLeaseAssignments(
@@ -205,12 +219,18 @@ export async function generateMoveOutChecklist(
 
 export async function getVerificationChecklist(
   leaseId: string,
-  token: string
+  token: string,
+  page = 0,
+  size = 50
 ): Promise<VerificationItemDTO[]> {
-  return apiRequest<VerificationItemDTO[]>(`/api/v1/inventory/leases/${leaseId}/verification-checklist`, {
-    method: 'GET',
-    token,
-  });
+  const res = await apiRequest<PageResponse<VerificationItemDTO> | VerificationItemDTO[]>(
+    `/api/v1/inventory/leases/${leaseId}/verification-checklist?page=${page}&size=${size}`,
+    {
+      method: 'GET',
+      token,
+    }
+  );
+  return Array.isArray(res) ? res : (res?.content ?? []);
 }
 
 export async function verifyReturn(

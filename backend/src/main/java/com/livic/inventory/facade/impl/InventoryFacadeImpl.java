@@ -3,6 +3,7 @@ package com.livic.inventory.facade.impl;
 import com.livic.inventory.domain.LeaseInventoryAssignmentTbl;
 import com.livic.inventory.domain.enums.InventoryStatus;
 import com.livic.inventory.facade.InventoryFacade;
+import com.livic.inventory.mapper.InventoryMapper;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.repository.LeaseInventoryAssignmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +27,11 @@ public class InventoryFacadeImpl implements InventoryFacade {
         long unassigned = inventoryItemRepository.countByPropertyIdAndStatus(propertyId, InventoryStatus.AVAILABLE);
         BigDecimal totalValuation = inventoryItemRepository.sumReplacementValueByPropertyId(propertyId);
 
-        return new InventoryPropertyMetricsDTO(
+        return InventoryMapper.toPropertyMetricsDTO(
                 totalAssets,
                 maintenanceDue,
                 unassigned,
-                totalValuation != null ? totalValuation : BigDecimal.ZERO
+                totalValuation
         );
     }
 
