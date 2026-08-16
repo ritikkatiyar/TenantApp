@@ -14,7 +14,6 @@ import com.livic.finance.domain.MeterReadingTbl;
 import com.livic.finance.dto.MeterReadingDTOs.MeterReadingRequest;
 import com.livic.finance.dto.MeterReadingDTOs.MeterReadingResponse;
 import com.livic.finance.dto.MeterReadingDTOs.UnitReading;
-import com.livic.finance.repository.MeterReadingRepository;
 import com.livic.finance.service.impl.MeterReadingServiceImpl;
 import com.livic.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.finance.service.interfaces.LeaseQueryService;
@@ -63,8 +62,6 @@ class MeterReadingCalculationTest {
     private UnitFacade unitFacade;
     @Mock
     private UserFacade userFacade;
-    @Mock
-    private MeterReadingRepository meterReadingRepository;
 
     @InjectMocks
     private MeterReadingServiceImpl meterReadingService;
@@ -104,7 +101,7 @@ class MeterReadingCalculationTest {
         unitSummary = new UnitSummaryDTO(unitId, propertyId, "Test Property", "401", 4, 1, 0, 0, 1, 1, UnitType.SINGLE_UNIT, FacingDirection.NORTH);
         userSummary = new UserSummaryDTO(userId, "ritik@example.com", "ritik katiyar", "+919999999999", UserRole.USER);
 
-        meteredCalculation = new MeteredCalculation(meterReadingRepository);
+        meteredCalculation = new MeteredCalculation(meterReadingCrudService);
     }
 
     @Test
@@ -139,6 +136,7 @@ class MeterReadingCalculationTest {
 
         List<MeterReadingResponse> worksheet = meterReadingService.getOrCreateWorksheet(propertyId, chargeConfigId, 8, 2026);
         assertEquals(1, worksheet.size());
+        assertEquals(4, worksheet.get(0).getFloor());
         assertEquals(BigDecimal.ZERO, worksheet.get(0).getPreviousReading());
         assertNull(worksheet.get(0).getCurrentReading());
 
@@ -237,7 +235,7 @@ class MeterReadingCalculationTest {
                 .currentReading(new BigDecimal("15706"))
                 .build();
 
-        when(meterReadingRepository.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(unitId, chargeConfigId, 8, 2026))
+        when(meterReadingCrudService.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(unitId, chargeConfigId, 8, 2026))
                 .thenReturn(Optional.of(reading));
 
         CalculationResult result = meteredCalculation.calculate(electricityConfig, unitId, "2026-08");

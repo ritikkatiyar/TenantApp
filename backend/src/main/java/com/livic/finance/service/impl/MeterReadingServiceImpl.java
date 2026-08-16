@@ -1,5 +1,6 @@
 package com.livic.finance.service.impl;
 
+import com.livic.common.domain.CalculationStrategyType;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.ChargeConfigTbl;
@@ -48,14 +49,14 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         ChargeConfigTbl chargeConfig = chargeConfigCrudService.findById(chargeConfigId)
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
 
-        if (!"METERED".equals(chargeConfig.getCalculationStrategy().name())) {
+        if (chargeConfig.getCalculationStrategy() != CalculationStrategyType.METERED) {
             throw new BusinessException("Charge config is not a metered strategy");
         }
 
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
         List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(propertyId);
-        Map<UUID, LeaseTbl> unitToLeaseMap = activeLeases.stream()
-                .collect(Collectors.toMap(LeaseTbl::getUnitId, l -> l, (existing, replacement) -> existing));
+        Map<UUID, List<LeaseTbl>> unitToLeasesMap = activeLeases.stream()
+                .collect(Collectors.groupingBy(LeaseTbl::getUnitId));
 
         List<MeterReadingTbl> existingEntries = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 propertyId, chargeConfigId, month, year);
@@ -74,7 +75,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         List<MeterReadingTbl> newEntriesToSave = new ArrayList<>();
 
         for (UnitSummaryDTO unitSummary : units) {
-            if (!unitToLeaseMap.containsKey(unitSummary.id())) {
+            if (!unitToLeasesMap.containsKey(unitSummary.id())) {
                 continue;
             }
 
@@ -109,30 +110,32 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(userIds);
 
         Set<UUID> unitIdsInResult = finalEntries.stream().map(MeterReadingTbl::getUnitId).collect(Collectors.toSet());
-        Map<UUID, UnitSummaryDTO> unitMap = unitFacade.getUnitsByPropertyId(propertyId).stream()
+        Map<UUID, UnitSummaryDTO> unitMap = units.stream()
                 .filter(u -> unitIdsInResult.contains(u.id()))
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
         return finalEntries.stream().map(r -> {
-            LeaseTbl lease = unitToLeaseMap.get(r.getUnitId());
+            List<LeaseTbl> leases = unitToLeasesMap.getOrDefault(r.getUnitId(), List.of());
             String tenantName = "Vacant";
-            if (lease != null) {
-                UserSummaryDTO user = usersMap.get(lease.getUserId());
-                if (user != null) {
-                    tenantName = user.fullName();
-                } else {
-                    tenantName = "Unknown Tenant";
-                }
+            if (!leases.isEmpty()) {
+                tenantName = leases.stream()
+                        .map(l -> {
+                            UserSummaryDTO user = usersMap.get(l.getUserId());
+                            return user != null ? user.fullName() : "Unknown Tenant";
+                        })
+                        .collect(Collectors.joining(", "));
             }
 
             UnitSummaryDTO unit = unitMap.get(r.getUnitId());
             String unitName = unit != null ? unit.unitNumber() : "N/A";
+            Integer floor = unit != null && unit.floor() != null ? unit.floor() : 0;
 
             return MeterReadingResponse.builder()
                     .id(r.getId())
                     .unitId(r.getUnitId())
                     .unitName(unitName)
                     .tenantName(tenantName)
+                    .floor(floor)
                     .previousReading(r.getPreviousReading())
                     .currentReading(r.getCurrentReading())
                     .isBilled(r.getIsBilled())
