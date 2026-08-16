@@ -54,8 +54,8 @@ public class MeterReadingServiceImpl implements MeterReadingService {
 
         List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
         List<LeaseTbl> activeLeases = leaseQueryService.findActiveLeasesByProperty(propertyId);
-        Map<UUID, LeaseTbl> unitToLeaseMap = activeLeases.stream()
-                .collect(Collectors.toMap(LeaseTbl::getUnitId, l -> l, (existing, replacement) -> existing));
+        Map<UUID, List<LeaseTbl>> unitToLeasesMap = activeLeases.stream()
+                .collect(Collectors.groupingBy(LeaseTbl::getUnitId));
 
         List<MeterReadingTbl> existingEntries = meterReadingCrudService.findByPropertyIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 propertyId, chargeConfigId, month, year);
@@ -74,7 +74,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         List<MeterReadingTbl> newEntriesToSave = new ArrayList<>();
 
         for (UnitSummaryDTO unitSummary : units) {
-            if (!unitToLeaseMap.containsKey(unitSummary.id())) {
+            if (!unitToLeasesMap.containsKey(unitSummary.id())) {
                 continue;
             }
 
@@ -114,15 +114,15 @@ public class MeterReadingServiceImpl implements MeterReadingService {
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 
         return finalEntries.stream().map(r -> {
-            LeaseTbl lease = unitToLeaseMap.get(r.getUnitId());
+            List<LeaseTbl> leases = unitToLeasesMap.getOrDefault(r.getUnitId(), List.of());
             String tenantName = "Vacant";
-            if (lease != null) {
-                UserSummaryDTO user = usersMap.get(lease.getUserId());
-                if (user != null) {
-                    tenantName = user.fullName();
-                } else {
-                    tenantName = "Unknown Tenant";
-                }
+            if (!leases.isEmpty()) {
+                tenantName = leases.stream()
+                        .map(l -> {
+                            UserSummaryDTO user = usersMap.get(l.getUserId());
+                            return user != null ? user.fullName() : "Unknown Tenant";
+                        })
+                        .collect(Collectors.joining(", "));
             }
 
             UnitSummaryDTO unit = unitMap.get(r.getUnitId());
