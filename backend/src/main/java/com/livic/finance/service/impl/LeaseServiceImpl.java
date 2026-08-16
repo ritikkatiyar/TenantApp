@@ -185,4 +185,17 @@ public class LeaseServiceImpl implements LeaseService {
         lease.setMoveOutDate(moveOutDate);
         return leaseCrudService.save(lease);
     }
+
+    @Override
+    public LeaseTbl updateLeaseTerms(UUID id, java.math.BigDecimal monthlyRentAmount, java.math.BigDecimal securityDeposit) {
+        LeaseTbl lease = leaseCrudService.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
+        if (monthlyRentAmount != null) {
+            lease.setMonthlyRentAmount(monthlyRentAmount);
+        }
+        if (securityDeposit != null) {
+            lease.setSecurityDeposit(securityDeposit);
+        }
+        return leaseCrudService.save(lease);
+    }
 }

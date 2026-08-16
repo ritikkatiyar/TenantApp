@@ -3,7 +3,6 @@ package com.livic.auth.service.impl;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
-import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
@@ -134,6 +133,20 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Override
     @Transactional(readOnly = true)
+    public boolean hasPermissionByItemId(UUID itemId, String permissionCode) {
+        if (itemId == null) return false;
+        try {
+            return inventoryFacade.getPropertyIdForInventoryItem(itemId)
+                    .map(propertyId -> checkPermission(propertyId, permissionCode))
+                    .orElse(false);
+        } catch (Exception e) {
+            log.error("Error checking permission for itemId {}: {}", itemId, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode) {
         if (rentCycleId == null) return false;
         try {
@@ -142,19 +155,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                     .orElse(false);
         } catch (Exception e) {
             log.error("Error checking permission for rentCycleId {}: {}", rentCycleId, e.getMessage(), e);
-            return false;
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode) {
-        if (chargeConfigId == null) return false;
-        try {
-            ChargeConfigResponse c = financeFacade.getChargeConfigById(chargeConfigId);
-            return checkPermission(c.getPropertyId(), permissionCode);
-        } catch (Exception e) {
-            log.error("Error checking permission for chargeConfigId {}: {}", chargeConfigId, e.getMessage(), e);
             return false;
         }
     }

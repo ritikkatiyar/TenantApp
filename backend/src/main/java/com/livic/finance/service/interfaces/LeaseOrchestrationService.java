@@ -17,4 +17,5 @@ public interface LeaseOrchestrationService {
     LeaseDTOs.LeaseResponse getLeaseById(UUID id);
     LeaseDTOs.LeaseResponse terminateLease(UUID id);
     LeaseDTOs.LeaseResponse serveNotice(UUID id, LocalDate moveOutDate);
+    LeaseDTOs.LeaseResponse updateLeaseTerms(UUID id, LeaseDTOs.UpdateLeaseTermsRequest request);
 }

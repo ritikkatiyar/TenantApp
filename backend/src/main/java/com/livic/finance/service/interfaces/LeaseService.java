@@ -8,4 +8,5 @@ public interface LeaseService {
     LeaseTbl createLease(LeaseDTOs.CreateLeaseRequest request, UUID assignedByUserId);
     LeaseDTOs.LeaseResponse terminateLease(UUID id);
     LeaseTbl updateNoticePeriod(UUID id, java.time.LocalDate moveOutDate);
+    LeaseTbl updateLeaseTerms(UUID id, java.math.BigDecimal monthlyRentAmount, java.math.BigDecimal securityDeposit);
 }

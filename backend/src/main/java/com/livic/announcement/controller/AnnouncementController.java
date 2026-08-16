@@ -28,7 +28,7 @@ public class AnnouncementController {
     private final AnnouncementService announcementService;
 
     @PostMapping
-    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId(), 'ANNOUNCEMENT_CREATE')")
+    @PreAuthorize("@authorizationService.hasPermission(#request.propertyId, 'ANNOUNCEMENT_CREATE')")
     public ResponseEntity<ApiResponse<AnnouncementResponse>> createAnnouncement(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @Valid @RequestBody CreateAnnouncementRequest request) {

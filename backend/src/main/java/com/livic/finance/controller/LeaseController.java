@@ -82,4 +82,13 @@ public class LeaseController {
         LocalDate moveOutDate = moveOutDateStr != null ? LocalDate.parse(moveOutDateStr) : null;
         return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.serveNotice(id, moveOutDate)));
     }
+
+    @PutMapping("/{id}/terms")
+    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#id, 'LEASE_UPDATE')")
+    public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> updateLeaseTerms(
+            @PathVariable UUID id,
+            @Valid @RequestBody LeaseDTOs.UpdateLeaseTermsRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.updateLeaseTerms(id, request)));
+    }
 }

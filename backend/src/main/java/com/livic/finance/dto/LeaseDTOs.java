@@ -42,4 +42,9 @@ public class LeaseDTOs {
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {}
+
+    public record UpdateLeaseTermsRequest(
+            @NotNull(message = "Monthly rent amount is required") @PositiveOrZero(message = "Monthly rent amount must be zero or positive") BigDecimal monthlyRentAmount,
+            @NotNull(message = "Security deposit is required") @PositiveOrZero(message = "Security deposit must be zero or positive") BigDecimal securityDeposit
+    ) {}
 }
