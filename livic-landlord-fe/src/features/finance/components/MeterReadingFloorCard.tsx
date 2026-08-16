@@ -60,10 +60,15 @@ export function MeterReadingFloorCard({
       {isExpanded && (
         <>
           {paginatedUnits.map((row, index) => {
-            const currentVal = inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null;
-            const consumed = currentVal !== null ? currentVal - row.previousReading : 0;
-            const isError = currentVal !== null && currentVal < row.previousReading;
-            const estCost = consumed > 0 ? consumed * baseRate : 0;
+            const prevStr = prevInputs[row.unitId];
+            const prevVal = prevStr !== undefined && prevStr !== '' ? parseFloat(prevStr) : 0;
+            const currentStr = inputs[row.unitId];
+            const currentVal = currentStr !== undefined && currentStr.trim() !== '' ? parseFloat(currentStr) : null;
+            const isInvalidPrev = isNaN(prevVal);
+            const isInvalidCurrent = currentVal !== null && isNaN(currentVal);
+            const isError = currentVal !== null && !isInvalidPrev && !isInvalidCurrent && currentVal < prevVal;
+            const consumed = currentVal !== null && !isInvalidPrev && !isInvalidCurrent ? Math.max(0, currentVal - prevVal) : 0;
+            const estCost = consumed * baseRate;
             const isLast = index === paginatedUnits.length - 1;
             
             return (
@@ -73,21 +78,23 @@ export function MeterReadingFloorCard({
                   <Text style={styles.tenantName}>{row.tenantName}</Text>
                   {!row.isBilled ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                      <Text style={[styles.prevReading, { marginRight: 4 }]}>Prev:</Text>
+                      <Text style={[styles.prevReading, { marginRight: 6 }]}>Prev:</Text>
                       <TextInput
                         style={styles.prevTextInput}
                         keyboardType="decimal-pad"
-                        value={prevInputs[row.unitId]}
+                        placeholder="0.00"
+                        placeholderTextColor="#a0aab2"
+                        value={prevInputs[row.unitId] ?? ''}
                         onChangeText={(val) => setPrevInputs(prev => ({ ...prev, [row.unitId]: val }))}
                       />
                     </View>
                   ) : (
-                    <Text style={styles.prevReading}>Prev: {row.previousReading}</Text>
+                    <Text style={styles.prevReading}>Prev: {row.previousReading ?? 0}</Text>
                   )}
                 </View>
                 
                 <View style={styles.rowMiddle}>
-                  {currentVal !== null && (
+                  {currentVal !== null && !isInvalidCurrent && (
                     <>
                       <Text style={[styles.consumedText, isError && { color: '#ef4444' }]}>
                         {consumed > 0 ? '+' : ''}{consumed} {unitType || 'Units'}
@@ -105,7 +112,7 @@ export function MeterReadingFloorCard({
                       keyboardType="decimal-pad"
                       placeholder="0.00"
                       placeholderTextColor="#a0aab2"
-                      value={inputs[row.unitId]}
+                      value={inputs[row.unitId] ?? ''}
                       onChangeText={(val) => setInputs(prev => ({ ...prev, [row.unitId]: val }))}
                       returnKeyType="next"
                       editable={!row.isBilled}
@@ -114,7 +121,7 @@ export function MeterReadingFloorCard({
                       {unitType || 'Units'}
                     </Text>
                   </View>
-                  {isError && <Text style={styles.errorText}>Invalid</Text>}
+                  {isError && <Text style={styles.errorText}>Invalid (Current &lt; Prev)</Text>}
                 </View>
               </View>
             );

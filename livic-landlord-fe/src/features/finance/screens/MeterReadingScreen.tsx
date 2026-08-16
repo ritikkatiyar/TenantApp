@@ -83,10 +83,12 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
   worksheet.forEach(row => {
     const valStr = inputs[row.unitId];
+    const prevStr = prevInputs[row.unitId];
+    const prevVal = prevStr !== undefined && prevStr !== '' ? parseFloat(prevStr) : (row.previousReading ?? 0);
     if (valStr && valStr.trim() !== '') {
       const val = parseFloat(valStr);
-      if (!isNaN(val) && val >= row.previousReading) {
-        const consumed = val - row.previousReading;
+      if (!isNaN(val) && !isNaN(prevVal) && val >= prevVal) {
+        const consumed = val - prevVal;
         totalConsumption += consumed;
         totalEstimatedCost += consumed * baseRate;
       }
