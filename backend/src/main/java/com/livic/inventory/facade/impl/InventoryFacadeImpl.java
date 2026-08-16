@@ -60,4 +60,13 @@ public class InventoryFacadeImpl implements InventoryFacade {
         return assignmentRepository.findById(assignmentId)
                 .map(LeaseInventoryAssignmentTbl::getLeaseId);
     }
+
+    @Override
+    public Optional<UUID> getPropertyIdForInventoryItem(UUID itemId) {
+        if (itemId == null) {
+            return Optional.empty();
+        }
+        return inventoryItemRepository.findById(itemId)
+                .map(com.livic.inventory.domain.InventoryItemTbl::getPropertyId);
+    }
 }

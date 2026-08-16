@@ -134,6 +134,20 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Override
     @Transactional(readOnly = true)
+    public boolean hasPermissionByItemId(UUID itemId, String permissionCode) {
+        if (itemId == null) return false;
+        try {
+            return inventoryFacade.getPropertyIdForInventoryItem(itemId)
+                    .map(propertyId -> checkPermission(propertyId, permissionCode))
+                    .orElse(false);
+        } catch (Exception e) {
+            log.error("Error checking permission for itemId {}: {}", itemId, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode) {
         if (rentCycleId == null) return false;
         try {

@@ -64,7 +64,7 @@ public class InventoryController {
     }
 
     @PutMapping("/items/{itemId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByItemId(#itemId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<InventoryItemResponse>> updateItem(
             @PathVariable UUID itemId,
             @Valid @RequestBody UpdateInventoryItemRequest request,
@@ -75,13 +75,13 @@ public class InventoryController {
     }
 
     @GetMapping("/items/{itemId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByItemId(#itemId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<InventoryItemResponse>> getItem(@PathVariable UUID itemId) {
         return ResponseEntity.ok(ApiResponse.success(inventoryItemService.getItem(itemId)));
     }
 
     @PostMapping("/items/{itemId}/service-expenses")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByItemId(#itemId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<ServiceExpenseResponse>> recordServiceExpense(
             @PathVariable UUID itemId,
             @Valid @RequestBody ServiceExpenseRequest request,
@@ -92,7 +92,7 @@ public class InventoryController {
     }
 
     @GetMapping("/items/{itemId}/service-expenses")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByItemId(#itemId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<ServiceExpenseResponse>>> listServiceExpenses(@PathVariable UUID itemId) {
         return ResponseEntity.ok(ApiResponse.success(serviceExpenseService.listExpensesByItem(itemId)));
     }
@@ -104,7 +104,7 @@ public class InventoryController {
     }
 
     @GetMapping("/my-visible-items")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW_OWN_LEASE')")
     public ResponseEntity<ApiResponse<TenantVisibleInventoryResponse>> getTenantVisibleItems(
             @RequestParam UUID propertyId,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {

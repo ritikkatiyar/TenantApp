@@ -17,4 +17,6 @@ public interface InventoryFacade {
     long getAssignedInventoryCountForLease(UUID leaseId);
 
     Optional<UUID> getLeaseIdForAssignment(UUID assignmentId);
+
+    Optional<UUID> getPropertyIdForInventoryItem(UUID itemId);
 }
