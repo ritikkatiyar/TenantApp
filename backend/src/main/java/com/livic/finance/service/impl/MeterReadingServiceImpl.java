@@ -1,5 +1,6 @@
 package com.livic.finance.service.impl;
 
+import com.livic.common.domain.CalculationStrategyType;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.ChargeConfigTbl;
@@ -48,7 +49,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         ChargeConfigTbl chargeConfig = chargeConfigCrudService.findById(chargeConfigId)
                 .orElseThrow(() -> new BusinessException("Charge config not found"));
 
-        if (!"METERED".equals(chargeConfig.getCalculationStrategy().name())) {
+        if (chargeConfig.getCalculationStrategy() != CalculationStrategyType.METERED) {
             throw new BusinessException("Charge config is not a metered strategy");
         }
 
