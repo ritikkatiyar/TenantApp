@@ -3,7 +3,7 @@ package com.livic.auth.service.impl;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
-import com.livic.finance.dto.ChargeConfigDTOs;
+import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
@@ -60,14 +60,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Override
     @Transactional(readOnly = true)
     public boolean hasRole(UUID propertyId, String roleCode) {
-        UserDetailsImpl currentUser = getCurrentUser();
-        if (currentUser == null) return false;
-        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
-
-        UUID userId = UUID.fromString(currentUser.getId());
-        boolean hasRole = membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode);
-        log.debug("User {} role check for {} on property {}: {}", userId, roleCode, propertyId, hasRole);
-        return hasRole;
+        return hasAnyRole(propertyId, roleCode);
     }
 
     @Override
@@ -78,6 +71,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
 
         UUID userId = UUID.fromString(currentUser.getId());
+        
         for (String roleCode : roleCodes) {
             if (membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode)) {
                 log.debug("User {} has role {} on property {}", userId, roleCode, propertyId);
@@ -151,7 +145,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode) {
         if (chargeConfigId == null) return false;
         try {
-            ChargeConfigDTOs.ChargeConfigResponse c = financeFacade.getChargeConfigById(chargeConfigId);
+            ChargeConfigResponse c = financeFacade.getChargeConfigById(chargeConfigId);
             return checkPermission(c.getPropertyId(), permissionCode);
         } catch (Exception e) {
             return false;

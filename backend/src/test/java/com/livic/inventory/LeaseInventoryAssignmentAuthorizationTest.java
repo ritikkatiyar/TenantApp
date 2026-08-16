@@ -3,6 +3,7 @@ package com.livic.inventory;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.impl.AuthorizationServiceImpl;
 import com.livic.auth.service.interfaces.MembershipCrudService;
+import com.livic.common.domain.UserRole;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.controller.LeaseInventoryAssignmentController;
@@ -69,7 +70,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
                 email,
                 "Test User",
                 "+919876543210",
-                com.livic.common.domain.UserRole.USER
+                UserRole.USER
         );
         UserDetailsImpl userDetails = UserDetailsImpl.fromSummary(userSummary);
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
