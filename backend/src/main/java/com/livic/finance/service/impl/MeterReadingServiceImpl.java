@@ -110,7 +110,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(userIds);
 
         Set<UUID> unitIdsInResult = finalEntries.stream().map(MeterReadingTbl::getUnitId).collect(Collectors.toSet());
-        Map<UUID, UnitSummaryDTO> unitMap = unitFacade.getUnitsByPropertyId(propertyId).stream()
+        Map<UUID, UnitSummaryDTO> unitMap = units.stream()
                 .filter(u -> unitIdsInResult.contains(u.id()))
                 .collect(Collectors.toMap(UnitSummaryDTO::id, u -> u));
 

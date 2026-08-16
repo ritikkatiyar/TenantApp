@@ -3,7 +3,7 @@ package com.livic.finance.strategy;
 import com.livic.common.domain.CalculationStrategyType;
 import com.livic.finance.domain.ChargeConfigTbl;
 import com.livic.finance.domain.MeterReadingTbl;
-import com.livic.finance.repository.MeterReadingRepository;
+import com.livic.finance.service.interfaces.MeterReadingCrudService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +14,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MeteredCalculation implements ChargeCalculation {
 
-    private final MeterReadingRepository meterReadingRepository;
+    private final MeterReadingCrudService meterReadingCrudService;
 
     @Override
     public CalculationStrategyType getStrategyType() {
@@ -27,7 +27,7 @@ public class MeteredCalculation implements ChargeCalculation {
         int year = Integer.parseInt(parts[0]);
         int month = Integer.parseInt(parts[1]);
 
-        return meterReadingRepository.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(
+        return meterReadingCrudService.findByUnitIdAndChargeConfigIdAndBillingMonthAndBillingYear(
                 unitId, config.getId(), month, year)
                 .map(reading -> {
                     BigDecimal current = reading.getCurrentReading();
