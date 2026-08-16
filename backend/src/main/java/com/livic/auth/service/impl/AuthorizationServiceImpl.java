@@ -91,6 +91,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
             return u != null && checkPermission(u.propertyId(), permissionCode);
         } catch (Exception e) {
+            log.error("Error checking permission for unitId {}: {}", unitId, e.getMessage(), e);
             return false;
         }
     }
@@ -113,6 +114,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 return checkPermission(lease.propertyId(), permissionCode);
             }).orElse(false);
         } catch (Exception e) {
+            log.error("Error checking permission for leaseId {}: {}", leaseId, e.getMessage(), e);
             return false;
         }
     }
@@ -126,7 +128,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                     .map(leaseId -> hasPermissionByLeaseId(leaseId, permissionCode))
                     .orElse(false);
         } catch (Exception e) {
-            log.error("Error checking permission for assignmentId {}: {}", assignmentId, e.getMessage());
+            log.error("Error checking permission for assignmentId {}: {}", assignmentId, e.getMessage(), e);
             return false;
         }
     }
@@ -135,9 +137,14 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode) {
         if (rentCycleId == null) return false;
-        return financeFacade.getPropertyIdByRentCycleId(rentCycleId)
-                .map(propertyId -> checkPermission(propertyId, permissionCode))
-                .orElse(false);
+        try {
+            return financeFacade.getPropertyIdByRentCycleId(rentCycleId)
+                    .map(propertyId -> checkPermission(propertyId, permissionCode))
+                    .orElse(false);
+        } catch (Exception e) {
+            log.error("Error checking permission for rentCycleId {}: {}", rentCycleId, e.getMessage(), e);
+            return false;
+        }
     }
 
     @Override
@@ -148,6 +155,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             ChargeConfigResponse c = financeFacade.getChargeConfigById(chargeConfigId);
             return checkPermission(c.getPropertyId(), permissionCode);
         } catch (Exception e) {
+            log.error("Error checking permission for chargeConfigId {}: {}", chargeConfigId, e.getMessage(), e);
             return false;
         }
     }

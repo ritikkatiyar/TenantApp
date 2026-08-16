@@ -45,8 +45,10 @@ module/
   9. `payment` - Payment gateway integrations (Razorpay, Stripe, PayPal), payment initiation, webhooks, and ledger transactions.
   10. `issue` - Maintenance tickets, issue reporting, priority triage, and resolution workflows.
   11. `analytics` - Business intelligence, revenue metrics, occupancy rates, and operational reporting.
+  12. `storage` - Pluggable media storage and CDN integration (Cloudinary, S3, R2, Local).
+  13. `inventory` - Physical asset registry, appliances, condition tracking, and lease move-in/move-out lifecycle.
 * No direct repository access across modules
-* Modules communicate ONLY via service interfaces
+* Modules communicate ONLY via facade or service interfaces (e.g. `com.livic.<module>.facade` or `com.livic.<module>.service.interfaces`)
 * Controllers must remain thin
 * Business logic only inside services
 

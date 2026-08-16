@@ -47,7 +47,7 @@ public class InventoryFacadeImpl implements InventoryFacade {
 
     @Override
     public long getAssignedInventoryCountForLease(UUID leaseId) {
-        return assignmentRepository.findAllByLeaseId(leaseId).size();
+        return assignmentRepository.countByLeaseId(leaseId);
     }
 
     @Override

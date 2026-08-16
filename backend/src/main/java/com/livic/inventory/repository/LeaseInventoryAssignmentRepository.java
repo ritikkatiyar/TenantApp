@@ -16,6 +16,8 @@ public interface LeaseInventoryAssignmentRepository extends JpaRepository<LeaseI
 
     List<LeaseInventoryAssignmentTbl> findAllByLeaseId(UUID leaseId);
 
+    long countByLeaseId(UUID leaseId);
+
     List<LeaseInventoryAssignmentTbl> findAllByLeaseIdIn(Collection<UUID> leaseIds);
 
     List<LeaseInventoryAssignmentTbl> findAllByItemId(UUID itemId);
