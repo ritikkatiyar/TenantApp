@@ -35,7 +35,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const isWideDesktop = width >= 1200;
-  const useTwoColumnLayout = width >= 1500;
+  const useTwoColumnLayout = width >= 1024;
   const { accessToken } = useAuth();
   const { properties, isLoading: propertiesLoading } = useProperties();
   const { handleScroll } = useScrollNav();

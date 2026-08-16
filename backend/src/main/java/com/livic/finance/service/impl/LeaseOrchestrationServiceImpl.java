@@ -81,6 +81,13 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
         return enrichLease(lease);
     }
 
+    @Override
+    @Transactional
+    public LeaseDTOs.LeaseResponse updateLeaseTerms(UUID id, LeaseDTOs.UpdateLeaseTermsRequest request) {
+        LeaseTbl lease = leaseService.updateLeaseTerms(id, request.monthlyRentAmount(), request.securityDeposit());
+        return enrichLease(lease);
+    }
+
     private LeaseDTOs.LeaseResponse enrichLease(LeaseTbl lease) {
         UserSummaryDTO user = userFacade.getUserById(lease.getUserId()).orElse(null);
         return toResponse(lease, user);

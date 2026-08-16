@@ -28,6 +28,7 @@ import { formatCurrency, formatCompactCurrency } from '@/src/utils/formatters';
 import {
   listActiveLeasesByProperty,
   createLease,
+  updateLeaseTerms,
   LeaseResponse,
 } from '@/src/features/tenant/api/lease.api';
 
@@ -80,6 +81,11 @@ export default function OwnerLeasesScreen() {
   const [isNoticeModalVisible, setIsNoticeModalVisible] = useState(false);
   const [isCashModalVisible, setIsCashModalVisible] = useState(false);
   const [isConversionModalVisible, setIsConversionModalVisible] = useState(false);
+  const [isEditTermsModalVisible, setIsEditTermsModalVisible] = useState(false);
+  const [editingLease, setEditingLease] = useState<LeaseResponse | null>(null);
+  const [editRentAmount, setEditRentAmount] = useState('');
+  const [editSecurityDeposit, setEditSecurityDeposit] = useState('');
+  const [isSavingTerms, setIsSavingTerms] = useState(false);
 
   // Selected Action Targets
   const [selectedLeaseId, setSelectedLeaseId] = useState<string | null>(null);
@@ -270,6 +276,40 @@ export default function OwnerLeasesScreen() {
   const openInventory = (lease: LeaseResponse) => {
     const tab = lease.moveOutDate ? 'moveOut' : 'moveIn';
     router.push(`/inventory?tab=${tab}&leaseId=${lease.id}`);
+  };
+
+  const handleOpenEditTerms = (lease: LeaseResponse) => {
+    setEditingLease(lease);
+    setEditRentAmount(lease.monthlyRentAmount != null ? lease.monthlyRentAmount.toString() : '');
+    setEditSecurityDeposit(lease.securityDeposit != null ? lease.securityDeposit.toString() : '0');
+    setIsEditTermsModalVisible(true);
+  };
+
+  const handleSaveTerms = async () => {
+    if (!editingLease || !accessToken) return;
+    const rentNum = parseFloat(editRentAmount);
+    const depNum = parseFloat(editSecurityDeposit);
+    if (isNaN(rentNum) || rentNum < 0) {
+      showToast('Please enter a valid monthly rent amount', 'error');
+      return;
+    }
+    if (isNaN(depNum) || depNum < 0) {
+      showToast('Please enter a valid security deposit', 'error');
+      return;
+    }
+
+    try {
+      setIsSavingTerms(true);
+      const updated = await updateLeaseTerms(editingLease.id, { monthlyRentAmount: rentNum, securityDeposit: depNum }, accessToken);
+      setLeases(prev => prev.map(l => l.id === updated.id ? { ...l, monthlyRentAmount: updated.monthlyRentAmount, securityDeposit: updated.securityDeposit } : l));
+      showToast('Lease terms updated successfully', 'success');
+      setIsEditTermsModalVisible(false);
+      setEditingLease(null);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to update lease terms', 'error');
+    } finally {
+      setIsSavingTerms(false);
+    }
   };
 
   // ─── Filtered Data ──────────────────────────────────────────────────────────
@@ -496,6 +536,10 @@ export default function OwnerLeasesScreen() {
                                 <Text style={styles.detailValue}>{formatCurrency(l.monthlyRentAmount)}</Text>
                               </View>
                               <View style={styles.detailItem}>
+                                <Text style={styles.detailLabel}>SECURITY DEPOSIT</Text>
+                                <Text style={styles.detailValue}>{formatCurrency(l.securityDeposit ?? 0)}</Text>
+                              </View>
+                              <View style={styles.detailItem}>
                                 <Text style={styles.detailLabel}>MOVE-IN</Text>
                                 <Text style={styles.detailValueSecondary}>{l.moveInDate}</Text>
                               </View>
@@ -509,6 +553,14 @@ export default function OwnerLeasesScreen() {
                           </View>
 
                           <View style={styles.leaseActionsCol}>
+                            <TouchableOpacity
+                              style={styles.actionBtnOutline}
+                              onPress={() => handleOpenEditTerms(l)}
+                            >
+                              <MaterialIcons name="edit" size={14} color="#0891b2" />
+                              <Text style={styles.actionBtnText}>Edit Terms</Text>
+                            </TouchableOpacity>
+
                             <TouchableOpacity
                               style={styles.actionBtnPrimary}
                               onPress={() => openInventory(l)}
@@ -946,6 +998,73 @@ export default function OwnerLeasesScreen() {
                 <LinearGradient colors={['#059669', '#10b981']} style={styles.submitBtnInner}>
                   <MaterialIcons name="how-to-reg" size={18} color="#fff" />
                   <Text style={styles.submitBtnText}>Activate Lease</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Lease Terms Modal */}
+      <Modal visible={isEditTermsModalVisible} transparent animationType="fade" onRequestClose={() => setIsEditTermsModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFillObject} />
+          <View style={[styles.modalCard, { maxWidth: 440 }]}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalKicker}>LEASE TERMS</Text>
+                <Text style={styles.modalTitle}>Edit Rent & Deposit</Text>
+              </View>
+              <TouchableOpacity onPress={() => setIsEditTermsModalVisible(false)} style={styles.closeBtn}>
+                <MaterialIcons name="close" size={20} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              {editingLease && (
+                <View style={{ marginBottom: 14, padding: 12, backgroundColor: 'rgba(8,145,178,0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(8,145,178,0.2)' }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#0891b2' }}>
+                    Unit {editingLease.unitNumber} • {editingLease.tenantName || 'Tenant'}
+                  </Text>
+                  {editingLease.tenantPhone ? (
+                    <Text style={{ fontSize: 12, color: '#5b6b6d', marginTop: 2 }}>{editingLease.tenantPhone}</Text>
+                  ) : null}
+                </View>
+              )}
+              <Text style={styles.label}>Monthly Rent Amount (₹) *</Text>
+              <TextInput
+                value={editRentAmount}
+                onChangeText={setEditRentAmount}
+                placeholder="e.g. 15000"
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+              <Text style={styles.label}>Security Deposit (₹) *</Text>
+              <TextInput
+                value={editSecurityDeposit}
+                onChangeText={setEditSecurityDeposit}
+                placeholder="e.g. 30000"
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity onPress={() => setIsEditTermsModalVisible(false)} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSaveTerms} disabled={isSavingTerms} style={styles.submitBtn}>
+                <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.submitBtnInner}>
+                  {isSavingTerms ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <MaterialIcons name="check" size={18} color="#fff" />
+                      <Text style={styles.submitBtnText}>Save Terms</Text>
+                    </>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
             </View>
