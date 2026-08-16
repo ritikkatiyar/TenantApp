@@ -1,10 +1,11 @@
 package com.livic.inventory.service.impl;
 
+import com.livic.inventory.dto.ServiceExpenseRequest;
+import com.livic.inventory.dto.ServiceExpenseResponse;
 import com.livic.common.exception.BusinessException;
 import com.livic.inventory.domain.InventoryItemTbl;
 import com.livic.inventory.domain.InventoryServiceExpenseTbl;
 import com.livic.inventory.domain.enums.InventoryStatus;
-import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.mapper.InventoryMapper;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.repository.InventoryServiceExpenseRepository;
@@ -31,9 +32,9 @@ public class InventoryServiceExpenseServiceImpl implements InventoryServiceExpen
 
     @Override
     @Transactional
-    public InventoryDTOs.ServiceExpenseResponse recordExpense(
+    public ServiceExpenseResponse recordExpense(
             UUID itemId, 
-            InventoryDTOs.ServiceExpenseRequest request, 
+            ServiceExpenseRequest request, 
             UUID userId) {
         
         InventoryItemTbl item = inventoryItemRepository.findById(itemId)
@@ -69,7 +70,7 @@ public class InventoryServiceExpenseServiceImpl implements InventoryServiceExpen
 
     @Override
     @Transactional(readOnly = true)
-    public List<InventoryDTOs.ServiceExpenseResponse> listExpensesByItem(UUID itemId) {
+    public List<ServiceExpenseResponse> listExpensesByItem(UUID itemId) {
         return expenseRepository.findAllByItemId(itemId).stream()
                 .map(InventoryMapper::toServiceExpenseResponse)
                 .collect(Collectors.toList());
@@ -77,7 +78,7 @@ public class InventoryServiceExpenseServiceImpl implements InventoryServiceExpen
 
     @Override
     @Transactional(readOnly = true)
-    public Page<InventoryDTOs.ServiceExpenseResponse> listExpensesByProperty(UUID propertyId, Pageable pageable) {
+    public Page<ServiceExpenseResponse> listExpensesByProperty(UUID propertyId, Pageable pageable) {
         return expenseRepository.findAllByPropertyId(propertyId, pageable)
                 .map(InventoryMapper::toServiceExpenseResponse);
     }

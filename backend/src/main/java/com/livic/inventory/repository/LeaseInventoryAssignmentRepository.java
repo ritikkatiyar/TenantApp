@@ -1,6 +1,8 @@
 package com.livic.inventory.repository;
 
 import com.livic.inventory.domain.LeaseInventoryAssignmentTbl;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,9 +18,13 @@ public interface LeaseInventoryAssignmentRepository extends JpaRepository<LeaseI
 
     List<LeaseInventoryAssignmentTbl> findAllByLeaseId(UUID leaseId);
 
+    Page<LeaseInventoryAssignmentTbl> findAllByLeaseId(UUID leaseId, Pageable pageable);
+
+    long countByLeaseId(UUID leaseId);
+
     List<LeaseInventoryAssignmentTbl> findAllByLeaseIdIn(Collection<UUID> leaseIds);
 
-    List<LeaseInventoryAssignmentTbl> findAllByItemId(UUID itemId);
+    Page<LeaseInventoryAssignmentTbl> findAllByItemId(UUID itemId, Pageable pageable);
 
     @Query("SELECT a FROM LeaseInventoryAssignmentTbl a WHERE a.itemId = :itemId AND a.returnedAt IS NULL")
     Optional<LeaseInventoryAssignmentTbl> findActiveAssignmentByItemId(@Param("itemId") UUID itemId);

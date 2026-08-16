@@ -15,7 +15,7 @@ import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.domain.RentCycleChargeTbl;
 import com.livic.finance.domain.RentCycleTbl;
 import com.livic.finance.dto.BillingWorksheetDTOs.WorksheetEntryResponse;
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigRequest;
+import com.livic.finance.dto.ChargeConfigRequest;
 import com.livic.finance.dto.LeaseDTOs;
 import com.livic.finance.dto.RentCycleDTOs;
 import com.livic.finance.mapper.LeaseMapper;

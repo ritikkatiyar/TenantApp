@@ -1,5 +1,10 @@
 package com.livic.inventory;
 
+import com.livic.inventory.dto.AssignmentItemResponse;
+import com.livic.inventory.dto.CreateAssignmentItemPayload;
+import com.livic.inventory.dto.CreateAssignmentRequest;
+import com.livic.inventory.dto.ReturnVerificationRequest;
+import com.livic.inventory.dto.VerificationItemResponse;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.domain.InventoryItemTbl;
@@ -9,7 +14,6 @@ import com.livic.inventory.domain.enums.InventoryCategory;
 import com.livic.inventory.domain.enums.InventoryCondition;
 import com.livic.inventory.domain.enums.InventoryScope;
 import com.livic.inventory.domain.enums.InventoryStatus;
-import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.repository.LeaseInventoryAssignmentRepository;
 import com.livic.inventory.service.impl.LeaseInventoryAssignmentServiceImpl;
@@ -22,6 +26,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
@@ -85,8 +91,8 @@ class LeaseInventoryAssignmentServiceTest {
         when(inventoryItemRepository.findAllByIdIn(Set.of(itemId))).thenReturn(List.of(item));
         when(assignmentRepository.findActiveAssignmentsByItemIds(Set.of(itemId))).thenReturn(List.of());
 
-        InventoryDTOs.CreateAssignmentRequest request = new InventoryDTOs.CreateAssignmentRequest(
-                List.of(new InventoryDTOs.CreateAssignmentItemPayload(
+        CreateAssignmentRequest request = new CreateAssignmentRequest(
+                List.of(new CreateAssignmentItemPayload(
                         itemId,
                         InventoryCondition.EXCELLENT,
                         "Assigned on move-in",
@@ -94,9 +100,20 @@ class LeaseInventoryAssignmentServiceTest {
                 ))
         );
 
-        when(assignmentRepository.saveAll(any())).thenAnswer(inv -> inv.getArgument(0));
+        LeaseInventoryAssignmentTbl assignment = LeaseInventoryAssignmentTbl.builder()
+                .id(UUID.randomUUID())
+                .leaseId(leaseId)
+                .itemId(itemId)
+                .conditionAtAssignment(InventoryCondition.EXCELLENT)
+                .assignedAt(Instant.now())
+                .deductionApprovalStatus(DeductionApprovalStatus.NONE)
+                .build();
 
-        List<InventoryDTOs.AssignmentItemResponse> result = assignmentService.createAssignments(leaseId, request, userId);
+        when(assignmentRepository.saveAll(any())).thenReturn(List.of(assignment));
+        when(assignmentRepository.findAllByLeaseId(eq(leaseId), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(assignment)));
+
+        List<AssignmentItemResponse> result = assignmentService.createAssignments(leaseId, request, userId);
 
         assertThat(result).isNotNull();
         assertThat(item.getStatus()).isEqualTo(InventoryStatus.ASSIGNED);
@@ -115,8 +132,8 @@ class LeaseInventoryAssignmentServiceTest {
 
         when(assignmentRepository.findActiveAssignmentsByItemIds(Set.of(itemId))).thenReturn(List.of(activeAssignment));
 
-        InventoryDTOs.CreateAssignmentRequest request = new InventoryDTOs.CreateAssignmentRequest(
-                List.of(new InventoryDTOs.CreateAssignmentItemPayload(
+        CreateAssignmentRequest request = new CreateAssignmentRequest(
+                List.of(new CreateAssignmentItemPayload(
                         itemId,
                         InventoryCondition.EXCELLENT,
                         "Assigned on move-in",
@@ -158,7 +175,7 @@ class LeaseInventoryAssignmentServiceTest {
         when(inventoryItemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(assignmentRepository.save(any(LeaseInventoryAssignmentTbl.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        InventoryDTOs.ReturnVerificationRequest request = new InventoryDTOs.ReturnVerificationRequest(
+        ReturnVerificationRequest request = new ReturnVerificationRequest(
                 InventoryCondition.DAMAGED,
                 "Deep surface scratch",
                 BigDecimal.valueOf(4500),
@@ -166,7 +183,7 @@ class LeaseInventoryAssignmentServiceTest {
                 null
         );
 
-        InventoryDTOs.VerificationItemResponse response = assignmentService.verifyReturn(assignmentId, request, userId);
+        VerificationItemResponse response = assignmentService.verifyReturn(assignmentId, request, userId);
 
         assertThat(response).isNotNull();
         assertThat(response.returnCondition()).isEqualTo("Damaged");

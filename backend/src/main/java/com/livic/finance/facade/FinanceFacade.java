@@ -1,6 +1,6 @@
 package com.livic.finance.facade;
 
-import com.livic.finance.dto.ChargeConfigDTOs;
+import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +33,7 @@ public interface FinanceFacade {
 
     Optional<UUID> getPropertyIdByRentCycleId(UUID rentCycleId);
 
-    ChargeConfigDTOs.ChargeConfigResponse getChargeConfigById(UUID chargeConfigId);
+    ChargeConfigResponse getChargeConfigById(UUID chargeConfigId);
 
     // Analytics Read Methods
     record RevenueMetricsDTO(BigDecimal expected, BigDecimal collected) {}

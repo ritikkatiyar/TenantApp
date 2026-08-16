@@ -1,7 +1,7 @@
 package com.livic.finance.service;
 
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigRequest;
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
+import com.livic.finance.dto.ChargeConfigRequest;
+import com.livic.finance.dto.ChargeConfigResponse;
 import java.util.UUID;
 
 public interface ChargeConfigService {

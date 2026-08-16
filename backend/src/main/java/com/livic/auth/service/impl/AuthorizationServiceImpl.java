@@ -3,9 +3,9 @@ package com.livic.auth.service.impl;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
-import com.livic.finance.dto.ChargeConfigDTOs;
-import com.livic.finance.dto.LeaseSummaryDTO;
+import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.finance.facade.FinanceFacade;
+import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.UnitFacade;
 
@@ -27,6 +27,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final MembershipCrudService membershipCrudService;
     private final UnitFacade unitFacade;
     private final FinanceFacade financeFacade;
+    private final InventoryFacade inventoryFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -39,9 +40,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasAnyPermission(UUID propertyId, String... permissionCodes) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
-        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
+        if (isUserGloballyAuthorized(currentUser)) return true;
 
-        UUID userId = UUID.fromString(currentUser.getId());
+        UUID userId = currentUser.getUuid();
         Set<String> userPermissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         
         for (String code : permissionCodes) {
@@ -58,14 +59,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Override
     @Transactional(readOnly = true)
     public boolean hasRole(UUID propertyId, String roleCode) {
-        UserDetailsImpl currentUser = getCurrentUser();
-        if (currentUser == null) return false;
-        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
-
-        UUID userId = UUID.fromString(currentUser.getId());
-        boolean hasRole = membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode);
-        log.debug("User {} role check for {} on property {}: {}", userId, roleCode, propertyId, hasRole);
-        return hasRole;
+        return hasAnyRole(propertyId, roleCode);
     }
 
     @Override
@@ -73,9 +67,10 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasAnyRole(UUID propertyId, String... roleCodes) {
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
-        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) return true;
+        if (isUserGloballyAuthorized(currentUser)) return true;
 
-        UUID userId = UUID.fromString(currentUser.getId());
+        UUID userId = currentUser.getUuid();
+        
         for (String roleCode : roleCodes) {
             if (membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode)) {
                 log.debug("User {} has role {} on property {}", userId, roleCode, propertyId);
@@ -95,6 +90,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             UnitSummaryDTO u = unitFacade.getUnitById(unitId).orElse(null);
             return u != null && checkPermission(u.propertyId(), permissionCode);
         } catch (Exception e) {
+            log.error("Error checking permission for unitId {}: {}", unitId, e.getMessage(), e);
             return false;
         }
     }
@@ -106,17 +102,32 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
-        UUID userId = UUID.fromString(currentUser.getId());
+        UUID userId = currentUser.getUuid();
         
         try {
             return financeFacade.getLeaseById(leaseId).map(lease -> {
-                if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.userId() != null && lease.userId().toString().equals(currentUser.getId())) {
+                if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.userId() != null && lease.userId().equals(userId)) {
                     log.debug("User {} has own lease access for lease {}", userId, leaseId);
                     return true;
                 }
                 return checkPermission(lease.propertyId(), permissionCode);
             }).orElse(false);
         } catch (Exception e) {
+            log.error("Error checking permission for leaseId {}: {}", leaseId, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasPermissionByAssignmentId(UUID assignmentId, String permissionCode) {
+        if (assignmentId == null) return false;
+        try {
+            return inventoryFacade.getLeaseIdForAssignment(assignmentId)
+                    .map(leaseId -> hasPermissionByLeaseId(leaseId, permissionCode))
+                    .orElse(false);
+        } catch (Exception e) {
+            log.error("Error checking permission for assignmentId {}: {}", assignmentId, e.getMessage(), e);
             return false;
         }
     }
@@ -125,9 +136,14 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Transactional(readOnly = true)
     public boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode) {
         if (rentCycleId == null) return false;
-        return financeFacade.getPropertyIdByRentCycleId(rentCycleId)
-                .map(propertyId -> checkPermission(propertyId, permissionCode))
-                .orElse(false);
+        try {
+            return financeFacade.getPropertyIdByRentCycleId(rentCycleId)
+                    .map(propertyId -> checkPermission(propertyId, permissionCode))
+                    .orElse(false);
+        } catch (Exception e) {
+            log.error("Error checking permission for rentCycleId {}: {}", rentCycleId, e.getMessage(), e);
+            return false;
+        }
     }
 
     @Override
@@ -135,11 +151,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode) {
         if (chargeConfigId == null) return false;
         try {
-            ChargeConfigDTOs.ChargeConfigResponse c = financeFacade.getChargeConfigById(chargeConfigId);
+            ChargeConfigResponse c = financeFacade.getChargeConfigById(chargeConfigId);
             return checkPermission(c.getPropertyId(), permissionCode);
         } catch (Exception e) {
+            log.error("Error checking permission for chargeConfigId {}: {}", chargeConfigId, e.getMessage(), e);
             return false;
         }
+    }
+
+    private boolean isUserGloballyAuthorized(UserDetailsImpl currentUser) {
+        return currentUser != null && (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN"));
     }
 
     private boolean checkPermission(UUID propertyId, String permissionCode) {
@@ -147,11 +168,11 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) {
             return false;
         }
-        if (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN")) {
+        if (isUserGloballyAuthorized(currentUser)) {
             return true;
         }
 
-        UUID userId = UUID.fromString(currentUser.getId());
+        UUID userId = currentUser.getUuid();
         Set<String> permissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         
         boolean hasPerm = permissions.contains(permissionCode);

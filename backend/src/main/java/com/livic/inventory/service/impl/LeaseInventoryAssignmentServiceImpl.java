@@ -1,5 +1,12 @@
 package com.livic.inventory.service.impl;
 
+import com.livic.inventory.dto.ApproveDeductionsRequest;
+import com.livic.inventory.dto.AssignmentItemResponse;
+import com.livic.inventory.dto.CreateAssignmentItemPayload;
+import com.livic.inventory.dto.CreateAssignmentRequest;
+import com.livic.inventory.dto.MoveOutChecklistRequest;
+import com.livic.inventory.dto.ReturnVerificationRequest;
+import com.livic.inventory.dto.VerificationItemResponse;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.domain.InventoryItemTbl;
@@ -7,16 +14,18 @@ import com.livic.inventory.domain.LeaseInventoryAssignmentTbl;
 import com.livic.inventory.domain.enums.DeductionApprovalStatus;
 import com.livic.inventory.domain.enums.InventoryCondition;
 import com.livic.inventory.domain.enums.InventoryStatus;
-import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.mapper.InventoryMapper;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.repository.LeaseInventoryAssignmentRepository;
 import com.livic.inventory.service.interfaces.LeaseInventoryAssignmentService;
-import com.livic.storage.dto.OwnerModule;
 import com.livic.storage.dto.MediaDTOs;
+import com.livic.storage.dto.OwnerModule;
 import com.livic.storage.facade.StorageFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -45,9 +53,9 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
 
     @Override
     @Transactional
-    public List<InventoryDTOs.AssignmentItemResponse> createAssignments(
+    public List<AssignmentItemResponse> createAssignments(
             UUID leaseId, 
-            InventoryDTOs.CreateAssignmentRequest request, 
+            CreateAssignmentRequest request, 
             UUID userId) {
         
         if (request.items() == null || request.items().isEmpty()) {
@@ -55,7 +63,7 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
         }
 
         Set<UUID> itemIds = request.items().stream()
-                .map(InventoryDTOs.CreateAssignmentItemPayload::itemId)
+                .map(CreateAssignmentItemPayload::itemId)
                 .collect(Collectors.toSet());
 
         List<InventoryItemTbl> items = inventoryItemRepository.findAllByIdIn(itemIds);
@@ -73,7 +81,7 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
         List<LeaseInventoryAssignmentTbl> newAssignments = new ArrayList<>();
         List<InventoryItemTbl> itemsToUpdate = new ArrayList<>();
 
-        for (InventoryDTOs.CreateAssignmentItemPayload payload : request.items()) {
+        for (CreateAssignmentItemPayload payload : request.items()) {
             InventoryItemTbl item = itemMap.get(payload.itemId());
             if (item == null) {
                 throw new BusinessException(HttpStatus.NOT_FOUND, "Inventory item not found: " + payload.itemId());
@@ -108,20 +116,26 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
 
     @Override
     @Transactional(readOnly = true)
-    public List<InventoryDTOs.AssignmentItemResponse> getAssignmentsForLease(UUID leaseId) {
-        List<LeaseInventoryAssignmentTbl> assignments = assignmentRepository.findAllByLeaseId(leaseId);
-        if (assignments.isEmpty()) {
-            return List.of();
+    public List<AssignmentItemResponse> getAssignmentsForLease(UUID leaseId) {
+        return getAssignmentsForLease(leaseId, Pageable.unpaged()).getContent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AssignmentItemResponse> getAssignmentsForLease(UUID leaseId, Pageable pageable) {
+        Page<LeaseInventoryAssignmentTbl> page = assignmentRepository.findAllByLeaseId(leaseId, pageable);
+        if (page == null || page.isEmpty()) {
+            return Page.empty(pageable);
         }
 
-        Set<UUID> itemIds = assignments.stream().map(LeaseInventoryAssignmentTbl::getItemId).collect(Collectors.toSet());
+        Set<UUID> itemIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getItemId).collect(Collectors.toSet());
         List<InventoryItemTbl> items = inventoryItemRepository.findAllByIdIn(itemIds);
         Map<UUID, InventoryItemTbl> itemMap = items.stream().collect(Collectors.toMap(InventoryItemTbl::getId, Function.identity()));
 
-        Set<UUID> assignmentIds = assignments.stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
+        Set<UUID> assignmentIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
         Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, assignmentIds);
 
-        return assignments.stream()
+        List<AssignmentItemResponse> dtoList = page.getContent().stream()
                 .map(a -> {
                     InventoryItemTbl item = itemMap.get(a.getItemId());
                     if (item == null) return null;
@@ -130,13 +144,15 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
                     String img = (media != null && !media.isEmpty()) ? media.get(0).url() : null;
                     return InventoryMapper.toAssignmentResponse(item, a, null, img, photoCount);
                 })
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 
     @Override
     @Transactional
-    public List<InventoryDTOs.VerificationItemResponse> generateMoveOutChecklist(UUID leaseId, InventoryDTOs.MoveOutChecklistRequest request, UUID userId) {
+    public List<VerificationItemResponse> generateMoveOutChecklist(UUID leaseId, MoveOutChecklistRequest request, UUID userId) {
         List<LeaseInventoryAssignmentTbl> activeAssignments = assignmentRepository.findActiveAssignmentsByLeaseId(leaseId);
         log.info("[INVENTORY] Generating move-out checklist for leaseId={}, activeItemsCount={}, user={}",
                 leaseId, activeAssignments.size(), userId);
@@ -145,7 +161,7 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
 
     @Override
     @Transactional
-    public InventoryDTOs.VerificationItemResponse verifyReturn(UUID assignmentId, InventoryDTOs.ReturnVerificationRequest request, UUID userId) {
+    public VerificationItemResponse verifyReturn(UUID assignmentId, ReturnVerificationRequest request, UUID userId) {
         LeaseInventoryAssignmentTbl assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Assignment not found with ID: " + assignmentId));
 
@@ -193,7 +209,7 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
 
     @Override
     @Transactional
-    public List<InventoryDTOs.VerificationItemResponse> approveDeductions(UUID leaseId, InventoryDTOs.ApproveDeductionsRequest request, UUID userId) {
+    public List<VerificationItemResponse> approveDeductions(UUID leaseId, ApproveDeductionsRequest request, UUID userId) {
         List<LeaseInventoryAssignmentTbl> assignments = assignmentRepository.findAllByLeaseId(leaseId);
         if (assignments.isEmpty()) {
             return List.of();
@@ -221,20 +237,26 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
 
     @Override
     @Transactional(readOnly = true)
-    public List<InventoryDTOs.VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId) {
-        List<LeaseInventoryAssignmentTbl> assignments = assignmentRepository.findAllByLeaseId(leaseId);
-        if (assignments.isEmpty()) {
-            return List.of();
+    public List<VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId) {
+        return getVerificationChecklistForLease(leaseId, Pageable.unpaged()).getContent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId, Pageable pageable) {
+        Page<LeaseInventoryAssignmentTbl> page = assignmentRepository.findAllByLeaseId(leaseId, pageable);
+        if (page == null || page.isEmpty()) {
+            return Page.empty(pageable);
         }
 
-        Set<UUID> itemIds = assignments.stream().map(LeaseInventoryAssignmentTbl::getItemId).collect(Collectors.toSet());
+        Set<UUID> itemIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getItemId).collect(Collectors.toSet());
         List<InventoryItemTbl> items = inventoryItemRepository.findAllByIdIn(itemIds);
         Map<UUID, InventoryItemTbl> itemMap = items.stream().collect(Collectors.toMap(InventoryItemTbl::getId, Function.identity()));
 
-        Set<UUID> assignmentIds = assignments.stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
+        Set<UUID> assignmentIds = page.getContent().stream().map(LeaseInventoryAssignmentTbl::getId).collect(Collectors.toSet());
         Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, assignmentIds);
 
-        return assignments.stream()
+        List<VerificationItemResponse> dtoList = page.getContent().stream()
                 .map(a -> {
                     InventoryItemTbl item = itemMap.get(a.getItemId());
                     if (item == null) return null;
@@ -253,7 +275,9 @@ public class LeaseInventoryAssignmentServiceImpl implements LeaseInventoryAssign
 
                     return InventoryMapper.toVerificationResponse(a, item, null, moveInPhoto, returnPhoto);
                 })
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 }

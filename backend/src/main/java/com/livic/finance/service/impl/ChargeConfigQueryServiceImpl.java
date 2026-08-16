@@ -4,7 +4,7 @@ import com.livic.common.domain.BillingFrequency;
 import com.livic.common.domain.CalculationStrategyType;
 import com.livic.common.domain.ChargeCategory;
 import com.livic.finance.domain.ChargeConfigTbl;
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
+import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.finance.mapper.ChargeConfigMapper;
 import com.livic.finance.service.ChargeConfigQueryService;
 import com.livic.finance.service.interfaces.ChargeConfigCrudService;

@@ -1,8 +1,12 @@
 package com.livic.inventory.service.interfaces;
 
+import com.livic.inventory.dto.CreateInventoryItemRequest;
+import com.livic.inventory.dto.InventoryItemResponse;
+import com.livic.inventory.dto.InventoryStatsResponse;
+import com.livic.inventory.dto.TenantVisibleInventoryResponse;
+import com.livic.inventory.dto.UpdateInventoryItemRequest;
 import com.livic.inventory.domain.enums.InventoryScope;
 import com.livic.inventory.domain.enums.InventoryStatus;
-import com.livic.inventory.dto.InventoryDTOs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,22 +15,22 @@ import java.util.UUID;
 
 public interface InventoryItemService {
 
-    InventoryDTOs.InventoryItemResponse createItem(InventoryDTOs.CreateInventoryItemRequest request, UUID userId);
+    InventoryItemResponse createItem(CreateInventoryItemRequest request, UUID userId);
 
-    InventoryDTOs.InventoryItemResponse updateItem(UUID itemId, InventoryDTOs.UpdateInventoryItemRequest request, UUID userId);
+    InventoryItemResponse updateItem(UUID itemId, UpdateInventoryItemRequest request, UUID userId);
 
-    InventoryDTOs.InventoryItemResponse getItem(UUID itemId);
+    InventoryItemResponse getItem(UUID itemId);
 
-    List<InventoryDTOs.InventoryItemResponse> listItemsByProperty(
+    List<InventoryItemResponse> listItemsByProperty(
             UUID propertyId, 
             String query, 
             InventoryStatus status, 
             InventoryScope scope, 
             Boolean serviceDueOnly);
 
-    Page<InventoryDTOs.InventoryItemResponse> listItemsByPropertyPaginated(UUID propertyId, Pageable pageable);
+    Page<InventoryItemResponse> listItemsByPropertyPaginated(UUID propertyId, Pageable pageable);
 
-    InventoryDTOs.TenantVisibleInventoryResponse getTenantVisibleItems(UUID userId, UUID propertyId);
+    TenantVisibleInventoryResponse getTenantVisibleItems(UUID userId, UUID propertyId);
 
-    InventoryDTOs.InventoryStatsResponse getInventoryStats(UUID propertyId);
+    InventoryStatsResponse getInventoryStats(UUID propertyId);
 }

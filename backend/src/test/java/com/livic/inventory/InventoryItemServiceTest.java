@@ -1,5 +1,8 @@
 package com.livic.inventory;
 
+import com.livic.inventory.dto.CreateInventoryItemRequest;
+import com.livic.inventory.dto.InventoryItemResponse;
+import com.livic.inventory.dto.TenantVisibleInventoryResponse;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.domain.InventoryItemTbl;
@@ -7,7 +10,6 @@ import com.livic.inventory.domain.enums.InventoryCategory;
 import com.livic.inventory.domain.enums.InventoryCondition;
 import com.livic.inventory.domain.enums.InventoryScope;
 import com.livic.inventory.domain.enums.InventoryStatus;
-import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.service.impl.InventoryItemServiceImpl;
 import com.livic.property.facade.PropertyFacade;
@@ -69,7 +71,7 @@ class InventoryItemServiceTest {
         when(propertyFacade.existsPropertyById(propertyId)).thenReturn(true);
         when(inventoryItemRepository.save(any(InventoryItemTbl.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        InventoryDTOs.CreateInventoryItemRequest request = new InventoryDTOs.CreateInventoryItemRequest(
+        CreateInventoryItemRequest request = new CreateInventoryItemRequest(
                 propertyId,
                 unitId,
                 "Samsung Refrigerator",
@@ -86,7 +88,7 @@ class InventoryItemServiceTest {
                 "Brand new fridge"
         );
 
-        InventoryDTOs.InventoryItemResponse response = itemService.createItem(request, userId);
+        InventoryItemResponse response = itemService.createItem(request, userId);
 
         assertThat(response).isNotNull();
         assertThat(response.name()).isEqualTo("Samsung Refrigerator");
@@ -144,7 +146,7 @@ class InventoryItemServiceTest {
         when(storageFacade.getAssetsForReferences(eq(OwnerModule.INVENTORY), any(Set.class)))
                 .thenReturn(Map.of());
 
-        InventoryDTOs.TenantVisibleInventoryResponse response = itemService.getTenantVisibleItems(userId, propertyId);
+        TenantVisibleInventoryResponse response = itemService.getTenantVisibleItems(userId, propertyId);
 
         assertThat(response).isNotNull();
         assertThat(response.sharedItems()).hasSize(1);
