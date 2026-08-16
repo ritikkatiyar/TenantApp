@@ -1,6 +1,6 @@
 package com.livic.finance.service;
 
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
+import com.livic.finance.dto.ChargeConfigResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.UUID;

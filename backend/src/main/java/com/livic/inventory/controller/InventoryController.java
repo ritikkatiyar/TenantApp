@@ -1,10 +1,16 @@
 package com.livic.inventory.controller;
 
+import com.livic.inventory.dto.CreateInventoryItemRequest;
+import com.livic.inventory.dto.InventoryItemResponse;
+import com.livic.inventory.dto.InventoryStatsResponse;
+import com.livic.inventory.dto.ServiceExpenseRequest;
+import com.livic.inventory.dto.ServiceExpenseResponse;
+import com.livic.inventory.dto.TenantVisibleInventoryResponse;
+import com.livic.inventory.dto.UpdateInventoryItemRequest;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
 import com.livic.inventory.domain.enums.InventoryScope;
 import com.livic.inventory.domain.enums.InventoryStatus;
-import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.service.interfaces.InventoryItemService;
 import com.livic.inventory.service.interfaces.InventoryServiceExpenseService;
 import jakarta.validation.Valid;
@@ -35,13 +41,13 @@ public class InventoryController {
 
     @GetMapping("/properties/{propertyId}/items")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
-    public ResponseEntity<ApiResponse<List<InventoryDTOs.InventoryItemResponse>>> listPropertyItems(
+    public ResponseEntity<ApiResponse<List<InventoryItemResponse>>> listPropertyItems(
             @PathVariable UUID propertyId,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) InventoryStatus status,
             @RequestParam(required = false) InventoryScope scope,
             @RequestParam(required = false) Boolean serviceDueOnly) {
-        List<InventoryDTOs.InventoryItemResponse> items = inventoryItemService.listItemsByProperty(
+        List<InventoryItemResponse> items = inventoryItemService.listItemsByProperty(
                 propertyId, q, status, scope, serviceDueOnly
         );
         return ResponseEntity.ok(ApiResponse.success(items));
@@ -49,61 +55,61 @@ public class InventoryController {
 
     @PostMapping("/items")
     @PreAuthorize("@authorizationService.hasPermission(#request.propertyId(), 'PROPERTY_EDIT')")
-    public ResponseEntity<ApiResponse<InventoryDTOs.InventoryItemResponse>> createItem(
-            @Valid @RequestBody InventoryDTOs.CreateInventoryItemRequest request,
+    public ResponseEntity<ApiResponse<InventoryItemResponse>> createItem(
+            @Valid @RequestBody CreateInventoryItemRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        InventoryDTOs.InventoryItemResponse response = inventoryItemService.createItem(request, userId);
+        InventoryItemResponse response = inventoryItemService.createItem(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     @PutMapping("/items/{itemId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<InventoryDTOs.InventoryItemResponse>> updateItem(
+    public ResponseEntity<ApiResponse<InventoryItemResponse>> updateItem(
             @PathVariable UUID itemId,
-            @Valid @RequestBody InventoryDTOs.UpdateInventoryItemRequest request,
+            @Valid @RequestBody UpdateInventoryItemRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        InventoryDTOs.InventoryItemResponse response = inventoryItemService.updateItem(itemId, request, userId);
+        InventoryItemResponse response = inventoryItemService.updateItem(itemId, request, userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/items/{itemId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<InventoryDTOs.InventoryItemResponse>> getItem(@PathVariable UUID itemId) {
+    public ResponseEntity<ApiResponse<InventoryItemResponse>> getItem(@PathVariable UUID itemId) {
         return ResponseEntity.ok(ApiResponse.success(inventoryItemService.getItem(itemId)));
     }
 
     @PostMapping("/items/{itemId}/service-expenses")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<InventoryDTOs.ServiceExpenseResponse>> recordServiceExpense(
+    public ResponseEntity<ApiResponse<ServiceExpenseResponse>> recordServiceExpense(
             @PathVariable UUID itemId,
-            @Valid @RequestBody InventoryDTOs.ServiceExpenseRequest request,
+            @Valid @RequestBody ServiceExpenseRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        InventoryDTOs.ServiceExpenseResponse response = serviceExpenseService.recordExpense(itemId, request, userId);
+        ServiceExpenseResponse response = serviceExpenseService.recordExpense(itemId, request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     @GetMapping("/items/{itemId}/service-expenses")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<List<InventoryDTOs.ServiceExpenseResponse>>> listServiceExpenses(@PathVariable UUID itemId) {
+    public ResponseEntity<ApiResponse<List<ServiceExpenseResponse>>> listServiceExpenses(@PathVariable UUID itemId) {
         return ResponseEntity.ok(ApiResponse.success(serviceExpenseService.listExpensesByItem(itemId)));
     }
 
     @GetMapping("/properties/{propertyId}/stats")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
-    public ResponseEntity<ApiResponse<InventoryDTOs.InventoryStatsResponse>> getPropertyStats(@PathVariable UUID propertyId) {
+    public ResponseEntity<ApiResponse<InventoryStatsResponse>> getPropertyStats(@PathVariable UUID propertyId) {
         return ResponseEntity.ok(ApiResponse.success(inventoryItemService.getInventoryStats(propertyId)));
     }
 
     @GetMapping("/my-visible-items")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<InventoryDTOs.TenantVisibleInventoryResponse>> getTenantVisibleItems(
+    public ResponseEntity<ApiResponse<TenantVisibleInventoryResponse>> getTenantVisibleItems(
             @RequestParam UUID propertyId,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        InventoryDTOs.TenantVisibleInventoryResponse response = inventoryItemService.getTenantVisibleItems(userId, propertyId);
+        TenantVisibleInventoryResponse response = inventoryItemService.getTenantVisibleItems(userId, propertyId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Spring Security {@link UserDetails} adapter for the {@link UserTbl} entity.
@@ -95,6 +96,13 @@ public class UserDetailsImpl implements UserDetails {
     public boolean hasGlobalRole(String roleName) {
         return authorities.stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + roleName));
+    }
+
+    /**
+     * Returns the user ID as a {@link UUID}, avoiding repeated {@code UUID.fromString(getId())} calls.
+     */
+    public UUID getUuid() {
+        return UUID.fromString(id);
     }
 
     @Override

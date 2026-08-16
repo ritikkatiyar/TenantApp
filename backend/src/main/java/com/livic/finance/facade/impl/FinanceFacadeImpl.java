@@ -1,7 +1,7 @@
 package com.livic.finance.facade.impl;
 
 import com.livic.common.domain.LeaseStatus;
-import com.livic.finance.dto.ChargeConfigDTOs;
+import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.finance.service.ChargeConfigQueryService;
@@ -116,7 +116,7 @@ public class FinanceFacadeImpl implements FinanceFacade {
     }
 
     @Override
-    public ChargeConfigDTOs.ChargeConfigResponse getChargeConfigById(UUID chargeConfigId) {
+    public ChargeConfigResponse getChargeConfigById(UUID chargeConfigId) {
         return chargeConfigQueryService.getChargeConfigById(chargeConfigId);
     }
 

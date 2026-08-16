@@ -1,8 +1,8 @@
 package com.livic.finance.mapper;
 
 import com.livic.finance.domain.ChargeConfigTbl;
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigRequest;
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
+import com.livic.finance.dto.ChargeConfigRequest;
+import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.property.domain.PropertyTbl;
 
 import java.util.UUID;

@@ -1,5 +1,9 @@
 package com.livic.inventory;
 
+import com.livic.inventory.dto.ApproveDeductionsRequest;
+import com.livic.inventory.dto.CreateAssignmentRequest;
+import com.livic.inventory.dto.MoveOutChecklistRequest;
+import com.livic.inventory.dto.ReturnVerificationRequest;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.impl.AuthorizationServiceImpl;
 import com.livic.auth.service.interfaces.MembershipCrudService;
@@ -7,7 +11,6 @@ import com.livic.common.domain.UserRole;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.controller.LeaseInventoryAssignmentController;
-import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -184,7 +187,7 @@ class LeaseInventoryAssignmentAuthorizationTest {
     void verifyControllerPreAuthorizeAnnotations() throws NoSuchMethodException {
         Class<LeaseInventoryAssignmentController> clazz = LeaseInventoryAssignmentController.class;
 
-        Method createAssignments = clazz.getMethod("createAssignments", UUID.class, InventoryDTOs.CreateAssignmentRequest.class, UserDetailsImpl.class);
+        Method createAssignments = clazz.getMethod("createAssignments", UUID.class, CreateAssignmentRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthCreate = createAssignments.getAnnotation(PreAuthorize.class);
         assertThat(preAuthCreate).isNotNull();
         assertThat(preAuthCreate.value()).isEqualTo("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')");
@@ -194,17 +197,17 @@ class LeaseInventoryAssignmentAuthorizationTest {
         assertThat(preAuthGet).isNotNull();
         assertThat(preAuthGet.value()).isEqualTo("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')");
 
-        Method generateChecklist = clazz.getMethod("generateMoveOutChecklist", UUID.class, InventoryDTOs.MoveOutChecklistRequest.class, UserDetailsImpl.class);
+        Method generateChecklist = clazz.getMethod("generateMoveOutChecklist", UUID.class, MoveOutChecklistRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthChecklist = generateChecklist.getAnnotation(PreAuthorize.class);
         assertThat(preAuthChecklist).isNotNull();
         assertThat(preAuthChecklist.value()).isEqualTo("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')");
 
-        Method verifyReturn = clazz.getMethod("verifyReturn", UUID.class, InventoryDTOs.ReturnVerificationRequest.class, UserDetailsImpl.class);
+        Method verifyReturn = clazz.getMethod("verifyReturn", UUID.class, ReturnVerificationRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthVerify = verifyReturn.getAnnotation(PreAuthorize.class);
         assertThat(preAuthVerify).isNotNull();
         assertThat(preAuthVerify.value()).isEqualTo("@authorizationService.hasPermissionByAssignmentId(#assignmentId, 'LEASE_UPDATE')");
 
-        Method approveDeductions = clazz.getMethod("approveDeductions", UUID.class, InventoryDTOs.ApproveDeductionsRequest.class, UserDetailsImpl.class);
+        Method approveDeductions = clazz.getMethod("approveDeductions", UUID.class, ApproveDeductionsRequest.class, UserDetailsImpl.class);
         PreAuthorize preAuthApprove = approveDeductions.getAnnotation(PreAuthorize.class);
         assertThat(preAuthApprove).isNotNull();
         assertThat(preAuthApprove.value()).isEqualTo("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')");

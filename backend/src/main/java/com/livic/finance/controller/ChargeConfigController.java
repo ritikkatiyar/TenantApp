@@ -2,8 +2,8 @@ package com.livic.finance.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigRequest;
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
+import com.livic.finance.dto.ChargeConfigRequest;
+import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.finance.service.ChargeConfigQueryService;
 import com.livic.finance.service.ChargeConfigService;
 import lombok.RequiredArgsConstructor;

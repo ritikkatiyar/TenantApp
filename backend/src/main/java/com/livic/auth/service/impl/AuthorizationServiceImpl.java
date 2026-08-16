@@ -3,8 +3,7 @@ package com.livic.auth.service.impl;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.auth.service.interfaces.MembershipCrudService;
-import com.livic.finance.dto.ChargeConfigDTOs.ChargeConfigResponse;
-import com.livic.finance.dto.LeaseSummaryDTO;
+import com.livic.finance.dto.ChargeConfigResponse;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
@@ -43,7 +42,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) return false;
         if (isUserGloballyAuthorized(currentUser)) return true;
 
-        UUID userId = UUID.fromString(currentUser.getId());
+        UUID userId = currentUser.getUuid();
         Set<String> userPermissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         
         for (String code : permissionCodes) {
@@ -70,7 +69,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         if (currentUser == null) return false;
         if (isUserGloballyAuthorized(currentUser)) return true;
 
-        UUID userId = UUID.fromString(currentUser.getId());
+        UUID userId = currentUser.getUuid();
         
         for (String roleCode : roleCodes) {
             if (membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode)) {
@@ -103,11 +102,11 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         
         UserDetailsImpl currentUser = getCurrentUser();
         if (currentUser == null) return false;
-        UUID userId = UUID.fromString(currentUser.getId());
+        UUID userId = currentUser.getUuid();
         
         try {
             return financeFacade.getLeaseById(leaseId).map(lease -> {
-                if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.userId() != null && lease.userId().toString().equals(currentUser.getId())) {
+                if ("LEASE_VIEW_OWN".equals(permissionCode) && lease.userId() != null && lease.userId().equals(userId)) {
                     log.debug("User {} has own lease access for lease {}", userId, leaseId);
                     return true;
                 }
@@ -173,7 +172,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             return true;
         }
 
-        UUID userId = UUID.fromString(currentUser.getId());
+        UUID userId = currentUser.getUuid();
         Set<String> permissions = membershipCrudService.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
         
         boolean hasPerm = permissions.contains(permissionCode);

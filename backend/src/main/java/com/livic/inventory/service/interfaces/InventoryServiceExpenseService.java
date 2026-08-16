@@ -1,6 +1,7 @@
 package com.livic.inventory.service.interfaces;
 
-import com.livic.inventory.dto.InventoryDTOs;
+import com.livic.inventory.dto.ServiceExpenseRequest;
+import com.livic.inventory.dto.ServiceExpenseResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -9,9 +10,9 @@ import java.util.UUID;
 
 public interface InventoryServiceExpenseService {
 
-    InventoryDTOs.ServiceExpenseResponse recordExpense(UUID itemId, InventoryDTOs.ServiceExpenseRequest request, UUID userId);
+    ServiceExpenseResponse recordExpense(UUID itemId, ServiceExpenseRequest request, UUID userId);
 
-    List<InventoryDTOs.ServiceExpenseResponse> listExpensesByItem(UUID itemId);
+    List<ServiceExpenseResponse> listExpensesByItem(UUID itemId);
 
-    Page<InventoryDTOs.ServiceExpenseResponse> listExpensesByProperty(UUID propertyId, Pageable pageable);
+    Page<ServiceExpenseResponse> listExpensesByProperty(UUID propertyId, Pageable pageable);
 }

@@ -1,6 +1,11 @@
 package com.livic.inventory.service.interfaces;
 
-import com.livic.inventory.dto.InventoryDTOs;
+import com.livic.inventory.dto.ApproveDeductionsRequest;
+import com.livic.inventory.dto.AssignmentItemResponse;
+import com.livic.inventory.dto.CreateAssignmentRequest;
+import com.livic.inventory.dto.MoveOutChecklistRequest;
+import com.livic.inventory.dto.ReturnVerificationRequest;
+import com.livic.inventory.dto.VerificationItemResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -9,19 +14,19 @@ import java.util.UUID;
 
 public interface LeaseInventoryAssignmentService {
 
-    List<InventoryDTOs.AssignmentItemResponse> createAssignments(UUID leaseId, InventoryDTOs.CreateAssignmentRequest request, UUID userId);
+    List<AssignmentItemResponse> createAssignments(UUID leaseId, CreateAssignmentRequest request, UUID userId);
 
-    List<InventoryDTOs.AssignmentItemResponse> getAssignmentsForLease(UUID leaseId);
+    List<AssignmentItemResponse> getAssignmentsForLease(UUID leaseId);
 
-    Page<InventoryDTOs.AssignmentItemResponse> getAssignmentsForLease(UUID leaseId, Pageable pageable);
+    Page<AssignmentItemResponse> getAssignmentsForLease(UUID leaseId, Pageable pageable);
 
-    List<InventoryDTOs.VerificationItemResponse> generateMoveOutChecklist(UUID leaseId, InventoryDTOs.MoveOutChecklistRequest request, UUID userId);
+    List<VerificationItemResponse> generateMoveOutChecklist(UUID leaseId, MoveOutChecklistRequest request, UUID userId);
 
-    InventoryDTOs.VerificationItemResponse verifyReturn(UUID assignmentId, InventoryDTOs.ReturnVerificationRequest request, UUID userId);
+    VerificationItemResponse verifyReturn(UUID assignmentId, ReturnVerificationRequest request, UUID userId);
 
-    List<InventoryDTOs.VerificationItemResponse> approveDeductions(UUID leaseId, InventoryDTOs.ApproveDeductionsRequest request, UUID userId);
+    List<VerificationItemResponse> approveDeductions(UUID leaseId, ApproveDeductionsRequest request, UUID userId);
 
-    List<InventoryDTOs.VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId);
+    List<VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId);
 
-    Page<InventoryDTOs.VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId, Pageable pageable);
+    Page<VerificationItemResponse> getVerificationChecklistForLease(UUID leaseId, Pageable pageable);
 }

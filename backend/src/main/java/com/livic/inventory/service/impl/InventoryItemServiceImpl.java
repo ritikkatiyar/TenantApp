@@ -1,12 +1,16 @@
 package com.livic.inventory.service.impl;
 
+import com.livic.inventory.dto.CreateInventoryItemRequest;
+import com.livic.inventory.dto.InventoryItemResponse;
+import com.livic.inventory.dto.InventoryStatsResponse;
+import com.livic.inventory.dto.TenantVisibleInventoryResponse;
+import com.livic.inventory.dto.UpdateInventoryItemRequest;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.domain.InventoryItemTbl;
 import com.livic.inventory.domain.enums.InventoryScope;
 import com.livic.inventory.domain.enums.InventoryStatus;
-import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.mapper.InventoryMapper;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.service.interfaces.InventoryItemService;
@@ -44,7 +48,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Override
     @Transactional
-    public InventoryDTOs.InventoryItemResponse createItem(InventoryDTOs.CreateInventoryItemRequest request, UUID userId) {
+    public InventoryItemResponse createItem(CreateInventoryItemRequest request, UUID userId) {
         if (!propertyFacade.existsPropertyById(request.propertyId())) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Property not found with ID: " + request.propertyId());
         }
@@ -76,7 +80,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Override
     @Transactional
-    public InventoryDTOs.InventoryItemResponse updateItem(UUID itemId, InventoryDTOs.UpdateInventoryItemRequest request, UUID userId) {
+    public InventoryItemResponse updateItem(UUID itemId, UpdateInventoryItemRequest request, UUID userId) {
         InventoryItemTbl item = inventoryItemRepository.findById(itemId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Inventory item not found with ID: " + itemId));
 
@@ -103,7 +107,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public InventoryDTOs.InventoryItemResponse getItem(UUID itemId) {
+    public InventoryItemResponse getItem(UUID itemId) {
         InventoryItemTbl item = inventoryItemRepository.findById(itemId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Inventory item not found with ID: " + itemId));
         String image = resolvePrimaryImage(item.getId());
@@ -112,7 +116,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InventoryDTOs.InventoryItemResponse> listItemsByProperty(
+    public List<InventoryItemResponse> listItemsByProperty(
             UUID propertyId, 
             String query, 
             InventoryStatus status, 
@@ -156,12 +160,12 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<InventoryDTOs.InventoryItemResponse> listItemsByPropertyPaginated(UUID propertyId, Pageable pageable) {
+    public Page<InventoryItemResponse> listItemsByPropertyPaginated(UUID propertyId, Pageable pageable) {
         Page<InventoryItemTbl> page = inventoryItemRepository.findAllByPropertyId(propertyId, pageable);
         Set<UUID> itemIds = page.getContent().stream().map(InventoryItemTbl::getId).collect(Collectors.toSet());
         Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, itemIds);
 
-        List<InventoryDTOs.InventoryItemResponse> dtoList = page.getContent().stream()
+        List<InventoryItemResponse> dtoList = page.getContent().stream()
                 .map(item -> {
                     List<MediaDTOs.MediaAssetDTO> assets = mediaMap.get(item.getId());
                     String primaryImage = (assets != null && !assets.isEmpty()) ? assets.get(0).url() : null;
@@ -174,7 +178,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public InventoryDTOs.TenantVisibleInventoryResponse getTenantVisibleItems(UUID userId, UUID propertyId) {
+    public TenantVisibleInventoryResponse getTenantVisibleItems(UUID userId, UUID propertyId) {
         Optional<LeaseSummaryDTO> activeLeaseOpt = financeFacade.getActiveLeaseForUser(userId);
         
         List<InventoryItemTbl> sharedItems = inventoryItemRepository.findAllByPropertyIdAndScope(propertyId, InventoryScope.PROPERTY_SHARED);
@@ -191,7 +195,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
         allIds.addAll(unitItems.stream().map(InventoryItemTbl::getId).collect(Collectors.toSet()));
         Map<UUID, List<MediaDTOs.MediaAssetDTO>> mediaMap = storageFacade.getAssetsForReferences(OwnerModule.INVENTORY, allIds);
 
-        List<InventoryDTOs.InventoryItemResponse> sharedDTOs = sharedItems.stream()
+        List<InventoryItemResponse> sharedDTOs = sharedItems.stream()
                 .map(item -> {
                     List<MediaDTOs.MediaAssetDTO> assets = mediaMap.get(item.getId());
                     String img = (assets != null && !assets.isEmpty()) ? assets.get(0).url() : null;
@@ -199,7 +203,7 @@ public class InventoryItemServiceImpl implements InventoryItemService {
                 })
                 .collect(Collectors.toList());
 
-        List<InventoryDTOs.InventoryItemResponse> unitDTOs = unitItems.stream()
+        List<InventoryItemResponse> unitDTOs = unitItems.stream()
                 .map(item -> {
                     List<MediaDTOs.MediaAssetDTO> assets = mediaMap.get(item.getId());
                     String img = (assets != null && !assets.isEmpty()) ? assets.get(0).url() : null;
@@ -207,18 +211,18 @@ public class InventoryItemServiceImpl implements InventoryItemService {
                 })
                 .collect(Collectors.toList());
 
-        return new InventoryDTOs.TenantVisibleInventoryResponse(unitDTOs, sharedDTOs);
+        return new TenantVisibleInventoryResponse(unitDTOs, sharedDTOs);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public InventoryDTOs.InventoryStatsResponse getInventoryStats(UUID propertyId) {
+    public InventoryStatsResponse getInventoryStats(UUID propertyId) {
         long totalAssets = inventoryItemRepository.countByPropertyId(propertyId);
         long maintenanceDue = inventoryItemRepository.countByPropertyIdAndStatus(propertyId, InventoryStatus.SERVICE_DUE);
         long unassigned = inventoryItemRepository.countByPropertyIdAndStatus(propertyId, InventoryStatus.AVAILABLE);
         BigDecimal totalValuation = inventoryItemRepository.sumReplacementValueByPropertyId(propertyId);
 
-        return new InventoryDTOs.InventoryStatsResponse(
+        return new InventoryStatsResponse(
                 totalAssets,
                 maintenanceDue,
                 unassigned,

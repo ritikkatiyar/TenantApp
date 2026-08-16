@@ -6,7 +6,10 @@ import com.livic.inventory.domain.LeaseInventoryAssignmentTbl;
 import com.livic.inventory.domain.enums.InventoryCategory;
 import com.livic.inventory.domain.enums.InventoryCondition;
 import com.livic.inventory.domain.enums.InventoryScope;
-import com.livic.inventory.dto.InventoryDTOs;
+import com.livic.inventory.dto.AssignmentItemResponse;
+import com.livic.inventory.dto.InventoryItemResponse;
+import com.livic.inventory.dto.ServiceExpenseResponse;
+import com.livic.inventory.dto.VerificationItemResponse;
 import com.livic.inventory.dto.InventoryPropertyMetricsDTO;
 
 import java.math.BigDecimal;
@@ -47,7 +50,7 @@ public final class InventoryMapper {
         );
     }
 
-    public static InventoryDTOs.InventoryItemResponse toResponse(
+    public static InventoryItemResponse toResponse(
             InventoryItemTbl entity, 
             String unitNumber, 
             String primaryImageUrl) {
@@ -60,7 +63,7 @@ public final class InventoryMapper {
                 ? entity.getNextServiceDate().format(DATE_FORMATTER) 
                 : null;
 
-        return new InventoryDTOs.InventoryItemResponse(
+        return new InventoryItemResponse(
                 entity.getId(),
                 entity.getPropertyId(),
                 entity.getUnitId(),
@@ -81,7 +84,7 @@ public final class InventoryMapper {
         );
     }
 
-    public static InventoryDTOs.AssignmentItemResponse toAssignmentResponse(
+    public static AssignmentItemResponse toAssignmentResponse(
             InventoryItemTbl item,
             LeaseInventoryAssignmentTbl assignment,
             String unitNumber,
@@ -101,7 +104,7 @@ public final class InventoryMapper {
                 ? assignment.getConditionAtAssignment().getLabel() 
                 : (item.getCurrentCondition() != null ? item.getCurrentCondition().getLabel() : "Good");
 
-        return new InventoryDTOs.AssignmentItemResponse(
+        return new AssignmentItemResponse(
                 item.getId(),
                 assignment != null ? assignment.getId() : null,
                 assignment != null ? assignment.getLeaseId() : null,
@@ -126,7 +129,7 @@ public final class InventoryMapper {
         );
     }
 
-    public static InventoryDTOs.VerificationItemResponse toVerificationResponse(
+    public static VerificationItemResponse toVerificationResponse(
             LeaseInventoryAssignmentTbl assignment,
             InventoryItemTbl item,
             String unitNumber,
@@ -151,7 +154,7 @@ public final class InventoryMapper {
             status = "Review";
         }
 
-        return new InventoryDTOs.VerificationItemResponse(
+        return new VerificationItemResponse(
                 assignment.getId(),
                 item.getId(),
                 assignment.getLeaseId(),
@@ -170,8 +173,8 @@ public final class InventoryMapper {
         );
     }
 
-    public static InventoryDTOs.ServiceExpenseResponse toServiceExpenseResponse(InventoryServiceExpenseTbl entity) {
-        return new InventoryDTOs.ServiceExpenseResponse(
+    public static ServiceExpenseResponse toServiceExpenseResponse(InventoryServiceExpenseTbl entity) {
+        return new ServiceExpenseResponse(
                 entity.getId(),
                 entity.getItemId(),
                 entity.getPropertyId(),

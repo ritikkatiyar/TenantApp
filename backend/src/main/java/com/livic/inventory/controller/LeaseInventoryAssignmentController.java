@@ -1,8 +1,13 @@
 package com.livic.inventory.controller;
 
+import com.livic.inventory.dto.ApproveDeductionsRequest;
+import com.livic.inventory.dto.AssignmentItemResponse;
+import com.livic.inventory.dto.CreateAssignmentRequest;
+import com.livic.inventory.dto.MoveOutChecklistRequest;
+import com.livic.inventory.dto.ReturnVerificationRequest;
+import com.livic.inventory.dto.VerificationItemResponse;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
-import com.livic.inventory.dto.InventoryDTOs;
 import com.livic.inventory.service.interfaces.LeaseInventoryAssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,34 +38,34 @@ public class LeaseInventoryAssignmentController {
 
     @PostMapping("/leases/{leaseId}/assignments")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
-    public ResponseEntity<ApiResponse<List<InventoryDTOs.AssignmentItemResponse>>> createAssignments(
+    public ResponseEntity<ApiResponse<List<AssignmentItemResponse>>> createAssignments(
             @PathVariable UUID leaseId,
-            @Valid @RequestBody InventoryDTOs.CreateAssignmentRequest request,
+            @Valid @RequestBody CreateAssignmentRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        List<InventoryDTOs.AssignmentItemResponse> response = assignmentService.createAssignments(leaseId, request, userId);
+        List<AssignmentItemResponse> response = assignmentService.createAssignments(leaseId, request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     @GetMapping("/leases/{leaseId}/assignments")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
-    public ResponseEntity<ApiResponse<Page<InventoryDTOs.AssignmentItemResponse>>> getAssignments(
+    public ResponseEntity<ApiResponse<Page<AssignmentItemResponse>>> getAssignments(
             @PathVariable UUID leaseId,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<InventoryDTOs.AssignmentItemResponse> response = assignmentService.getAssignmentsForLease(leaseId, pageable);
+        Page<AssignmentItemResponse> response = assignmentService.getAssignmentsForLease(leaseId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/leases/{leaseId}/move-out-checklist")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
-    public ResponseEntity<ApiResponse<List<InventoryDTOs.VerificationItemResponse>>> generateMoveOutChecklist(
+    public ResponseEntity<ApiResponse<List<VerificationItemResponse>>> generateMoveOutChecklist(
             @PathVariable UUID leaseId,
-            @RequestBody(required = false) InventoryDTOs.MoveOutChecklistRequest request,
+            @RequestBody(required = false) MoveOutChecklistRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        List<InventoryDTOs.VerificationItemResponse> response = assignmentService.generateMoveOutChecklist(
+        List<VerificationItemResponse> response = assignmentService.generateMoveOutChecklist(
                 leaseId, 
-                request != null ? request : new InventoryDTOs.MoveOutChecklistRequest(null), 
+                request != null ? request : new MoveOutChecklistRequest(null), 
                 userId
         );
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -68,32 +73,32 @@ public class LeaseInventoryAssignmentController {
 
     @PutMapping("/assignments/{assignmentId}/return-verification")
     @PreAuthorize("@authorizationService.hasPermissionByAssignmentId(#assignmentId, 'LEASE_UPDATE')")
-    public ResponseEntity<ApiResponse<InventoryDTOs.VerificationItemResponse>> verifyReturn(
+    public ResponseEntity<ApiResponse<VerificationItemResponse>> verifyReturn(
             @PathVariable UUID assignmentId,
-            @Valid @RequestBody InventoryDTOs.ReturnVerificationRequest request,
+            @Valid @RequestBody ReturnVerificationRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        InventoryDTOs.VerificationItemResponse response = assignmentService.verifyReturn(assignmentId, request, userId);
+        VerificationItemResponse response = assignmentService.verifyReturn(assignmentId, request, userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/leases/{leaseId}/deductions/approve")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
-    public ResponseEntity<ApiResponse<List<InventoryDTOs.VerificationItemResponse>>> approveDeductions(
+    public ResponseEntity<ApiResponse<List<VerificationItemResponse>>> approveDeductions(
             @PathVariable UUID leaseId,
-            @RequestBody InventoryDTOs.ApproveDeductionsRequest request,
+            @RequestBody ApproveDeductionsRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
-        List<InventoryDTOs.VerificationItemResponse> response = assignmentService.approveDeductions(leaseId, request, userId);
+        List<VerificationItemResponse> response = assignmentService.approveDeductions(leaseId, request, userId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/leases/{leaseId}/verification-checklist")
     @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
-    public ResponseEntity<ApiResponse<Page<InventoryDTOs.VerificationItemResponse>>> getVerificationChecklist(
+    public ResponseEntity<ApiResponse<Page<VerificationItemResponse>>> getVerificationChecklist(
             @PathVariable UUID leaseId,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<InventoryDTOs.VerificationItemResponse> response = assignmentService.getVerificationChecklistForLease(leaseId, pageable);
+        Page<VerificationItemResponse> response = assignmentService.getVerificationChecklistForLease(leaseId, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
