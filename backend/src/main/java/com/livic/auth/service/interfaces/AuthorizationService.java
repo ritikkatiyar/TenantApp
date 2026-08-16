@@ -10,6 +10,7 @@ public interface AuthorizationService {
 
     boolean hasPermissionByUnitId(UUID unitId, String permissionCode);
     boolean hasPermissionByLeaseId(UUID leaseId, String permissionCode);
+    boolean hasPermissionByAssignmentId(UUID assignmentId, String permissionCode);
     boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode);
     boolean hasPermissionByChargeConfigId(UUID chargeConfigId, String permissionCode);
 }

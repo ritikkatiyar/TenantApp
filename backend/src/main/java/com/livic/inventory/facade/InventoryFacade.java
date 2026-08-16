@@ -1,6 +1,7 @@
 package com.livic.inventory.facade;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface InventoryFacade {
@@ -19,4 +20,6 @@ public interface InventoryFacade {
     long getInventoryCountForProperty(UUID propertyId);
 
     long getAssignedInventoryCountForLease(UUID leaseId);
+
+    Optional<UUID> getLeaseIdForAssignment(UUID assignmentId);
 }

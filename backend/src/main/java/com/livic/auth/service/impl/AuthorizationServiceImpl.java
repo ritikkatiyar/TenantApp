@@ -6,6 +6,7 @@ import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.finance.dto.ChargeConfigDTOs;
 import com.livic.finance.dto.LeaseSummaryDTO;
 import com.livic.finance.facade.FinanceFacade;
+import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.UnitFacade;
 
@@ -27,6 +28,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final MembershipCrudService membershipCrudService;
     private final UnitFacade unitFacade;
     private final FinanceFacade financeFacade;
+    private final InventoryFacade inventoryFacade;
 
     @Override
     @Transactional(readOnly = true)
@@ -117,6 +119,20 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 return checkPermission(lease.propertyId(), permissionCode);
             }).orElse(false);
         } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasPermissionByAssignmentId(UUID assignmentId, String permissionCode) {
+        if (assignmentId == null) return false;
+        try {
+            return inventoryFacade.getLeaseIdForAssignment(assignmentId)
+                    .map(leaseId -> hasPermissionByLeaseId(leaseId, permissionCode))
+                    .orElse(false);
+        } catch (Exception e) {
+            log.error("Error checking permission for assignmentId {}: {}", assignmentId, e.getMessage());
             return false;
         }
     }

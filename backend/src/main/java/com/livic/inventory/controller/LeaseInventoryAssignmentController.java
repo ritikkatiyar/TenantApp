@@ -29,7 +29,7 @@ public class LeaseInventoryAssignmentController {
     private final LeaseInventoryAssignmentService assignmentService;
 
     @PostMapping("/leases/{leaseId}/assignments")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<InventoryDTOs.AssignmentItemResponse>>> createAssignments(
             @PathVariable UUID leaseId,
             @Valid @RequestBody InventoryDTOs.CreateAssignmentRequest request,
@@ -40,7 +40,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @GetMapping("/leases/{leaseId}/assignments")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<List<InventoryDTOs.AssignmentItemResponse>>> getAssignments(
             @PathVariable UUID leaseId) {
         List<InventoryDTOs.AssignmentItemResponse> response = assignmentService.getAssignmentsForLease(leaseId);
@@ -48,7 +48,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PostMapping("/leases/{leaseId}/move-out-checklist")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<InventoryDTOs.VerificationItemResponse>>> generateMoveOutChecklist(
             @PathVariable UUID leaseId,
             @RequestBody(required = false) InventoryDTOs.MoveOutChecklistRequest request,
@@ -63,7 +63,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PutMapping("/assignments/{assignmentId}/return-verification")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByAssignmentId(#assignmentId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<InventoryDTOs.VerificationItemResponse>> verifyReturn(
             @PathVariable UUID assignmentId,
             @Valid @RequestBody InventoryDTOs.ReturnVerificationRequest request,
@@ -74,7 +74,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PostMapping("/leases/{leaseId}/deductions/approve")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<InventoryDTOs.VerificationItemResponse>>> approveDeductions(
             @PathVariable UUID leaseId,
             @RequestBody InventoryDTOs.ApproveDeductionsRequest request,
@@ -85,7 +85,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @GetMapping("/leases/{leaseId}/verification-checklist")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<List<InventoryDTOs.VerificationItemResponse>>> getVerificationChecklist(
             @PathVariable UUID leaseId) {
         List<InventoryDTOs.VerificationItemResponse> response = assignmentService.getVerificationChecklistForLease(leaseId);

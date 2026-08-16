@@ -47,4 +47,13 @@ public class InventoryFacadeImpl implements InventoryFacade {
     public long getAssignedInventoryCountForLease(UUID leaseId) {
         return assignmentRepository.findAllByLeaseId(leaseId).size();
     }
+
+    @Override
+    public java.util.Optional<UUID> getLeaseIdForAssignment(UUID assignmentId) {
+        if (assignmentId == null) {
+            return java.util.Optional.empty();
+        }
+        return assignmentRepository.findById(assignmentId)
+                .map(com.livic.inventory.domain.LeaseInventoryAssignmentTbl::getLeaseId);
+    }
 }
