@@ -101,17 +101,17 @@ export function useMeterReading({ token, propertyId }: UseMeterReadingProps) {
     worksheet.forEach(row => {
       const valStr = inputs[row.unitId];
       const prevValStr = prevInputs[row.unitId];
-      const prevVal = prevValStr ? parseFloat(prevValStr) : 0;
-      if (valStr) {
+      const prevVal = prevValStr !== undefined && prevValStr !== '' ? parseFloat(prevValStr) : (row.previousReading ?? 0);
+      if (valStr && valStr.trim() !== '') {
         const val = parseFloat(valStr);
-        if (val < prevVal) {
+        if (!isNaN(val) && !isNaN(prevVal) && val < prevVal) {
           hasErrors = true;
         }
       }
     });
 
     if (hasErrors) {
-      Alert.alert("Validation Error", "One or more entries are less than the previous reading. Please correct them before saving.");
+      Alert.alert("Validation Error", "One or more current readings are less than the previous reading. Please correct them before saving.");
       return;
     }
 
@@ -119,8 +119,12 @@ export function useMeterReading({ token, propertyId }: UseMeterReadingProps) {
       setIsSaving(true);
       const readingsToSave = worksheet.map(row => ({
         unitId: row.unitId,
-        previousReading: prevInputs[row.unitId] ? parseFloat(prevInputs[row.unitId]) : row.previousReading,
-        currentReading: inputs[row.unitId] ? parseFloat(inputs[row.unitId]) : null
+        previousReading: prevInputs[row.unitId] !== undefined && prevInputs[row.unitId] !== ''
+          ? parseFloat(prevInputs[row.unitId])
+          : (row.previousReading ?? 0),
+        currentReading: inputs[row.unitId] && inputs[row.unitId].trim() !== ''
+          ? parseFloat(inputs[row.unitId])
+          : null
       }));
 
       await batchSaveReadings({
@@ -132,6 +136,7 @@ export function useMeterReading({ token, propertyId }: UseMeterReadingProps) {
       }, token);
 
       Alert.alert("Success", "Readings saved successfully!");
+      await loadWorksheet();
     } catch (e: any) {
       Alert.alert("Error", "Failed to save readings.");
     } finally {

@@ -82,11 +82,7 @@ public class MeterReadingServiceImpl implements MeterReadingService {
             if (entry == null) {
                 BigDecimal previousReading = previousReadingsMap.get(unitSummary.id());
                 if (previousReading == null) {
-                    if (chargeConfig.getBaseRate() != null) {
-                        previousReading = chargeConfig.getBaseRate();
-                    } else {
-                        previousReading = BigDecimal.ZERO;
-                    }
+                    previousReading = BigDecimal.ZERO;
                 }
 
                 entry = MeterReadingTbl.builder()
@@ -156,6 +152,9 @@ public class MeterReadingServiceImpl implements MeterReadingService {
         for (UnitReading entryReq : request.getReadings()) {
             MeterReadingTbl entry = existingEntriesMap.get(entryReq.getUnitId());
             if (entry != null && !Boolean.TRUE.equals(entry.getIsBilled())) {
+                if (entryReq.getPreviousReading() != null) {
+                    entry.setPreviousReading(entryReq.getPreviousReading());
+                }
                 entry.setCurrentReading(entryReq.getCurrentReading());
                 toUpdate.add(entry);
             }

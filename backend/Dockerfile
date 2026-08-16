@@ -21,8 +21,8 @@ USER spring:spring
 # Copy the jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Environment variables with sensible defaults for production
-ENV JAVA_TOOL_OPTIONS="-Xms128m -Xmx320m -XX:+UseSerialGC"
+# Environment variables tuned for Render 512MB Free Tier (keeps total RSS under ~380-400MB)
+ENV JAVA_TOOL_OPTIONS="-Xms64m -Xmx224m -Xss512k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m -XX:CompressedClassSpaceSize=32m -XX:+UseSerialGC"
 ENV SERVER_PORT=8080
 
 EXPOSE 8080
