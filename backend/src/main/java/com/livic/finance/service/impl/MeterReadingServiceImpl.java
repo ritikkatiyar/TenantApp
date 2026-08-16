@@ -127,12 +127,14 @@ public class MeterReadingServiceImpl implements MeterReadingService {
 
             UnitSummaryDTO unit = unitMap.get(r.getUnitId());
             String unitName = unit != null ? unit.unitNumber() : "N/A";
+            Integer floor = unit != null && unit.floor() != null ? unit.floor() : 0;
 
             return MeterReadingResponse.builder()
                     .id(r.getId())
                     .unitId(r.getUnitId())
                     .unitName(unitName)
                     .tenantName(tenantName)
+                    .floor(floor)
                     .previousReading(r.getPreviousReading())
                     .currentReading(r.getCurrentReading())
                     .isBilled(r.getIsBilled())

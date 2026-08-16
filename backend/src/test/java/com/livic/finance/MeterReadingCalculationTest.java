@@ -139,6 +139,7 @@ class MeterReadingCalculationTest {
 
         List<MeterReadingResponse> worksheet = meterReadingService.getOrCreateWorksheet(propertyId, chargeConfigId, 8, 2026);
         assertEquals(1, worksheet.size());
+        assertEquals(4, worksheet.get(0).getFloor());
         assertEquals(BigDecimal.ZERO, worksheet.get(0).getPreviousReading());
         assertNull(worksheet.get(0).getCurrentReading());
 
