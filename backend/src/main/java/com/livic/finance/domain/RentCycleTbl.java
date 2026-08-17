@@ -1,7 +1,7 @@
 package com.livic.finance.domain;
 
 import com.livic.common.domain.BaseEntity;
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;

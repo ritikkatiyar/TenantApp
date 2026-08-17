@@ -1,7 +1,7 @@
 package com.livic.finance.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.common.response.ApiResponse;
 import com.livic.finance.dto.RentCycleDTOs;
 import com.livic.finance.service.interfaces.RentCycleService;

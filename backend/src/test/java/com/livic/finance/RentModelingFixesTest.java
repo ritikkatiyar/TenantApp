@@ -6,7 +6,7 @@ import com.livic.common.domain.ChargeCategory;
 import com.livic.common.domain.LeaseSplitStrategy;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.domain.RentChargeType;
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.common.event.RentPublishedEvent;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.BillingWorksheetEntryTbl;
@@ -90,6 +90,8 @@ public class RentModelingFixesTest {
     @Mock
     private com.livic.finance.strategy.ChargeCalculationService chargeCalculationService;
     @Mock
+    private com.livic.payment.facade.PaymentFacade paymentFacade;
+    @Mock
     private RentCycleTransactionHelper transactionHelper;
 
     @InjectMocks
@@ -149,6 +151,34 @@ public class RentModelingFixesTest {
                 .isActive(true)
                 .build();
         rentConfig.setId(chargeConfigId);
+
+        transactionHelper = new RentCycleTransactionHelper(
+                rentCycleCrudService,
+                rentCycleChargeCrudService,
+                unitFacade,
+                billingWorksheetCrudService,
+                leaseCrudService,
+                chargeConfigCrudService,
+                chargeCalculationService,
+                unitBookingCrudService,
+                financeLedgerCrudService,
+                rentCycleService
+        );
+        rentCycleService = new RentCycleServiceImpl(
+                rentCycleCrudService,
+                rentCycleChargeCrudService,
+                leaseQueryService,
+                leaseCrudService,
+                billingWorksheetCrudService,
+                meterReadingCrudService,
+                chargeConfigCrudService,
+                paymentFacade,
+                eventPublisher,
+                userFacade,
+                unitFacade,
+                propertyFacade,
+                transactionHelper
+        );
     }
 
     @Test

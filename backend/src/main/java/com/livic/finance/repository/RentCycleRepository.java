@@ -1,6 +1,6 @@
 package com.livic.finance.repository;
 
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.finance.domain.RentCycleTbl;
 import com.livic.finance.dto.DefaulterRecordDTO;
 import com.livic.finance.dto.RevenueMetricsDTO;

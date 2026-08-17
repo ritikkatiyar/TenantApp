@@ -1,15 +1,11 @@
 package com.livic.finance.service.interfaces;
 
-import com.livic.common.domain.RentCycleStatus;
-import com.livic.finance.domain.LeaseTbl;
-import com.livic.finance.domain.RentCycleTbl;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.finance.dto.RentCycleDTOs;
 import com.livic.payment.dto.PaymentInitiationResponse;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Map;
 import java.util.UUID;
 
 public interface RentCycleService {
@@ -34,6 +30,4 @@ public interface RentCycleService {
     PaymentInitiationResponse initiateOnlinePayment(UUID rentCycleId, UUID payerUserId);
 
     PaymentInitiationResponse recordCashPayment(UUID rentCycleId, BigDecimal amount, String note, UUID payerUserId, UUID confirmedBy);
-
-    RentCycleTbl generateSingleInTransaction(LeaseTbl lease, String billingMonth, LocalDate dueDate, Map<UUID, Integer> roommateCounts);
 }

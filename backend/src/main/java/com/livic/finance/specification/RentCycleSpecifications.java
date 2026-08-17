@@ -1,6 +1,6 @@
 package com.livic.finance.specification;
 
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.finance.domain.RentCycleTbl;
 import org.springframework.data.jpa.domain.Specification;
 

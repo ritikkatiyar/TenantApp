@@ -1,7 +1,7 @@
 package com.livic.finance.dto;
 
 import com.livic.common.domain.RentChargeType;
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;

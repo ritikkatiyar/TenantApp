@@ -1,7 +1,7 @@
 package com.livic.finance.listener;
 
 import com.livic.common.domain.LedgerTransactionType;
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.finance.domain.FinanceLedgerTbl;
 import com.livic.finance.domain.RentCycleTbl;
 import com.livic.finance.domain.UnitBookingTbl;
