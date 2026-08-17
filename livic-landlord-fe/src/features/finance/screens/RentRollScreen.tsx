@@ -14,6 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
