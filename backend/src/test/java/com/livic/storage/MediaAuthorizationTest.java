@@ -10,7 +10,7 @@ import com.livic.inventory.facade.InventoryFacade;
 import com.livic.storage.controller.MediaController;
 import com.livic.storage.dto.FileType;
 import com.livic.storage.dto.MediaDTOs;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.domain.OwnerModule;
 import com.livic.storage.dto.StorageProvider;
 import com.livic.storage.facade.StorageFacade;
 import com.livic.user.dto.UserSummaryDTO;

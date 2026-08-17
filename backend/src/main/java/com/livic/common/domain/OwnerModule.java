@@ -1,4 +1,4 @@
-package com.livic.storage.dto;
+package com.livic.common.domain;
 
 public enum OwnerModule {
     PROPERTY,

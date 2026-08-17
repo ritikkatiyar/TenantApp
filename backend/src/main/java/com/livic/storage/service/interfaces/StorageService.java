@@ -1,6 +1,6 @@
 package com.livic.storage.service.interfaces;
 
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.domain.OwnerModule;
 import com.livic.storage.dto.MediaDTOs;
 
 import java.util.Collection;

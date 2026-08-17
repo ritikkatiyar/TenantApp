@@ -8,7 +8,7 @@ import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.UnitFacade;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.domain.OwnerModule;
 import com.livic.storage.facade.StorageFacade;
 
 import lombok.RequiredArgsConstructor;

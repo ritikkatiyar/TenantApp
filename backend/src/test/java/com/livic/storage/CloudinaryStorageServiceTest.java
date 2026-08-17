@@ -3,7 +3,7 @@ package com.livic.storage;
 import com.livic.storage.config.StorageProperties;
 import com.livic.storage.domain.MediaAssetTbl;
 import com.livic.storage.dto.FileType;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.domain.OwnerModule;
 import com.livic.storage.dto.StorageProvider;
 import com.livic.storage.dto.MediaDTOs;
 import com.livic.storage.repository.MediaAssetRepository;

@@ -1,6 +1,7 @@
 package com.livic.auth.service.interfaces;
 
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.domain.OwnerModule;
+
 
 import java.util.UUID;
 

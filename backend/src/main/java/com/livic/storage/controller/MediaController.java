@@ -2,7 +2,7 @@ package com.livic.storage.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.domain.OwnerModule;
 import com.livic.storage.dto.MediaDTOs;
 import com.livic.storage.facade.StorageFacade;
 import jakarta.validation.Valid;

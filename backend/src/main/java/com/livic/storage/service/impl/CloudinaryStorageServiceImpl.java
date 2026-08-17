@@ -6,7 +6,8 @@ import com.livic.common.exception.BusinessException;
 import com.livic.storage.config.StorageProperties;
 import com.livic.storage.domain.MediaAssetTbl;
 import com.livic.storage.dto.FileType;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.domain.OwnerModule;
+import com.livic.storage.mapper.MediaAssetMapper;
 import com.livic.storage.dto.StorageProvider;
 import com.livic.storage.dto.MediaDTOs;
 import com.livic.storage.repository.MediaAssetRepository;
@@ -102,14 +103,14 @@ public class CloudinaryStorageServiceImpl implements StorageService {
         log.info("[STORAGE] Confirmed media asset id={}, ownerModule={}, refId={}, user={}",
                 saved.getId(), saved.getOwnerModule(), saved.getReferenceId(), userId);
 
-        return toDTO(saved);
+        return MediaAssetMapper.toResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<MediaDTOs.MediaAssetDTO> getAssetById(UUID mediaAssetId) {
         return mediaAssetRepository.findById(mediaAssetId)
-                .map(this::toDTO);
+                .map(MediaAssetMapper::toResponse);
     }
 
     @Override
@@ -117,7 +118,7 @@ public class CloudinaryStorageServiceImpl implements StorageService {
     public List<MediaDTOs.MediaAssetDTO> listAssets(OwnerModule ownerModule, UUID referenceId) {
         return mediaAssetRepository.findAllByOwnerModuleAndReferenceId(ownerModule, referenceId)
                 .stream()
-                .map(this::toDTO)
+                .map(MediaAssetMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -130,7 +131,7 @@ public class CloudinaryStorageServiceImpl implements StorageService {
         }
         return mediaAssetRepository.findAllByOwnerModuleAndReferenceIdIn(ownerModule, referenceIds)
                 .stream()
-                .map(this::toDTO)
+                .map(MediaAssetMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -161,18 +162,5 @@ public class CloudinaryStorageServiceImpl implements StorageService {
         log.info("[STORAGE] Deleted media asset id={}, user={}", mediaAssetId, userId);
     }
 
-    private MediaDTOs.MediaAssetDTO toDTO(MediaAssetTbl entity) {
-        return new MediaDTOs.MediaAssetDTO(
-                entity.getId(),
-                entity.getOwnerModule(),
-                entity.getReferenceId(),
-                entity.getStorageProvider(),
-                entity.getExternalId(),
-                entity.getUrl(),
-                entity.getFileType(),
-                entity.getCaption(),
-                entity.getUploadedByUserId(),
-                entity.getUploadedAt()
-        );
-    }
+
 }
