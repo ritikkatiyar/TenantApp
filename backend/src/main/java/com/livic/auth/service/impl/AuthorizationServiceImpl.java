@@ -2,11 +2,14 @@ package com.livic.auth.service.impl;
 
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.auth.service.interfaces.AuthorizationService;
+
 import com.livic.auth.service.interfaces.MembershipCrudService;
 import com.livic.finance.facade.FinanceFacade;
 import com.livic.inventory.facade.InventoryFacade;
 import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.UnitFacade;
+import com.livic.storage.dto.OwnerModule;
+import com.livic.storage.facade.StorageFacade;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final UnitFacade unitFacade;
     private final FinanceFacade financeFacade;
     private final InventoryFacade inventoryFacade;
+    private final StorageFacade storageFacade;
+
 
     @Override
     @Transactional(readOnly = true)
@@ -159,6 +164,48 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasMediaAccess(OwnerModule ownerModule, UUID referenceId, String action) {
+        if (ownerModule == null || referenceId == null) {
+            return false;
+        }
+        UserDetailsImpl currentUser = getCurrentUser();
+        if (currentUser == null) return false;
+        if (isUserGloballyAuthorized(currentUser)) return true;
+
+        boolean isWrite = "WRITE".equalsIgnoreCase(action) || "DELETE".equalsIgnoreCase(action) || "EDIT".equalsIgnoreCase(action);
+
+        return switch (ownerModule) {
+            case PROPERTY -> isWrite ? checkPermission(referenceId, "PROPERTY_EDIT") : checkPermission(referenceId, "PROPERTY_VIEW");
+            case LEASE -> isWrite ? hasPermissionByLeaseId(referenceId, "LEASE_UPDATE")
+                    : (hasPermissionByLeaseId(referenceId, "LEASE_VIEW") || hasPermissionByLeaseId(referenceId, "LEASE_VIEW_OWN"));
+            case INVENTORY -> isWrite ? hasPermissionByItemId(referenceId, "PROPERTY_EDIT") : hasPermissionByItemId(referenceId, "PROPERTY_VIEW");
+        };
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasMediaAssetAccess(UUID mediaAssetId, String action) {
+        if (mediaAssetId == null) return false;
+        UserDetailsImpl currentUser = getCurrentUser();
+        if (currentUser == null) return false;
+        if (isUserGloballyAuthorized(currentUser)) return true;
+
+        UUID userId = currentUser.getUuid();
+        try {
+            return storageFacade.getAssetById(mediaAssetId).map(asset -> {
+                if (asset.uploadedByUserId() != null && asset.uploadedByUserId().equals(userId)) {
+                    return true;
+                }
+                return hasMediaAccess(asset.ownerModule(), asset.referenceId(), action);
+            }).orElse(false);
+        } catch (Exception e) {
+            log.error("Error checking permission for mediaAssetId {}: {}", mediaAssetId, e.getMessage(), e);
+            return false;
+        }
+    }
+
     private boolean isUserGloballyAuthorized(UserDetailsImpl currentUser) {
         return currentUser != null && (currentUser.hasGlobalRole("SUPER_ADMIN") || currentUser.hasGlobalRole("ADMIN"));
     }
@@ -192,3 +239,4 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         return null;
     }
 }
+

@@ -81,6 +81,7 @@ public class RentCycleServiceImpl implements RentCycleService {
     private final UnitBookingCrudService unitBookingCrudService;
     private final UserFacade userFacade;
     private final UnitFacade unitFacade;
+    private final com.livic.property.facade.PropertyFacade propertyFacade;
 
     @Override
     @Transactional
@@ -382,16 +383,49 @@ public class RentCycleServiceImpl implements RentCycleService {
     @Override
     @Transactional(readOnly = true)
     public RentCycleDTOs.RentCycleListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, RentCycleStatus status, String search, Pageable pageable) {
-        if (propertyId == null && leaseId == null && currentUserId != null) {
-            leaseId = leaseQueryService.findByUserIdAndStatus(currentUserId, com.livic.common.domain.LeaseStatus.ACTIVE)
-                    .map(LeaseTbl::getId)
-                    .orElse(null);
+        List<UUID> targetPropertyIds = new ArrayList<>();
+
+        if (currentUserId != null) {
+            Optional<LeaseTbl> tenantLeaseOpt = leaseQueryService.findByUserIdAndStatus(currentUserId, LeaseStatus.ACTIVE);
+            if (tenantLeaseOpt.isPresent()) {
+                leaseId = tenantLeaseOpt.get().getId();
+                propertyId = null;
+            } else {
+                List<com.livic.property.dto.PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
+                List<UUID> ownedPropertyIds = userProperties.stream().map(com.livic.property.dto.PropertySummaryDTO::id).toList();
+
+                if (propertyId != null) {
+                    if (!ownedPropertyIds.contains(propertyId)) {
+                        return new RentCycleDTOs.RentCycleListResponse(
+                                List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
+                                new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                        );
+                    }
+                    targetPropertyIds.add(propertyId);
+                } else {
+                    if (ownedPropertyIds.isEmpty()) {
+                        return new RentCycleDTOs.RentCycleListResponse(
+                                List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
+                                new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+                        );
+                    }
+                    targetPropertyIds.addAll(ownedPropertyIds);
+                }
+            }
+        } else if (propertyId != null) {
+            targetPropertyIds.add(propertyId);
         }
 
-        Specification<RentCycleTbl> spec = Specification
-                .where(RentCycleSpecifications.hasPropertyId(propertyId))
-                .and(RentCycleSpecifications.hasLeaseId(leaseId))
-                .and(RentCycleSpecifications.hasBillingMonth(billingMonth))
+        Specification<RentCycleTbl> spec;
+        if (leaseId != null) {
+            spec = Specification.where(RentCycleSpecifications.hasLeaseId(leaseId));
+        } else if (targetPropertyIds.size() == 1) {
+            spec = Specification.where(RentCycleSpecifications.hasPropertyId(targetPropertyIds.get(0)));
+        } else {
+            spec = Specification.where(RentCycleSpecifications.hasPropertyIdIn(targetPropertyIds));
+        }
+
+        spec = spec.and(RentCycleSpecifications.hasBillingMonth(billingMonth))
                 .and(RentCycleSpecifications.hasStatus(status))
                 .and(RentCycleSpecifications.matchesSearch(search));
 
@@ -402,30 +436,22 @@ public class RentCycleServiceImpl implements RentCycleService {
         long pendingDraftsCount = 0;
         long publishedCount = 0;
 
-        UUID targetPropertyId = propertyId;
-        if (targetPropertyId == null && leaseId != null) {
-            LeaseTbl lease = leaseCrudService.findById(leaseId).orElse(null);
-            if (lease != null && lease.getUnitId() != null) {
-                targetPropertyId = unitFacade.getUnitById(lease.getUnitId())
-                        .map(com.livic.property.dto.UnitSummaryDTO::propertyId)
-                        .orElse(null);
-            }
-        }
-
-        if (targetPropertyId != null) {
-            RentCycleDTOs.RentRollMetricsDTO metrics = rentCycleCrudService.getRentRollMetrics(
-                    targetPropertyId,
-                    billingMonth,
-                    RentCycleStatus.PENDING,
-                    RentCycleStatus.PUBLISHED,
-                    RentCycleStatus.PAID,
-                    RentCycleStatus.OVERDUE,
-                    RentCycleStatus.PARTIALLY_PAID
-            );
-            if (metrics != null) {
-                totalExpectedRevenue = metrics.totalExpectedRevenue();
-                pendingDraftsCount = metrics.pendingDraftsCount();
-                publishedCount = metrics.publishedCount();
+        if (!targetPropertyIds.isEmpty()) {
+            for (UUID pid : targetPropertyIds) {
+                RentCycleDTOs.RentRollMetricsDTO metrics = rentCycleCrudService.getRentRollMetrics(
+                        pid,
+                        billingMonth,
+                        RentCycleStatus.PENDING,
+                        RentCycleStatus.PUBLISHED,
+                        RentCycleStatus.PAID,
+                        RentCycleStatus.OVERDUE,
+                        RentCycleStatus.PARTIALLY_PAID
+                );
+                if (metrics != null) {
+                    totalExpectedRevenue = totalExpectedRevenue.add(metrics.totalExpectedRevenue());
+                    pendingDraftsCount += metrics.pendingDraftsCount();
+                    publishedCount += metrics.publishedCount();
+                }
             }
         }
 
@@ -442,6 +468,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                 )
         );
     }
+
 
     @Override
     @Transactional

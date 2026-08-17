@@ -7,6 +7,7 @@ import com.livic.storage.dto.MediaDTOs;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface StorageFacade {
@@ -22,7 +23,10 @@ public interface StorageFacade {
 
     List<MediaDTOs.MediaAssetDTO> getAssets(OwnerModule ownerModule, UUID referenceId);
 
+    Optional<MediaDTOs.MediaAssetDTO> getAssetById(UUID mediaAssetId);
+
     Map<UUID, List<MediaDTOs.MediaAssetDTO>> getAssetsForReferences(OwnerModule ownerModule, Collection<UUID> referenceIds);
 
     void deleteAsset(UUID mediaAssetId, UUID userId);
 }
+

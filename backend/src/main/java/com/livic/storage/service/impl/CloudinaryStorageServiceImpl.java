@@ -22,8 +22,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -105,12 +107,20 @@ public class CloudinaryStorageServiceImpl implements StorageService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<MediaDTOs.MediaAssetDTO> getAssetById(UUID mediaAssetId) {
+        return mediaAssetRepository.findById(mediaAssetId)
+                .map(this::toDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<MediaDTOs.MediaAssetDTO> listAssets(OwnerModule ownerModule, UUID referenceId) {
         return mediaAssetRepository.findAllByOwnerModuleAndReferenceId(ownerModule, referenceId)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
+
 
     @Override
     @Transactional(readOnly = true)

@@ -5,6 +5,7 @@ import com.livic.storage.dto.MediaDTOs;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface StorageService {
@@ -15,7 +16,10 @@ public interface StorageService {
 
     List<MediaDTOs.MediaAssetDTO> listAssets(OwnerModule ownerModule, UUID referenceId);
 
+    Optional<MediaDTOs.MediaAssetDTO> getAssetById(UUID mediaAssetId);
+
     List<MediaDTOs.MediaAssetDTO> listAssetsForReferences(OwnerModule ownerModule, Collection<UUID> referenceIds);
 
     void deleteAsset(UUID mediaAssetId, UUID userId);
 }
+

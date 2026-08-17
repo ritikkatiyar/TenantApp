@@ -31,7 +31,7 @@ public class MediaController {
     private final StorageFacade storageFacade;
 
     @PostMapping("/upload-authorization")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasMediaAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')")
     public ResponseEntity<ApiResponse<MediaDTOs.UploadAuthorizationResponse>> requestUploadAuthorization(
             @Valid @RequestBody MediaDTOs.UploadAuthorizationRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
@@ -47,7 +47,7 @@ public class MediaController {
     }
 
     @PostMapping("/confirm")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasMediaAccess(#request.ownerModule(), #request.referenceId(), 'WRITE')")
     public ResponseEntity<ApiResponse<MediaDTOs.MediaAssetDTO>> confirmUpload(
             @Valid @RequestBody MediaDTOs.ConfirmUploadRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
@@ -57,7 +57,7 @@ public class MediaController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasMediaAccess(#ownerModule, #referenceId, 'READ')")
     public ResponseEntity<ApiResponse<List<MediaDTOs.MediaAssetDTO>>> listMediaAssets(
             @RequestParam OwnerModule ownerModule,
             @RequestParam UUID referenceId) {
@@ -66,7 +66,7 @@ public class MediaController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@authorizationService.hasMediaAssetAccess(#id, 'DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteMediaAsset(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
@@ -75,3 +75,4 @@ public class MediaController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
+

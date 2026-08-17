@@ -94,6 +94,11 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [checklist, setChecklist] = useState<PreFlightChecklistResponse | null>(null);
 
+  const [page, setPage] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalElements, setTotalElements] = useState<number>(0);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
@@ -131,7 +136,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       await recordCashPayment(selectedInvoice.id, amountNum, cashNote, token);
       setReceiptSuccess(true);
       showToast("Cash payment recorded successfully!", "success");
-      checkExistingInvoices();
+      checkExistingInvoices(page);
     } catch (e: any) {
       showToast(e.message || "Failed to record cash payment.", "error");
     } finally {
@@ -141,26 +146,41 @@ export default function RentRollScreen({ token }: { token: string | null }) {
 
   useEffect(() => {
     if (token && propertyId) {
-      checkExistingInvoices();
+      setPage(0);
+      checkExistingInvoices(0);
     }
   }, [billingMonth, token, propertyId, debouncedSearchQuery]);
 
-  const checkExistingInvoices = async () => {
+  const checkExistingInvoices = async (targetPage: number = 0) => {
     if (!token || !propertyId) return;
     try {
       setIsLoading(true);
-      const data = await listRentCycles(billingMonth, token, propertyId as string, 0, 100, undefined, debouncedSearchQuery);
+      const data = await listRentCycles(
+        billingMonth,
+        token,
+        propertyId as string,
+        targetPage,
+        pageSize,
+        undefined,
+        debouncedSearchQuery
+      );
       if (data && data.content && data.content.length > 0) {
         setInvoices(data.content);
         setTotalRevenue(data.totalExpectedRevenue || 0);
         setPublishedCount(data.publishedCount || 0);
         setPendingCount(data.pendingDraftsCount || 0);
+        setTotalPages(data.totalPages || 0);
+        setTotalElements(data.totalElements || 0);
+        setPage(data.number || targetPage);
         setHasGenerated(true);
       } else {
         setInvoices([]);
         setTotalRevenue(0);
         setPublishedCount(0);
         setPendingCount(0);
+        setTotalPages(0);
+        setTotalElements(0);
+        setPage(0);
         setHasGenerated(false);
         const flightData = await getPreFlightChecklist(propertyId as string, billingMonth, token);
         setChecklist(flightData);
@@ -171,6 +191,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       setIsLoading(false);
     }
   };
+
 
   const handleGenerate = async () => {
     if (!token || !propertyId) return;
@@ -481,8 +502,54 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                 ));
               })()}
             </View>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <View style={styles.paginationBar}>
+                <Text style={styles.paginationInfo}>
+                  Showing <Text style={{ fontWeight: '700' }}>{page * pageSize + 1}</Text> -{' '}
+                  <Text style={{ fontWeight: '700' }}>{Math.min((page + 1) * pageSize, totalElements)}</Text> of{' '}
+                  <Text style={{ fontWeight: '700' }}>{totalElements}</Text> invoices
+                </Text>
+
+                <View style={styles.paginationActions}>
+                  <TouchableOpacity
+                    onPress={() => page > 0 && checkExistingInvoices(page - 1)}
+                    disabled={page === 0}
+                    style={[styles.pageBtn, page === 0 && styles.pageBtnDisabled]}
+                  >
+                    <MaterialIcons
+                      name="chevron-left"
+                      size={20}
+                      color={page === 0 ? '#9ca3af' : Theme.Colors.primary}
+                    />
+                    <Text style={[styles.pageBtnText, page === 0 && styles.pageBtnTextDisabled]}>Prev</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.pageIndicator}>
+                    <Text style={styles.pageIndicatorText}>
+                      Page {page + 1} of {totalPages}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => page < totalPages - 1 && checkExistingInvoices(page + 1)}
+                    disabled={page >= totalPages - 1}
+                    style={[styles.pageBtn, page >= totalPages - 1 && styles.pageBtnDisabled]}
+                  >
+                    <Text style={[styles.pageBtnText, page >= totalPages - 1 && styles.pageBtnTextDisabled]}>Next</Text>
+                    <MaterialIcons
+                      name="chevron-right"
+                      size={20}
+                      color={page >= totalPages - 1 ? '#9ca3af' : Theme.Colors.primary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         )}
+
 
         {/* Record Cash Modal */}
         <Modal
@@ -987,4 +1054,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     outlineWidth: 0,
   },
+  paginationBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  paginationInfo: {
+    fontSize: 13,
+    color: '#6b7a7d',
+  },
+  paginationActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  pageBtnDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#f8fafc',
+  },
+  pageBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Theme.Colors.primary,
+  },
+  pageBtnTextDisabled: {
+    color: '#9ca3af',
+  },
+  pageIndicator: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+  },
+  pageIndicatorText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Theme.Colors.primary,
+  },
 });
+

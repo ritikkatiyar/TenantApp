@@ -49,8 +49,9 @@ export default function ReportsRoute() {
   const [isLoading, setIsLoading] = useState(false);
   const [statements, setStatements] = useState<RentCycleResponse[]>([]);
   const [page, setPage] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(20);
   const [totalPages, setTotalPages] = useState<number>(0);
+
   const [totalElements, setTotalElements] = useState<number>(0);
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [publishedCount, setPublishedCount] = useState<number>(0);

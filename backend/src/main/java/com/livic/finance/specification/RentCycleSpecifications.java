@@ -44,6 +44,21 @@ public class RentCycleSpecifications {
         };
     }
 
+    public static Specification<RentCycleTbl> hasPropertyIdIn(java.util.Collection<UUID> propertyIds) {
+        return (root, query, cb) -> {
+            if (propertyIds == null || propertyIds.isEmpty()) {
+                return cb.disjunction();
+            }
+            jakarta.persistence.criteria.Subquery<UUID> subquery = query.subquery(UUID.class);
+            jakarta.persistence.criteria.Root<com.livic.property.domain.UnitTbl> unitRoot = subquery.from(com.livic.property.domain.UnitTbl.class);
+            subquery.select(unitRoot.get("id"));
+            subquery.where(unitRoot.get("property").get("id").in(propertyIds));
+            
+            return cb.in(root.get("lease").get("unitId")).value(subquery);
+        };
+    }
+
+
     public static Specification<RentCycleTbl> matchesSearch(String search) {
         return (root, query, cb) -> {
             if (search == null || search.trim().isEmpty()) {
