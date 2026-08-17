@@ -35,9 +35,10 @@ import { ResponsiveHeader } from '@/src/components/common/layout/ResponsiveHeade
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import { SectionHeader } from '@/src/components/common/display/SectionHeader';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
+import { EmptyState } from '@/src/components/common/display/EmptyState';
+
 
 export default function RentRollScreen({ token }: { token: string | null }) {
   const insets = useSafeAreaInsets();
@@ -83,7 +84,8 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     return d.toISOString().split('T')[0];
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isListLoading, setIsListLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
@@ -154,7 +156,8 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const checkExistingInvoices = async (targetPage: number = 0) => {
     if (!token || !propertyId) return;
     try {
-      setIsLoading(true);
+      setIsListLoading(true);
+      const isSearchActive = !!debouncedSearchQuery.trim();
       const data = await listRentCycles(
         billingMonth,
         token,
@@ -164,14 +167,20 @@ export default function RentRollScreen({ token }: { token: string | null }) {
         undefined,
         debouncedSearchQuery
       );
-      if (data && data.content && data.content.length > 0) {
-        setInvoices(data.content);
-        setTotalRevenue(data.totalExpectedRevenue || 0);
-        setPublishedCount(data.publishedCount || 0);
-        setPendingCount(data.pendingDraftsCount || 0);
-        setTotalPages(data.totalPages || 0);
-        setTotalElements(data.totalElements || 0);
-        setPage(data.number || targetPage);
+
+      const hasContent = !!(data && data.content && data.content.length > 0);
+      const hasMetrics = !!(data && ((data.totalExpectedRevenue || 0) > 0 || (data.publishedCount || 0) > 0 || (data.pendingDraftsCount || 0) > 0 || (data.totalElements || 0) > 0));
+
+      if (hasContent || hasMetrics || isSearchActive) {
+        setInvoices(data?.content || []);
+        if (data?.totalExpectedRevenue !== undefined && (!isSearchActive || !hasGenerated)) {
+          setTotalRevenue(data.totalExpectedRevenue);
+          setPublishedCount(data.publishedCount || 0);
+          setPendingCount(data.pendingDraftsCount || 0);
+        }
+        setTotalPages(data?.totalPages || 0);
+        setTotalElements(data?.totalElements || 0);
+        setPage(data?.number ?? targetPage);
         setHasGenerated(true);
       } else {
         setInvoices([]);
@@ -188,9 +197,11 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     } catch (e) {
       // Handled silently
     } finally {
-      setIsLoading(false);
+      setIsInitialLoading(false);
+      setIsListLoading(false);
     }
   };
+
 
 
   const handleGenerate = async () => {
@@ -303,7 +314,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       );
     }
 
-    if (isLoading) {
+    if (isInitialLoading) {
       return (
         <View style={{ flex: 1, justifyContent: 'center', padding: 40 }}>
           <ActivityIndicator size="large" color={Theme.Colors.primary} />
@@ -441,67 +452,84 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
-              {searchQuery.length > 0 && (
+              {isListLoading ? (
+                <ActivityIndicator size="small" color="#006875" />
+              ) : searchQuery.length > 0 ? (
                 <TouchableOpacity onPress={() => setSearchQuery('')}>
                   <MaterialIcons name="close" size={20} color="#6b7a7d" />
                 </TouchableOpacity>
-              )}
+              ) : null}
             </View>
 
             <View style={styles.invoiceList}>
-              {(() => {
-                const sortedInvoices = [...invoices].sort((a, b) => {
-                  const numA = parseInt(a.unitNumber?.replace(/\D/g, '')) || 0;
-                  const numB = parseInt(b.unitNumber?.replace(/\D/g, '')) || 0;
-                  if (numA !== numB) return numA - numB;
-                  return (a.tenantName || '').localeCompare(b.tenantName || '');
-                });
-                return sortedInvoices.map((invoice, idx) => (
-                  <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
-                    <View style={styles.invoiceHeader}>
-                      <View>
-                        <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
-                        <Text style={{ fontSize: 12, color: Theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
-                      </View>
-                      <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
-                    </View>
-                    
-                    <View style={styles.chargesList}>
-                      {invoice.charges?.map((charge, i) => (
-                        <View key={i} style={styles.chargeRow}>
-                          <Text style={styles.chargeDesc}>{charge.description || charge.chargeType}</Text>
-                          <Text style={styles.chargeAmt}>₹ {charge.amount?.toFixed(2)}</Text>
+              {invoices.length === 0 ? (
+                <EmptyState
+                  iconName="search-off"
+                  title="No Invoices Found"
+                  description={
+                    debouncedSearchQuery.trim()
+                      ? `No rent cycles match "${debouncedSearchQuery.trim()}". Try searching with a different name or unit number.`
+                      : 'No rent cycles found for this billing month.'
+                  }
+                  actionText={debouncedSearchQuery.trim() ? "Clear Search" : undefined}
+                  onAction={debouncedSearchQuery.trim() ? () => setSearchQuery('') : undefined}
+                />
+              ) : (
+                (() => {
+                  const sortedInvoices = [...invoices].sort((a, b) => {
+                    const numA = parseInt(a.unitNumber?.replace(/\D/g, '')) || 0;
+                    const numB = parseInt(b.unitNumber?.replace(/\D/g, '')) || 0;
+                    if (numA !== numB) return numA - numB;
+                    return (a.tenantName || '').localeCompare(b.tenantName || '');
+                  });
+                  return sortedInvoices.map((invoice, idx) => (
+                    <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
+                      <View style={styles.invoiceHeader}>
+                        <View>
+                          <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
+                          <Text style={{ fontSize: 12, color: Theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
                         </View>
-                      ))}
-                    </View>
-                    
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                      <StatusPill status={invoice.status} />
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        {invoice.status === 'PENDING' && (
-                          <TouchableOpacity 
-                            style={[styles.recordCashBtn, { marginRight: 8 }]} 
-                            onPress={() => handlePublishSingle(invoice)}
-                          >
-                            <MaterialIcons name="send" size={16} color={Theme.Colors.primary} />
-                            <Text style={styles.recordCashBtnText}>Publish</Text>
-                          </TouchableOpacity>
-                        )}
-                        {invoice.status !== 'PAID' && (
-                          <TouchableOpacity 
-                            style={styles.recordCashBtn} 
-                            onPress={() => handleOpenCashModal(invoice)}
-                          >
-                            <MaterialIcons name="payments" size={16} color={Theme.Colors.primary} />
-                            <Text style={styles.recordCashBtnText}>Record Cash</Text>
-                          </TouchableOpacity>
-                        )}
+                        <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
                       </View>
-                    </View>
-                  </GlassCard>
-                ));
-              })()}
+                      
+                      <View style={styles.chargesList}>
+                        {invoice.charges?.map((charge, i) => (
+                          <View key={i} style={styles.chargeRow}>
+                            <Text style={styles.chargeDesc}>{charge.description || charge.chargeType}</Text>
+                            <Text style={styles.chargeAmt}>₹ {charge.amount?.toFixed(2)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                        <StatusPill status={invoice.status} />
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          {invoice.status === 'PENDING' && (
+                            <TouchableOpacity 
+                              style={[styles.recordCashBtn, { marginRight: 8 }]} 
+                              onPress={() => handlePublishSingle(invoice)}
+                            >
+                              <MaterialIcons name="send" size={16} color={Theme.Colors.primary} />
+                              <Text style={styles.recordCashBtnText}>Publish</Text>
+                            </TouchableOpacity>
+                          )}
+                          {invoice.status !== 'PAID' && (
+                            <TouchableOpacity 
+                              style={styles.recordCashBtn} 
+                              onPress={() => handleOpenCashModal(invoice)}
+                            >
+                              <MaterialIcons name="payments" size={16} color={Theme.Colors.primary} />
+                              <Text style={styles.recordCashBtnText}>Record Cash</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    </GlassCard>
+                  ));
+                })()
+              )}
             </View>
+
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
