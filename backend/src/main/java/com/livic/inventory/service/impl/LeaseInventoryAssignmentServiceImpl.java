@@ -19,7 +19,7 @@ import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.repository.LeaseInventoryAssignmentRepository;
 import com.livic.inventory.service.interfaces.LeaseInventoryAssignmentService;
 import com.livic.storage.dto.MediaDTOs;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 import com.livic.storage.facade.StorageFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

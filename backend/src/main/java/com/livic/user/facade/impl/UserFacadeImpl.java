@@ -1,12 +1,15 @@
 package com.livic.user.facade.impl;
 
 import com.livic.common.domain.UserRole;
+import com.livic.user.domain.DevicePlatform;
+import com.livic.user.domain.UserDeviceTokenTbl;
 import com.livic.user.domain.UserMode;
 import com.livic.user.domain.UserPreferenceTbl;
 import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import com.livic.user.service.interfaces.UserCrudService;
+import com.livic.user.service.interfaces.UserDeviceTokenCrudService;
 import com.livic.user.service.interfaces.UserPreferenceCrudService;
 import com.livic.user.service.interfaces.UserQueryService;
 import com.livic.user.service.interfaces.UserService;
@@ -15,8 +18,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +38,7 @@ public class UserFacadeImpl implements UserFacade {
     private final PasswordEncoder passwordEncoder;
 
     private final UserPreferenceCrudService userPreferenceCrudService;
-    private final com.livic.user.service.interfaces.UserDeviceTokenCrudService userDeviceTokenCrudService;
+    private final UserDeviceTokenCrudService userDeviceTokenCrudService;
 
     @Override
     public Optional<UserSummaryDTO> getUserById(UUID userId) {
@@ -99,30 +104,35 @@ public class UserFacadeImpl implements UserFacade {
 
     @Override
     @Transactional
-    public void registerDeviceToken(UUID userId, String expoPushToken, com.livic.user.domain.DevicePlatform platform) {
-        Optional<com.livic.user.domain.UserDeviceTokenTbl> existingOpt = userDeviceTokenCrudService.findByExpoPushToken(expoPushToken);
+    public void registerDeviceToken(UUID userId, String expoPushToken, DevicePlatform platform) {
+        Optional<UserDeviceTokenTbl> existingOpt = userDeviceTokenCrudService.findByExpoPushToken(expoPushToken);
         if (existingOpt.isPresent()) {
-            com.livic.user.domain.UserDeviceTokenTbl token = existingOpt.get();
+            UserDeviceTokenTbl token = existingOpt.get();
             token.setUserId(userId);
             token.setPlatform(platform);
-            token.setLastSeenAt(java.time.LocalDateTime.now());
+            token.setLastSeenAt(LocalDateTime.now());
             userDeviceTokenCrudService.save(token);
         } else {
-            com.livic.user.domain.UserDeviceTokenTbl token = com.livic.user.domain.UserDeviceTokenTbl.builder()
+            UserDeviceTokenTbl token = UserDeviceTokenTbl.builder()
                     .userId(userId)
                     .expoPushToken(expoPushToken)
                     .platform(platform)
-                    .registeredAt(java.time.LocalDateTime.now())
-                    .lastSeenAt(java.time.LocalDateTime.now())
+                    .registeredAt(LocalDateTime.now())
+                    .lastSeenAt(LocalDateTime.now())
                     .build();
             userDeviceTokenCrudService.save(token);
         }
     }
 
     @Override
-    public java.util.List<String> getActiveDeviceTokens(UUID userId) {
+    public List<String> getActiveDeviceTokens(UUID userId) {
         return userDeviceTokenCrudService.findByUserId(userId).stream()
-                .map(com.livic.user.domain.UserDeviceTokenTbl::getExpoPushToken)
+                .map(UserDeviceTokenTbl::getExpoPushToken)
                 .toList();
+    }
+
+    @Override
+    public List<UUID> getUserIdsBySearch(String searchPattern) {
+        return userCrudService.findIdsByFullNameOrPhonePattern(searchPattern);
     }
 }

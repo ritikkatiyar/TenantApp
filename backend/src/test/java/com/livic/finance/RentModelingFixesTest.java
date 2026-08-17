@@ -6,7 +6,7 @@ import com.livic.common.domain.ChargeCategory;
 import com.livic.common.domain.LeaseSplitStrategy;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.domain.RentChargeType;
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.common.event.RentPublishedEvent;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.BillingWorksheetEntryTbl;
@@ -22,6 +22,7 @@ import com.livic.finance.mapper.LeaseMapper;
 import com.livic.finance.service.impl.BillingWorksheetServiceImpl;
 import com.livic.finance.service.impl.ChargeConfigServiceImpl;
 import com.livic.finance.service.impl.RentCycleServiceImpl;
+import com.livic.finance.service.impl.RentCycleTransactionHelper;
 import com.livic.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.finance.service.interfaces.LeaseCrudService;
@@ -88,6 +89,10 @@ public class RentModelingFixesTest {
     private com.livic.finance.service.interfaces.FinanceLedgerCrudService financeLedgerCrudService;
     @Mock
     private com.livic.finance.strategy.ChargeCalculationService chargeCalculationService;
+    @Mock
+    private com.livic.payment.facade.PaymentFacade paymentFacade;
+    @Mock
+    private RentCycleTransactionHelper transactionHelper;
 
     @InjectMocks
     private ChargeConfigServiceImpl chargeConfigService;
@@ -146,6 +151,34 @@ public class RentModelingFixesTest {
                 .isActive(true)
                 .build();
         rentConfig.setId(chargeConfigId);
+
+        transactionHelper = new RentCycleTransactionHelper(
+                rentCycleCrudService,
+                rentCycleChargeCrudService,
+                unitFacade,
+                billingWorksheetCrudService,
+                leaseCrudService,
+                chargeConfigCrudService,
+                chargeCalculationService,
+                unitBookingCrudService,
+                financeLedgerCrudService,
+                rentCycleService
+        );
+        rentCycleService = new RentCycleServiceImpl(
+                rentCycleCrudService,
+                rentCycleChargeCrudService,
+                leaseQueryService,
+                leaseCrudService,
+                billingWorksheetCrudService,
+                meterReadingCrudService,
+                chargeConfigCrudService,
+                paymentFacade,
+                eventPublisher,
+                userFacade,
+                unitFacade,
+                propertyFacade,
+                transactionHelper
+        );
     }
 
     @Test
@@ -255,4 +288,70 @@ public class RentModelingFixesTest {
         LeaseDTOs.LeaseResponse response = LeaseMapper.toResponseWithDetails(entity, "John Doe", "1234567890");
         assertEquals(BigDecimal.valueOf(2500.00), response.monthlyRentAmount());
     }
+
+    @Test
+    @DisplayName("Landlord querying All Properties scopes strictly to owned properties")
+    void testList_AllProperties_ScopesToLandlordProperties() {
+        UUID landlordId = UUID.randomUUID();
+        UUID myProperty1 = UUID.randomUUID();
+        UUID myProperty2 = UUID.randomUUID();
+
+        when(leaseQueryService.findByUserIdAndStatus(landlordId, LeaseStatus.ACTIVE)).thenReturn(Optional.empty());
+        when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
+                new PropertySummaryDTO(myProperty1, "My PG 1", "Address 1", "City", "Landmark", 3, true),
+                new PropertySummaryDTO(myProperty2, "My PG 2", "Address 2", "City", "Landmark", 3, true)
+        ));
+
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        org.springframework.data.domain.Page<RentCycleTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
+        when(rentCycleCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+                .thenReturn(mockPage);
+
+        RentCycleDTOs.RentCycleListResponse result = rentCycleService.list(landlordId, null, null, "2026-08", null, null, pageable);
+
+        assertNotNull(result);
+        assertEquals(0, result.totalElements());
+        verify(propertyFacade, times(1)).getPropertiesByUserId(landlordId);
+    }
+
+    @Test
+    @DisplayName("Landlord querying foreign property they do not own returns empty 0 results immediately")
+    void testList_UnauthorizedForeignProperty_ReturnsEmpty() {
+        UUID landlordId = UUID.randomUUID();
+        UUID foreignPropertyId = UUID.randomUUID();
+
+        when(leaseQueryService.findByUserIdAndStatus(landlordId, LeaseStatus.ACTIVE)).thenReturn(Optional.empty());
+        when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of()); // Owns 0 properties
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        RentCycleDTOs.RentCycleListResponse result = rentCycleService.list(landlordId, foreignPropertyId, null, "2026-08", null, null, pageable);
+
+        assertNotNull(result);
+        assertEquals(0, result.totalElements());
+        assertTrue(result.content().isEmpty());
+        verify(rentCycleCrudService, never()).findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Tenant querying rent cycles scopes strictly to their active lease")
+    void testList_Tenant_ScopesStrictlyToLease() {
+        UUID tenantId = UUID.randomUUID();
+        LeaseTbl tenantLease = new LeaseTbl();
+        UUID tenantLeaseId = UUID.randomUUID();
+        tenantLease.setId(tenantLeaseId);
+
+        when(leaseQueryService.findByUserIdAndStatus(tenantId, LeaseStatus.ACTIVE)).thenReturn(Optional.of(tenantLease));
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        org.springframework.data.domain.Page<RentCycleTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
+        when(rentCycleCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+                .thenReturn(mockPage);
+
+        RentCycleDTOs.RentCycleListResponse result = rentCycleService.list(tenantId, null, null, "2026-08", null, null, pageable);
+
+        assertNotNull(result);
+        verify(propertyFacade, never()).getPropertiesByUserId(any());
+    }
 }
+

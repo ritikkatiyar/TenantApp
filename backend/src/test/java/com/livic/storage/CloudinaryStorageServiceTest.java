@@ -3,7 +3,7 @@ package com.livic.storage;
 import com.livic.storage.config.StorageProperties;
 import com.livic.storage.domain.MediaAssetTbl;
 import com.livic.storage.dto.FileType;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 import com.livic.storage.dto.StorageProvider;
 import com.livic.storage.dto.MediaDTOs;
 import com.livic.storage.repository.MediaAssetRepository;
@@ -18,7 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -124,4 +126,42 @@ class CloudinaryStorageServiceTest {
         assertThat(list).hasSize(1);
         assertThat(list.get(0).externalId()).isEqualTo("ext1");
     }
+
+    @Test
+    @DisplayName("getAssetById returns asset DTO when found")
+    void testGetAssetById_WhenFound() {
+        UUID assetId = UUID.randomUUID();
+        MediaAssetTbl asset = MediaAssetTbl.builder()
+                .id(assetId)
+                .ownerModule(OwnerModule.PROPERTY)
+                .referenceId(referenceId)
+                .storageProvider(StorageProvider.CLOUDINARY)
+                .externalId("ext2")
+                .url("https://url.com/ext2")
+                .fileType(FileType.IMAGE)
+                .caption("building")
+                .uploadedByUserId(userId)
+                .uploadedAt(java.time.Instant.now())
+                .build();
+
+        when(mediaAssetRepository.findById(assetId)).thenReturn(java.util.Optional.of(asset));
+
+        java.util.Optional<MediaDTOs.MediaAssetDTO> opt = storageService.getAssetById(assetId);
+
+        assertThat(opt).isPresent();
+        assertThat(opt.get().id()).isEqualTo(assetId);
+        assertThat(opt.get().externalId()).isEqualTo("ext2");
+    }
+
+    @Test
+    @DisplayName("getAssetById returns empty optional when not found")
+    void testGetAssetById_WhenNotFound() {
+        UUID assetId = UUID.randomUUID();
+        when(mediaAssetRepository.findById(assetId)).thenReturn(java.util.Optional.empty());
+
+        java.util.Optional<MediaDTOs.MediaAssetDTO> opt = storageService.getAssetById(assetId);
+
+        assertThat(opt).isEmpty();
+    }
 }
+

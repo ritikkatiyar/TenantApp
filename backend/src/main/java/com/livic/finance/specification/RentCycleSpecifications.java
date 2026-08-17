@@ -1,9 +1,10 @@
 package com.livic.finance.specification;
 
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.finance.domain.RentCycleTbl;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.Collection;
 import java.util.UUID;
 
 public class RentCycleSpecifications {
@@ -30,44 +31,34 @@ public class RentCycleSpecifications {
                 : cb.equal(root.get("status"), status);
     }
 
-    public static Specification<RentCycleTbl> hasPropertyId(UUID propertyId) {
+    public static Specification<RentCycleTbl> hasUnitIdIn(Collection<UUID> unitIds) {
         return (root, query, cb) -> {
-            if (propertyId == null) {
-                return null;
+            if (unitIds == null || unitIds.isEmpty()) {
+                return cb.disjunction();
             }
-            jakarta.persistence.criteria.Subquery<UUID> subquery = query.subquery(UUID.class);
-            jakarta.persistence.criteria.Root<com.livic.property.domain.UnitTbl> unitRoot = subquery.from(com.livic.property.domain.UnitTbl.class);
-            subquery.select(unitRoot.get("id"));
-            subquery.where(cb.equal(unitRoot.get("property").get("id"), propertyId));
-            
-            return cb.in(root.get("lease").get("unitId")).value(subquery);
+            return root.get("lease").get("unitId").in(unitIds);
         };
     }
 
-    public static Specification<RentCycleTbl> matchesSearch(String search) {
+    public static Specification<RentCycleTbl> matchesSearch(Collection<UUID> matchingUnitIds, Collection<UUID> matchingUserIds) {
         return (root, query, cb) -> {
-            if (search == null || search.trim().isEmpty()) {
-                return null;
+            boolean hasUnits = matchingUnitIds != null && !matchingUnitIds.isEmpty();
+            boolean hasUsers = matchingUserIds != null && !matchingUserIds.isEmpty();
+
+            if (!hasUnits && !hasUsers) {
+                return cb.disjunction();
             }
-            String searchPattern = "%" + search.trim().toLowerCase() + "%";
 
-            jakarta.persistence.criteria.Subquery<UUID> unitSubquery = query.subquery(UUID.class);
-            jakarta.persistence.criteria.Root<com.livic.property.domain.UnitTbl> unitRoot = unitSubquery.from(com.livic.property.domain.UnitTbl.class);
-            unitSubquery.select(unitRoot.get("id"));
-            unitSubquery.where(cb.like(cb.lower(unitRoot.get("unitNumber")), searchPattern));
-
-            jakarta.persistence.criteria.Subquery<UUID> userSubquery = query.subquery(UUID.class);
-            jakarta.persistence.criteria.Root<com.livic.user.domain.UserTbl> userRoot = userSubquery.from(com.livic.user.domain.UserTbl.class);
-            userSubquery.select(userRoot.get("id"));
-            userSubquery.where(cb.or(
-                    cb.like(cb.lower(userRoot.get("fullName")), searchPattern),
-                    cb.like(cb.lower(userRoot.get("phoneNumber")), searchPattern)
-            ));
-
-            return cb.or(
-                    cb.in(root.get("lease").get("unitId")).value(unitSubquery),
-                    cb.in(root.get("lease").get("userId")).value(userSubquery)
-            );
+            if (hasUnits && hasUsers) {
+                return cb.or(
+                        root.get("lease").get("unitId").in(matchingUnitIds),
+                        root.get("lease").get("userId").in(matchingUserIds)
+                );
+            } else if (hasUnits) {
+                return root.get("lease").get("unitId").in(matchingUnitIds);
+            } else {
+                return root.get("lease").get("userId").in(matchingUserIds);
+            }
         };
     }
 }

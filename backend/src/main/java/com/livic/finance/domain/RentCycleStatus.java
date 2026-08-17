@@ -1,4 +1,4 @@
-package com.livic.common.domain;
+package com.livic.finance.domain;
 
 public enum RentCycleStatus {
     PENDING,

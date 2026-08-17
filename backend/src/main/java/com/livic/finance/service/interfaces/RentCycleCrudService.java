@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.finance.dto.RentCycleDTOs;
 import java.util.Collection;
 import java.util.List;

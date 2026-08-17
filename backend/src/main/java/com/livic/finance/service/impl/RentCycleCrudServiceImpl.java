@@ -1,6 +1,6 @@
 package com.livic.finance.service.impl;
 
-import com.livic.common.domain.RentCycleStatus;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.common.service.impl.AbstractCrudService;
 import com.livic.finance.domain.RentCycleTbl;
 import com.livic.finance.domain.LeaseTbl;

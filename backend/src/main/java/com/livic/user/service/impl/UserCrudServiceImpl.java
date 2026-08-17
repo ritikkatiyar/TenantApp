@@ -33,4 +33,12 @@ public class UserCrudServiceImpl extends AbstractCrudService<UserTbl, UUID, User
     public List<UserTbl> findTop10ByPhoneNumberContaining(String phoneNumber) {
         return repository.findTop10ByPhoneNumberContaining(phoneNumber);
     }
+
+    @Override
+    public List<UUID> findIdsByFullNameOrPhonePattern(String pattern) {
+        if (pattern == null || pattern.trim().isEmpty()) {
+            return List.of();
+        }
+        return repository.findIdsByFullNameOrPhonePattern(pattern.trim());
+    }
 }

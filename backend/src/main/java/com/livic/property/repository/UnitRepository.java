@@ -24,4 +24,7 @@ public interface UnitRepository extends JpaRepository<UnitTbl, UUID> {
     long countByPropertyIdIn(@Param("propertyIds") List<UUID> propertyIds);
 
     void deleteByPropertyId(UUID propertyId);
+
+    @Query("SELECT u.id FROM UnitTbl u WHERE LOWER(u.unitNumber) LIKE LOWER(CONCAT('%', :pattern, '%'))")
+    List<UUID> findIdsByUnitNumberPattern(@Param("pattern") String pattern);
 }

@@ -15,7 +15,7 @@ import com.livic.inventory.mapper.InventoryMapper;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.service.interfaces.InventoryItemService;
 import com.livic.property.facade.PropertyFacade;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 import com.livic.storage.dto.MediaDTOs;
 import com.livic.storage.facade.StorageFacade;
 import lombok.RequiredArgsConstructor;

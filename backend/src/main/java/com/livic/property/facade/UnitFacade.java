@@ -2,8 +2,9 @@ package com.livic.property.facade;
 
 import com.livic.property.dto.UnitSummaryDTO;
 
-import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,4 +19,8 @@ public interface UnitFacade {
     boolean existsUnitById(UUID unitId);
 
     long getTotalUnitsForPropertyIds(List<UUID> propertyIds);
+
+    Map<UUID, UnitSummaryDTO> getUnitsByIds(Collection<UUID> unitIds);
+
+    List<UUID> getUnitIdsByUnitNumberSearch(String searchPattern);
 }

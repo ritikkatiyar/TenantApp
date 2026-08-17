@@ -13,7 +13,7 @@ import com.livic.inventory.domain.enums.InventoryStatus;
 import com.livic.inventory.repository.InventoryItemRepository;
 import com.livic.inventory.service.impl.InventoryItemServiceImpl;
 import com.livic.property.facade.PropertyFacade;
-import com.livic.storage.dto.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 import com.livic.storage.facade.StorageFacade;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
