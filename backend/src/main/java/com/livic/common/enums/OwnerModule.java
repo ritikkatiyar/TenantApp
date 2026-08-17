@@ -1,4 +1,4 @@
-package com.livic.common.domain;
+package com.livic.common.enums;
 
 public enum OwnerModule {
     PROPERTY,

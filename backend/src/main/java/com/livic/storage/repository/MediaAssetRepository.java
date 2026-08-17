@@ -1,7 +1,7 @@
 package com.livic.storage.repository;
 
 import com.livic.storage.domain.MediaAssetTbl;
-import com.livic.common.domain.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

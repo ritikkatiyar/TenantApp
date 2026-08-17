@@ -1,7 +1,7 @@
 package com.livic.storage.domain;
 
 import com.livic.storage.dto.FileType;
-import com.livic.common.domain.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 import com.livic.storage.dto.StorageProvider;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

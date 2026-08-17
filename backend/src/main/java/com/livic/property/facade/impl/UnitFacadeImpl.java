@@ -63,4 +63,9 @@ public class UnitFacadeImpl implements UnitFacade {
                 .map(UnitSummaryDTO::from)
                 .collect(Collectors.toMap(UnitSummaryDTO::id, dto -> dto));
     }
+
+    @Override
+    public List<UUID> getUnitIdsByUnitNumberSearch(String searchPattern) {
+        return unitCrudService.findIdsByUnitNumberPattern(searchPattern);
+    }
 }

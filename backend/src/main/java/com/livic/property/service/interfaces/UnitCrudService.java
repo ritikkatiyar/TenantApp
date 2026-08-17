@@ -13,4 +13,5 @@ public interface UnitCrudService extends CrudService<UnitTbl, UUID> {
     int findMaxFloorByPropertyId(UUID propertyId);
     long countByPropertyIdIn(List<UUID> propertyIds);
     void deleteByPropertyId(UUID propertyId);
+    List<UUID> findIdsByUnitNumberPattern(String pattern);
 }

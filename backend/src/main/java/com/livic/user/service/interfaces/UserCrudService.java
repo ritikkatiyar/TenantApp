@@ -11,4 +11,5 @@ public interface UserCrudService extends CrudService<UserTbl, UUID> {
     Optional<UserTbl> findByAuthUid(String authUid);
     Optional<UserTbl> findByPhoneNumber(String phoneNumber);
     List<UserTbl> findTop10ByPhoneNumberContaining(String phoneNumber);
+    List<UUID> findIdsByFullNameOrPhonePattern(String pattern);
 }

@@ -1,9 +1,11 @@
 package com.livic.user.facade;
 
+import com.livic.user.domain.DevicePlatform;
 import com.livic.user.domain.UserMode;
 import com.livic.user.dto.UserSummaryDTO;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +28,9 @@ public interface UserFacade {
 
     UserMode getActiveModeForUser(UUID userId);
 
-    void registerDeviceToken(UUID userId, String expoPushToken, com.livic.user.domain.DevicePlatform platform);
+    void registerDeviceToken(UUID userId, String expoPushToken, DevicePlatform platform);
 
-    java.util.List<String> getActiveDeviceTokens(UUID userId);
+    List<String> getActiveDeviceTokens(UUID userId);
+
+    List<UUID> getUserIdsBySearch(String searchPattern);
 }

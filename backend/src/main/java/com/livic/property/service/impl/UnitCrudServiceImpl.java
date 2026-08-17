@@ -50,4 +50,12 @@ public class UnitCrudServiceImpl extends AbstractCrudService<UnitTbl, UUID, Unit
     public void deleteByPropertyId(UUID propertyId) {
         repository.deleteByPropertyId(propertyId);
     }
+
+    @Override
+    public List<UUID> findIdsByUnitNumberPattern(String pattern) {
+        if (pattern == null || pattern.trim().isEmpty()) {
+            return List.of();
+        }
+        return repository.findIdsByUnitNumberPattern(pattern.trim());
+    }
 }

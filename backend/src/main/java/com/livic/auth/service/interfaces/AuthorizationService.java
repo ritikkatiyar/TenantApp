@@ -1,6 +1,6 @@
 package com.livic.auth.service.interfaces;
 
-import com.livic.common.domain.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 
 
 import java.util.UUID;

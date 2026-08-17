@@ -6,7 +6,7 @@ import com.livic.common.exception.BusinessException;
 import com.livic.storage.config.StorageProperties;
 import com.livic.storage.domain.MediaAssetTbl;
 import com.livic.storage.dto.FileType;
-import com.livic.common.domain.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 import com.livic.storage.mapper.MediaAssetMapper;
 import com.livic.storage.dto.StorageProvider;
 import com.livic.storage.dto.MediaDTOs;

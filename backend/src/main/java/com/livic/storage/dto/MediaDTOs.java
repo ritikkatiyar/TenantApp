@@ -1,7 +1,7 @@
 package com.livic.storage.dto;
 
 
-import com.livic.common.domain.OwnerModule;
+import com.livic.common.enums.OwnerModule;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

@@ -22,6 +22,7 @@ import com.livic.finance.mapper.LeaseMapper;
 import com.livic.finance.service.impl.BillingWorksheetServiceImpl;
 import com.livic.finance.service.impl.ChargeConfigServiceImpl;
 import com.livic.finance.service.impl.RentCycleServiceImpl;
+import com.livic.finance.service.impl.RentCycleTransactionHelper;
 import com.livic.finance.service.interfaces.BillingWorksheetCrudService;
 import com.livic.finance.service.interfaces.ChargeConfigCrudService;
 import com.livic.finance.service.interfaces.LeaseCrudService;
@@ -88,6 +89,8 @@ public class RentModelingFixesTest {
     private com.livic.finance.service.interfaces.FinanceLedgerCrudService financeLedgerCrudService;
     @Mock
     private com.livic.finance.strategy.ChargeCalculationService chargeCalculationService;
+    @Mock
+    private RentCycleTransactionHelper transactionHelper;
 
     @InjectMocks
     private ChargeConfigServiceImpl chargeConfigService;
