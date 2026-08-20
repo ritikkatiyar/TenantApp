@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -35,13 +36,16 @@ export function MeterReadingFloorCard({
   baseRate,
   unitType,
 }: MeterReadingFloorCardProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const unitsPerFloorPage = 4;
   const totalFloorPagesUnits = Math.ceil(floorUnits.length / unitsPerFloorPage);
   const startIndex = (currentPage - 1) * unitsPerFloorPage;
   const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
 
   return (
-    <BlurView intensity={60} tint="light" style={styles.floorCard}>
+    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.floorCard}>
       <TouchableOpacity 
         style={styles.floorHeader}
         onPress={toggleFloor}
@@ -53,7 +57,7 @@ export function MeterReadingFloorCard({
         <MaterialIcons 
           name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
           size={24} 
-          color="#006875" 
+          color={theme.Colors.primary} 
         />
       </TouchableOpacity>
       
@@ -134,7 +138,7 @@ export function MeterReadingFloorCard({
                 disabled={currentPage === 1}
                 onPress={() => setPage(currentPage - 1)}
               >
-                <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : '#006875'} />
+                <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : theme.Colors.primary} />
                 <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
               </TouchableOpacity>
               
@@ -148,7 +152,7 @@ export function MeterReadingFloorCard({
                 onPress={() => setPage(currentPage + 1)}
               >
                 <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
-                <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : '#006875'} />
+                <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : theme.Colors.primary} />
               </TouchableOpacity>
             </View>
           )}
@@ -158,10 +162,10 @@ export function MeterReadingFloorCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   floorCard: {
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.75)',
     overflow: 'hidden',
@@ -202,14 +206,14 @@ const styles = StyleSheet.create({
   },
   tenantName: {
     fontSize: 12,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 2,
     fontFamily: 'Inter',
   },
   prevReading: {
     fontSize: 12,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 4,
     fontFamily: 'Inter',
@@ -239,7 +243,7 @@ const styles = StyleSheet.create({
   },
   costText: {
     fontSize: 11,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 4,
     fontFamily: 'Inter',
@@ -251,7 +255,7 @@ const styles = StyleSheet.create({
   input: {
     height: 40,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: 'rgba(0, 104, 117, 0.15)',
     paddingHorizontal: 12,
@@ -285,7 +289,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: 'rgba(0, 104, 117, 0.02)',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 104, 117, 0.04)',
+    borderTopColor: (isDark ? 'rgba(0, 229, 255, 0.08)' : 'rgba(0, 104, 117, 0.04)'),
   },
   pageButton: {
     flexDirection: 'row',
@@ -306,7 +310,7 @@ const styles = StyleSheet.create({
   pageButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   pageButtonTextDisabled: {
@@ -315,7 +319,7 @@ const styles = StyleSheet.create({
   pageInfoText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
 });

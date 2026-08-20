@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -45,6 +46,9 @@ declare global {
 }
 
 export default function BillingScreen({ token }: BillingScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -267,7 +271,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
   if (isLoading) {
     return (
       <LinearGradient colors={LUMINOUS_BACKGROUND} style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={Theme.Colors.primaryContainer} />
+        <ActivityIndicator size="large" color={theme.Colors.primaryContainer} />
         <Text style={styles.loaderText}>Syncing financial wallet...</Text>
       </LinearGradient>
     );
@@ -293,7 +297,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
         ) : (
           /* Mobile Glassy Header */
           <View style={[styles.headerContainer, !isDesktop && { paddingTop: insets.top, height: 56 + insets.top }]}>
-            <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+            <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
             <View style={styles.headerContent}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                 <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
@@ -323,7 +327,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             )}
           
           {/* Quick Wallet Summary Card */}
-          <BlurView intensity={60} tint="light" style={styles.walletStatusCard}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.walletStatusCard}>
             <LinearGradient
               colors={['rgba(0, 224, 255, 0.12)', 'rgba(0, 112, 234, 0.06)']}
               style={styles.walletStatusGradient}
@@ -347,7 +351,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
                     {remainingCredits.toLocaleString()} <Text style={styles.creditUnit}>AI Credits</Text>
                   </Text>
                 </View>
-                <Ionicons name="wallet-outline" size={32} color={Theme.Colors.primary} />
+                <Ionicons name="wallet-outline" size={32} color={theme.Colors.primary} />
               </View>
             </LinearGradient>
           </BlurView>
@@ -372,7 +376,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
           <View style={styles.cardsWrapper}>
             {plans.length === 0 ? (
               <View style={{ padding: 24, alignItems: 'center', width: '100%' }}>
-                <Text style={{ color: Theme.Colors.onSurfaceVariant, fontSize: 14 }}>No plans available. Please try again later.</Text>
+                <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: 14 }}>No plans available. Please try again later.</Text>
               </View>
             ) : plans.map((plan) => {
               const isCurrent = currentPlan.toUpperCase() === plan.planKey.toUpperCase();
@@ -382,7 +386,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
                 <BlurView
                   key={plan.id || plan.planKey}
                   intensity={60}
-                  tint="light"
+                  tint={isDark ? 'dark' : 'light'}
                   style={[
                     styles.planCard,
                     plan.planKey === 'PREMIUM' && styles.planCardPro,
@@ -397,7 +401,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.proHeaderRow}>
-                      <Text style={[styles.planTitle, plan.planKey === 'PREMIUM' && { color: Theme.Colors.primary }]}>
+                      <Text style={[styles.planTitle, plan.planKey === 'PREMIUM' && { color: theme.Colors.primary }]}>
                         {plan.name || plan.planKey}
                       </Text>
                       {plan.planKey === 'PREMIUM' && (
@@ -418,7 +422,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
                           <MaterialIcons
                             name={feat.included ? 'check' : 'close'}
                             size={16}
-                            color={feat.included ? Theme.Colors.primaryContainer : '#94a3b8'}
+                            color={feat.included ? theme.Colors.primaryContainer : '#94a3b8'}
                           />
                           <Text style={[styles.bulletText, !feat.included && styles.bulletTextDisabled]}>
                             {feat.displayLabel}
@@ -438,7 +442,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
                     onPress={() => handleSubscribe(plan.planKey, plan.priceMonthly)}
                   >
                     {subscribingPlanKey === plan.planKey ? (
-                      <ActivityIndicator size="small" color={plan.planKey === 'PREMIUM' ? '#004f58' : Theme.Colors.primary} />
+                      <ActivityIndicator size="small" color={plan.planKey === 'PREMIUM' ? '#004f58' : theme.Colors.primary} />
                     ) : (
                       <Text style={[styles.cardButtonText, plan.planKey === 'PREMIUM' && styles.cardButtonTextPro]} numberOfLines={1}>
                         {isCurrent ? 'Active Plan' : `Upgrade to ${plan.name || plan.planKey}`}
@@ -451,7 +455,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
           </View>
 
           {/* Interactive Calculator Slider Card */}
-          <BlurView intensity={60} tint="light" style={styles.calculatorCard}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.calculatorCard}>
             <Text style={styles.calculatorTitle}>INTERACTIVE PAY-AS-YOU-GO CALCULATOR</Text>
             <Text style={styles.calculatorSub}>Estimate custom SaaS billing limits tailored to your scale:</Text>
 
@@ -518,7 +522,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
           </BlurView>
 
           {/* Prepaid Top-Up Card */}
-          <BlurView intensity={60} tint="light" style={styles.topUpCard}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.topUpCard}>
             <Text style={styles.calculatorTitle}>METERED CREDIT WALLET TOP-UP</Text>
             <Text style={styles.calculatorSub}>Out-of-bundle credit purchases (never expire):</Text>
 
@@ -554,7 +558,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <LinearGradient
-                  colors={[Theme.Colors.primaryContainer, Theme.Colors.secondaryContainer]}
+                  colors={[theme.Colors.primaryContainer, theme.Colors.secondaryContainer]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.topUpSubmitGradient}
@@ -574,7 +578,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -587,7 +591,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loaderText: {
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 15,
     fontSize: 16,
   },
@@ -599,7 +603,7 @@ const styles = StyleSheet.create({
     height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
@@ -617,14 +621,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassFill,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 15,
     fontFamily: 'Inter',
     fontWeight: '800',
@@ -637,9 +641,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
+    borderColor: theme.Colors.glassStroke,
     marginVertical: 15,
-    backgroundColor: Theme.Colors.glassFill,
+    backgroundColor: theme.Colors.glassFill,
   },
   walletStatusGradient: {
     padding: 20,
@@ -650,14 +654,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   walletLabel: {
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
     marginBottom: 4,
   },
   walletValue: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 22,
     fontWeight: '800',
   },
@@ -670,13 +674,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 104, 119, 0.24)',
   },
   activeBadge: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontSize: 11,
     fontWeight: '800',
   },
   divider: {
     height: 1,
-    backgroundColor: Theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.outlineVariant,
     marginVertical: 15,
   },
   walletFooter: {
@@ -685,18 +689,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   creditValue: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 26,
     fontWeight: '800',
   },
   creditUnit: {
     fontSize: 14,
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontWeight: '500',
   },
   toggleContainer: {
     flexDirection: 'row',
-    backgroundColor: Theme.Colors.surfaceContainerLow,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderRadius: 16,
     padding: 4,
     marginVertical: 15,
@@ -713,12 +717,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 224, 255, 0.42)',
   },
   toggleText: {
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     fontSize: 14,
     fontWeight: '700',
   },
   toggleTextActive: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   desktopInner: {
     width: '100%',
@@ -731,13 +735,13 @@ const styles = StyleSheet.create({
   titleLineDesktop: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 38,
     letterSpacing: -0.5,
   },
   subtitleDesktop: {
     fontSize: 14,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
     fontWeight: '500',
     lineHeight: 20,
@@ -754,9 +758,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 25,
     borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
-    backgroundColor: Theme.Colors.glassFill,
+    backgroundColor: theme.Colors.glassFill,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
@@ -765,20 +769,20 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 224, 255, 0.55)',
   },
   planCardActive: {
-    borderColor: Theme.Colors.primaryContainer,
+    borderColor: theme.Colors.primaryContainer,
     backgroundColor: 'rgba(0, 224, 255, 0.08)',
   },
   currentPlanRibbon: {
     position: 'absolute',
     top: 15,
     right: -25,
-    backgroundColor: Theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primaryContainer,
     transform: [{ rotate: '45deg' }],
     paddingHorizontal: 25,
     paddingVertical: 5,
   },
   ribbonText: {
-    color: Theme.Colors.onPrimaryContainer,
+    color: theme.Colors.onPrimaryContainer,
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.5,
@@ -797,12 +801,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 224, 255, 0.5)',
   },
   popularText: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontSize: 9,
     fontWeight: '900',
   },
   planTitle: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 14,
     fontWeight: '900',
     letterSpacing: 1,
@@ -814,12 +818,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   priceDollar: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 34,
     fontWeight: '900',
   },
   priceMonth: {
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     fontSize: 14,
     fontWeight: '500',
     marginLeft: 5,
@@ -834,7 +838,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   bulletText: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -849,26 +853,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     borderRadius: 14,
-    backgroundColor: Theme.Colors.surfaceContainerLow,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: Theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineVariant,
     marginTop: 16,
   },
   cardButtonPro: {
-    backgroundColor: Theme.Colors.primaryContainer,
-    borderColor: Theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primaryContainer,
+    borderColor: theme.Colors.primaryContainer,
   },
   cardButtonDisabled: {
     opacity: 0.5,
   },
   cardButtonText: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
   },
   cardButtonTextPro: {
-    color: Theme.Colors.onPrimaryContainer,
+    color: theme.Colors.onPrimaryContainer,
     fontSize: 14,
     fontWeight: '800',
   },
@@ -876,20 +880,20 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 25,
     borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
     marginVertical: 15,
-    backgroundColor: Theme.Colors.glassFill,
+    backgroundColor: theme.Colors.glassFill,
   },
   calculatorTitle: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 13,
     fontWeight: '900',
     letterSpacing: 1,
     marginBottom: 6,
   },
   calculatorSub: {
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     fontSize: 12,
     lineHeight: 18,
     marginBottom: 20,
@@ -904,12 +908,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sliderLabel: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 13,
     fontWeight: '600',
   },
   sliderValue: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontSize: 14,
     fontWeight: '800',
   },
@@ -926,12 +930,12 @@ const styles = StyleSheet.create({
   trackBase: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: Theme.Colors.surfaceContainerHigh,
+    backgroundColor: theme.Colors.surfaceContainerHigh,
   },
   trackFill: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: Theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primaryContainer,
     position: 'absolute',
     left: 0,
   },
@@ -939,41 +943,41 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: Theme.Colors.surfaceContainerLowest,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     position: 'absolute',
-    shadowColor: Theme.Colors.primaryContainer,
+    shadowColor: theme.Colors.primaryContainer,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 5,
     elevation: 4,
   },
   estimateBox: {
-    backgroundColor: Theme.Colors.surfaceContainerLow,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineVariant,
   },
   estimateLabel: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1.5,
     marginBottom: 6,
   },
   estimateTotal: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 32,
     fontWeight: '900',
   },
   estimateCycle: {
     fontSize: 16,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
   },
   estimateDesc: {
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     fontSize: 11,
     marginTop: 6,
     textAlign: 'center',
@@ -982,34 +986,34 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 25,
     borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
     marginVertical: 15,
-    backgroundColor: Theme.Colors.glassFill,
+    backgroundColor: theme.Colors.glassFill,
   },
   topUpInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.Colors.surfaceContainerLowest,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 16,
     paddingHorizontal: 15,
     paddingVertical: 10,
     marginBottom: 15,
   },
   dollarPrefix: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 20,
     fontWeight: '800',
     marginRight: 5,
   },
   topUpInput: {
     flex: 1,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 20,
     fontWeight: '800',
   },
   creditsConversion: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1023,21 +1027,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: Theme.Colors.surfaceContainerLow,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: Theme.Colors.outlineVariant,
+    borderColor: theme.Colors.outlineVariant,
   },
   presetBtnActive: {
     backgroundColor: 'rgba(0, 224, 255, 0.16)',
     borderColor: 'rgba(0, 224, 255, 0.42)',
   },
   presetText: {
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     fontSize: 13,
     fontWeight: '700',
   },
   presetTextActive: {
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   topUpSubmit: {
     borderRadius: 16,
@@ -1051,7 +1055,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   topUpSubmitText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 13,
     fontWeight: '900',
     letterSpacing: 1,

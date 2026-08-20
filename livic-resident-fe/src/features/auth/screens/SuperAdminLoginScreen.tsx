@@ -15,7 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { login } from '@/src/features/auth/api/auth.api';
 
 interface SuperAdminLoginScreenProps {
@@ -24,6 +24,9 @@ interface SuperAdminLoginScreenProps {
 }
 
 export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: SuperAdminLoginScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const passwordInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,7 +83,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
             {/* Branding */}
             <View style={styles.brandingContainer}>
               <View style={styles.iconWrapper}>
-                <MaterialIcons name="home" size={28} color={Theme.Colors.primary} />
+                <MaterialIcons name="home" size={28} color={theme.Colors.primary} />
               </View>
               <Text style={styles.brandingText}>RESIDENT PORTAL</Text>
             </View>
@@ -91,7 +94,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
             {/* Error Message */}
             {errorMsg ? (
               <View style={styles.errorContainer}>
-                <MaterialIcons name="error-outline" size={16} color={Theme.Colors.error} />
+                <MaterialIcons name="error-outline" size={16} color={theme.Colors.error} />
                 <Text style={styles.errorText}>{errorMsg}</Text>
               </View>
             ) : null}
@@ -102,11 +105,11 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>EMAIL ADDRESS</Text>
                 <View style={styles.inputWrapper}>
-                  <MaterialIcons name="mail-outline" size={20} color={Theme.Colors.outlineVariant} style={styles.inputIcon} />
+                  <MaterialIcons name="mail-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
                     placeholder="resident@tenantliving.com"
-                    placeholderTextColor={Theme.Colors.outlineVariant}
+                    placeholderTextColor={theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -120,7 +123,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
                       style={styles.clearIcon}
                       onPress={() => setEmail('')}
                     >
-                      <MaterialIcons name="cancel" size={20} color={Theme.Colors.outlineVariant} />
+                      <MaterialIcons name="cancel" size={20} color={theme.Colors.outlineVariant} />
                     </TouchableOpacity>
                   ) : null}
                 </View>
@@ -130,12 +133,12 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>PASSWORD</Text>
                 <View style={styles.inputWrapper}>
-                  <MaterialIcons name="lock-outline" size={20} color={Theme.Colors.outlineVariant} style={styles.inputIcon} />
+                  <MaterialIcons name="lock-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     ref={passwordInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
                     placeholder="••••••••"
-                    placeholderTextColor={Theme.Colors.outlineVariant}
+                    placeholderTextColor={theme.Colors.outlineVariant}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -149,7 +152,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
                     <MaterialIcons 
                       name={showPassword ? "visibility" : "visibility-off"} 
                       size={20} 
-                      color={Theme.Colors.outlineVariant} 
+                      color={theme.Colors.outlineVariant} 
                     />
                   </TouchableOpacity>
                 </View>
@@ -164,7 +167,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color={Theme.Colors.onPrimaryContainer} />
+                  <ActivityIndicator color={theme.Colors.onPrimaryContainer} />
                 ) : (
                   <Text style={styles.submitButtonText}>SIGN IN</Text>
                 )}
@@ -186,7 +189,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -198,12 +201,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Theme.Spacing.containerPadding,
+    padding: theme.Spacing.containerPadding,
     position: 'relative',
   },
   orb: {
     position: 'absolute',
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     opacity: 0.3,
   },
   orb1: {
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
     left: '5%',
     width: 300,
     height: 300,
-    backgroundColor: Theme.Colors.primaryFixed,
+    backgroundColor: theme.Colors.primaryFixed,
     filter: 'blur(100px)' as any,
   },
   orb2: {
@@ -219,20 +222,20 @@ const styles = StyleSheet.create({
     right: '-10%',
     width: 350,
     height: 350,
-    backgroundColor: Theme.Colors.secondaryFixed,
+    backgroundColor: theme.Colors.secondaryFixed,
     filter: 'blur(120px)' as any,
   },
   cardContainer: {
     width: '100%',
     maxWidth: 400,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: Theme.Rounded.lg,
-    paddingHorizontal: Theme.Spacing.stackLg,
+    borderRadius: theme.Rounded.lg,
+    paddingHorizontal: theme.Spacing.stackLg,
     paddingTop: 48,
-    paddingBottom: Theme.Spacing.stackLg,
+    paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: Theme.Colors.primary,
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 30,
@@ -241,27 +244,27 @@ const styles = StyleSheet.create({
   },
   brandingContainer: {
     alignItems: 'center',
-    marginBottom: Theme.Spacing.stackMd,
+    marginBottom: theme.Spacing.stackMd,
   },
   iconWrapper: {
     width: 56,
     height: 56,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Theme.Spacing.stackSm,
+    marginBottom: theme.Spacing.stackSm,
   },
   brandingText: {
-    ...Theme.Typography.labelCaps,
-    color: Theme.Colors.outline,
+    ...theme.Typography.labelCaps,
+    color: theme.Colors.outline,
     marginTop: 8,
   },
   title: {
-    ...Theme.Typography.headlineMd,
-    color: Theme.Colors.onSurface,
+    ...theme.Typography.headlineMd,
+    color: theme.Colors.onSurface,
     marginBottom: 40,
     textAlign: 'center',
   },
@@ -272,8 +275,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   label: {
-    ...Theme.Typography.labelCaps,
-    color: Theme.Colors.onSurfaceVariant,
+    ...theme.Typography.labelCaps,
+    color: theme.Colors.onSurfaceVariant,
     marginLeft: 4,
     marginBottom: 8,
   },
@@ -283,18 +286,18 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     position: 'absolute',
-    left: Theme.Spacing.stackMd,
+    left: theme.Spacing.stackMd,
     zIndex: 1,
   },
   passwordToggleIcon: {
     position: 'absolute',
-    right: Theme.Spacing.stackMd,
+    right: theme.Spacing.stackMd,
     zIndex: 1,
     padding: 4,
   },
   clearIcon: {
     position: 'absolute',
-    right: Theme.Spacing.stackMd,
+    right: theme.Spacing.stackMd,
     zIndex: 1,
     padding: 4,
   },
@@ -303,22 +306,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 1)',
-    borderRadius: Theme.Rounded.default,
+    borderRadius: theme.Rounded.default,
     paddingLeft: 44,
-    paddingRight: Theme.Spacing.stackMd,
+    paddingRight: theme.Spacing.stackMd,
     paddingVertical: 14,
-    ...Theme.Typography.bodyMd,
-    color: Theme.Colors.onSurface,
+    ...theme.Typography.bodyMd,
+    color: theme.Colors.onSurface,
   },
   submitButton: {
     marginTop: 8,
     width: '100%',
-    backgroundColor: Theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primaryContainer,
     paddingVertical: 16,
-    paddingHorizontal: Theme.Spacing.stackMd,
-    borderRadius: Theme.Rounded.default,
+    paddingHorizontal: theme.Spacing.stackMd,
+    borderRadius: theme.Rounded.default,
     alignItems: 'center',
-    shadowColor: Theme.Colors.primaryContainer,
+    shadowColor: theme.Colors.primaryContainer,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -328,21 +331,21 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   submitButtonText: {
-    ...Theme.Typography.labelCaps,
-    color: Theme.Colors.onPrimaryContainer,
+    ...theme.Typography.labelCaps,
+    color: theme.Colors.onPrimaryContainer,
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.Colors.errorContainer,
+    backgroundColor: theme.Colors.errorContainer,
     padding: 12,
-    borderRadius: Theme.Rounded.default,
+    borderRadius: theme.Rounded.default,
     marginBottom: 20,
     width: '100%',
   },
   errorText: {
-    ...Theme.Typography.bodyMd,
-    color: Theme.Colors.error,
+    ...theme.Typography.bodyMd,
+    color: theme.Colors.error,
     marginLeft: 8,
     fontSize: 12,
   },
@@ -355,12 +358,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerText: {
-    ...Theme.Typography.bodyMd,
-    color: Theme.Colors.onSurfaceVariant,
+    ...theme.Typography.bodyMd,
+    color: theme.Colors.onSurfaceVariant,
   },
   footerLink: {
-    ...Theme.Typography.bodyMd,
-    color: Theme.Colors.surfaceTint,
+    ...theme.Typography.bodyMd,
+    color: theme.Colors.surfaceTint,
     fontWeight: 'bold',
   },
 });

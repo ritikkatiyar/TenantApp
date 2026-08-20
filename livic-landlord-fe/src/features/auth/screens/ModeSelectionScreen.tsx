@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,6 +44,9 @@ const MODES = [
 ] as const;
 
 export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSelectionScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -72,12 +76,12 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
         activeOpacity={mode.disabled ? 1 : 0.7}
         disabled={mode.disabled || isLoading}
       >
-        <BlurView intensity={isSelected ? 80 : 50} tint="light" style={styles.cardInner}>
+        <BlurView intensity={isSelected ? 80 : 50} tint={isDark ? 'dark' : 'light'} style={styles.cardInner}>
           <View style={styles.iconWrapper}>
             <MaterialIcons 
               name={mode.icon as any} 
               size={36} 
-              color={mode.disabled ? '#a0aab2' : isSelected ? Theme.Colors.primary : '#006875'} 
+              color={mode.disabled ? '#a0aab2' : isSelected ? theme.Colors.primary : theme.Colors.primary} 
             />
           </View>
           <Text style={[styles.cardLabel, mode.disabled && styles.labelDisabled]}>
@@ -92,7 +96,7 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
 
           {isSelected && isLoading && (
             <View style={styles.loaderOverlay}>
-              <ActivityIndicator color={Theme.Colors.primary} />
+              <ActivityIndicator color={theme.Colors.primary} />
             </View>
           )}
         </BlurView>
@@ -101,7 +105,7 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
   };
 
   return (
-    <LinearGradient colors={Theme.Colors.backgroundGradient as [string, string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
+    <LinearGradient colors={theme.Colors.backgroundGradient as [string, string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <Text style={styles.title}>What do you want to manage?</Text>
@@ -116,7 +120,7 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -130,15 +134,15 @@ const styles = StyleSheet.create({
     padding: Theme.Spacing.containerPadding,
   },
   title: {
-    fontSize: Theme.Typography.headlineMd.fontSize,
-    fontWeight: Theme.Typography.headlineMd.fontWeight as any,
-    color: Theme.Colors.onSurface,
+    fontSize: theme.Typography.headlineMd.fontSize,
+    fontWeight: theme.Typography.headlineMd.fontWeight as any,
+    color: theme.Colors.onSurface,
     textAlign: 'center',
     marginBottom: Theme.Spacing.stackSm,
   },
   subtitle: {
-    fontSize: Theme.Typography.bodyMd.fontSize,
-    color: Theme.Colors.outline,
+    fontSize: theme.Typography.bodyMd.fontSize,
+    color: theme.Colors.outline,
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -165,8 +169,8 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   cardSelected: {
-    borderColor: Theme.Colors.primaryContainer,
-    shadowColor: Theme.Colors.primaryContainer,
+    borderColor: theme.Colors.primaryContainer,
+    shadowColor: theme.Colors.primaryContainer,
     shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -176,31 +180,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: Theme.Spacing.gutter,
-    backgroundColor: Theme.Colors.glassFill,
+    backgroundColor: theme.Colors.glassFill,
   },
   iconWrapper: {
     width: 64,
     height: 64,
     borderRadius: Theme.Rounded.xl,
-    backgroundColor: Theme.Colors.glassFill,
+    backgroundColor: theme.Colors.glassFill,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   cardLabel: {
-    fontSize: Theme.Typography.bodyMd.fontSize,
+    fontSize: theme.Typography.bodyMd.fontSize,
     fontWeight: '600',
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     textAlign: 'center',
   },
   labelDisabled: {
-    color: Theme.Colors.outlineVariant,
+    color: theme.Colors.outlineVariant,
   },
   badge: {
     position: 'absolute',
     top: Theme.Spacing.stackSm,
     right: Theme.Spacing.stackSm,
-    backgroundColor: Theme.Colors.surfaceContainer,
+    backgroundColor: theme.Colors.surfaceContainer,
     paddingHorizontal: Theme.Spacing.stackSm,
     paddingVertical: 4,
     borderRadius: Theme.Rounded.md,
@@ -208,11 +212,11 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: Theme.Colors.outline,
+    color: theme.Colors.outline,
   },
   loaderOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: Theme.Colors.glassFill,
+    backgroundColor: theme.Colors.glassFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

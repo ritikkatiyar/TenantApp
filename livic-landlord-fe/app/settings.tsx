@@ -38,6 +38,7 @@ import { EmptyState } from '@/src/components/common/display/EmptyState';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 const ALL_PERMISSIONS = [
   { code: 'PROPERTY_VIEW', name: 'View Property', description: 'Can view property details and announcements', category: 'Property' },
@@ -61,6 +62,7 @@ export default function SystemPreferencesRoute() {
   const { accessToken, context } = useAuth();
   const { showToast } = useToast();
   const { isDesktop } = useResponsive();
+  const { mode, setMode } = useAppTheme();
 
   const [activeTab, setActiveTab] = useState<'roles' | 'invites' | 'preferences'>('roles');
   const [loading, setLoading] = useState(true);
@@ -528,6 +530,66 @@ export default function SystemPreferencesRoute() {
           </View>
 
           <View style={styles.prefGrid}>
+            <GlassCard style={styles.prefCard}>
+              <View style={styles.prefCardHeader}>
+                <MaterialIcons name="palette" size={22} color="#006875" />
+                <Text style={styles.prefCardTitle}>Appearance & Theme Mode</Text>
+              </View>
+              <View style={styles.prefItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.prefItemName}>App Theme Preference</Text>
+                  <Text style={styles.prefItemDesc}>Switch between Light, Dark, or System auto-detect</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                {(['system', 'light', 'dark'] as const).map((themeOption) => {
+                  const isSelected = mode === themeOption;
+                  return (
+                    <TouchableOpacity
+                      key={themeOption}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 10,
+                        paddingHorizontal: 12,
+                        borderRadius: 10,
+                        borderWidth: 1.5,
+                        borderColor: isSelected ? '#006875' : 'rgba(0, 104, 117, 0.2)',
+                        backgroundColor: isSelected ? 'rgba(0, 104, 117, 0.12)' : 'transparent',
+                        alignItems: 'center',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        gap: 6,
+                      }}
+                      onPress={() => setMode(themeOption)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialIcons
+                        name={
+                          themeOption === 'system'
+                            ? 'settings-brightness'
+                            : themeOption === 'dark'
+                            ? 'dark-mode'
+                            : 'light-mode'
+                        }
+                        size={18}
+                        color={isSelected ? '#006875' : '#6b7a7d'}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '700',
+                          textTransform: 'capitalize',
+                          color: isSelected ? '#006875' : '#6b7a7d',
+                        }}
+                      >
+                        {themeOption}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </GlassCard>
+
             <GlassCard style={styles.prefCard}>
               <View style={styles.prefCardHeader}>
                 <MaterialIcons name="receipt-long" size={22} color="#006875" />

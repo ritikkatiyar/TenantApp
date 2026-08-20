@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
 import {
   View,
@@ -51,6 +52,9 @@ export function AddItemModal({
   onClose,
   onSuccess,
 }: AddItemModalProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const [name, setName] = useState('');
   const [category, setCategory] = useState('APPLIANCES');
   const [scope, setScope] = useState<'PROPERTY_SHARED' | 'UNIT_PRIVATE'>('UNIT_PRIVATE');
@@ -332,7 +336,7 @@ export function AddItemModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -344,7 +348,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 580,
     maxHeight: '90%',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Surface.card,
     borderRadius: 24,
     overflow: 'hidden',
     shadowColor: '#000',

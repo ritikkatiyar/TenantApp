@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -23,6 +24,9 @@ const formatCurrency = (amount: number) =>
   `Rs. ${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
 export function ConditionPill({ condition }: { condition: InventoryCondition }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const cfg = CONDITION_CONFIG[condition];
   return (
     <View style={[styles.conditionPill, { backgroundColor: cfg.bg }]}>
@@ -33,6 +37,9 @@ export function ConditionPill({ condition }: { condition: InventoryCondition }) 
 }
 
 export function StatusPill({ status }: { status: string }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const cfg = STATUS_CONFIG[status] ?? { color: '#6b7280', bg: 'rgba(107,114,128,0.1)', dot: '#9ca3af' };
   return (
     <View style={[styles.statusPill, { backgroundColor: cfg.bg }]}>
@@ -45,6 +52,9 @@ export function StatusPill({ status }: { status: string }) {
 export function SummaryLine({ label, value, danger = false, bold = false }: {
   label: string; value: string; danger?: boolean; bold?: boolean;
 }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
     <View style={styles.summaryLine}>
       <Text style={[styles.summaryLabel, bold && { fontWeight: '800', color: '#0b1c30' }]}>{label}</Text>
@@ -54,9 +64,12 @@ export function SummaryLine({ label, value, danger = false, bold = false }: {
 }
 
 export function MobileInventoryCard({ item }: { item: InventoryItem }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const serviceDue = item.status === 'Service Due';
   return (
-    <BlurView intensity={48} tint="light" style={[styles.inventoryCard, serviceDue && styles.inventoryCardAlert]}>
+    <BlurView intensity={48} tint={isDark ? 'dark' : 'light'} style={[styles.inventoryCard, serviceDue && styles.inventoryCardAlert]}>
       {serviceDue && (
         <LinearGradient colors={['#dc2626', '#ef4444']} style={styles.alertStripe} />
       )}
@@ -89,6 +102,9 @@ export function MobileInventoryCard({ item }: { item: InventoryItem }) {
 }
 
 export function DesktopRegistryRow({ item }: { item: InventoryItem }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
     <View style={[styles.tableRow, item.status === 'Service Due' && styles.tableRowAlert]}>
       <View style={[styles.tableCell, styles.itemCell]}>
@@ -124,11 +140,14 @@ export function DesktopRegistryRow({ item }: { item: InventoryItem }) {
 }
 
 export function AssignmentCard({ item }: { item: AssignmentItem }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const selected = item.assignmentStatus !== 'Unselected';
   const isDraft  = item.assignmentStatus === 'Draft';
 
   return (
-    <BlurView intensity={45} tint="light" style={[styles.assignCard, !selected && styles.assignCardMuted]}>
+    <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={[styles.assignCard, !selected && styles.assignCardMuted]}>
       <View style={styles.assignHeader}>
         <View style={styles.assignIdentity}>
           <Image source={{ uri: item.image }} style={styles.assignThumb} />
@@ -176,6 +195,9 @@ export function AssignmentCard({ item }: { item: AssignmentItem }) {
 }
 
 export function VerificationCard({ item }: { item: VerificationItem }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const isDamaged = item.status === 'Damaged';
   const isReview  = item.status === 'Review';
   const statusCfg = isDamaged
@@ -185,7 +207,7 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
     : { color: '#059669', bg: 'rgba(5,150,105,0.1)',  label: 'Good' };
 
   return (
-    <BlurView intensity={45} tint="light" style={styles.verifyCard}>
+    <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={styles.verifyCard}>
       <View style={styles.verifyHeader}>
         <View style={[styles.verifyIconCircle, { backgroundColor: statusCfg.bg }]}>
           <MaterialIcons name={item.icon as any} size={20} color={statusCfg.color} />
@@ -249,7 +271,7 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   conditionPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
   conditionDot: { width: 6, height: 6, borderRadius: 3 },
   conditionText: { fontSize: 11, fontWeight: '800', fontFamily: 'Inter' },

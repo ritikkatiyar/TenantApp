@@ -26,6 +26,7 @@ import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 
 // Phase 4 modular hook & component imports
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useCommandCenter } from '@/src/features/properties/hooks/useCommandCenter';
 import { PropertyCard } from '@/src/features/properties/components/PropertyCard';
 import { BroadcastComposerModal } from '@/src/features/properties/components/BroadcastComposerModal';
@@ -40,6 +41,7 @@ interface CommandCenterScreenProps {
 
 export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogout }: CommandCenterScreenProps) {
   const router = useRouter();
+  const { theme, isDark } = useAppTheme();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const { user, accessToken } = useAuth();
@@ -60,6 +62,8 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const { showToast } = useToast();
   const { handleScroll: handleNavScroll } = useScrollNav();
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const {
     resetTriggers,
@@ -106,8 +110,8 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     extrapolate: 'clamp',
   });
 
-  const renderStatCard = (label: string, value: string, icon: keyof typeof MaterialIcons.glyphMap, color = Theme.Colors.primary) => (
-    <BlurView intensity={50} tint="light" style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
+  const renderStatCard = (label: string, value: string, icon: keyof typeof MaterialIcons.glyphMap, color = theme.Colors.primary) => (
+    <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
       <View style={[styles.statIcon, { backgroundColor: `${color}18` }]}>
         <MaterialIcons name={icon} size={20} color={color} />
       </View>
@@ -124,7 +128,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
       onPress={route ? () => router.push(route) : undefined}
       activeOpacity={route ? 0.75 : 1}
     >
-      <MaterialIcons name={icon} size={22} color={active ? Theme.Colors.primary : Theme.Colors.onSurfaceVariant} />
+      <MaterialIcons name={icon} size={22} color={active ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
       <Text style={[styles.sidebarLinkText, active && styles.sidebarLinkTextActive]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -173,13 +177,13 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
       {isDesktop ? (
         <View style={styles.statsGrid}>
           {renderStatCard('TOTAL ASSETS', String(properties.length), 'real-estate-agent')}
-          {renderStatCard('OCCUPANCY', properties.length > 0 ? 'LIVE' : 'NONE', 'trending-up', Theme.Colors.primaryContainer)}
-          {renderStatCard('REVENUE', 'READY', 'payments', Theme.Colors.secondary)}
-          {renderStatCard('ALERTS', '00', 'warning', Theme.Colors.error)}
+          {renderStatCard('OCCUPANCY', properties.length > 0 ? 'LIVE' : 'NONE', 'trending-up', theme.Colors.primaryContainer)}
+          {renderStatCard('REVENUE', 'READY', 'payments', theme.Colors.secondary)}
+          {renderStatCard('ALERTS', '00', 'warning', theme.Colors.error)}
         </View>
       ) : (
         <View style={styles.mobileSearchRow}>
-          <BlurView intensity={50} tint="light" style={styles.mobileSearchBox}>
+          <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={styles.mobileSearchBox}>
             <MaterialIcons name="search" size={18} color="#6b7a7d" />
             <TextInput
               style={styles.searchInput}
@@ -189,7 +193,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               onChangeText={setSearchQuery}
             />
           </BlurView>
-          <BlurView intensity={50} tint="light" style={styles.mobileFilterButtonWrapper}>
+          <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={styles.mobileFilterButtonWrapper}>
             <TouchableOpacity style={styles.mobileFilterButton}>
               <MaterialIcons name="filter-list" size={22} color="#006875" />
             </TouchableOpacity>
@@ -224,14 +228,14 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   );
 
   const DesktopShell = () => (
-    <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
+    <LinearGradient colors={theme.Colors.backgroundGradient as [string, string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
       <View style={styles.desktopShell}>
         <View style={styles.desktopMain}>
           <DesktopNavBar 
             activeTab="Properties" 
             rightContent={
               <>
-                <BlurView intensity={50} tint="light" style={styles.searchBox}>
+                <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={styles.searchBox}>
                   <MaterialIcons name="search" size={22} color="#6b7a7d" />
                   <TextInput
                     style={styles.searchInput}
@@ -241,7 +245,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                     onChangeText={setSearchQuery}
                   />
                 </BlurView>
-                <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} /></TouchableOpacity>
+                <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} /></TouchableOpacity>
               </>
             }
           />
@@ -251,7 +255,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
               <ListHeader />
               {isLoading ? (
                 <View style={styles.loaderContainer}>
-                  <ActivityIndicator size="large" color={Theme.Colors.primaryContainer} />
+                  <ActivityIndicator size="large" color={theme.Colors.primaryContainer} />
                 </View>
               ) : properties.length === 0 ? (
                 <ListEmptyComponent />
@@ -276,7 +280,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     <>
       {isDesktop ? DesktopShell() : (
         <LinearGradient
-        colors={LUMINOUS_BACKGROUND}
+        colors={theme.Colors.backgroundGradient as [string, string, string]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -351,7 +355,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
   },
@@ -369,8 +373,8 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 24,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.8)',
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    borderRightColor: theme.Surface.border,
+    backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   sidebarBrand: {
@@ -380,13 +384,13 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '800',
     lineHeight: 40,
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   sidebarBrandSub: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 2,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
   },
   sidebarNav: {
@@ -398,34 +402,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     paddingHorizontal: 18,
-    borderRadius: Theme.Rounded.lg,
+    borderRadius: theme.Rounded.lg,
   },
   sidebarLinkActive: {
     backgroundColor: 'rgba(0, 224, 255, 0.10)',
     borderRightWidth: 4,
-    borderRightColor: Theme.Colors.primaryContainer,
+    borderRightColor: theme.Colors.primaryContainer,
   },
   sidebarLinkText: {
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1.6,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   sidebarLinkTextActive: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   sidebarFooter: {
     marginTop: 'auto',
     borderTopWidth: 1,
-    borderTopColor: Theme.Colors.outlineVariant,
+    borderTopColor: theme.Colors.outlineVariant,
     paddingTop: 28,
     gap: 10,
   },
   upgradeButton: {
-    borderRadius: Theme.Rounded.lg,
+    borderRadius: theme.Rounded.lg,
     overflow: 'hidden',
     marginBottom: 14,
-    shadowColor: Theme.Colors.secondary,
+    shadowColor: theme.Colors.secondary,
     shadowOpacity: 0.24,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -449,8 +453,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.75)',
-    backgroundColor: 'rgba(255, 255, 255, 0.58)',
+    borderBottomColor: theme.Surface.border,
+    backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   topbarTabs: {
@@ -460,12 +464,12 @@ const styles = StyleSheet.create({
   },
   topbarTab: {
     fontSize: 18,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   topbarTabActive: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     borderBottomWidth: 2,
-    borderBottomColor: Theme.Colors.primaryContainer,
+    borderBottomColor: theme.Colors.primaryContainer,
     paddingBottom: 8,
   },
   topbarRight: {
@@ -478,8 +482,8 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: theme.Surface.border,
+    backgroundColor: theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -488,7 +492,7 @@ const styles = StyleSheet.create({
   },
   searchPlaceholder: {
     fontSize: 15,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   topIcon: {
     width: 42,
@@ -501,8 +505,8 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 3,
-    borderColor: Theme.Colors.primaryContainer,
-    backgroundColor: Theme.Colors.primary,
+    borderColor: theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -534,7 +538,7 @@ const styles = StyleSheet.create({
     marginTop: 70,
     paddingTop: 26,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.7)',
+    borderTopColor: theme.Surface.border,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 42,
@@ -542,17 +546,17 @@ const styles = StyleSheet.create({
   footerBrand: {
     fontSize: 26,
     fontWeight: '800',
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     marginRight: 22,
   },
   footerLink: {
     fontSize: 12,
     letterSpacing: 1.3,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   footerCopy: {
     marginLeft: 'auto',
-    color: Theme.Colors.outline,
+    color: theme.Colors.outline,
     fontSize: 13,
   },
   header: {
@@ -573,17 +577,17 @@ const styles = StyleSheet.create({
   mobileBrand: {
     fontSize: 20,
     fontWeight: '800',
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   mobileAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Theme.Colors.inverseSurface,
+    backgroundColor: theme.Colors.inverseSurface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: Theme.Colors.primaryContainer,
+    borderColor: theme.Colors.primaryContainer,
   },
   mobileAvatarText: {
     color: '#fff',
@@ -598,13 +602,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#00e5ff',
+    color: theme.Colors.primary,
     letterSpacing: 1,
   },
   compactHeaderTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   menuButton: {
     padding: 5,
@@ -674,7 +678,7 @@ const styles = StyleSheet.create({
   titleLine: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 52,
     letterSpacing: -1,
   },
@@ -682,13 +686,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
     lineHeight: 38,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   subtitle: {
     fontSize: 16,
     fontWeight: '400',
     lineHeight: 24,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 6,
     maxWidth: 620,
   },
@@ -702,8 +706,8 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: theme.Surface.border,
+    backgroundColor: theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -712,13 +716,13 @@ const styles = StyleSheet.create({
   },
   mobileSearchText: {
     fontSize: 15,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   searchInput: {
     flex: 1,
     height: '100%',
     fontSize: 15,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     padding: 0,
     borderWidth: 0,
     backgroundColor: 'transparent',
@@ -729,8 +733,8 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: theme.Surface.border,
+    backgroundColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   mobileFilterButton: {
@@ -747,10 +751,10 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minHeight: 86,
-    backgroundColor: Theme.Colors.glassFill,
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: Theme.Colors.glassStroke,
-    borderRadius: Theme.Rounded.xl,
+    borderColor: theme.Colors.glassStroke,
+    borderRadius: theme.Rounded.xl,
     padding: 14,
     overflow: 'hidden',
     justifyContent: 'space-between',
@@ -777,23 +781,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 12,
     letterSpacing: 1,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   statValue: {
     fontSize: 24,
     fontWeight: '700',
     lineHeight: 31,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     marginTop: 2,
   },
   propertyCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
-    borderRadius: Theme.Rounded.xl,
+    backgroundColor: theme.Colors.glassFill,
+    borderRadius: theme.Rounded.xl,
     padding: 0,
     marginBottom: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    shadowColor: Theme.Colors.primary,
+    borderColor: theme.Surface.border,
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 30,
@@ -803,7 +807,7 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 440,
     padding: 24,
-    borderRadius: Theme.Rounded.xl,
+    borderRadius: theme.Rounded.xl,
   },
   desktopCardRow: {
     flexDirection: 'row',
@@ -832,18 +836,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: Theme.Rounded.lg,
+    backgroundColor: theme.Colors.glassFill,
+    borderRadius: theme.Rounded.lg,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: theme.Surface.border,
     overflow: 'hidden',
   },
   desktopMetricValue: {
     fontSize: 16,
     fontWeight: '800',
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   propertyHeaderRow: {
     flexDirection: 'row',
@@ -872,9 +876,9 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: 0,
     paddingVertical: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.Colors.glassFill,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.5)',
+    borderBottomColor: theme.Surface.border,
   },
   buildingPreviewContainerDesktop: {
     height: 380,
@@ -882,10 +886,10 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: 0,
     paddingVertical: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: theme.Surface.border,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -895,7 +899,7 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
     padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 999,
     zIndex: 10,
   },
@@ -904,7 +908,7 @@ const styles = StyleSheet.create({
     bottom: 16,
     right: 16,
     padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 999,
     zIndex: 10,
     shadowColor: '#000',
@@ -923,7 +927,7 @@ const styles = StyleSheet.create({
     top: 16,
     left: 16,
     backgroundColor: 'rgba(0, 224, 255, 0.18)',
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     paddingHorizontal: 10,
     paddingVertical: 4,
     zIndex: 10,
@@ -933,13 +937,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 12,
     letterSpacing: 1,
-    color: Theme.Colors.onPrimaryContainer,
+    color: theme.Colors.onPrimaryContainer,
   },
   propertyName: {
     fontSize: 25,
     fontWeight: '700',
     lineHeight: 31,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     marginBottom: 8,
   },
   addressContainer: {
@@ -949,7 +953,7 @@ const styles = StyleSheet.create({
   },
   propertyAddress: {
     fontSize: 14,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     flexShrink: 1,
   },
   propertyMetrics: {
@@ -968,11 +972,11 @@ const styles = StyleSheet.create({
   },
   propertyMetric: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: Theme.Rounded.lg,
+    backgroundColor: theme.Colors.glassFill,
+    borderRadius: theme.Rounded.lg,
     padding: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: theme.Surface.border,
     overflow: 'hidden',
   },
   propertyMetricLabel: {
@@ -980,16 +984,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 12,
     letterSpacing: 1,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   propertyMetricValue: {
     fontSize: 16,
     fontWeight: '800',
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     marginTop: 4,
   },
   propertyMetricAccent: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   manageButtonWrapper: {
     borderRadius: 28,
@@ -998,7 +1002,7 @@ const styles = StyleSheet.create({
   manageButtonWrapperMobile: {
     marginHorizontal: 24,
     marginBottom: 24,
-    shadowColor: Theme.Colors.primaryContainer,
+    shadowColor: theme.Colors.primaryContainer,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -1028,11 +1032,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   addNewCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Surface.border,
     borderStyle: 'dashed',
-    borderRadius: Theme.Rounded.xl,
+    borderRadius: theme.Rounded.xl,
     padding: 30,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1042,8 +1046,8 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 180,
     marginTop: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.28)',
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: theme.Colors.glassFill,
+    borderColor: theme.Surface.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1054,7 +1058,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#edf5f7',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 15,
@@ -1062,12 +1066,12 @@ const styles = StyleSheet.create({
   addNewTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     marginBottom: 5,
   },
   addNewSubtitle: {
     fontSize: 14,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   loaderContainer: {
     flex: 1,
@@ -1075,13 +1079,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 24,
     padding: 30,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#006875',
+    borderColor: theme.Surface.border,
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 30,
@@ -1091,7 +1095,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#f0f4f5',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -1099,13 +1103,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     marginBottom: 10,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 15,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 30,
@@ -1143,7 +1147,7 @@ const styles = StyleSheet.create({
   learnMoreText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 0.5,
   },
 
@@ -1174,7 +1178,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.06)',
   },
   broadcastButtonText: {
-    color: '#006875',
+    color: theme.Colors.primary,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -1215,7 +1219,7 @@ const styles = StyleSheet.create({
   },
   composerSubtitle: {
     fontSize: 13,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 3,
   },
   composerScroll: {
@@ -1226,7 +1230,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1.4,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 8,
     marginTop: 16,
   },
@@ -1259,23 +1263,23 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   chipActive: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   chipText: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   chipTextActive: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
   },
   composerSendBtn: {
     margin: 20,
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#006875',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 14,

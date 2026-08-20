@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { 
   View, 
@@ -24,6 +25,9 @@ import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { getLedgerForProperty, LedgerEntryResponse } from '../api/ledger.api';
 
 export default function LedgerScreen({ token }: { token: string | null }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
@@ -162,7 +166,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
   const renderGlassyHeader = () => (
     <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+      <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContent}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
@@ -237,7 +241,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
           disabled={page === 0}
           style={[styles.pageButton, page === 0 && styles.pageButtonDisabled]}
         >
-          <MaterialIcons name="chevron-left" size={24} color={page === 0 ? '#b0bec5' : '#006875'} />
+          <MaterialIcons name="chevron-left" size={24} color={page === 0 ? '#b0bec5' : theme.Colors.primary} />
         </TouchableOpacity>
         <Text style={styles.pageText}>
           Page {page + 1} of {totalPages}
@@ -247,7 +251,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
           disabled={page >= totalPages - 1}
           style={[styles.pageButton, page >= totalPages - 1 && styles.pageButtonDisabled]}
         >
-          <MaterialIcons name="chevron-right" size={24} color={page >= totalPages - 1 ? '#b0bec5' : '#006875'} />
+          <MaterialIcons name="chevron-right" size={24} color={page >= totalPages - 1 ? '#b0bec5' : theme.Colors.primary} />
         </TouchableOpacity>
       </View>
     );
@@ -256,12 +260,12 @@ export default function LedgerScreen({ token }: { token: string | null }) {
   const renderLedgerList = () => {
     if (!properties || properties.length === 0) {
       return (
-        <BlurView intensity={60} tint="light" style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%' }}>
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%' }}>
           <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-            <MaterialIcons name="business" size={32} color="#006875" />
+            <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
           </View>
           <Text style={{ fontSize: 20, fontWeight: '800', color: '#163235', marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
-          <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+          <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
             Viewing financial ledgers requires an active property. Create your first property to start logging transactions.
           </Text>
           <TouchableOpacity 
@@ -278,12 +282,12 @@ export default function LedgerScreen({ token }: { token: string | null }) {
     }
 
     if (isLoading) {
-      return <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />;
+      return <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />;
     }
 
     if (ledger.length === 0) {
       return (
-        <BlurView intensity={40} tint="light" style={styles.emptyCard}>
+        <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
           <MaterialIcons name="account-balance" size={48} color="#6b7a7d" style={{ marginBottom: 12 }} />
           <Text style={styles.emptyTitle}>No transaction logs found.</Text>
           <Text style={styles.emptySubtitle}>Transactions appear here once rent cycles are generated or payments are made.</Text>
@@ -293,7 +297,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
     if (isDesktop) {
       return (
-        <BlurView intensity={60} tint="light" style={styles.desktopTableCard}>
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.desktopTableCard}>
           <View style={styles.tableHeader}>
             <Text style={[styles.th, { flex: 1.5 }]}>DATE</Text>
             <Text style={[styles.th, { flex: 1 }]}>UNIT</Text>
@@ -339,7 +343,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
                     flex: 1.3, 
                     textAlign: 'right', 
                     fontWeight: '700',
-                    color: '#151d1e'
+                    color: theme.Colors.onBackground
                   }
                 ]}>
                   ₹{(item.balance ?? 0).toFixed(2)}
@@ -357,7 +361,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
           const colors = getTransactionTypeColor(item.transactionType);
           const isPayment = item.amount < 0;
           return (
-            <BlurView key={item.id} intensity={40} tint="light" style={styles.mobileCard}>
+            <BlurView key={item.id} intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.mobileCard}>
               <View style={styles.cardHeaderRow}>
                 <Text style={styles.cardUnitText}>{item.unitName}</Text>
                 <View style={{ alignItems: 'flex-end' }}>
@@ -456,7 +460,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
   headerContainer: {
@@ -467,7 +471,7 @@ const styles = StyleSheet.create({
     height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
@@ -485,9 +489,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassFill,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#006677',
@@ -500,7 +504,7 @@ const styles = StyleSheet.create({
   
   mobileScroll: { paddingHorizontal: 24, paddingTop: 76, paddingBottom: 60 },
   titleContainer: { marginTop: 16, marginBottom: 24 },
-  titleLine: { fontSize: 44, fontWeight: '800', color: '#151d1e', lineHeight: 48 },
+  titleLine: { fontSize: 44, fontWeight: '800', color: theme.Colors.onBackground, lineHeight: 48 },
   
   searchBox: {
     flexDirection: 'row',
@@ -516,7 +520,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontSize: 14,
     outlineWidth: 0,
   },
@@ -543,11 +547,11 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#006875'
+    color: theme.Colors.primary
   },
   dateInput: {
     width: 90,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontSize: 12,
     padding: 0
   },
@@ -557,7 +561,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   filterButton: {
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     borderRadius: 10,
     paddingHorizontal: 16,
     height: 40,
@@ -565,7 +569,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   filterButtonText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 13,
     fontWeight: '700'
   },
@@ -606,7 +610,7 @@ const styles = StyleSheet.create({
   pageText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#151d1e'
+    color: theme.Colors.onBackground
   },
   
   emptyCard: {
@@ -617,8 +621,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.8)',
     marginTop: 20
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#151d1e', marginTop: 12, marginBottom: 6 },
-  emptySubtitle: { fontSize: 14, color: '#6b7a7d', textAlign: 'center', lineHeight: 20, maxWidth: 320 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: theme.Colors.onBackground, marginTop: 12, marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, maxWidth: 320 },
   
   listContainer: { gap: 16 },
   mobileCard: {
@@ -629,12 +633,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)'
   },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardUnitText: { fontSize: 16, fontWeight: '800', color: '#151d1e' },
+  cardUnitText: { fontSize: 16, fontWeight: '800', color: theme.Colors.onBackground },
   cardAmountText: { fontSize: 16, fontWeight: '800' },
   cardDetailRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   cardTenantText: { fontSize: 13, color: '#5b6b6d', fontWeight: '500' },
-  cardDateText: { fontSize: 12, color: '#6b7a7d' },
-  cardDescText: { fontSize: 13, color: '#6b7a7d', marginTop: 10, lineHeight: 18 },
+  cardDateText: { fontSize: 12, color: theme.Colors.onSurfaceVariant },
+  cardDescText: { fontSize: 13, color: theme.Colors.onSurfaceVariant, marginTop: 10, lineHeight: 18 },
   
   pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   pillText: { fontSize: 11, fontWeight: '800' },
@@ -643,8 +647,8 @@ const styles = StyleSheet.create({
   desktopInner: { width: '100%', maxWidth: 1080 },
   desktopHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 },
   largeTitleContainer: { flex: 1, marginRight: 24 },
-  titleLineDesktop: { fontSize: 32, fontWeight: '800', color: '#151d1e', lineHeight: 38, letterSpacing: -0.5 },
-  subtitle: { fontSize: 14, color: '#6b7a7d', fontWeight: '500', marginTop: 4, lineHeight: 20 },
+  titleLineDesktop: { fontSize: 32, fontWeight: '800', color: theme.Colors.onBackground, lineHeight: 38, letterSpacing: -0.5 },
+  subtitle: { fontSize: 14, color: theme.Colors.onSurfaceVariant, fontWeight: '500', marginTop: 4, lineHeight: 20 },
   
   desktopTableCard: {
     borderRadius: 20,
@@ -660,7 +664,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,104,117,0.1)'
   },
-  th: { fontSize: 12, fontWeight: '800', color: '#006875', letterSpacing: 0.5 },
+  th: { fontSize: 12, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.5 },
   tableRow: {
     flexDirection: 'row',
     paddingVertical: 16,
@@ -669,5 +673,5 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)'
   },
-  td: { fontSize: 14, color: '#151d1e' }
+  td: { fontSize: 14, color: theme.Colors.onBackground }
 });

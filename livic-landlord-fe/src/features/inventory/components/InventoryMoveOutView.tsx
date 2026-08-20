@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -25,11 +26,14 @@ export function InventoryMoveOutView({
   totalDeductions,
   netRefund,
 }: InventoryMoveOutViewProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const hasItems = items.length > 0;
 
   return (
     <View style={styles.sectionStack}>
-      <BlurView intensity={35} tint="light" style={styles.moveBanner}>
+      <BlurView intensity={35} tint={isDark ? 'dark' : 'light'} style={styles.moveBanner}>
         <LinearGradient
           colors={['rgba(220,38,38,0.8)', 'rgba(217,119,6,0.8)']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -63,7 +67,7 @@ export function InventoryMoveOutView({
           )}
         </View>
 
-        <BlurView intensity={65} tint="light" style={styles.rail}>
+        <BlurView intensity={65} tint={isDark ? 'dark' : 'light'} style={styles.rail}>
           <View style={styles.railHeader}>
             <LinearGradient colors={['#dc2626', '#ef4444']} style={styles.railIconCircle}>
               <MaterialIcons name="receipt-long" size={18} color="#fff" />
@@ -99,7 +103,7 @@ export function InventoryMoveOutView({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sectionStack: { gap: 16 },
   moveBanner: { borderRadius: 22, overflow: 'hidden', minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: 16 },
   moveBannerContent: { flex: 1 },

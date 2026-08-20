@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -21,11 +22,14 @@ export function AnnouncementHistoryList({
   announcements,
   loadingAnnouncements,
 }: AnnouncementHistoryListProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'CRITICAL': return '#ba1a1a';
       case 'WARNING': return '#e28743';
-      default: return '#006875';
+      default: return theme.Colors.primary;
     }
   };
 
@@ -55,7 +59,7 @@ export function AnnouncementHistoryList({
   };
 
   return (
-    <BlurView intensity={60} tint="light" style={styles.card}>
+    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.card}>
       <Text style={styles.sectionHeader}>BROADCAST HISTORY</Text>
 
       {/* History Property Select Dropdown */}
@@ -70,7 +74,7 @@ export function AnnouncementHistoryList({
 
       <View style={styles.listContainer}>
         {loadingAnnouncements ? (
-          <ActivityIndicator size="small" color="#006875" style={{ marginVertical: 32 }} />
+          <ActivityIndicator size="small" color={theme.Colors.primary} style={{ marginVertical: 32 }} />
         ) : !Array.isArray(announcements) || announcements.length === 0 ? (
           <View style={styles.emptyState}>
             <MaterialIcons name="notifications-none" size={32} color="#6b7a7d" style={{ marginBottom: 8 }} />
@@ -120,11 +124,11 @@ export function AnnouncementHistoryList({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   card: {
     padding: 24,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.75)',
     overflow: 'hidden',
@@ -132,7 +136,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: 20,
     fontFamily: 'Inter',
@@ -140,7 +144,7 @@ const styles = StyleSheet.create({
   composerLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
     marginBottom: 8,
     marginTop: 18,
@@ -157,7 +161,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     fontFamily: 'Inter',
   },
@@ -169,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
+    borderColor: theme.Colors.glassStroke,
   },
   historyHeader: {
     flexDirection: 'row',
@@ -194,13 +198,13 @@ const styles = StyleSheet.create({
   historyTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
   historyMeta: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
     fontFamily: 'Inter',
   },
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
   historySender: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   historyTime: {

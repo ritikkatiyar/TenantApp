@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef } from 'react';
 import { 
   View, Text, StyleSheet, Animated, TouchableOpacity,
@@ -6,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -20,6 +22,9 @@ import { MeterReadingSummary } from '@/src/features/finance/components/MeterRead
 import { MeterReadingFloorCard } from '@/src/features/finance/components/MeterReadingFloorCard';
 
 export default function MeterReadingScreen({ token }: { token: string | null }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const router = useRouter();
   const { id: paramPropertyId, propertyId: paramPropertyIdAlt } = useLocalSearchParams<{ id?: string; propertyId?: string }>();
   const { isDesktop } = useResponsive();
@@ -161,11 +166,11 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                 <Text style={styles.filterLabelCaps}>BILLING PERIOD</Text>
                 <View style={styles.monthSelector}>
                   <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.monthBtn}>
-                    <MaterialIcons name="chevron-left" size={24} color="#006875" />
+                    <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
                   </TouchableOpacity>
                   <Text style={styles.monthText}>{getMonthName(month)} {year}</Text>
                   <TouchableOpacity onPress={() => changeMonth(1)} style={styles.monthBtn}>
-                    <MaterialIcons name="chevron-right" size={24} color="#006875" />
+                    <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -173,9 +178,9 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
             {/* Main Content Grid */}
             {isLoading ? (
-              <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />
+              <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
             ) : worksheet.length === 0 ? (
-              <BlurView intensity={60} tint="light" style={styles.emptyStateCard}>
+              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
                 <MaterialIcons name="receipt-long" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
                 <Text style={styles.emptyText}>No metered units found for this configuration.</Text>
               </BlurView>
@@ -193,7 +198,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                           setExpandedFloors(allExpanded);
                         }}
                       >
-                        <MaterialIcons name="unfold-more" size={16} color="#006875" />
+                        <MaterialIcons name="unfold-more" size={16} color={theme.Colors.primary} />
                         <Text style={styles.controlLinkText}>EXPAND ALL</Text>
                       </TouchableOpacity>
                       <View style={styles.controlSeparator} />
@@ -203,7 +208,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                           setExpandedFloors({});
                         }}
                       >
-                        <MaterialIcons name="unfold-less" size={16} color="#006875" />
+                        <MaterialIcons name="unfold-less" size={16} color={theme.Colors.primary} />
                         <Text style={styles.controlLinkText}>COLLAPSE ALL</Text>
                       </TouchableOpacity>
                     </View>
@@ -238,7 +243,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                         disabled={floorPage === 1}
                         onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
                       >
-                        <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : '#006875'} />
+                        <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : theme.Colors.primary} />
                         <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
                       </TouchableOpacity>
                       
@@ -252,7 +257,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                         onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
                       >
                         <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : '#006875'} />
+                        <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : theme.Colors.primary} />
                       </TouchableOpacity>
                     </View>
                   )}
@@ -288,22 +293,10 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
-        {/* Glassy Overlay Header — clean, title only */}
-        <View style={styles.headerContainer}>
-          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
-            </TouchableOpacity>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.headerTitle}>Meter Readings</Text>
-            </View>
-            <View style={{ width: 36 }} />
-          </View>
-        </View>
+        <FloatingBackButton onPress={() => router.back()} />
 
         {/* Filters */}
-        <View style={[styles.filterSection, { paddingTop: 76 }]}>
+        <View style={[styles.filterSection, { paddingTop: 64 }]}>
           <GlassDropdown 
             options={configs.map(c => ({ label: c.chargeName, value: c.id }))}
             value={selectedConfigId}
@@ -314,11 +307,11 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
           
           <View style={styles.monthSelector}>
             <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.monthBtn}>
-              <MaterialIcons name="chevron-left" size={24} color="#006875" />
+              <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
             </TouchableOpacity>
             <Text style={styles.monthText}>{getMonthName(month)} {year}</Text>
             <TouchableOpacity onPress={() => changeMonth(1)} style={styles.monthBtn}>
-              <MaterialIcons name="chevron-right" size={24} color="#006875" />
+              <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -330,12 +323,12 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
           keyboardShouldPersistTaps="handled"
         >
           {(!properties || properties.length === 0) ? (
-            <BlurView intensity={60} tint="light" style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%' }}>
+            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginTop: 40, width: '100%' }}>
               <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-                <MaterialIcons name="business" size={32} color="#006875" />
+                <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
               </View>
               <Text style={{ fontSize: 20, fontWeight: '800', color: '#163235', marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
-              <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+              <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
                 Logging meter readings requires an active property. Create your first property to start inputting meter logs.
               </Text>
               <TouchableOpacity 
@@ -349,7 +342,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               </TouchableOpacity>
             </BlurView>
           ) : isLoading ? (
-            <ActivityIndicator size="large" color="#006875" style={{ marginTop: 50 }} />
+            <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 50 }} />
           ) : worksheet.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>No metered units found for this configuration.</Text>
@@ -365,7 +358,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                     setExpandedFloors(allExpanded);
                   }}
                 >
-                  <MaterialIcons name="unfold-more" size={16} color="#006875" />
+                  <MaterialIcons name="unfold-more" size={16} color={theme.Colors.primary} />
                   <Text style={styles.controlLinkText}>EXPAND ALL</Text>
                 </TouchableOpacity>
                 <View style={styles.controlSeparator} />
@@ -375,7 +368,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                     setExpandedFloors({});
                   }}
                 >
-                  <MaterialIcons name="unfold-less" size={16} color="#006875" />
+                  <MaterialIcons name="unfold-less" size={16} color={theme.Colors.primary} />
                   <Text style={styles.controlLinkText}>COLLAPSE ALL</Text>
                 </TouchableOpacity>
               </View>
@@ -409,7 +402,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                     disabled={floorPage === 1}
                     onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
                   >
-                    <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : '#006875'} />
+                    <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : theme.Colors.primary} />
                     <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
                   </TouchableOpacity>
                   
@@ -423,7 +416,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                     onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
                   >
                     <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
-                    <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : '#006875'} />
+                    <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : theme.Colors.primary} />
                   </TouchableOpacity>
                 </View>
               )}
@@ -434,7 +427,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
         {/* Floating Save Button */}
         <View style={styles.floatingSaveBar}>
-          <BlurView intensity={55} tint="light" style={StyleSheet.absoluteFillObject} />
+          <BlurView intensity={55} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
           <TouchableOpacity
             style={[styles.floatingSaveBtn, (isSaving || worksheet.length === 0) && { opacity: 0.5 }]}
             onPress={handleSave}
@@ -472,7 +465,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
   headerContainer: {
@@ -483,7 +476,7 @@ const styles = StyleSheet.create({
     height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
@@ -501,9 +494,9 @@ const styles = StyleSheet.create({
     width: 36, 
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassFill,
     justifyContent: 'center', 
     alignItems: 'center',
     shadowColor: '#006677',
@@ -513,7 +506,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   headerTitle: { fontSize: 18, fontFamily: 'Inter', fontWeight: '800', color: '#0b1c30' },
-  headerSubtitle: { fontSize: 12, color: '#6b7a7d', fontWeight: '500', marginTop: 2 },
+  headerSubtitle: { fontSize: 12, color: theme.Colors.onSurfaceVariant, fontWeight: '500', marginTop: 2 },
   
   headerSaveBtnWrapper: {
     borderRadius: 19,
@@ -534,7 +527,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   headerSaveText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontWeight: '800',
     fontSize: 12,
     letterSpacing: 0.5,
@@ -569,7 +562,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   floatingSaveText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 1,
@@ -587,11 +580,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   monthBtn: { padding: 8 },
-  monthText: { flex: 1, textAlign: 'center', fontSize: 15, fontWeight: '700', color: '#006875' },
+  monthText: { flex: 1, textAlign: 'center', fontSize: 15, fontWeight: '700', color: theme.Colors.primary },
   
   listContent: { paddingHorizontal: 24, paddingBottom: 40 },
   emptyState: { padding: 40, alignItems: 'center' },
-  emptyText: { color: '#6b7a7d', fontSize: 16 },
+  emptyText: { color: theme.Colors.onSurfaceVariant, fontSize: 16 },
   
   floorCard: {
     marginBottom: 24,
@@ -601,14 +594,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.8)',
     paddingHorizontal: 24,
     overflow: 'hidden',
-    shadowColor: '#006875',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 30,
     elevation: 3,
   },
   floorHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 20 },
-  floorHeaderText: { fontSize: 18, fontWeight: '800', color: '#006875' },
+  floorHeaderText: { fontSize: 18, fontWeight: '800', color: theme.Colors.primary },
   
   rowCard: {
     flexDirection: 'row', alignItems: 'center',
@@ -618,12 +611,12 @@ const styles = StyleSheet.create({
   rowError: { backgroundColor: 'rgba(254, 226, 226, 0.4)', borderRadius: 12, paddingHorizontal: 8 },
   
   rowLeft: { flex: 2 },
-  unitName: { fontSize: 16, fontWeight: '700', color: '#151d1e' },
+  unitName: { fontSize: 16, fontWeight: '700', color: theme.Colors.onBackground },
   tenantName: { fontSize: 13, color: '#5b6b6d', marginVertical: 2 },
   prevReading: { fontSize: 11, color: '#849495', fontWeight: '600' },
   
   rowMiddle: { flex: 1.5, alignItems: 'flex-end', paddingRight: 12 },
-  consumedText: { fontSize: 14, fontWeight: '700', color: '#006875' },
+  consumedText: { fontSize: 14, fontWeight: '700', color: theme.Colors.primary },
   costText: { fontSize: 11, color: '#2e7d32', fontWeight: '600', marginTop: 2 },
   
   rowRight: { flex: 2, alignItems: 'flex-end' },
@@ -637,7 +630,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 16, 
     fontWeight: '600', 
-    color: '#151d1e', 
+    color: theme.Colors.onBackground, 
     textAlign: 'right',
   },
   inputError: { borderColor: '#ef4444', color: '#ef4444' },
@@ -669,10 +662,10 @@ const styles = StyleSheet.create({
   topbarTab: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   topbarTabActive: {
-    color: '#006875',
+    color: theme.Colors.primary,
     fontWeight: '800',
   },
   topbarRight: {
@@ -694,13 +687,13 @@ const styles = StyleSheet.create({
   backButtonTextDesktop: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   avatar: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -731,11 +724,11 @@ const styles = StyleSheet.create({
   titleLineDesktop: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   desktopSubtitle: {
     fontSize: 14,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
     marginTop: 4,
   },
@@ -757,7 +750,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   desktopSaveButtonText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -796,12 +789,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   summaryCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#006875',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 30,
@@ -812,7 +805,7 @@ const styles = StyleSheet.create({
   summaryCardTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: 20,
   },
@@ -839,7 +832,7 @@ const styles = StyleSheet.create({
   summaryMetricValue: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   previewDivider: {
     height: 1,
@@ -859,7 +852,7 @@ const styles = StyleSheet.create({
   },
   summaryValue: {
     fontSize: 14,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontWeight: '700',
   },
   warningAlertBox: {
@@ -906,7 +899,7 @@ const styles = StyleSheet.create({
   pageButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   pageButtonTextDisabled: {
     color: '#a0aab2',
@@ -914,7 +907,7 @@ const styles = StyleSheet.create({
   pageInfoText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   listControlsRow: {
     flexDirection: 'row',
@@ -943,7 +936,7 @@ const styles = StyleSheet.create({
   controlLinkText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 0.5,
   },
   controlSeparator: {

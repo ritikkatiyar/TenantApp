@@ -365,7 +365,9 @@ const styles = StyleSheet.create({
   },
   toastBlurWeb: {
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(20px)',
+    ...Platform.select({
+      web: { backdropFilter: 'blur(20px)' } as any,
+    }),
   },
   dismissBtn: {
     width: 28,

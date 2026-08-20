@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,6 +11,9 @@ import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { Theme } from '@/src/theme/Theme';
 
 export default function ReportsComingSoonScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { isDesktop } = useResponsive();
   const router = useRouter();
 
@@ -23,7 +27,7 @@ export default function ReportsComingSoonScreen() {
       <View style={styles.centerContainer}>
         <GlassCard style={styles.glassCard}>
           <View style={styles.iconCircle}>
-            <MaterialIcons name="assessment" size={48} color={Theme.Colors.primary} />
+            <MaterialIcons name="assessment" size={48} color={theme.Colors.primary} />
           </View>
           <Text style={styles.title}>Reports Coming Soon</Text>
           <Text style={styles.subtitle}>
@@ -41,7 +45,7 @@ export default function ReportsComingSoonScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     paddingHorizontal: 0,
   },
@@ -67,14 +71,14 @@ const styles = StyleSheet.create({
     marginBottom: Theme.Spacing.stackLg,
   },
   title: {
-    ...Theme.Typography.headlineXl,
-    color: Theme.Colors.onBackground,
+    ...theme.Typography.headlineXl,
+    color: theme.Colors.onBackground,
     textAlign: 'center',
     marginBottom: Theme.Spacing.stackSm,
   },
   subtitle: {
-    ...Theme.Typography.bodyMd,
-    color: Theme.Colors.outline,
+    ...theme.Typography.bodyMd,
+    color: theme.Colors.outline,
     lineHeight: 22,
     textAlign: 'center',
     marginBottom: Theme.Spacing.stackLg,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, Modal, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from '../display/GlassCard';
 import { ActionButton } from '../inputs/ActionButton';
 
@@ -28,6 +28,9 @@ export function ConfirmDialog({
   isDestructive = false,
   loading = false,
 }: ConfirmDialogProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
     <Modal
       transparent
@@ -66,12 +69,12 @@ export function ConfirmDialog({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Theme.Spacing.containerPadding,
+    padding: theme.Spacing.containerPadding,
   },
   blurBackdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -85,25 +88,25 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   card: {
-    padding: Theme.Spacing.containerPadding,
-    borderRadius: Theme.Rounded.lg,
+    padding: theme.Spacing.containerPadding,
+    borderRadius: theme.Rounded.lg,
   },
   title: {
-    ...Theme.Typography.headlineLg,
-    color: Theme.Colors.onBackground,
-    marginBottom: Theme.Spacing.stackSm,
+    ...theme.Typography.headlineLg,
+    color: theme.Colors.onBackground,
+    marginBottom: theme.Spacing.stackSm,
   },
   message: {
-    ...Theme.Typography.bodyMd,
-    color: Theme.Colors.outline,
-    marginBottom: Theme.Spacing.stackLg,
+    ...theme.Typography.bodyMd,
+    color: theme.Colors.outline,
+    marginBottom: theme.Spacing.stackLg,
     lineHeight: 22,
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: Theme.Spacing.stackSm,
+    gap: theme.Spacing.stackSm,
   },
   button: {
     flex: 1,

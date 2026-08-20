@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   ScrollView,
@@ -57,6 +58,9 @@ const STAT_COLORS = ['#0891b2', '#dc2626', '#4f46e5', '#059669'];
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 
 export default function OwnerLeasesScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
@@ -378,7 +382,7 @@ export default function OwnerLeasesScreen() {
 
   return (
     <LinearGradient
-      colors={Theme.Colors.backgroundGradient as [string, string, string]}
+      colors={theme.Colors.backgroundGradient as [string, string, string]}
       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       style={styles.root}
     >
@@ -434,7 +438,7 @@ export default function OwnerLeasesScreen() {
           {/* 4 Glassmorphic Stat Cards */}
           <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>
             {stats.map((stat, i) => (
-              <BlurView key={stat.label} intensity={55} tint="light" style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
+              <BlurView key={stat.label} intensity={55} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
                 <LinearGradient colors={STAT_GRAD[i]} style={styles.statIconCircle}>
                   <MaterialIcons name={stat.icon as any} size={18} color="#fff" />
                 </LinearGradient>
@@ -491,7 +495,7 @@ export default function OwnerLeasesScreen() {
           </View>
 
           {/* Main List Panel */}
-          <BlurView intensity={65} tint="light" style={styles.panel}>
+          <BlurView intensity={65} tint={isDark ? 'dark' : 'light'} style={styles.panel}>
             {isLoadingData ? (
               <View style={styles.loadingBox}>
                 <ActivityIndicator size="large" color="#0891b2" />
@@ -511,7 +515,7 @@ export default function OwnerLeasesScreen() {
                   {filteredLeases.map((l) => {
                     const hasNotice = Boolean(l.moveOutDate);
                     return (
-                      <BlurView key={l.id} intensity={45} tint="light" style={[styles.leaseCard, hasNotice && styles.leaseCardAlert]}>
+                      <BlurView key={l.id} intensity={45} tint={isDark ? 'dark' : 'light'} style={[styles.leaseCard, hasNotice && styles.leaseCardAlert]}>
                         {hasNotice && <LinearGradient colors={['#dc2626', '#ef4444']} style={styles.alertStripe} />}
                         <View style={styles.leaseCardInner}>
                           <View style={styles.tenantAvatarCircle}>
@@ -635,7 +639,7 @@ export default function OwnerLeasesScreen() {
               ) : (
                 <View style={styles.listContainer}>
                   {filteredBookings.map((b) => (
-                    <BlurView key={b.id} intensity={45} tint="light" style={styles.leaseCard}>
+                    <BlurView key={b.id} intensity={45} tint={isDark ? 'dark' : 'light'} style={styles.leaseCard}>
                       <View style={styles.leaseCardInner}>
                         <View style={[styles.tenantAvatarCircle, { backgroundColor: 'rgba(79,70,229,0.1)' }]}>
                           <Text style={[styles.tenantAvatarText, { color: '#4f46e5' }]}>
@@ -737,7 +741,7 @@ export default function OwnerLeasesScreen() {
               ) : (
                 <View style={styles.listContainer}>
                   {vacatingUnits.map((v, i) => (
-                    <BlurView key={v.id || i} intensity={45} tint="light" style={styles.leaseCard}>
+                    <BlurView key={v.id || i} intensity={45} tint={isDark ? 'dark' : 'light'} style={styles.leaseCard}>
                       <View style={styles.leaseCardInner}>
                         <View style={[styles.tenantAvatarCircle, { backgroundColor: 'rgba(220,38,38,0.1)' }]}>
                           <MaterialIcons name="door-sliding" size={22} color="#dc2626" />
@@ -1075,7 +1079,7 @@ export default function OwnerLeasesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 120, gap: 16 },
@@ -1214,7 +1218,7 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 16 },
   modalCard: {
     width: '100%', maxWidth: 540, maxHeight: '90%',
-    backgroundColor: '#ffffff', borderRadius: 24, overflow: 'hidden',
+    backgroundColor: theme.Surface.card, borderRadius: 24, overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10,
   },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },

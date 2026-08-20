@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useState, useEffect } from 'react';
 import { 
   View, 
@@ -30,6 +31,9 @@ import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 
 export default function ExpenseConfigurationScreen({ token }: { token: string | null }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
@@ -208,7 +212,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
           />
         ) : (
           <View style={[styles.headerContainer, !isDesktop && { paddingTop: insets.top, height: 56 + insets.top }]}>
-            <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+            <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
             <View style={styles.headerContent}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                 <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
@@ -274,11 +278,11 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             </View>
 
             {isLoading ? (
-              <ActivityIndicator size="large" color="#006875" style={{ marginTop: 40 }} />
+              <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 40 }} />
             ) : (!properties || properties.length === 0) ? (
-              <BlurView intensity={60} tint="light" style={styles.emptyCard}>
+              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
                 <View style={styles.emptyIconCircle}>
-                  <MaterialIcons name="business" size={36} color="#006875" />
+                  <MaterialIcons name="business" size={36} color={theme.Colors.primary} />
                 </View>
                 <Text style={styles.emptyTitle}>No Property Created Yet</Text>
                 <Text style={styles.emptySubtitle}>
@@ -302,7 +306,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                 </TouchableOpacity>
               </BlurView>
             ) : (charges || []).length === 0 ? (
-              <BlurView intensity={60} tint="light" style={styles.emptyCard}>
+              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
                 <View style={styles.emptyIconCircle}>
                   <MaterialIcons name="receipt-long" size={36} color="#6b7a7d" />
                 </View>
@@ -328,7 +332,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.learnMoreContainer}>
-                  <MaterialIcons name="help-outline" size={16} color="#006875" />
+                  <MaterialIcons name="help-outline" size={16} color={theme.Colors.primary} />
                   <Text style={styles.learnMoreText}>LEARN ABOUT CHARGE TRACKING</Text>
                 </TouchableOpacity>
               </BlurView>
@@ -344,7 +348,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                         !charge.isActive && { opacity: 0.7 }
                       ]}
                     >
-                      <BlurView intensity={60} tint="light" style={styles.expenseCard}>
+                      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.expenseCard}>
                         {/* Upper card area is pressable to edit the config */}
                         <TouchableOpacity 
                           activeOpacity={0.7}
@@ -415,8 +419,8 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                                     onPress={() => handleReactivate(charge.id)} 
                                     style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                                   >
-                                    <MaterialIcons name="restore" size={14} color="#006875" />
-                                    <Text style={{ color: '#006875', fontSize: 12, fontWeight: '600' }}>Reactivate</Text>
+                                    <MaterialIcons name="restore" size={14} color={theme.Colors.primary} />
+                                    <Text style={{ color: theme.Colors.primary, fontSize: 12, fontWeight: '600' }}>Reactivate</Text>
                                   </TouchableOpacity>
                                   <TouchableOpacity 
                                     onPress={() => handleDeletePermanently(charge.id)} 
@@ -465,7 +469,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             <Text style={{ fontSize: 18, fontWeight: '800', color: '#163235', marginBottom: 12 }}>
               {confirmModal.title}
             </Text>
-            <Text style={{ fontSize: 14, color: '#6b7a7d', lineHeight: 20, marginBottom: 24, fontWeight: '500' }}>
+            <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, lineHeight: 20, marginBottom: 24, fontWeight: '500' }}>
               {confirmModal.message}
             </Text>
             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
@@ -478,7 +482,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                 }}
                 onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
               >
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#6b7a7d' }}>Cancel</Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: theme.Colors.onSurfaceVariant }}>Cancel</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -502,7 +506,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                     paddingHorizontal: 20,
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#ffffff', letterSpacing: 0.5 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: theme.Surface.card, letterSpacing: 0.5 }}>
                     Confirm
                   </Text>
                 </LinearGradient>
@@ -515,7 +519,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
   },
@@ -530,7 +534,7 @@ const styles = StyleSheet.create({
     height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
@@ -554,9 +558,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassFill,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#006677',
@@ -583,7 +587,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   headerGradientText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -600,7 +604,7 @@ const styles = StyleSheet.create({
   desktopBackButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   desktopInner: {
     width: '100%',
@@ -618,14 +622,14 @@ const styles = StyleSheet.create({
   titleLine: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 52,
     letterSpacing: -1,
   },
   titleLineDesktop: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 38,
     letterSpacing: -0.5,
   },
@@ -660,7 +664,7 @@ const styles = StyleSheet.create({
   headerAddButtonText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#ffffff',
+    color: theme.Surface.card,
     letterSpacing: 0.5,
   },
   expenseCard: {
@@ -691,7 +695,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     marginBottom: 4,
   },
   cardSub: {
@@ -721,7 +725,7 @@ const styles = StyleSheet.create({
   amountBold: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   amountSuffix: {
     fontSize: 12,
@@ -745,7 +749,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Surface.card,
     borderWidth: 1,
     borderColor: '#67e8f9',
     alignItems: 'center',
@@ -777,13 +781,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     marginBottom: 10,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 15,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 30,
@@ -818,7 +822,7 @@ const styles = StyleSheet.create({
   learnMoreText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 0.5,
   },
   desktopHeader: {
@@ -877,7 +881,7 @@ const styles = StyleSheet.create({
     padding: 20 
   },
   modalPopup: { 
-    backgroundColor: '#ffffff', 
+    backgroundColor: theme.Surface.card, 
     borderRadius: 24, 
     padding: 24, 
     shadowColor: '#000', 

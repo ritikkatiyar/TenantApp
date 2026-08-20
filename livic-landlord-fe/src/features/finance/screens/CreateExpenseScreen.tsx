@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useState, useEffect } from 'react';
 import { 
   View, 
@@ -15,6 +16,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { createChargeConfig, updateChargeConfig, getChargeConfigById } from '@/src/features/finance/api/charge.api';
@@ -26,6 +28,9 @@ import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useProperties } from '@/src/hooks/useProperties';
 
 export default function CreateExpenseScreen({ token }: { token: string | null }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
   const { handleScroll } = useScrollNav();
@@ -155,9 +160,9 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   });
 
   const renderCard1 = () => (
-    <BlurView intensity={40} tint="light" style={styles.card}>
+    <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
       <View style={styles.cardHeader}>
-        <MaterialCommunityIcons name="file-document-outline" size={20} color="#006875" />
+        <MaterialCommunityIcons name="file-document-outline" size={20} color={theme.Colors.primary} />
         <Text style={styles.cardTitle}>Charge Identity</Text>
       </View>
 
@@ -186,10 +191,10 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
               style={{
                 paddingVertical: 8,
                 paddingHorizontal: 14,
-                backgroundColor: isActive ? '#006875' : 'rgba(255, 255, 255, 0.5)',
+                backgroundColor: isActive ? theme.Colors.primary : 'rgba(255, 255, 255, 0.5)',
                 borderRadius: 16,
                 borderWidth: 1,
-                borderColor: isActive ? '#006875' : 'rgba(255, 255, 255, 0.9)',
+                borderColor: isActive ? theme.Colors.primary : 'rgba(255, 255, 255, 0.9)',
               }}
               onPress={() => setChargeCategory(cat)}
               activeOpacity={0.8}
@@ -197,7 +202,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
               <Text style={{
                 fontSize: 12,
                 fontWeight: isActive ? '800' : '600',
-                color: isActive ? '#ffffff' : '#5b6b6d',
+                color: isActive ? theme.Surface.card : '#5b6b6d',
               }}>{cat}</Text>
             </TouchableOpacity>
           );
@@ -237,9 +242,9 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   );
 
   const renderCard2 = () => (
-    <BlurView intensity={40} tint="light" style={[styles.card, isDesktop && { flex: 1 }, { overflow: Platform.OS === 'web' ? 'visible' : 'hidden', zIndex: 10 }]}>
+    <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={[styles.card, isDesktop && { flex: 1 }, { overflow: Platform.OS === 'web' ? 'visible' : 'hidden', zIndex: 10 }]}>
       <View style={styles.cardHeader}>
-        <MaterialCommunityIcons name="calculator-variant-outline" size={20} color="#006875" />
+        <MaterialCommunityIcons name="calculator-variant-outline" size={20} color={theme.Colors.primary} />
         <Text style={styles.cardTitle}>Rate & Calculation</Text>
       </View>
 
@@ -305,11 +310,11 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
                     style={{
                       paddingVertical: 8,
                       paddingHorizontal: 14,
-                      backgroundColor: unitType === unit ? '#006875' : 'rgba(255, 255, 255, 0.5)',
+                      backgroundColor: unitType === unit ? theme.Colors.primary : 'rgba(255, 255, 255, 0.5)',
                       borderRadius: 16,
                       borderWidth: 1,
-                      borderColor: unitType === unit ? '#006875' : 'rgba(255, 255, 255, 0.9)',
-                      shadowColor: unitType === unit ? '#006875' : '#000',
+                      borderColor: unitType === unit ? theme.Colors.primary : 'rgba(255, 255, 255, 0.9)',
+                      shadowColor: unitType === unit ? theme.Colors.primary : '#000',
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: unitType === unit ? 0.2 : 0.05,
                       shadowRadius: 3,
@@ -321,7 +326,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
                     <Text style={{
                       fontSize: 13,
                       fontWeight: unitType === unit ? '800' : '600',
-                      color: unitType === unit ? '#ffffff' : '#5b6b6d',
+                      color: unitType === unit ? theme.Surface.card : '#5b6b6d',
                     }}>{unit}</Text>
                   </TouchableOpacity>
                 ))}
@@ -385,7 +390,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
                           unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
                         }}
                       >
-                        <Text style={{ fontSize: isActive ? 16 : 13, fontWeight: isActive ? '700' : '500', color: isActive ? '#006875' : 'rgba(132, 148, 149, 0.4)' }}>{unit}</Text>
+                        <Text style={{ fontSize: isActive ? 16 : 13, fontWeight: isActive ? '700' : '500', color: isActive ? theme.Colors.primary : 'rgba(132, 148, 149, 0.4)' }}>{unit}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -399,9 +404,9 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   );
 
   const renderCard3 = () => (
-    <BlurView intensity={40} tint="light" style={styles.card}>
+    <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
       <View style={styles.cardHeader}>
-        <Ionicons name="settings-outline" size={20} color="#006875" />
+        <Ionicons name="settings-outline" size={20} color={theme.Colors.primary} />
         <Text style={[styles.cardTitle, { textTransform: 'uppercase', fontSize: 13 }]}>Advanced Logic</Text>
       </View>
 
@@ -448,13 +453,13 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   );
 
   const renderLivePreview = () => (
-    <BlurView intensity={40} tint="light" style={[styles.card, isDesktop && { flex: 1 }]}>
+    <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={[styles.card, isDesktop && { flex: 1 }]}>
       <View style={styles.cardHeader}>
-        <MaterialCommunityIcons name="card-bulleted-settings-outline" size={20} color="#006875" />
+        <MaterialCommunityIcons name="card-bulleted-settings-outline" size={20} color={theme.Colors.primary} />
         <Text style={styles.cardTitle}>Dynamic Preview</Text>
       </View>
       <LinearGradient
-        colors={['#006875', '#004d56']}
+        colors={[theme.Colors.primary, '#004d56']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.previewCardGradient, isDesktop && { flex: 1 }]}
@@ -594,12 +599,12 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
             />
           )}
           <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
-            <BlurView intensity={60} tint="light" style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%' }}>
+            <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%' }}>
               <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-                <MaterialIcons name="business" size={32} color="#006875" />
+                <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
               </View>
               <Text style={{ fontSize: 20, fontWeight: '800', color: '#163235', marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
-              <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+              <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
                 Creating charges and expense configurations requires an active property. Create your first property to start configuring billing logic.
               </Text>
               <TouchableOpacity 
@@ -641,46 +646,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
-        {/* Pinned Glassy Header */}
-        <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
-            </TouchableOpacity>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.compactTitleText}>{isEditMode ? 'Update Charge' : 'New Charge'}</Text>
-            </View>
-            <TouchableOpacity
-              onPress={handleSubmit}
-              disabled={isLoading}
-              style={{
-                borderRadius: 100,
-                overflow: 'hidden',
-                shadowColor: '#00d4ff',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 4,
-              }}
-            >
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{ paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 4 }}
-              >
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>
-                    {isEditMode ? 'Save' : 'Create'}
-                  </Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <FloatingBackButton onPress={() => router.back()} />
 
         <Animated.ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingTop: 68 + insets.top }]}
@@ -702,6 +668,8 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
           {renderCard3()}
           {renderLivePreview()}
 
+          {renderActionButtons(false)}
+
           <View style={{ height: 40 }} />
         </Animated.ScrollView>
       </SafeAreaView>
@@ -709,7 +677,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
   },
@@ -724,7 +692,7 @@ const styles = StyleSheet.create({
     height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
@@ -748,9 +716,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassFill,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#006677',
@@ -770,7 +738,7 @@ const styles = StyleSheet.create({
   titleLine: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 52,
     letterSpacing: -1,
   },
@@ -793,7 +761,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   label: {
     fontSize: 11,
@@ -815,12 +783,12 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 15,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     flex: 1,
   },
   inputText: {
     fontSize: 15,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   segmentContainer: {
     flexDirection: 'row',
@@ -847,10 +815,10 @@ const styles = StyleSheet.create({
   segmentText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   segmentTextActive: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -868,7 +836,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#006875',
+    borderColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -876,12 +844,12 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
   },
   radioTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   radioSub: {
     fontSize: 13,
@@ -890,13 +858,13 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginRight: 8,
   },
   inputWithIcon: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     flex: 1,
   },
   rowBetween: {
@@ -907,7 +875,7 @@ const styles = StyleSheet.create({
   settingText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   badge: {
     backgroundColor: '#e6fcfd',
@@ -918,7 +886,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   // Dynamic Preview Styles
   previewCardGradient: {
@@ -938,7 +906,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   previewName: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 22,
     fontWeight: '800',
   },
@@ -961,7 +929,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   previewValue: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -989,7 +957,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -999,7 +967,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   draftButtonText: {
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -1029,10 +997,10 @@ const styles = StyleSheet.create({
   topbarTab: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   topbarTabActive: {
-    color: '#006875',
+    color: theme.Colors.primary,
     fontWeight: '800',
   },
   topbarRight: {
@@ -1054,13 +1022,13 @@ const styles = StyleSheet.create({
   backButtonTextDesktop: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   avatar: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1088,7 +1056,7 @@ const styles = StyleSheet.create({
   titleLineDesktop: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 38,
     letterSpacing: -0.5,
   },
@@ -1115,7 +1083,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   desktopSubmitButtonText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -1127,11 +1095,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#006875',
+    borderColor: theme.Colors.primary,
     backgroundColor: 'transparent',
   },
   desktopDraftButtonText: {
-    color: '#006875',
+    color: theme.Colors.primary,
     fontSize: 13,
     fontWeight: '800',
   },

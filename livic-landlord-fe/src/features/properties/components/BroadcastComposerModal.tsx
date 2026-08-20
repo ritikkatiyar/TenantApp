@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { PropertyResponse } from '@/src/types/property';
 
 interface BroadcastComposerModalProps {
@@ -43,6 +44,8 @@ export function BroadcastComposerModal({
   handleSendBroadcast,
   onClose
 }: BroadcastComposerModalProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   return (
     <Modal
       transparent
@@ -104,7 +107,7 @@ export function BroadcastComposerModal({
             <Text style={styles.composerLabel}>SEVERITY</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
               {[
-                { val: 'INFO' as const, color: '#006875' },
+                { val: 'INFO' as const, color: theme.Colors.primary },
                 { val: 'WARNING' as const, color: '#e28743' },
                 { val: 'CRITICAL' as const, color: '#ba1a1a' },
               ].map(({ val, color }) => (
@@ -177,7 +180,7 @@ export function BroadcastComposerModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   composerOverlay: {
     flex: 1,
     backgroundColor: 'rgba(11, 28, 48, 0.45)',
@@ -185,7 +188,7 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   composerSheet: {
-    backgroundColor: '#f3fbfc',
+    backgroundColor: theme.Colors.inverseSurface,
     borderTopLeftRadius: 36,
     borderTopRightRadius: 36,
     padding: 28,
@@ -196,7 +199,7 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Surface.border,
   },
   composerHeader: {
     flexDirection: 'row',
@@ -207,12 +210,12 @@ const styles = StyleSheet.create({
   composerTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
   composerSubtitle: {
     fontSize: 13,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 2,
     fontFamily: 'Inter',
@@ -223,7 +226,7 @@ const styles = StyleSheet.create({
   composerLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
     marginBottom: 8,
     marginTop: 16,
@@ -232,12 +235,12 @@ const styles = StyleSheet.create({
   composerInput: {
     height: 48,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.15)',
+    borderColor: theme.Surface.border,
     paddingHorizontal: 16,
     fontSize: 14,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
   composerTextarea: {
@@ -252,19 +255,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.15)',
+    borderColor: theme.Surface.border,
     marginRight: 6,
   },
   chipActive: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   chipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   chipTextActive: {

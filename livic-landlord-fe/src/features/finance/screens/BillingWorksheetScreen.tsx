@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -26,6 +27,9 @@ import { getOrCreateWorksheet, batchSaveWorksheet, WorksheetEntryResponse } from
 import { formatErrorMessage } from '@/src/utils/errors';
 
 export default function BillingWorksheetScreen({ token }: { token: string | null }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
@@ -177,7 +181,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
       {paginatedFloors.map(floor => {
         const isExpanded = expandedFloors[floor];
         return (
-          <BlurView intensity={60} tint="light" key={`floor-${floor}`} style={styles.floorCard}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} key={`floor-${floor}`} style={styles.floorCard}>
             <TouchableOpacity 
               style={styles.floorHeader}
               onPress={() => toggleFloor(floor)}
@@ -189,7 +193,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               <MaterialIcons 
                 name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
                 size={24} 
-                color="#006875" 
+                color={theme.Colors.primary} 
               />
             </TouchableOpacity>
             
@@ -234,8 +238,8 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                                 }}
                                 onPress={() => router.push(`/properties/${propertyId}/meter-readings`)}
                               >
-                                <MaterialIcons name="speed" size={16} color="#006875" />
-                                <Text style={{ color: '#006875', fontSize: 13, fontWeight: '700' }}>Enter Readings</Text>
+                                <MaterialIcons name="speed" size={16} color={theme.Colors.primary} />
+                                <Text style={{ color: theme.Colors.primary, fontSize: 13, fontWeight: '700' }}>Enter Readings</Text>
                               </TouchableOpacity>
                             ) : (
                               <View style={styles.inputWrapper}>
@@ -265,7 +269,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                         disabled={currentPage === 1}
                         onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
                       >
-                        <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : '#006875'} />
+                        <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : theme.Colors.primary} />
                         <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
                       </TouchableOpacity>
                       
@@ -279,7 +283,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                         onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
                       >
                         <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : '#006875'} />
+                        <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : theme.Colors.primary} />
                       </TouchableOpacity>
                     </View>
                   )}
@@ -297,7 +301,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             disabled={floorPage === 1}
             onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
           >
-            <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : '#006875'} />
+            <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : theme.Colors.primary} />
             <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
           </TouchableOpacity>
           
@@ -311,7 +315,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
           >
             <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
-            <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : '#006875'} />
+            <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : theme.Colors.primary} />
           </TouchableOpacity>
         </View>
       )}
@@ -384,16 +388,16 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                 <Text style={styles.filterLabelCaps}>BILLING MONTH</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                   <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
-                    <MaterialIcons name="chevron-left" size={20} color="#006875" />
+                    <MaterialIcons name="chevron-left" size={20} color={theme.Colors.primary} />
                   </TouchableOpacity>
                   
                   <View style={[styles.monthBadge, { flex: 1, marginTop: 0 }]}>
-                    <MaterialIcons name="calendar-today" size={16} color="#006875" />
+                    <MaterialIcons name="calendar-today" size={16} color={theme.Colors.primary} />
                     <Text style={styles.monthBadgeText}>{billingMonth}</Text>
                   </View>
                   
                   <TouchableOpacity onPress={handleNextMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
-                    <MaterialIcons name="chevron-right" size={20} color="#006875" />
+                    <MaterialIcons name="chevron-right" size={20} color={theme.Colors.primary} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -401,8 +405,8 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
             {/* Content */}
             {(!properties || properties.length === 0) ? (
-              <BlurView intensity={60} tint="light" style={styles.emptyStateCard}>
-                <MaterialIcons name="business" size={48} color="#006875" style={{ marginBottom: 16 }} />
+              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+                <MaterialIcons name="business" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
                 <Text style={[styles.emptyText, { fontWeight: '800', color: '#163235', fontSize: 18, marginBottom: 8 }]}>No Property Created Yet</Text>
                 <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40, marginBottom: 20 }]}>
                   Billing worksheets require an active property. Create your first property to start managing worksheets.
@@ -418,16 +422,16 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                 </TouchableOpacity>
               </BlurView>
             ) : isLoadingCharges ? (
-              <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />
+              <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
             ) : charges.length === 0 ? (
-              <BlurView intensity={60} tint="light" style={styles.emptyStateCard}>
+              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
                 <MaterialIcons name="receipt-long" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
                 <Text style={styles.emptyText}>No active charges configured for this property.</Text>
               </BlurView>
             ) : isLoadingWorksheet ? (
-              <ActivityIndicator size="large" color="#006875" style={{ marginTop: 80 }} />
+              <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
             ) : entries.length === 0 ? (
-              <BlurView intensity={60} tint="light" style={styles.emptyStateCard}>
+              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
                 <MaterialIcons name="domain-disabled" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
                 <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40 }]}>
                   No occupied units with active leases found for this property. Assign a tenant first to view billing worksheets.
@@ -452,7 +456,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
       <SafeAreaView style={styles.safeArea} edges={[]}>
         {/* Pinned Glassy Overlay Header */}
         <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+          <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
           <View style={styles.headerContent}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
@@ -501,13 +505,13 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             <Text style={styles.filterLabelCaps}>MONTH</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 4 }}>
-                <MaterialIcons name="chevron-left" size={24} color="#006875" />
+                <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
               </TouchableOpacity>
               
               <Text style={styles.monthBadgeTextMobile}>{billingMonth}</Text>
               
               <TouchableOpacity onPress={handleNextMonth} style={{ padding: 4 }}>
-                <MaterialIcons name="chevron-right" size={24} color="#006875" />
+                <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -520,13 +524,13 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
           keyboardShouldPersistTaps="handled"
         >
           {isLoadingCharges ? (
-            <ActivityIndicator size="large" color="#006875" style={{ marginTop: 50 }} />
+            <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 50 }} />
           ) : charges.length === 0 ? (
             <View style={styles.emptyStateCard}>
               <Text style={styles.emptyText}>No active charges configured for this property.</Text>
             </View>
           ) : isLoadingWorksheet ? (
-            <ActivityIndicator size="large" color="#006875" style={{ marginTop: 50 }} />
+            <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 50 }} />
           ) : entries.length === 0 ? (
             <View style={styles.emptyStateCard}>
               <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 20 }]}>
@@ -551,7 +555,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
   
@@ -576,7 +580,7 @@ const styles = StyleSheet.create({
   titleLineDesktop: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 38,
     letterSpacing: -0.5,
   },
@@ -598,7 +602,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   desktopSaveButtonText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -619,7 +623,7 @@ const styles = StyleSheet.create({
     height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
@@ -633,9 +637,9 @@ const styles = StyleSheet.create({
     width: 36, 
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassFill,
     justifyContent: 'center', 
     alignItems: 'center',
     shadowColor: '#006677',
@@ -672,7 +676,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headerSaveText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -707,7 +711,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   floatingSaveText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 1,
@@ -731,7 +735,7 @@ const styles = StyleSheet.create({
   monthBadgeTextMobile: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   mobileListContent: {
     paddingHorizontal: 20,
@@ -760,7 +764,7 @@ const styles = StyleSheet.create({
   monthBadgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
 
   // Grid & Cards
@@ -775,18 +779,18 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   unitName: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     marginBottom: 2,
   },
   tenantName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   inputWrapper: {
     width: '100%',
@@ -811,7 +815,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 16, 
     fontWeight: '600', 
-    color: '#151d1e', 
+    color: theme.Colors.onBackground, 
     textAlign: 'left',
   },
   billedBadge: {
@@ -844,7 +848,7 @@ const styles = StyleSheet.create({
   floorHeaderText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 0.5,
   },
   rowCard: {
@@ -895,7 +899,7 @@ const styles = StyleSheet.create({
   pageButtonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   pageButtonTextDisabled: {
     color: '#a0aab2',
@@ -923,7 +927,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   headerGradientText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,

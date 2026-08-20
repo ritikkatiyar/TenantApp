@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import {
   Platform,
@@ -27,6 +28,9 @@ import { PropertySelector } from '@/src/components/common/display/PropertySelect
 import { useRouter } from 'expo-router';
 
 export default function InventoryScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
@@ -65,7 +69,7 @@ export default function InventoryScreen() {
 
   return (
     <LinearGradient
-      colors={Theme.Colors.backgroundGradient as [string, string, string]}
+      colors={theme.Colors.backgroundGradient as [string, string, string]}
       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       style={styles.root}
     >
@@ -245,7 +249,7 @@ export default function InventoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 120, gap: 16 },

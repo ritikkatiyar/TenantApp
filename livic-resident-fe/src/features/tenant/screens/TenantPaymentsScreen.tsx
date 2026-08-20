@@ -7,8 +7,9 @@ import { BlurView } from 'expo-blur';
 
 import { useResponsive } from '@/hooks/useResponsive';
 import { getTenantRentCycles, markRentCyclePaid, RentCycle, fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
@@ -19,6 +20,9 @@ interface TenantPaymentsScreenProps {
 }
 
 export default function TenantPaymentsScreen({ token, onLogout }: TenantPaymentsScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
   const [cycles, setCycles] = useState<RentCycle[]>([]);
@@ -74,17 +78,17 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
 
   return (
     <LinearGradient
-      colors={Theme.Colors.backgroundGradient as [string, string, string]}
+      colors={theme.Colors.backgroundGradient as [string, string, string]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.root}
     >
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop && <DesktopNavBar title="Billing & Rent Payments" />}
+        {isDesktop ? <DesktopNavBar title="Billing & Rent Payments" /> : <FloatingBackButton />}
 
         {loading ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color={Theme.Colors.primary} />
+            <ActivityIndicator size="large" color={theme.Colors.primary} />
           </View>
         ) : (
           <ScrollView 
@@ -97,7 +101,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
           <BlurView intensity={70} tint="light" style={styles.glassCard}>
             <View style={styles.cycleTopRow}>
               <View style={styles.cycleBadge}>
-                <MaterialIcons name="calendar-month" size={18} color={Theme.Colors.primary} />
+                <MaterialIcons name="calendar-month" size={18} color={theme.Colors.primary} />
                 <Text style={styles.cycleBadgeText}>
                   Current Cycle: {activeCycle?.billingMonth || 'October 2023'}
                 </Text>
@@ -139,7 +143,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                 onPress={() => activeCycle && handleDownloadStatement(activeCycle.id)}
                 disabled={!activeCycle}
               >
-                <MaterialIcons name="download" size={20} color={Theme.Colors.primary} />
+                <MaterialIcons name="download" size={20} color={theme.Colors.primary} />
                 <Text style={styles.invoiceBtnText}>Payment Statement</Text>
               </TouchableOpacity>
             </View>
@@ -149,21 +153,21 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
           <View style={styles.statsRow}>
             <BlurView intensity={60} tint="light" style={styles.statBox}>
               <View style={styles.statIconBox}>
-                <MaterialIcons name="verified-user" size={22} color={Theme.Colors.primary} />
+                <MaterialIcons name="verified-user" size={22} color={theme.Colors.primary} />
               </View>
               <View style={{ marginLeft: 12 }}>
                 <Text style={styles.statLabel}>LEASE ACCOUNT</Text>
-                <Text style={[styles.statValue, { color: Theme.Colors.primary }]}>Active & Good Standing</Text>
+                <Text style={[styles.statValue, { color: theme.Colors.primary }]}>Active & Good Standing</Text>
               </View>
             </BlurView>
 
             <BlurView intensity={60} tint="light" style={styles.statBox}>
               <View style={styles.statIconBox}>
-                <MaterialIcons name="history" size={22} color={Theme.Colors.secondary} />
+                <MaterialIcons name="history" size={22} color={theme.Colors.secondary} />
               </View>
               <View style={{ marginLeft: 12 }}>
                 <Text style={styles.statLabel}>ON-TIME RATING</Text>
-                <Text style={[styles.statValue, { color: Theme.Colors.secondary }]}>100% On Time</Text>
+                <Text style={[styles.statValue, { color: theme.Colors.secondary }]}>100% On Time</Text>
               </View>
             </BlurView>
           </View>
@@ -176,7 +180,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                 <Text style={styles.historySub}>Verified ledger records</Text>
               </View>
               <View style={styles.filterBox}>
-                <MaterialIcons name="filter-list" size={16} color={Theme.Colors.onSurfaceVariant} />
+                <MaterialIcons name="filter-list" size={16} color={theme.Colors.onSurfaceVariant} />
                 <Text style={styles.filterText}>All Ledger Entries</Text>
               </View>
             </View>
@@ -188,7 +192,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                     <View style={styles.historyMain}>
                       <Text style={styles.historyDate}>{cycle.billingMonth || 'Current Billing Cycle'}</Text>
                       <View style={styles.historyRowData}>
-                        <MaterialIcons name="home-work" size={16} color={Theme.Colors.primary} />
+                        <MaterialIcons name="home-work" size={16} color={theme.Colors.primary} />
                         <Text style={styles.historyDesc}>Monthly Rent Statement</Text>
                       </View>
                     </View>
@@ -201,7 +205,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                            </Text>
                          </View>
                          <TouchableOpacity onPress={() => handleDownloadStatement(cycle.id)}>
-                           <MaterialIcons name="download" size={18} color={Theme.Colors.primary} />
+                           <MaterialIcons name="download" size={18} color={theme.Colors.primary} />
                          </TouchableOpacity>
                        </View>
                      </View>
@@ -212,7 +216,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                   <View style={styles.historyMain}>
                     <Text style={styles.historyDate}>Today (Just now)</Text>
                     <View style={styles.historyRowData}>
-                      <MaterialIcons name="home-work" size={16} color={Theme.Colors.primary} />
+                      <MaterialIcons name="home-work" size={16} color={theme.Colors.primary} />
                       <Text style={styles.historyDesc}>Monthly Rent (Online Payment)</Text>
                     </View>
                   </View>
@@ -225,9 +229,9 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                 </View>
               ) : (
                 <View style={{ padding: 24, alignItems: 'center' }}>
-                  <MaterialIcons name="receipt-long" size={36} color={Theme.Colors.primary} style={{ marginBottom: 8 }} />
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: Theme.Colors.onBackground }}>No Billing Transactions Found</Text>
-                  <Text style={{ fontSize: 12, color: Theme.Colors.onSurfaceVariant, marginTop: 2 }}>Your property ledger account is up to date.</Text>
+                  <MaterialIcons name="receipt-long" size={36} color={theme.Colors.primary} style={{ marginBottom: 8 }} />
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.Colors.onBackground }}>No Billing Transactions Found</Text>
+                  <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>Your property ledger account is up to date.</Text>
                 </View>
               )}
             </View>
@@ -262,7 +266,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
           {/* Security Guarantee Banner */}
           <BlurView intensity={60} tint="light" style={styles.securityCard}>
             <View style={styles.securityHeader}>
-              <MaterialIcons name="security" size={20} color={Theme.Colors.primary} />
+              <MaterialIcons name="security" size={20} color={theme.Colors.primary} />
               <Text style={styles.securityTitle}>BANK-GRADE 256-BIT ENCRYPTION</Text>
             </View>
             <Text style={styles.securityDesc}>All payments are processed securely through PCI-DSS Level 1 compliant payment gateways. No sensitive card data is stored on application servers.</Text>
@@ -280,7 +284,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                     <View style={styles.modalHeader}>
                       <Text style={styles.modalTitle}>Checkout Payment</Text>
                       <TouchableOpacity onPress={() => setShowPayModal(false)}>
-                        <MaterialIcons name="close" size={24} color={Theme.Colors.onBackground} />
+                        <MaterialIcons name="close" size={24} color={theme.Colors.onBackground} />
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.modalSubTitle}>Review Rent Statement</Text>
@@ -302,8 +306,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
 
                     {paying ? (
                       <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-                        <ActivityIndicator size="large" color={Theme.Colors.primary} />
-                        <Text style={{ marginTop: 12, fontSize: 14, color: Theme.Colors.onSurfaceVariant, fontWeight: '600' }}>Processing secure payment...</Text>
+                        <ActivityIndicator size="large" color={theme.Colors.primary} />
+                        <Text style={{ marginTop: 12, fontSize: 14, color: theme.Colors.onSurfaceVariant, fontWeight: '600' }}>Processing secure payment...</Text>
                       </View>
                     ) : (
                       <TouchableOpacity onPress={handlePayRent} activeOpacity={0.85}>
@@ -340,7 +344,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 20 },
@@ -352,7 +356,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: Theme.Colors.primary,
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
     shadowRadius: 20,
@@ -361,7 +365,7 @@ const styles = StyleSheet.create({
   },
   cycleTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   cycleBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cycleBadgeText: { color: Theme.Colors.primary, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  cycleBadgeText: { color: theme.Colors.primary, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   statusPillPending: { backgroundColor: '#fef3c7' },
   statusPillPaid: { backgroundColor: '#dcfce7' },
@@ -369,39 +373,39 @@ const styles = StyleSheet.create({
   statusPillTextPending: { color: '#b45309' },
   statusPillTextPaid: { color: '#15803d' },
 
-  amountText: { fontSize: 38, fontWeight: '800', color: Theme.Colors.onSurface },
-  dueText: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, marginTop: 4, marginBottom: 20 },
+  amountText: { fontSize: 38, fontWeight: '800', color: theme.Colors.onSurface },
+  dueText: { fontSize: 14, color: theme.Colors.onSurfaceVariant, marginTop: 4, marginBottom: 20 },
   cycleActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   payBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
   payBtnDisabled: { opacity: 0.7 },
   payBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   invoiceBtn: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.2)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, minWidth: 140 },
-  invoiceBtnText: { color: Theme.Colors.primary, fontSize: 15, fontWeight: '700' },
+  invoiceBtnText: { color: theme.Colors.primary, fontSize: 15, fontWeight: '700' },
 
   statsRow: { flexDirection: 'row', gap: 14 },
   statBox: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
   statIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: 11, fontWeight: '800', color: Theme.Colors.onSurfaceVariant, letterSpacing: 0.5, marginBottom: 2 },
+  statLabel: { fontSize: 11, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5, marginBottom: 2 },
   statValue: { fontSize: 14, fontWeight: '800' },
 
-  historyCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', shadowColor: Theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
+  historyCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.3)' },
-  historyTitle: { fontSize: 18, fontWeight: '800', color: Theme.Colors.onSurface },
-  historySub: { fontSize: 12, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+  historyTitle: { fontSize: 18, fontWeight: '800', color: theme.Colors.onSurface },
+  historySub: { fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   filterBox: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255, 255, 255, 0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.4)' },
-  filterText: { fontSize: 13, color: Theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  filterText: { fontSize: 13, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
   historyList: { backgroundColor: 'rgba(255, 255, 255, 0.7)' },
   historyItem: { padding: 18, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.25)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   historyMain: { flex: 1 },
-  historyDate: { fontSize: 14, fontWeight: '700', color: Theme.Colors.onSurface, marginBottom: 4 },
+  historyDate: { fontSize: 14, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 4 },
   historyRowData: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  historyDesc: { fontSize: 13, color: Theme.Colors.onSurfaceVariant },
+  historyDesc: { fontSize: 13, color: theme.Colors.onSurfaceVariant },
   historyRight: { alignItems: 'flex-end' },
-  historyAmount: { fontSize: 15, fontWeight: '800', color: Theme.Colors.onSurface, marginBottom: 4 },
+  historyAmount: { fontSize: 15, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 4 },
   statusSuccess: { backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   statusSuccessText: { color: '#15803d', fontSize: 10, fontWeight: '800' },
   historyFooter: { padding: 14, backgroundColor: 'rgba(255, 255, 255, 0.4)', alignItems: 'center' },
-  historyFooterText: { fontSize: 12, color: Theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  historyFooterText: { fontSize: 12, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
 
   promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: '#0070ea', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
   promoTitle: { color: '#fff', fontSize: 20, fontWeight: '800', marginBottom: 8, zIndex: 1 },
@@ -412,27 +416,27 @@ const styles = StyleSheet.create({
 
   securityCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
   securityHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  securityTitle: { fontSize: 12, fontWeight: '800', color: Theme.Colors.primary, letterSpacing: 0.8 },
-  securityDesc: { fontSize: 13, color: Theme.Colors.onSurfaceVariant, lineHeight: 20 },
+  securityTitle: { fontSize: 12, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8 },
+  securityDesc: { fontSize: 13, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.6)', justifyContent: 'center', padding: 20 },
   modalContent: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: 22, fontWeight: '800', color: Theme.Colors.onBackground },
-  modalSubTitle: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, marginBottom: 16 },
+  modalTitle: { fontSize: 22, fontWeight: '800', color: theme.Colors.onBackground },
+  modalSubTitle: { fontSize: 14, color: theme.Colors.onSurfaceVariant, marginBottom: 16 },
   
   checkoutBox: { backgroundColor: 'rgba(0, 104, 117, 0.05)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.15)', marginBottom: 20 },
   checkoutRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.2)' },
-  checkoutLabel: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, fontWeight: '600' },
-  checkoutValue: { fontSize: 14, color: Theme.Colors.onBackground, fontWeight: '800' },
+  checkoutLabel: { fontSize: 14, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  checkoutValue: { fontSize: 14, color: theme.Colors.onBackground, fontWeight: '800' },
 
   modalPayBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   modalPayBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
   successIconBox: { marginBottom: 12 },
-  successTitle: { fontSize: 22, fontWeight: '800', color: Theme.Colors.onBackground, marginBottom: 6 },
-  successDesc: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  modalCloseBtn: { backgroundColor: Theme.Colors.primary, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, alignItems: 'center', width: '100%' },
+  successTitle: { fontSize: 22, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
+  successDesc: { fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  modalCloseBtn: { backgroundColor: theme.Colors.primary, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, alignItems: 'center', width: '100%' },
   modalCloseBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' }
 });
 

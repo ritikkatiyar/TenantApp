@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface DesktopNavBarProps {
   onBack?: () => void;
@@ -20,15 +21,17 @@ export default function DesktopNavBar({
   title
 }: DesktopNavBarProps) {
   const { user } = useAuth();
+  const { theme, isDark, toggleTheme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const initial = user?.fullName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <BlurView intensity={70} tint="light" style={styles.topbar}>
+    <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.topbar}>
       {/* Left Area: Back Button or Page Title */}
       <View style={styles.topbarLeft}>
         {onBack ? (
           <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop} activeOpacity={0.7}>
-            <MaterialIcons name="arrow-back" size={20} color="#151d1e" />
+            <MaterialIcons name="arrow-back" size={20} color={theme.Colors.onBackground} />
             <Text style={styles.backButtonTextDesktop}>{backText}</Text>
           </TouchableOpacity>
         ) : title ? (
@@ -36,9 +39,23 @@ export default function DesktopNavBar({
         ) : null}
       </View>
 
-      {/* Right Area: Right Content (Search, notifications, etc.) + Avatar */}
+      {/* Right Area: Right Content + Theme Toggle + Avatar */}
       <View style={styles.topbarRight}>
         {rightContent}
+
+        <TouchableOpacity 
+          onPress={toggleTheme} 
+          style={styles.themeToggleBtn}
+          activeOpacity={0.75}
+          accessibilityLabel="Toggle Theme Mode"
+        >
+          <MaterialIcons 
+            name={isDark ? "wb-sunny" : "dark-mode"} 
+            size={20} 
+            color={isDark ? "#f59e0b" : theme.Colors.primary} 
+          />
+        </TouchableOpacity>
+
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
@@ -47,7 +64,7 @@ export default function DesktopNavBar({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   topbar: {
     height: 70,
     flexDirection: 'row',
@@ -55,8 +72,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: theme.Surface.border,
+    backgroundColor: theme.Colors.glassFill,
   },
   topbarLeft: {
     flexDirection: 'row',
@@ -65,12 +82,23 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   topbarRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
+    gap: 16,
+  },
+  themeToggleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.Surface.card,
+    borderWidth: 1,
+    borderColor: theme.Surface.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
   },
   backButtonDesktop: {
     flexDirection: 'row',
@@ -79,14 +107,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: theme.Surface.card,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: theme.Surface.border,
   },
   backButtonTextDesktop: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
   },
   avatar: {
     width: 38,

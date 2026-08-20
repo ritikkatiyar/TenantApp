@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface GlassCardProps {
   children: React.ReactNode;
@@ -16,9 +16,13 @@ export function GlassCard({
   intensity = 70,
   tint = 'light',
 }: GlassCardProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const activeTint = tint || (isDark ? 'dark' : 'light');
+
   return (
     <View style={[styles.outerContainer, style]}>
-      <BlurView intensity={intensity} tint={tint} style={styles.blurView}>
+      <BlurView intensity={intensity} tint={activeTint} style={styles.blurView}>
         <View style={styles.content}>
           {children}
         </View>
@@ -27,12 +31,12 @@ export function GlassCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   outerContainer: {
-    borderRadius: Theme.Rounded.lg,
+    borderRadius: theme.Rounded.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
     boxShadow: '0px 10px 30px rgba(0, 104, 117, 0.05)',
   },
@@ -40,6 +44,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   content: {
-    padding: Theme.Spacing.containerPadding,
+    padding: theme.Spacing.containerPadding,
   },
 });

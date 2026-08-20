@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
 import {
   View,
@@ -34,6 +35,9 @@ export function InventoryMoveInView({
   onRefresh,
   onAddItem,
 }: InventoryMoveInViewProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const hasAssigned = assignedItems.length > 0;
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,7 +100,7 @@ export function InventoryMoveInView({
 
   return (
     <View style={styles.sectionStack}>
-      <BlurView intensity={35} tint="light" style={styles.moveBanner}>
+      <BlurView intensity={35} tint={isDark ? 'dark' : 'light'} style={styles.moveBanner}>
         <LinearGradient
           colors={['rgba(8,145,178,0.85)', 'rgba(79,70,229,0.85)']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -168,7 +172,7 @@ export function InventoryMoveInView({
                 >
                   <BlurView
                     intensity={45}
-                    tint="light"
+                    tint={isDark ? 'dark' : 'light'}
                     style={[styles.itemCard, isSelected && styles.itemCardSelected]}
                   >
                     <View style={styles.itemCardContent}>
@@ -200,7 +204,7 @@ export function InventoryMoveInView({
           )}
         </View>
 
-        <BlurView intensity={65} tint="light" style={styles.rail}>
+        <BlurView intensity={65} tint={isDark ? 'dark' : 'light'} style={styles.rail}>
           <View style={styles.railHeader}>
             <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.railIconCircle}>
               <MaterialIcons name="fact-check" size={18} color="#fff" />
@@ -245,7 +249,7 @@ export function InventoryMoveInView({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sectionStack: { gap: 16 },
   moveBanner: {
     borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'center',

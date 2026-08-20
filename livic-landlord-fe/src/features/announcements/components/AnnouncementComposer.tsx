@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -45,8 +46,11 @@ export function AnnouncementComposer({
   sendingBroadcast,
   handleSendBroadcast,
 }: AnnouncementComposerProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
-    <BlurView intensity={60} tint="light" style={styles.card}>
+    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.card}>
       <Text style={styles.sectionHeader}>NEW BROADCAST NOTICE</Text>
 
       {/* Property Select Dropdown */}
@@ -102,7 +106,7 @@ export function AnnouncementComposer({
       <Text style={styles.composerLabel}>SEVERITY LEVEL</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
         {[
-          { val: 'INFO' as const, color: '#006875' },
+          { val: 'INFO' as const, color: theme.Colors.primary },
           { val: 'WARNING' as const, color: '#e28743' },
           { val: 'CRITICAL' as const, color: '#ba1a1a' },
         ].map(({ val, color }) => (
@@ -155,7 +159,7 @@ export function AnnouncementComposer({
         activeOpacity={0.85}
       >
         <LinearGradient
-          colors={broadcastSeverity === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : ['#006875', '#00bcd4']}
+          colors={broadcastSeverity === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : [theme.Colors.primary, '#00bcd4']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.composerSendGradient}
@@ -174,11 +178,11 @@ export function AnnouncementComposer({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   card: {
     padding: 24,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.75)',
     overflow: 'hidden',
@@ -186,7 +190,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: 20,
     fontFamily: 'Inter',
@@ -194,7 +198,7 @@ const styles = StyleSheet.create({
   composerLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
     marginBottom: 8,
     marginTop: 18,
@@ -208,7 +212,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.08)',
     paddingHorizontal: 16,
     fontSize: 14,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
   composerTextarea: {
@@ -223,19 +227,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: theme.Colors.glassStroke,
     borderWidth: 1,
     borderColor: 'rgba(0, 104, 117, 0.15)',
     marginRight: 8,
   },
   chipActive: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   chipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   chipTextActive: {
@@ -244,7 +248,7 @@ const styles = StyleSheet.create({
   composerSendBtn: {
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#006875',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

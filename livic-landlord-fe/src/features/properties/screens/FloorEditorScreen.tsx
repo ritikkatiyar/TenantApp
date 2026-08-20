@@ -30,7 +30,7 @@ import { logger } from '@/src/utils/logger';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { getFloorLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 // Phase 4 modular hook & component imports
 import { useFloorEditorGestures } from '@/src/features/properties/hooks/useFloorEditorGestures';
@@ -80,6 +80,9 @@ export default function FloorEditorScreen({
   onBack,
   onSave
 }: FloorEditorScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const [typeSelectionModalVisible, setTypeSelectionModalVisible] = useState(false);
   const [pendingBlockId, setPendingBlockId] = useState<string | null>(null);
   const [pendingBlockNum, setPendingBlockNum] = useState<string>('');
@@ -296,7 +299,7 @@ export default function FloorEditorScreen({
       onPress={route ? () => (route === '/command-center' ? onBack() : router.push(route)) : undefined}
       activeOpacity={route ? 0.75 : 1}
     >
-      <MaterialIcons name={icon} size={22} color={active ? Theme.Colors.primary : Theme.Colors.onSurfaceVariant} />
+      <MaterialIcons name={icon} size={22} color={active ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
       <Text style={[styles.sidebarLinkText, active && styles.sidebarLinkTextActive]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -627,7 +630,7 @@ export default function FloorEditorScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
   },
@@ -899,11 +902,11 @@ const styles = StyleSheet.create({
   sidebarLinkText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   sidebarLinkTextActive: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontWeight: '800',
   },
 });

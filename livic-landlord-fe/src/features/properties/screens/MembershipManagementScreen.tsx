@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { getMemberships, assignRole, removeRole, transferOwnership, MembershipResponse } from '@/src/features/properties/api/membership.api';
 import { searchUserByPhone } from '@/src/features/auth/api/user.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { ResponsiveHeader } from '@/src/components/common/layout/ResponsiveHeader';
@@ -28,6 +28,9 @@ interface Props {
 }
 
 export default function MembershipManagementScreen({ propertyId }: Props) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const router = useRouter();
   const { accessToken } = useAuth();
   const { handleScroll } = useScrollNav();
@@ -157,12 +160,12 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
       <View style={styles.cardActions}>
         {item.roleCode !== 'PROPERTY_OWNER' && (
           <TouchableOpacity onPress={() => triggerTransferOwnership(item)} style={styles.actionBtn}>
-            <MaterialIcons name="swap-horiz" size={20} color={Theme.Colors.primary} />
+            <MaterialIcons name="swap-horiz" size={20} color={theme.Colors.primary} />
           </TouchableOpacity>
         )}
         {item.roleCode !== 'PROPERTY_OWNER' && (
           <TouchableOpacity onPress={() => triggerRemoveRole(item)} style={styles.actionBtn}>
-            <MaterialIcons name="delete-outline" size={20} color={Theme.Colors.error} />
+            <MaterialIcons name="delete-outline" size={20} color={theme.Colors.error} />
           </TouchableOpacity>
         )}
       </View>
@@ -171,7 +174,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
 
   const renderHeaderRight = () => (
     <TouchableOpacity onPress={() => setSearchModalVisible(true)} style={styles.addBtn}>
-      <MaterialIcons name="person-add" size={24} color={Theme.Colors.primary} />
+      <MaterialIcons name="person-add" size={24} color={theme.Colors.primary} />
     </TouchableOpacity>
   );
 
@@ -185,7 +188,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={Theme.Colors.primary} />
+          <ActivityIndicator size="large" color={theme.Colors.primary} />
         </View>
       ) : (
         <FlatList
@@ -240,7 +243,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
                 setSearchModalVisible(false);
                 setSelectedUser(null);
               }}>
-                <MaterialIcons name="close" size={24} color={Theme.Colors.onSurface} />
+                <MaterialIcons name="close" size={24} color={theme.Colors.onSurface} />
               </TouchableOpacity>
             </View>
 
@@ -313,7 +316,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 0,
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   list: {
-    padding: Theme.Spacing.containerPadding,
+    padding: theme.Spacing.containerPadding,
   },
   card: {
     marginBottom: 12,
@@ -335,14 +338,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   cardInfo: { flex: 1 },
-  name: { fontSize: 16, fontWeight: '700', color: Theme.Colors.onSurface },
-  email: { fontSize: 13, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+  name: { fontSize: 16, fontWeight: '700', color: theme.Colors.onSurface },
+  email: { fontSize: 13, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   pillOverride: {
     marginTop: 8,
   },
   cardActions: { flexDirection: 'row', gap: 12 },
   actionBtn: { padding: 8, backgroundColor: '#f5f5f5', borderRadius: 8 },
-  emptyText: { textAlign: 'center', color: Theme.Colors.onSurfaceVariant, marginTop: 40 },
+  emptyText: { textAlign: 'center', color: theme.Colors.onSurfaceVariant, marginTop: 40 },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -362,7 +365,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: { fontSize: 20, fontWeight: '700' },
-  label: { fontSize: 14, fontWeight: '600', marginBottom: 8, color: Theme.Colors.onSurfaceVariant },
+  label: { fontSize: 14, fontWeight: '600', marginBottom: 8, color: theme.Colors.onSurfaceVariant },
   searchRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   searchInput: {
     flex: 1,
@@ -384,7 +387,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   userName: { fontSize: 16, fontWeight: '600' },
-  userPhone: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, marginTop: 4 },
+  userPhone: { fontSize: 14, color: theme.Colors.onSurfaceVariant, marginTop: 4 },
   roleOptions: { flexDirection: 'row', gap: 12 },
   roleOption: {
     flex: 1,
@@ -395,11 +398,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   roleOptionActive: {
-    borderColor: Theme.Colors.primary,
+    borderColor: theme.Colors.primary,
     backgroundColor: '#e6f7ff',
   },
-  roleOptionText: { fontWeight: '600', color: Theme.Colors.onSurfaceVariant },
-  roleOptionTextActive: { color: Theme.Colors.primary },
+  roleOptionText: { fontWeight: '600', color: theme.Colors.onSurfaceVariant },
+  roleOptionTextActive: { color: theme.Colors.primary },
   assignBtn: {
     marginTop: 24,
   },

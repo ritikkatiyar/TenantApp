@@ -9,6 +9,7 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { getActiveLease, LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface TenantPropertyScreenProps {
@@ -40,7 +41,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
       style={styles.root}
     >
       <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop && <DesktopNavBar title="My Unit & Property Lease" />}
+        {isDesktop ? <DesktopNavBar title="My Unit & Property Lease" /> : <FloatingBackButton />}
 
         <ScrollView 
           onScroll={handleScroll}

@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform, ViewStyle, StyleProp } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface PageShellProps {
@@ -22,6 +22,9 @@ export function PageShell({
   keyboardAvoiding = false,
   edges = ['top', 'left', 'right'],
 }: PageShellProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { handleScroll } = useScrollNav();
 
   const container = (
@@ -46,7 +49,7 @@ export function PageShell({
 
   return (
     <LinearGradient
-      colors={(Theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
+      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
       style={styles.gradient}
     >
       {keyboardAvoiding ? (
@@ -63,7 +66,7 @@ export function PageShell({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
   },
@@ -77,11 +80,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Theme.Spacing.containerPadding,
-    paddingBottom: Theme.Spacing.stackLg + 100,
+    paddingHorizontal: theme.Spacing.containerPadding,
+    paddingBottom: theme.Spacing.stackLg + 100,
   },
   flatContainer: {
     flex: 1,
-    paddingHorizontal: Theme.Spacing.containerPadding,
+    paddingHorizontal: theme.Spacing.containerPadding,
   },
 });

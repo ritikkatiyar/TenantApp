@@ -5,9 +5,12 @@ import { BlurView } from 'expo-blur';
 import { useRouter, usePathname, Href } from 'expo-router';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 export default function SidebarNavigation() {
+  const { theme, isDark, toggleTheme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const width = useSharedValue(260);
   const paddingH = useSharedValue(20);
@@ -42,7 +45,7 @@ export default function SidebarNavigation() {
         onPress={() => router.push(route)}
         activeOpacity={0.75}
       >
-        <MaterialIcons name={icon} size={22} color={isActive ? Theme.Colors.primary : Theme.Colors.onSurfaceVariant} />
+        <MaterialIcons name={icon} size={22} color={isActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
         {!isCollapsed && <Text style={[styles.sidebarLinkText, isActive && styles.sidebarLinkTextActive]} numberOfLines={1}>{label}</Text>}
       </TouchableOpacity>
     );
@@ -50,7 +53,7 @@ export default function SidebarNavigation() {
 
   return (
     <Animated.View style={[styles.sidebar, animatedStyles]}>
-      <BlurView intensity={70} tint="light" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255, 255, 255, 0.55)' }]} />
+      <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { backgroundColor: theme.Colors.glassFill }]} />
       
       <View style={[styles.sidebarHeader, isCollapsed && styles.sidebarHeaderCollapsed]}>
         {!isCollapsed ? (
@@ -64,7 +67,7 @@ export default function SidebarNavigation() {
           </View>
         )}
         <TouchableOpacity onPress={toggleCollapse} style={styles.collapseButton}>
-          <MaterialIcons name={isCollapsed ? "chevron-right" : "chevron-left"} size={24} color={Theme.Colors.onSurfaceVariant} />
+          <MaterialIcons name={isCollapsed ? "chevron-right" : "chevron-left"} size={24} color={theme.Colors.onSurfaceVariant} />
         </TouchableOpacity>
       </View>
 
@@ -74,14 +77,32 @@ export default function SidebarNavigation() {
         {renderSidebarLink('inventory', 'Inventory', '/tenant-inventory' as Href)}
         {renderSidebarLink('payments', 'Payments', '/tenant-payments')}
         {renderSidebarLink('support-agent', 'Support', '/tenant-maintenance')}
+        {renderSidebarLink('settings', 'Settings', '/settings' as Href)}
       </ScrollView>
 
       <View style={[styles.sidebarFooter, isCollapsed && styles.sidebarFooterCollapsed]}>
+        <TouchableOpacity 
+          style={[styles.sidebarLink, isCollapsed && styles.sidebarLinkCollapsed]} 
+          onPress={toggleTheme}
+          activeOpacity={0.75}
+        >
+          <MaterialIcons 
+            name={isDark ? "wb-sunny" : "dark-mode"} 
+            size={22} 
+            color={isDark ? "#f59e0b" : theme.Colors.onSurfaceVariant} 
+          />
+          {!isCollapsed && (
+            <Text style={styles.sidebarLinkText}>
+              {isDark ? 'Light Mode' : 'Dark Mode'}
+            </Text>
+          )}
+        </TouchableOpacity>
+
         <TouchableOpacity style={[styles.sidebarLink, isCollapsed && styles.sidebarLinkCollapsed]} onPress={async () => {
           await signOut();
           router.replace('/login');
         }}>
-          <MaterialIcons name="logout" size={22} color={Theme.Colors.onSurfaceVariant} />
+          <MaterialIcons name="logout" size={22} color={theme.Colors.onSurfaceVariant} />
           {!isCollapsed && <Text style={styles.sidebarLinkText}>Logout</Text>}
         </TouchableOpacity>
       </View>
@@ -89,13 +110,13 @@ export default function SidebarNavigation() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sidebar: {
     height: '100%',
     paddingTop: 32,
     paddingBottom: 24,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255, 255, 255, 0.8)',
+    borderRightColor: theme.Surface.border,
     overflow: 'hidden',
   },
   sidebarHeader: {
@@ -111,21 +132,21 @@ const styles = StyleSheet.create({
   },
   sidebarBrand: { flex: 1 },
   sidebarBrandCollapsed: { alignItems: 'center' },
-  sidebarBrandTitleCollapsed: { fontSize: 24, fontWeight: '800', color: Theme.Colors.primary },
+  sidebarBrandTitleCollapsed: { fontSize: 24, fontWeight: '800', color: theme.Colors.primary },
   collapseButton: {
     padding: 4,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
-  sidebarBrandTitle: { fontSize: 28, fontWeight: '800', lineHeight: 34, color: Theme.Colors.primary },
-  sidebarBrandSub: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: Theme.Colors.onSurfaceVariant, marginTop: 4 },
+  sidebarBrandTitle: { fontSize: 28, fontWeight: '800', lineHeight: 34, color: theme.Colors.primary },
+  sidebarBrandSub: { fontSize: 10, fontWeight: '700', letterSpacing: 2, color: theme.Colors.onSurfaceVariant, marginTop: 4 },
   sidebarNavScroll: { flex: 1, marginBottom: 16 },
   sidebarNav: { gap: 14, paddingBottom: 16 },
-  sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 18, borderRadius: Theme.Rounded.lg },
+  sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 18, borderRadius: theme.Rounded.lg },
   sidebarLinkCollapsed: { justifyContent: 'center', paddingHorizontal: 0 },
-  sidebarLinkActive: { backgroundColor: 'rgba(0, 224, 255, 0.10)', borderRightWidth: 4, borderRightColor: Theme.Colors.primaryContainer },
-  sidebarLinkText: { fontSize: 13, fontWeight: '700', letterSpacing: 1.6, color: Theme.Colors.onSurface },
-  sidebarLinkTextActive: { color: Theme.Colors.primary },
-  sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: Theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
+  sidebarLinkActive: { backgroundColor: 'rgba(0, 224, 255, 0.10)', borderRightWidth: 4, borderRightColor: theme.Colors.primaryContainer },
+  sidebarLinkText: { fontSize: 13, fontWeight: '700', letterSpacing: 1.6, color: theme.Colors.onSurface },
+  sidebarLinkTextActive: { color: theme.Colors.primary },
+  sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
   sidebarFooterCollapsed: { alignItems: 'center' },
 });

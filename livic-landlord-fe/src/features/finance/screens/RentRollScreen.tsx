@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -42,6 +43,9 @@ import { EmptyState } from '@/src/components/common/display/EmptyState';
 
 
 export default function RentRollScreen({ token }: { token: string | null }) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
@@ -293,12 +297,12 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (!properties || properties.length === 0) {
       return (
         <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
-          <BlurView intensity={60} tint="light" style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%' }}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%' }}>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-              <MaterialIcons name="business" size={32} color="#006875" />
+              <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
             </View>
             <Text style={{ fontSize: 20, fontWeight: '800', color: '#163235', marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
-            <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+            <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
               Generating rent rolls and invoices requires an active property. Create your first property to start running rent cycles.
             </Text>
             <TouchableOpacity 
@@ -318,7 +322,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (isInitialLoading) {
       return (
         <View style={{ flex: 1, justifyContent: 'center', padding: 40 }}>
-          <ActivityIndicator size="large" color={Theme.Colors.primary} />
+          <ActivityIndicator size="large" color={theme.Colors.primary} />
         </View>
       );
     }
@@ -331,16 +335,16 @@ export default function RentRollScreen({ token }: { token: string | null }) {
           rightAction={
             <View style={styles.selectorContainer}>
               <TouchableOpacity onPress={handlePrevMonth} style={styles.arrowBadge}>
-                <MaterialIcons name="chevron-left" size={20} color={Theme.Colors.primary} />
+                <MaterialIcons name="chevron-left" size={20} color={theme.Colors.primary} />
               </TouchableOpacity>
               <View style={styles.monthBadge}>
-                <MaterialIcons name="calendar-today" size={16} color={Theme.Colors.primary} />
+                <MaterialIcons name="calendar-today" size={16} color={theme.Colors.primary} />
                 <Text style={styles.monthBadgeText}>
                   {new Date(billingMonth + "-02").toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
                 </Text>
               </View>
               <TouchableOpacity onPress={handleNextMonth} style={styles.arrowBadge}>
-                <MaterialIcons name="chevron-right" size={20} color={Theme.Colors.primary} />
+                <MaterialIcons name="chevron-right" size={20} color={theme.Colors.primary} />
               </TouchableOpacity>
             </View>
           }
@@ -372,7 +376,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
               <MaterialIcons 
                 name={checklist && !checklist.isReady ? "warning" : "info-outline"} 
                 size={20} 
-                color={checklist && !checklist.isReady ? "#b91c1c" : Theme.Colors.primary} 
+                color={checklist && !checklist.isReady ? "#b91c1c" : theme.Colors.primary} 
               />
               <Text style={[styles.statusText, checklist && !checklist.isReady && { color: '#b91c1c' }]}>
                 {checklist && !checklist.isReady ? "Please complete required readings before generating." : `Ready to compile invoices for ${billingMonth}`}
@@ -463,7 +467,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
             </View>
 
             <View style={styles.invoiceList}>
-              {invoices.length === 0 ? (
+{invoices.length === 0 ? (
                 <EmptyState
                   iconName="search-off"
                   title="No Invoices Found"
@@ -488,7 +492,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                       <View style={styles.invoiceHeader}>
                         <View>
                           <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
-                          <Text style={{ fontSize: 12, color: Theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
+                          <Text style={{ fontSize: 12, color: theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
                         </View>
                         <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
                       </View>
@@ -510,7 +514,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                               style={[styles.recordCashBtn, { marginRight: 8 }]} 
                               onPress={() => handlePublishSingle(invoice)}
                             >
-                              <MaterialIcons name="send" size={16} color={Theme.Colors.primary} />
+                              <MaterialIcons name="send" size={16} color={theme.Colors.primary} />
                               <Text style={styles.recordCashBtnText}>Publish</Text>
                             </TouchableOpacity>
                           )}
@@ -519,7 +523,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                               style={styles.recordCashBtn} 
                               onPress={() => handleOpenCashModal(invoice)}
                             >
-                              <MaterialIcons name="payments" size={16} color={Theme.Colors.primary} />
+                              <MaterialIcons name="payments" size={16} color={theme.Colors.primary} />
                               <Text style={styles.recordCashBtnText}>Record Cash</Text>
                             </TouchableOpacity>
                           )}
@@ -595,7 +599,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                     <View style={styles.modalHeader}>
                       <Text style={styles.modalTitle}>Confirm Cash Settlement</Text>
                       <TouchableOpacity onPress={() => setShowCashModal(false)}>
-                        <MaterialIcons name="close" size={24} color={Theme.Colors.onBackground} />
+                        <MaterialIcons name="close" size={24} color={theme.Colors.onBackground} />
                       </TouchableOpacity>
                     </View>
 
@@ -678,7 +682,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
 
   const renderGlassyHeader = () => (
     <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+      <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContent}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
@@ -761,7 +765,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
 
   const renderDesktopShell = () => (
     <LinearGradient
-      colors={Theme.Colors.backgroundGradient as [string, string, string]}
+      colors={theme.Colors.backgroundGradient as [string, string, string]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
@@ -799,7 +803,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   headerContainer: {
     position: 'absolute',
     top: 0,
@@ -807,7 +811,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
@@ -831,9 +835,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassFill,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#006677',
@@ -860,7 +864,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   headerGradientText: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -869,7 +873,7 @@ const styles = StyleSheet.create({
   mobileScroll: { paddingVertical: 10, paddingHorizontal: 20 },
   inner: { width: '100%', maxWidth: 1080 },
   selectorContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  arrowBadge: { padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.45)', borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.7)' },
+  arrowBadge: { padding: 6, backgroundColor: theme.Colors.glassFill, borderRadius: 8, borderWidth: 1, borderColor: theme.Colors.glassStroke },
   monthBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -881,15 +885,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.8)',
   },
-  monthBadgeText: { fontSize: 14, fontWeight: '700', color: Theme.Colors.primary },
+  monthBadgeText: { fontSize: 14, fontWeight: '700', color: theme.Colors.primary },
   
   card: { padding: Theme.Spacing.containerPadding, alignItems: 'center', marginTop: 10 },
-  cardTitle: { ...Theme.Typography.headlineMd, color: Theme.Colors.onBackground, marginBottom: 12 },
-  cardText: { ...Theme.Typography.bodyMd, color: Theme.Colors.outline, textAlign: 'center', marginBottom: 32, maxWidth: 500, lineHeight: 22 },
+  cardTitle: { ...theme.Typography.headlineMd, color: theme.Colors.onBackground, marginBottom: 12 },
+  cardText: { ...theme.Typography.bodyMd, color: theme.Colors.outline, textAlign: 'center', marginBottom: 32, maxWidth: 500, lineHeight: 22 },
   checklistGrid: { flexDirection: 'row', gap: 24, marginBottom: 24, width: '100%', justifyContent: 'center' },
   checklistItem: { backgroundColor: 'rgba(255,255,255,0.7)', padding: 16, borderRadius: 12, alignItems: 'center', flex: 1, maxWidth: 200 },
-  checklistLabel: { fontSize: 12, fontWeight: '700', color: Theme.Colors.outline, textTransform: 'uppercase', marginBottom: 8 },
-  checklistValue: { fontSize: 20, fontWeight: '800', color: Theme.Colors.primary },
+  checklistLabel: { fontSize: 12, fontWeight: '700', color: theme.Colors.outline, textTransform: 'uppercase', marginBottom: 8 },
+  checklistValue: { fontSize: 20, fontWeight: '800', color: theme.Colors.primary },
   statusBox: { flexDirection: 'row', backgroundColor: '#e0f2fe', padding: 16, borderRadius: 12, marginBottom: 32, width: '100%', alignItems: 'center', gap: 8 },
   statusText: { fontSize: 14, fontWeight: '700', color: '#0369a1' },
   generateBtn: { width: '100%', maxWidth: 300 },
@@ -900,7 +904,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     alignItems: 'center',
   },
-  summaryLabel: { fontSize: 14, fontWeight: '700', color: Theme.Colors.outline, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
+  summaryLabel: { fontSize: 14, fontWeight: '700', color: theme.Colors.outline, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
   summaryAmount: { fontSize: 36, fontWeight: '800', color: '#00875a', marginBottom: 24 },
   summaryStatusRow: {
     flexDirection: 'row',
@@ -925,19 +929,19 @@ const styles = StyleSheet.create({
   invoiceList: { gap: 16 },
   invoiceCard: { padding: 20 },
   invoiceHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(0,104,117,0.1)' },
-  invoiceUnit: { fontSize: 16, fontWeight: '800', color: Theme.Colors.onBackground },
-  invoiceTotal: { fontSize: 18, fontWeight: '800', color: Theme.Colors.primary },
+  invoiceUnit: { fontSize: 16, fontWeight: '800', color: theme.Colors.onBackground },
+  invoiceTotal: { fontSize: 18, fontWeight: '800', color: theme.Colors.primary },
   chargesList: { gap: 8, marginBottom: 16 },
   chargeRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  chargeDesc: { fontSize: 14, color: Theme.Colors.outline, fontWeight: '500' },
-  chargeAmt: { fontSize: 14, color: Theme.Colors.onBackground, fontWeight: '600' },
+  chargeDesc: { fontSize: 14, color: theme.Colors.outline, fontWeight: '500' },
+  chargeAmt: { fontSize: 14, color: theme.Colors.onBackground, fontWeight: '600' },
   
   recordCashBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     borderWidth: 1.5,
-    borderColor: Theme.Colors.primary,
+    borderColor: theme.Colors.primary,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -946,7 +950,7 @@ const styles = StyleSheet.create({
   recordCashBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
 
   modalOverlay: {
@@ -974,11 +978,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: Theme.Colors.onBackground,
+    color: theme.Colors.onBackground,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: Theme.Colors.outline,
+    color: theme.Colors.outline,
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -988,7 +992,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: Theme.Colors.outline,
+    color: theme.Colors.outline,
     textTransform: 'uppercase',
     marginBottom: 8,
   },
@@ -1000,7 +1004,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
-    color: Theme.Colors.onBackground,
+    color: theme.Colors.onBackground,
   },
   successContainer: {
     alignItems: 'center',
@@ -1018,12 +1022,12 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: Theme.Colors.onBackground,
+    color: theme.Colors.onBackground,
     marginBottom: 8,
   },
   successSubtitle: {
     fontSize: 14,
-    color: Theme.Colors.outline,
+    color: theme.Colors.outline,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
@@ -1044,7 +1048,7 @@ const styles = StyleSheet.create({
   checkText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
   },
   receiptMeta: {
     flexDirection: 'row',
@@ -1057,7 +1061,7 @@ const styles = StyleSheet.create({
   metaLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: Theme.Colors.outline,
+    color: theme.Colors.outline,
   },
   metaValue: {
     fontSize: 16,
@@ -1079,7 +1083,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontSize: 14,
     outlineWidth: 0,
   },

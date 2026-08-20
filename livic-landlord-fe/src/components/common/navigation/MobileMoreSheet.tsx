@@ -13,6 +13,9 @@ import {
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useRouter, usePathname } from 'expo-router';
+import { useAppTheme } from '@/src/theme/ThemeContext';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { Theme } from '@/src/theme/Theme';
 
 interface MobileMoreSheetProps {
   visible: boolean;
@@ -42,6 +45,10 @@ const MENU_ITEMS: MenuItem[] = [
 export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, signOut } = useAuth();
+  const { theme, isDark, toggleTheme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  
   const translateY = useRef(new Animated.Value(300)).current;
 
   const panResponder = useRef(
@@ -78,7 +85,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
 
   const closeSheet = () => {
     Animated.timing(translateY, {
-      toValue: 350,
+      toValue: 500,
       duration: 150,
       useNativeDriver: false,
     }).start(() => {
@@ -99,13 +106,26 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
     }, 150);
   };
 
+  const handleThemeToggle = () => {
+    closeSheet();
+    setTimeout(() => {
+      toggleTheme();
+    }, 180);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    closeSheet();
+    router.replace('/login');
+  };
+
   if (!visible) return null;
 
   return (
     <Modal animationType="none" transparent visible={visible} onRequestClose={closeSheet}>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={closeSheet}>
-          <BlurView intensity={Platform.OS === 'ios' ? 40 : 60} tint="dark" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={isDark ? 80 : 60} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
         </TouchableOpacity>
 
         <Animated.View
@@ -123,9 +143,23 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
             </TouchableOpacity>
           </View>
 
+          {/* User Profile Header */}
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Navigation Menu</Text>
-            <Text style={styles.sheetSubtitle}>Select a section to manage your property</Text>
+            <View style={styles.profileRow}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{user?.fullName?.charAt(0) || 'L'}</Text>
+              </View>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>{user?.fullName || 'Landlord'}</Text>
+                <Text style={styles.profileRole}>{user?.email || 'Admin User'}</Text>
+              </View>
+              <TouchableOpacity style={styles.themeToggle} onPress={handleThemeToggle} activeOpacity={0.7}>
+                <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={theme.Colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.themeToggle, { marginLeft: 8, borderColor: theme.Colors.errorContainer, backgroundColor: theme.Colors.error + '1A' }]} onPress={handleLogout} activeOpacity={0.7}>
+                <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.gridContainer}>
@@ -155,7 +189,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -165,10 +199,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   sheetContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Surface.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    maxHeight: '80%',
+    maxHeight: '85%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
@@ -181,8 +215,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingVertical: 12,
-    cursor: 'pointer',
-  } as any,
+  },
   dragTouchZone: {
     paddingVertical: 4,
     paddingHorizontal: 24,
@@ -191,23 +224,52 @@ const styles = StyleSheet.create({
     width: 44,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: theme.Colors.outlineVariant,
   },
   sheetHeader: {
     paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: theme.Colors.surfaceVariant,
   },
-  sheetTitle: {
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.Colors.primaryContainer,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  avatarText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: theme.Colors.primary,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
   },
-  sheetSubtitle: {
+  profileRole: {
     fontSize: 13,
-    color: '#64748B',
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
+    textTransform: 'capitalize',
+  },
+  themeToggle: {
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: theme.Colors.surfaceContainerHigh,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
   },
   gridContainer: {
     padding: 20,
@@ -217,16 +279,16 @@ const styles = StyleSheet.create({
   },
   gridCard: {
     width: '48%',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: theme.Colors.outlineVariant,
     gap: 10,
   },
   gridCardActive: {
-    backgroundColor: '#F0FDFA',
-    borderColor: '#00D8F6',
+    backgroundColor: theme.Colors.primaryContainer,
+    borderColor: theme.Colors.primary,
   },
   iconBox: {
     width: 42,
@@ -241,14 +303,14 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1E293B',
+    color: theme.Colors.onSurface,
   },
   cardTitleActive: {
-    color: '#00A8C6',
-    fontWeight: '700',
+    color: theme.Colors.primary,
+    fontWeight: '800',
   },
   cardSubtitle: {
     fontSize: 11,
-    color: '#64748B',
+    color: theme.Colors.onSurfaceVariant,
   },
 });

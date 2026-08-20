@@ -12,6 +12,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, usePathname } from 'expo-router';
 import { useScrollNav } from './ScrollContext';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface BottomNavigationProps {
   onMorePress: () => void;
@@ -23,6 +24,7 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
   const router = useRouter();
   const pathname = usePathname();
   const { navTranslateY } = useScrollNav();
+  const { theme, isDark } = useAppTheme();
 
   if (pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') {
     return null;
@@ -102,14 +104,14 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
         ]}
       >
         <View style={styles.pillContainer}>
-          <BlurView intensity={Platform.OS === 'ios' ? 88 : 98} tint="light" style={styles.pillBlurBackground} />
+          <BlurView intensity={isDark ? 88 : (Platform.OS === 'ios' ? 88 : 98)} tint={isDark ? 'dark' : 'light'} style={[styles.pillBlurBackground, { backgroundColor: isDark ? 'rgba(28, 37, 46, 0.7)' : 'rgba(255, 255, 255, 0.7)' }]} />
           <View style={styles.pillContent}>
             {/* Home Button */}
             <TouchableOpacity style={styles.navItem} onPress={handleHomePress} activeOpacity={0.7}>
               <View style={[styles.iconCircle, isHomeActive && styles.iconCircleActive]}>
-                <MaterialIcons name="home" size={22} color={isHomeActive ? '#00A8C6' : '#64748B'} />
+                <MaterialIcons name="home" size={22} color={isHomeActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
               </View>
-              <Text style={[styles.navText, isHomeActive && styles.navTextActive]}>Home</Text>
+              <Text style={[styles.navText, { color: isHomeActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant }, isHomeActive && styles.navTextActive]}>Home</Text>
             </TouchableOpacity>
 
             {/* Protruding Centerpiece Camera Button */}
@@ -124,9 +126,9 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
             {/* More Button */}
             <TouchableOpacity style={styles.navItem} onPress={onMorePress} activeOpacity={0.7}>
               <View style={styles.iconCircle}>
-                <MaterialIcons name="widgets" size={22} color="#64748B" />
+                <MaterialIcons name="widgets" size={22} color={theme.Colors.onSurfaceVariant} />
               </View>
-              <Text style={styles.navText}>More</Text>
+              <Text style={[styles.navText, { color: theme.Colors.onSurfaceVariant }]}>More</Text>
             </TouchableOpacity>
           </View>
         </View>

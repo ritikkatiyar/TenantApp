@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/src/features/auth/context/AuthProvider';
+import { ThemeContextProvider } from '@/src/theme/ThemeContext';
 import BottomNavigation from '@/src/components/common/navigation/BottomNavigation';
 import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigation';
 import MobileHeader from '@/src/components/common/navigation/MobileHeader';
@@ -73,10 +74,14 @@ export default function RootLayout() {
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = mounted && isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
+  if (!mounted && Platform.OS === 'web') {
+    return <View style={{ flex: 1, backgroundColor: '#f9fafa' }} />;
+  }
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeContextProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <ToastProvider>
           <AuthProvider>
             <ScrollProvider>
@@ -138,7 +143,8 @@ export default function RootLayout() {
           </AuthProvider>
         </ToastProvider>
         <StatusBar style="dark" translucent backgroundColor="transparent" />
-      </ThemeProvider>
+        </ThemeProvider>
+      </ThemeContextProvider>
     </SafeAreaProvider>
   );
 }

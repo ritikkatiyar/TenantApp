@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -33,6 +34,9 @@ export function InventoryRegistryView({
   onToggleService,
   onAddItem,
 }: InventoryRegistryViewProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const displayStats = stats && stats.length > 0 ? stats : inventoryStats;
   const count = totalCount !== undefined ? totalCount : items.length;
 
@@ -40,7 +44,7 @@ export function InventoryRegistryView({
     <View style={styles.sectionStack}>
       <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>
         {displayStats.map((stat, i) => (
-          <BlurView key={stat.label} intensity={55} tint="light" style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
+          <BlurView key={stat.label} intensity={55} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
             <LinearGradient colors={STAT_GRAD[i % STAT_GRAD.length]} style={styles.statIconCircle}>
               <MaterialIcons name={stat.icon as any} size={18} color="#fff" />
             </LinearGradient>
@@ -51,7 +55,7 @@ export function InventoryRegistryView({
         ))}
       </View>
 
-      <BlurView intensity={60} tint="light" style={styles.panel}>
+      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.panel}>
         <View style={[styles.panelHeader, !isDesktop && styles.panelHeaderMobile]}>
           <View>
             <Text style={styles.panelTitle}>Itemized Registry</Text>
@@ -116,7 +120,7 @@ export function InventoryRegistryView({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sectionStack: { gap: 16 },
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statsRowDesktop: { flexWrap: 'nowrap' },

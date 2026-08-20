@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -26,8 +27,11 @@ export function MeterReadingSummary({
   totalConsumption,
   totalEstimatedCost,
 }: MeterReadingSummaryProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
-    <BlurView intensity={80} tint="light" style={styles.summaryCard}>
+    <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.summaryCard}>
       <Text style={styles.summaryCardTitle}>WORKSHEET SUMMARY</Text>
       
       <View style={styles.summaryMetricsGrid}>
@@ -62,7 +66,7 @@ export function MeterReadingSummary({
 
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Total Consumption</Text>
-        <Text style={[styles.summaryValue, { color: '#006875', fontSize: 16 }]}>
+        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: 16 }]}>
           {totalConsumption.toFixed(2)} {unitType || 'Units'}
         </Text>
       </View>
@@ -86,11 +90,11 @@ export function MeterReadingSummary({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   summaryCard: {
     padding: 24,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.75)',
     overflow: 'hidden',
@@ -98,7 +102,7 @@ const styles = StyleSheet.create({
   summaryCardTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: 20,
     fontFamily: 'Inter',
@@ -118,7 +122,7 @@ const styles = StyleSheet.create({
   summaryMetricLabel: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
     fontFamily: 'Inter',
   },
@@ -142,7 +146,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 13,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
     fontFamily: 'Inter',
   },

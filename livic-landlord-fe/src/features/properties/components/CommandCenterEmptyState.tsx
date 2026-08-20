@@ -3,14 +3,17 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface CommandCenterEmptyStateProps {
   onNavigateToCreateProperty: () => void;
 }
 
 export function CommandCenterEmptyState({ onNavigateToCreateProperty }: CommandCenterEmptyStateProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   return (
-    <BlurView intensity={40} tint="light" style={styles.emptyCard}>
+    <BlurView intensity={40} tint={isDark ? "dark" : "light"} style={styles.emptyCard}>
       <View style={styles.emptyIconCircle}>
         <MaterialIcons name="domain-disabled" size={36} color="#6b7a7d" />
       </View>
@@ -43,14 +46,14 @@ export function CommandCenterEmptyState({ onNavigateToCreateProperty }: CommandC
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   emptyCard: {
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     padding: 40,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderColor: theme.Surface.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.05,
@@ -61,23 +64,23 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 24,
-    backgroundColor: 'rgba(0, 104, 117, 0.06)',
+    backgroundColor: theme.Colors.primaryContainer,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.08)',
+    borderColor: theme.Colors.primaryContainer,
   },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     marginBottom: 10,
     fontFamily: 'Inter',
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 22,
     maxWidth: 380,
@@ -116,7 +119,7 @@ const styles = StyleSheet.create({
   learnMoreText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1,
     fontFamily: 'Inter',
   },

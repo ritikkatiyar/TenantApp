@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, ActivityIndicator, View, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface ActionButtonProps {
   title: string;
@@ -25,6 +25,9 @@ export function ActionButton({
   style,
   textStyle,
 }: ActionButtonProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const isInteractionDisabled = disabled || loading;
 
   const renderContent = () => {
@@ -33,14 +36,14 @@ export function ActionButton({
         {loading ? (
           <ActivityIndicator
             size="small"
-            color={variant === 'outline' || variant === 'secondary' ? Theme.Colors.primary : '#ffffff'}
+            color={variant === 'outline' || variant === 'secondary' ? theme.Colors.primary : '#ffffff'}
             style={styles.loader}
           />
         ) : iconName ? (
           <MaterialIcons
             name={iconName}
             size={18}
-            color={variant === 'outline' || variant === 'secondary' ? Theme.Colors.primary : '#ffffff'}
+            color={variant === 'outline' || variant === 'secondary' ? theme.Colors.primary : '#ffffff'}
             style={styles.icon}
           />
         ) : null}
@@ -66,7 +69,7 @@ export function ActionButton({
         style={[styles.button, styles.primaryButtonShadow, style]}
       >
         <LinearGradient
-          colors={[Theme.Colors.accentGradientStart || '#00e0ff', Theme.Colors.accentGradientEnd || '#0070ea']}
+          colors={[theme.Colors.accentGradientStart || '#00e0ff', theme.Colors.accentGradientEnd || '#0070ea']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.gradient}
@@ -107,10 +110,10 @@ export function ActionButton({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   button: {
     height: 48,
-    borderRadius: Theme.Rounded.md,
+    borderRadius: theme.Rounded.md,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -120,32 +123,32 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Theme.Spacing.gutter,
+    paddingHorizontal: theme.Spacing.gutter,
   },
   primaryButtonShadow: {
-    boxShadow: '0px 4px 15px rgba(0, 112, 234, 0.25)',
+    boxShadow: isDark ? '0px 4px 15px rgba(0, 229, 255, 0.25)' : '0px 4px 15px rgba(0, 112, 234, 0.25)',
   },
   primaryDisabled: {
     backgroundColor: '#99d9f9',
-    paddingHorizontal: Theme.Spacing.gutter,
+    paddingHorizontal: theme.Spacing.gutter,
   },
   secondary: {
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-    paddingHorizontal: Theme.Spacing.gutter,
+    backgroundColor: theme.Colors.primaryContainer,
+    paddingHorizontal: theme.Spacing.gutter,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: Theme.Colors.primary,
-    paddingHorizontal: Theme.Spacing.gutter,
+    borderColor: theme.Colors.primary,
+    paddingHorizontal: theme.Spacing.gutter,
   },
   danger: {
-    backgroundColor: Theme.Colors.error,
-    paddingHorizontal: Theme.Spacing.gutter,
+    backgroundColor: theme.Colors.error,
+    paddingHorizontal: theme.Spacing.gutter,
   },
   disabled: {
-    backgroundColor: 'rgba(107, 122, 125, 0.12)',
-    paddingHorizontal: Theme.Spacing.gutter,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(107, 122, 125, 0.12)',
+    paddingHorizontal: theme.Spacing.gutter,
   },
   contentRow: {
     flexDirection: 'row',
@@ -153,20 +156,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    ...Theme.Typography.buttonText,
+    ...theme.Typography.buttonText,
     color: '#ffffff',
     textAlign: 'center',
   },
   textSecondary: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   textOutline: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   loader: {
-    marginRight: Theme.Spacing.stackSm,
+    marginRight: theme.Spacing.stackSm,
   },
   icon: {
-    marginRight: Theme.Spacing.stackSm,
+    marginRight: theme.Spacing.stackSm,
   },
 });

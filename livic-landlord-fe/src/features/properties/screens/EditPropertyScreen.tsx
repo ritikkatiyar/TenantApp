@@ -18,11 +18,12 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { getProperty, updateProperty } from '@/src/features/properties/api/property.api';
 import { generateBatchUnits, getFloorSummaries } from '@/src/features/properties/api/unit.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useRouter, Href } from 'expo-router';
 import Building3DView from '@/src/features/properties/components/Building3DView';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
@@ -51,6 +52,9 @@ export default function EditPropertyScreen({
   onSave,
   onConfigureFloors
 }: EditPropertyScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const { user, signOut } = useAuth();
@@ -317,7 +321,7 @@ export default function EditPropertyScreen({
       onPress={route ? () => (route === '/command-center' ? onBack() : router.push(route)) : undefined}
       activeOpacity={route ? 0.75 : 1}
     >
-      <MaterialIcons name={icon} size={22} color={active ? Theme.Colors.primary : Theme.Colors.onSurfaceVariant} />
+      <MaterialIcons name={icon} size={22} color={active ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
       <Text style={[styles.sidebarLinkText, active && styles.sidebarLinkTextActive]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -427,7 +431,7 @@ export default function EditPropertyScreen({
         end={{ x: 1, y: 1 }}
         style={styles.container}
       >
-        <ActivityIndicator size="large" color={Theme.Colors.primary} style={styles.loader} />
+        <ActivityIndicator size="large" color={theme.Colors.primary} style={styles.loader} />
       </LinearGradient>
     );
   }
@@ -444,45 +448,7 @@ export default function EditPropertyScreen({
       style={styles.container}
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
-        {/* Pinned Glassy Overlay Back Header */}
-        <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
-            </TouchableOpacity>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.compactTitleText}>Edit Property</Text>
-            </View>
-            <TouchableOpacity
-              onPress={handleUpdate}
-              disabled={saving}
-              style={{
-                borderRadius: 100,
-                overflow: 'hidden',
-                shadowColor: '#00d4ff',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 4,
-              }}
-            >
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{ paddingVertical: 8, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 4 }}
-              >
-                {saving ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </View>
-
+        <FloatingBackButton onPress={onBack} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}
@@ -496,112 +462,10 @@ export default function EditPropertyScreen({
             )}
             scrollEventThrottle={16}
           >
-
             <BlurView intensity={60} tint="light" style={styles.card}>
-              <Text style={styles.sectionTitle}>BASIC INFORMATION</Text>
-              
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>PROPERTY NAME</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Lumina Heights"
-                  value={name}
-                  onChangeText={setName}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>ADDRESS</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Street address"
-                  value={address}
-                  onChangeText={setAddress}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>CITY</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. New York"
-                  value={city}
-                  onChangeText={setCity}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>LANDMARK (OPTIONAL)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Near Central Park"
-                  value={landmark}
-                  onChangeText={setLandmark}
-                />
-              </View>
-
-              <View style={[styles.row, !isDesktop && { flexDirection: 'column', gap: 0 }]}>
-                <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.label}>TOTAL FLOORS</Text>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      style={styles.inputWithIcon}
-                      placeholder="0"
-                      value={totalFloors}
-                      onChangeText={(val) => setTotalFloors(val.replace(/[^0-9]/g, ''))}
-                      keyboardType="numeric"
-                    />
-                    <MaterialIcons name="layers" size={20} color="#bac9cc" style={styles.inputIcon} />
-                  </View>
-                </View>
-
-                <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.label}>GLOBAL UNITS/FLOOR</Text>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      style={[styles.inputWithIcon, hasConfiguredFloor && { opacity: 0.5, backgroundColor: 'rgba(230, 230, 230, 0.3)' }]}
-                      placeholder={hasConfiguredFloor ? "Disabled (Units exist)" : "Optional"}
-                      value={globalUnitsPerFloor}
-                      onChangeText={(val) => setGlobalUnitsPerFloor(val.replace(/[^0-9]/g, ''))}
-                      keyboardType="numeric"
-                      editable={!hasConfiguredFloor}
-                    />
-                    <MaterialIcons name="grid-on" size={20} color="#bac9cc" style={styles.inputIcon} />
-                  </View>
-                </View>
-
-                {globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0 && (
-                  <View style={[styles.inputGroup, { flex: 1.2 }]}>
-                    <Text style={styles.label}>GLOBAL UNIT TYPE</Text>
-                    <GlassDropdown
-                      ref={unitTypeDropdownRefMobile}
-                      options={UNIT_TYPE_OPTIONS}
-                      value={globalUnitType}
-                      onChange={setGlobalUnitType}
-                      placeholder="Select Unit Type"
-                      icon="home"
-                    />
-                  </View>
-                )}
-              </View>
-
+              {renderFormFieldsContent(true)}
               <View style={styles.divider} />
-
-              <Text style={styles.sectionTitle}>STRUCTURE & UNITS</Text>
-              <TouchableOpacity 
-                style={styles.configButton}
-                activeOpacity={0.7}
-                onPress={onConfigureFloors}
-              >
-                <View style={styles.configIconWrapper}>
-                  <MaterialIcons name="layers" size={24} color="#006875" />
-                </View>
-                <View style={styles.configTextWrapper}>
-                  <Text style={styles.configTitle}>CONFIGURE FLOORS</Text>
-                  <Text style={styles.configSubtitle}>Manage floors, units, and layout</Text>
-                </View>
-                <MaterialIcons name="chevron-right" size={24} color="#6b7a7d" />
-              </TouchableOpacity>
+              {renderConfigCardContent()}
             </BlurView>
           </Animated.ScrollView>
         </KeyboardAvoidingView>
@@ -610,7 +474,7 @@ export default function EditPropertyScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -834,13 +698,13 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '800',
     lineHeight: 40,
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   sidebarBrandSub: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 2,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
   },
   sidebarNav: {
@@ -852,34 +716,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     paddingHorizontal: 18,
-    borderRadius: Theme.Rounded.lg,
+    borderRadius: theme.Rounded.lg,
   },
   sidebarLinkActive: {
     backgroundColor: 'rgba(0, 224, 255, 0.10)',
     borderRightWidth: 4,
-    borderRightColor: Theme.Colors.primaryContainer,
+    borderRightColor: theme.Colors.primaryContainer,
   },
   sidebarLinkText: {
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1.6,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   sidebarLinkTextActive: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   sidebarFooter: {
     marginTop: 'auto',
     borderTopWidth: 1,
-    borderTopColor: Theme.Colors.outlineVariant,
+    borderTopColor: theme.Colors.outlineVariant,
     paddingTop: 28,
     gap: 10,
   },
   upgradeButton: {
-    borderRadius: Theme.Rounded.lg,
+    borderRadius: theme.Rounded.lg,
     overflow: 'hidden',
     marginBottom: 14,
-    shadowColor: Theme.Colors.secondary,
+    shadowColor: theme.Colors.secondary,
     shadowOpacity: 0.24,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -914,12 +778,12 @@ const styles = StyleSheet.create({
   },
   topbarTab: {
     fontSize: 18,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   topbarTabActive: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     borderBottomWidth: 2,
-    borderBottomColor: Theme.Colors.primaryContainer,
+    borderBottomColor: theme.Colors.primaryContainer,
     paddingBottom: 8,
   },
   topbarRight: {
@@ -1069,8 +933,8 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 3,
-    borderColor: Theme.Colors.primaryContainer,
-    backgroundColor: Theme.Colors.primary,
+    borderColor: theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

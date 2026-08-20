@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { getProperty } from '@/src/features/properties/api/property.api';
@@ -48,6 +48,9 @@ export default function FloorListOverviewScreen({
   onBack,
   onEditFloor
 }: FloorListOverviewScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const router = useRouter();
@@ -164,7 +167,7 @@ export default function FloorListOverviewScreen({
       onPress={route ? () => (route === '/command-center' ? onBack() : router.push(route)) : undefined}
       activeOpacity={route ? 0.75 : 1}
     >
-      <MaterialIcons name={icon} size={22} color={active ? Theme.Colors.primary : Theme.Colors.onSurfaceVariant} />
+      <MaterialIcons name={icon} size={22} color={active ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
       <Text style={[styles.sidebarLinkText, active && styles.sidebarLinkTextActive]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -389,7 +392,7 @@ export default function FloorListOverviewScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
   },
@@ -622,13 +625,13 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '800',
     lineHeight: 40,
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   sidebarBrandSub: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 2,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
   },
   sidebarNav: {
@@ -640,34 +643,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     paddingHorizontal: 18,
-    borderRadius: Theme.Rounded.lg,
+    borderRadius: theme.Rounded.lg,
   },
   sidebarLinkActive: {
     backgroundColor: 'rgba(0, 224, 255, 0.10)',
     borderRightWidth: 4,
-    borderRightColor: Theme.Colors.primaryContainer,
+    borderRightColor: theme.Colors.primaryContainer,
   },
   sidebarLinkText: {
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1.6,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   sidebarLinkTextActive: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   sidebarFooter: {
     marginTop: 'auto',
     borderTopWidth: 1,
-    borderTopColor: Theme.Colors.outlineVariant,
+    borderTopColor: theme.Colors.outlineVariant,
     paddingTop: 28,
     gap: 10,
   },
   upgradeButton: {
-    borderRadius: Theme.Rounded.lg,
+    borderRadius: theme.Rounded.lg,
     overflow: 'hidden',
     marginBottom: 14,
-    shadowColor: Theme.Colors.secondary,
+    shadowColor: theme.Colors.secondary,
     shadowOpacity: 0.24,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -702,12 +705,12 @@ const styles = StyleSheet.create({
   },
   topbarTab: {
     fontSize: 18,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   topbarTabActive: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     borderBottomWidth: 2,
-    borderBottomColor: Theme.Colors.primaryContainer,
+    borderBottomColor: theme.Colors.primaryContainer,
     paddingBottom: 8,
   },
   topbarRight: {
@@ -735,8 +738,8 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 3,
-    borderColor: Theme.Colors.primaryContainer,
-    backgroundColor: Theme.Colors.primary,
+    borderColor: theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

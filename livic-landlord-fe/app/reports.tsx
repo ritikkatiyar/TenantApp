@@ -18,7 +18,7 @@ import { useProperties } from '@/src/hooks/useProperties';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { listRentCycles, RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
 import { fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
@@ -34,6 +34,9 @@ const STATUS_OPTIONS = [
 ];
 
 export default function ReportsRoute() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { accessToken } = useAuth();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
@@ -221,7 +224,7 @@ export default function ReportsRoute() {
           {/* Month Selector */}
           <View style={styles.monthSelector}>
             <TouchableOpacity onPress={handlePrevMonth} style={styles.monthArrow}>
-              <MaterialIcons name="chevron-left" size={24} color={Theme.Colors.primary} />
+              <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
             </TouchableOpacity>
             <Text style={styles.monthLabel}>
               {new Date(billingMonth + '-02').toLocaleDateString(undefined, {
@@ -230,7 +233,7 @@ export default function ReportsRoute() {
               })}
             </Text>
             <TouchableOpacity onPress={handleNextMonth} style={styles.monthArrow}>
-              <MaterialIcons name="chevron-right" size={24} color={Theme.Colors.primary} />
+              <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -322,7 +325,7 @@ export default function ReportsRoute() {
       <GlassCard style={[styles.listCard, isDesktop && styles.listCardDesktop]}>
         {isLoading ? (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color={Theme.Colors.primary} />
+            <ActivityIndicator size="large" color={theme.Colors.primary} />
             <Text style={styles.loadingText}>Fetching statements...</Text>
           </View>
         ) : statements.length > 0 ? (
@@ -386,7 +389,7 @@ export default function ReportsRoute() {
                       style={styles.downloadBtn}
                       activeOpacity={0.7}
                     >
-                      <MaterialIcons name="download" size={20} color={Theme.Colors.primary} />
+                      <MaterialIcons name="download" size={20} color={theme.Colors.primary} />
                       <Text style={styles.downloadBtnText}>PDF</Text>
                     </TouchableOpacity>
                   </>
@@ -409,7 +412,7 @@ export default function ReportsRoute() {
                         onPress={() => handleOpenStatement(stmt.id)}
                         style={styles.downloadBtn}
                       >
-                        <MaterialIcons name="download" size={18} color={Theme.Colors.primary} />
+                        <MaterialIcons name="download" size={18} color={theme.Colors.primary} />
                         <Text style={styles.downloadBtnText}>View</Text>
                       </TouchableOpacity>
                     </View>
@@ -456,7 +459,7 @@ export default function ReportsRoute() {
                   <MaterialIcons
                     name="chevron-left"
                     size={22}
-                    color={page === 0 ? '#9ca3af' : Theme.Colors.primary}
+                    color={page === 0 ? '#9ca3af' : theme.Colors.primary}
                   />
                   <Text style={[styles.pageBtnText, page === 0 && styles.pageBtnTextDisabled]}>
                     Prev
@@ -482,7 +485,7 @@ export default function ReportsRoute() {
                   <MaterialIcons
                     name="chevron-right"
                     size={22}
-                    color={page + 1 >= totalPages ? '#9ca3af' : Theme.Colors.primary}
+                    color={page + 1 >= totalPages ? '#9ca3af' : theme.Colors.primary}
                   />
                 </TouchableOpacity>
               </View>
@@ -500,9 +503,9 @@ export default function ReportsRoute() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
-    padding: Theme.Spacing.containerPadding,
+    padding: theme.Spacing.containerPadding,
     paddingTop: Platform.OS === 'web' ? 24 : 88,
   },
   containerDesktop: {
@@ -554,12 +557,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   sectionTitle: {
-    ...Theme.Typography.headlineMd,
-    color: Theme.Colors.onBackground,
+    ...theme.Typography.headlineMd,
+    color: theme.Colors.onBackground,
   },
   sectionSubtitle: {
-    ...Theme.Typography.labelMuted,
-    color: Theme.Colors.outline,
+    ...theme.Typography.labelMuted,
+    color: theme.Colors.outline,
     marginTop: 4,
     maxWidth: 540,
   },
@@ -567,7 +570,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
@@ -579,7 +582,7 @@ const styles = StyleSheet.create({
   monthLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: Theme.Colors.onBackground,
+    color: theme.Colors.onBackground,
     marginHorizontal: 12,
     minWidth: 130,
     textAlign: 'center',
@@ -597,19 +600,19 @@ const styles = StyleSheet.create({
   propTab: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
   propTabActive: {
-    backgroundColor: Theme.Colors.primary,
-    borderColor: Theme.Colors.primary,
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   propTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
   },
   propTabTextActive: {
     color: '#fff',
@@ -684,7 +687,7 @@ const styles = StyleSheet.create({
   headerCell: {
     fontSize: 12,
     fontWeight: '700',
-    color: Theme.Colors.outline,
+    color: theme.Colors.outline,
     textTransform: 'uppercase',
   },
   row: {
@@ -702,7 +705,7 @@ const styles = StyleSheet.create({
   },
   cell: {
     fontSize: 14,
-    color: Theme.Colors.onBackground,
+    color: theme.Colors.onBackground,
   },
   tenantAvatar: {
     width: 32,
@@ -731,7 +734,7 @@ const styles = StyleSheet.create({
   downloadBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   mobileCard: {
     width: '100%',
@@ -750,7 +753,7 @@ const styles = StyleSheet.create({
   mobileTenantName: {
     fontSize: 15,
     fontWeight: '800',
-    color: Theme.Colors.onBackground,
+    color: theme.Colors.onBackground,
   },
   mobileCardDetail: {
     flexDirection: 'row',
@@ -760,7 +763,7 @@ const styles = StyleSheet.create({
   },
   mobileDetailLabel: {
     fontSize: 13,
-    color: Theme.Colors.outline,
+    color: theme.Colors.outline,
     fontWeight: '500',
   },
   mobileDueDate: {
@@ -779,7 +782,7 @@ const styles = StyleSheet.create({
   mobileAmount: {
     fontSize: 13,
     fontWeight: '700',
-    color: Theme.Colors.onBackground,
+    color: theme.Colors.onBackground,
   },
   paginationBar: {
     flexDirection: 'row',
@@ -819,7 +822,7 @@ const styles = StyleSheet.create({
   pageBtnText: {
     fontSize: 13,
     fontWeight: '600',
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   pageBtnTextDisabled: {
     color: '#9ca3af',
@@ -833,7 +836,7 @@ const styles = StyleSheet.create({
   pageNumberText: {
     fontSize: 13,
     fontWeight: '700',
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   center: {
     padding: 48,

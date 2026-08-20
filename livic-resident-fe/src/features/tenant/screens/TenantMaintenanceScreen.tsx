@@ -7,8 +7,9 @@ import { BlurView } from 'expo-blur';
 
 import { useResponsive } from '@/hooks/useResponsive';
 import { getMaintenanceTickets, getTicketHealthStats, createMaintenanceTicket, MaintenanceTicket, TicketHealthStats } from '@/src/features/tenant/api/maintenance.api';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface TenantMaintenanceScreenProps {
@@ -20,6 +21,9 @@ const CATEGORIES = ['PLUMBING', 'ELECTRICAL', 'HVAC', 'APPLIANCE', 'GENERAL'];
 const PRIORITIES = ['STANDARD', 'HIGH', 'URGENT'];
 
 export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaintenanceScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { isDesktop } = useResponsive();
   const insets = useSafeAreaInsets();
   const { handleScroll } = useScrollNav();
@@ -81,7 +85,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
 
   return (
     <LinearGradient
-      colors={Theme.Colors.backgroundGradient as [string, string, string]}
+      colors={theme.Colors.backgroundGradient as [string, string, string]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.root}
@@ -90,39 +94,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
         {isDesktop ? (
           <DesktopNavBar title="Maintenance & Service Center" />
         ) : (
-          <View style={[styles.mobileHeaderContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-            <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
-            <View style={styles.mobileHeaderContent}>
-              <Text style={styles.mobileHeaderTitle}>Maintenance</Text>
-              <TouchableOpacity
-                onPress={handleSubmit}
-                disabled={!title.trim() || !description.trim() || submitting}
-                style={{
-                  borderRadius: 100,
-                  overflow: 'hidden',
-                  shadowColor: '#00d4ff',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 4,
-                  opacity: (!title.trim() || !description.trim() || submitting) ? 0.5 : 1,
-                }}
-              >
-                <LinearGradient
-                  colors={['#00e0ff', '#0070ea']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{ paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                >
-                  {submitting ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>Submit</Text>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <FloatingBackButton />
         )}
 
         <ScrollView 
@@ -135,7 +107,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
           <BlurView intensity={70} tint="light" style={styles.glassCard}>
             <View style={styles.formHeaderRow}>
               <View style={styles.iconBox}>
-                <MaterialIcons name="build" size={24} color={Theme.Colors.primary} />
+                <MaterialIcons name="build" size={24} color={theme.Colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>Log New Maintenance Ticket</Text>
@@ -147,7 +119,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
             <TextInput
               style={styles.input}
               placeholder="e.g., Water leakage under bathroom sink"
-              placeholderTextColor={Theme.Colors.outline}
+              placeholderTextColor={theme.Colors.outline}
               value={title}
               onChangeText={setTitle}
             />
@@ -184,7 +156,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Describe the issue in detail, symptoms, when it started..."
-              placeholderTextColor={Theme.Colors.outline}
+              placeholderTextColor={theme.Colors.outline}
               multiline
               numberOfLines={4}
               value={description}
@@ -192,7 +164,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
             />
 
             <TouchableOpacity style={styles.uploadBox} activeOpacity={0.8}>
-              <MaterialIcons name="cloud-upload" size={26} color={Theme.Colors.primary} />
+              <MaterialIcons name="cloud-upload" size={26} color={theme.Colors.primary} />
               <Text style={styles.uploadText}>Attach photos or video proof (Optional)</Text>
             </TouchableOpacity>
 
@@ -230,7 +202,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
             <Text style={styles.promoTitle}>Need immediate DIY fixes?</Text>
             <Text style={styles.promoDesc}>Our AI assistant provides instant troubleshooting guides for circuit breakers, AC resets, and plumbing shutoffs.</Text>
             <TouchableOpacity style={styles.promoBtn} onPress={() => setShowAiModal(true)} activeOpacity={0.85}>
-              <MaterialIcons name="smart-toy" size={20} color={Theme.Colors.primary} />
+              <MaterialIcons name="smart-toy" size={20} color={theme.Colors.primary} />
               <Text style={styles.promoBtnText}>Open AI Assistance</Text>
             </TouchableOpacity>
             <MaterialIcons name="psychology" size={130} color="rgba(255,255,255,0.12)" style={styles.promoBgIcon} />
@@ -242,13 +214,13 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
             
             <View style={styles.healthRow}>
               <View style={styles.healthRowLeft}>
-                <View style={[styles.healthPill, { backgroundColor: Theme.Colors.primary }]} />
+                <View style={[styles.healthPill, { backgroundColor: theme.Colors.primary }]} />
                 <View>
                   <Text style={styles.healthLabel}>Active Open Tickets</Text>
-                  <Text style={[styles.healthValue, { color: Theme.Colors.primary }]}>{stats?.pendingCount || tickets.length || '02'}</Text>
+                  <Text style={[styles.healthValue, { color: theme.Colors.primary }]}>{stats?.pendingCount || tickets.length || '02'}</Text>
                 </View>
               </View>
-              <MaterialIcons name="trending-up" size={24} color={Theme.Colors.primary} />
+              <MaterialIcons name="trending-up" size={24} color={theme.Colors.primary} />
             </View>
 
             <View style={styles.healthRow}>
@@ -283,16 +255,16 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
                     </View>
                     <View style={styles.historyItemRight}>
                       <View style={[styles.statusBadge, { backgroundColor: 'rgba(0, 104, 117, 0.12)' }]}>
-                        <Text style={[styles.statusBadgeText, { color: Theme.Colors.primary }]}>{t.status}</Text>
+                        <Text style={[styles.statusBadgeText, { color: theme.Colors.primary }]}>{t.status}</Text>
                       </View>
                     </View>
                   </View>
                 ))
               ) : (
                 <View style={{ padding: 28, alignItems: 'center' }}>
-                  <MaterialIcons name="build-circle" size={40} color={Theme.Colors.primary} style={{ marginBottom: 8 }} />
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: Theme.Colors.onBackground }}>No Active Service Tickets</Text>
-                  <Text style={{ fontSize: 13, color: Theme.Colors.onSurfaceVariant, marginTop: 4 }}>Submit a request above if you require maintenance support.</Text>
+                  <MaterialIcons name="build-circle" size={40} color={theme.Colors.primary} style={{ marginBottom: 8 }} />
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: theme.Colors.onBackground }}>No Active Service Tickets</Text>
+                  <Text style={{ fontSize: 13, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>Submit a request above if you require maintenance support.</Text>
                 </View>
               )}
             </View>
@@ -325,7 +297,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>AI Troubleshooting Desk</Text>
                   <TouchableOpacity onPress={() => setShowAiModal(false)}>
-                    <MaterialIcons name="close" size={24} color={Theme.Colors.onBackground} />
+                    <MaterialIcons name="close" size={24} color={theme.Colors.onBackground} />
                   </TouchableOpacity>
                 </View>
                 <ScrollView style={{ maxHeight: 280 }}>
@@ -350,7 +322,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 20 },
@@ -381,7 +353,7 @@ const styles = StyleSheet.create({
     padding: 22,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: Theme.Colors.primary,
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
     shadowRadius: 20,
@@ -390,22 +362,22 @@ const styles = StyleSheet.create({
   },
   formHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
   iconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { fontSize: 20, fontWeight: '800', color: Theme.Colors.onBackground },
-  cardSubtitle: { fontSize: 13, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+  cardTitle: { fontSize: 20, fontWeight: '800', color: theme.Colors.onBackground },
+  cardSubtitle: { fontSize: 13, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   
-  label: { fontSize: 13, fontWeight: '800', color: Theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, marginTop: 14 },
-  input: { backgroundColor: 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.4)', borderRadius: 14, padding: 14, fontSize: 15, color: Theme.Colors.onBackground },
+  label: { fontSize: 13, fontWeight: '800', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, marginTop: 14 },
+  input: { backgroundColor: 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.4)', borderRadius: 14, padding: 14, fontSize: 15, color: theme.Colors.onBackground },
   textArea: { minHeight: 90, textAlignVertical: 'top' },
   
   pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pickerChip: { backgroundColor: 'rgba(255, 255, 255, 0.8)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.4)' },
-  pickerChipActive: { backgroundColor: Theme.Colors.primary, borderColor: Theme.Colors.primary },
+  pickerChipActive: { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
   pickerChipActivePrio: { backgroundColor: '#ba1a1a', borderColor: '#ba1a1a' },
-  pickerChipText: { fontSize: 12, fontWeight: '700', color: Theme.Colors.onSurfaceVariant },
+  pickerChipText: { fontSize: 12, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
   pickerChipTextActive: { color: '#fff' },
 
   uploadBox: { borderWidth: 2, borderColor: 'rgba(0, 104, 117, 0.25)', borderStyle: 'dashed', borderRadius: 16, padding: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.4)', marginTop: 18, marginBottom: 18 },
-  uploadText: { fontSize: 13, fontWeight: '700', color: Theme.Colors.primary, marginTop: 6 },
+  uploadText: { fontSize: 13, fontWeight: '700', color: theme.Colors.primary, marginTop: 6 },
   
   submitBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   submitBtnDisabled: { opacity: 0.5 },
@@ -417,27 +389,27 @@ const styles = StyleSheet.create({
   promoTitle: { color: '#fff', fontSize: 20, fontWeight: '800', marginBottom: 6, zIndex: 1 },
   promoDesc: { color: 'rgba(255,255,255,0.9)', fontSize: 13, lineHeight: 20, marginBottom: 16, width: '80%', zIndex: 1 },
   promoBtn: { backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
-  promoBtnText: { color: Theme.Colors.primary, fontSize: 13, fontWeight: '800' },
+  promoBtnText: { color: theme.Colors.primary, fontSize: 13, fontWeight: '800' },
   promoBgIcon: { position: 'absolute', right: -25, bottom: -25 },
 
   healthCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, padding: 22, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
-  healthTitle: { fontSize: 18, fontWeight: '800', color: Theme.Colors.onBackground, marginBottom: 16 },
+  healthTitle: { fontSize: 18, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 16 },
   healthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.25)' },
   healthRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   healthPill: { width: 6, height: 32, borderRadius: 3 },
-  healthLabel: { fontSize: 12, fontWeight: '700', color: Theme.Colors.onSurfaceVariant },
+  healthLabel: { fontSize: 12, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
   healthValue: { fontSize: 20, fontWeight: '800' },
 
-  historyCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', shadowColor: Theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
+  historyCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
   historyHeader: { padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.3)' },
-  historyTitle: { fontSize: 18, fontWeight: '800', color: Theme.Colors.onBackground },
-  historySub: { fontSize: 12, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+  historyTitle: { fontSize: 18, fontWeight: '800', color: theme.Colors.onBackground },
+  historySub: { fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   historyList: { backgroundColor: 'rgba(255, 255, 255, 0.7)' },
   historyItem: { padding: 18, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.25)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   historyItemMain: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  historyItemId: { fontSize: 13, fontWeight: '800', color: Theme.Colors.primary },
-  historyItemTitle: { fontSize: 14, fontWeight: '700', color: Theme.Colors.onBackground },
-  historyItemSub: { fontSize: 12, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+  historyItemId: { fontSize: 13, fontWeight: '800', color: theme.Colors.primary },
+  historyItemTitle: { fontSize: 14, fontWeight: '700', color: theme.Colors.onBackground },
+  historyItemSub: { fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   historyItemRight: { alignItems: 'flex-end' },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   statusBadgeText: { fontSize: 11, fontWeight: '800' },
@@ -445,11 +417,11 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.6)', justifyContent: 'center', padding: 20 },
   modalContent: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: 22, fontWeight: '800', color: Theme.Colors.onBackground },
-  modalSubTitle: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  aiHelpTitle: { fontSize: 15, fontWeight: '800', color: Theme.Colors.primary, marginBottom: 12 },
-  aiHelpText: { fontSize: 14, color: Theme.Colors.onSurfaceVariant, lineHeight: 22 },
-  modalCloseBtn: { backgroundColor: Theme.Colors.primary, paddingVertical: 14, borderRadius: 14, alignItems: 'center', width: '100%' },
+  modalTitle: { fontSize: 22, fontWeight: '800', color: theme.Colors.onBackground },
+  modalSubTitle: { fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  aiHelpTitle: { fontSize: 15, fontWeight: '800', color: theme.Colors.primary, marginBottom: 12 },
+  aiHelpText: { fontSize: 14, color: theme.Colors.onSurfaceVariant, lineHeight: 22 },
+  modalCloseBtn: { backgroundColor: theme.Colors.primary, paddingVertical: 14, borderRadius: 14, alignItems: 'center', width: '100%' },
   modalCloseBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' }
 });
 

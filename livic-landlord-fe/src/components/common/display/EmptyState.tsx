@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, ViewStyle, StyleProp } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from './GlassCard';
 import { ActionButton } from '../inputs/ActionButton';
 
@@ -22,10 +22,13 @@ export function EmptyState({
   onAction,
   style,
 }: EmptyStateProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
     <GlassCard style={[styles.container, style]}>
       <View style={styles.iconWrapper}>
-        <MaterialIcons name={iconName} size={48} color={Theme.Colors.outline} />
+        <MaterialIcons name={iconName} size={48} color={theme.Colors.outline} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
@@ -41,35 +44,35 @@ export function EmptyState({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
-    padding: Theme.Spacing.containerPadding * 1.5,
+    padding: theme.Spacing.containerPadding * 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: Theme.Spacing.stackMd,
+    marginVertical: theme.Spacing.stackMd,
     textAlign: 'center',
   },
   iconWrapper: {
     width: 80,
     height: 80,
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     backgroundColor: 'rgba(0, 104, 117, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Theme.Spacing.stackMd,
+    marginBottom: theme.Spacing.stackMd,
   },
   title: {
-    ...Theme.Typography.headlineLg,
-    color: Theme.Colors.onBackground,
+    ...theme.Typography.headlineLg,
+    color: theme.Colors.onBackground,
     textAlign: 'center',
-    marginBottom: Theme.Spacing.stackSm,
+    marginBottom: theme.Spacing.stackSm,
   },
   description: {
-    ...Theme.Typography.labelMuted,
-    color: Theme.Colors.outline,
+    ...theme.Typography.labelMuted,
+    color: theme.Colors.outline,
     textAlign: 'center',
     maxWidth: 320,
-    marginBottom: Theme.Spacing.stackMd,
+    marginBottom: theme.Spacing.stackMd,
   },
   actionButton: {
     minWidth: 150,

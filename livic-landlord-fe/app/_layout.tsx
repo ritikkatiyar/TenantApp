@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/src/features/auth/context/AuthProvider';
+import { ThemeContextProvider } from '@/src/theme/ThemeContext';
 import BottomNavigation from '@/src/components/common/navigation/BottomNavigation';
 import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigation';
 import MobileHeader from '@/src/components/common/navigation/MobileHeader';
@@ -116,71 +117,77 @@ export default function RootLayout() {
   const showDesktop = mounted && isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
+  if (!mounted && Platform.OS === 'web') {
+    return <View style={{ flex: 1, backgroundColor: '#f9fafa' }} />;
+  }
+
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <ToastProvider>
-          <AuthProvider>
-            <ScrollProvider>
-              <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
-                {showDesktop && !hideNavigation && <SidebarNavigation />}
-                <View style={{ flex: 1 }}>
-                  {!showDesktop && !hideHeader && (
-                    <MobileHeader 
-                      title={getHeaderTitle(pathname)} 
-                      onMenuPress={() => setMoreSheetVisible(true)} 
-                    />
-                  )}
-                  <ScreenWrapper isAuth={hideNavigation}>
-                    <OnboardingGate>
-                      <Stack screenOptions={{ headerShown: false }}>
-                        <Stack.Screen name="index" />
-                        <Stack.Screen name="login" />
-                        <Stack.Screen name="signup" />
-                        <Stack.Screen name="onboarding" />
-                        <Stack.Screen name="command-center" />
-                        <Stack.Screen name="ai" />
-                        <Stack.Screen name="admin" />
-                        <Stack.Screen name="analytics" />
-                        <Stack.Screen name="reports" />
-                        <Stack.Screen name="billing" />
-                        <Stack.Screen name="expenses/index" />
-                        <Stack.Screen name="leases" />
-                        <Stack.Screen name="inventory" />
-                        <Stack.Screen name="create-expense" />
-                        <Stack.Screen name="properties/create" />
-                        <Stack.Screen name="properties/[id]/index" />
-                        <Stack.Screen name="properties/[id]/meter-readings" />
-                        <Stack.Screen name="escalations" />
-                        <Stack.Screen name="announcements" />
-                        <Stack.Screen name="settings" />
-                      </Stack>
-                    </OnboardingGate>
-                  </ScreenWrapper>
-                  
-                  {!showDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
-                    <>
-                      <BottomNavigation 
-                        onMorePress={() => setMoreSheetVisible(true)} 
-                        onQRPress={() => setQrModalVisible(true)} 
+      <ThemeContextProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ToastProvider>
+            <AuthProvider>
+              <ScrollProvider>
+                <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
+                  {showDesktop && !hideNavigation && <SidebarNavigation />}
+                  <View style={{ flex: 1 }}>
+                    {!showDesktop && !hideHeader && (
+                      <MobileHeader 
+                        title={getHeaderTitle(pathname)} 
+                        onMenuPress={() => setMoreSheetVisible(true)} 
                       />
-                      <MobileMoreSheet 
-                        visible={moreSheetVisible} 
-                        onClose={() => setMoreSheetVisible(false)} 
-                      />
-                      <QRScannerModal 
-                        visible={qrModalVisible} 
-                        onClose={() => setQrModalVisible(false)} 
-                      />
-                    </>
-                  )}
+                    )}
+                    <ScreenWrapper isAuth={hideNavigation}>
+                      <OnboardingGate>
+                        <Stack screenOptions={{ headerShown: false }}>
+                          <Stack.Screen name="index" />
+                          <Stack.Screen name="login" />
+                          <Stack.Screen name="signup" />
+                          <Stack.Screen name="onboarding" />
+                          <Stack.Screen name="command-center" />
+                          <Stack.Screen name="ai" />
+                          <Stack.Screen name="admin" />
+                          <Stack.Screen name="analytics" />
+                          <Stack.Screen name="reports" />
+                          <Stack.Screen name="billing" />
+                          <Stack.Screen name="expenses/index" />
+                          <Stack.Screen name="leases" />
+                          <Stack.Screen name="inventory" />
+                          <Stack.Screen name="create-expense" />
+                          <Stack.Screen name="properties/create" />
+                          <Stack.Screen name="properties/[id]/index" />
+                          <Stack.Screen name="properties/[id]/meter-readings" />
+                          <Stack.Screen name="escalations" />
+                          <Stack.Screen name="announcements" />
+                          <Stack.Screen name="settings" />
+                        </Stack>
+                      </OnboardingGate>
+                    </ScreenWrapper>
+                    
+                    {!showDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
+                      <>
+                        <BottomNavigation 
+                          onMorePress={() => setMoreSheetVisible(true)} 
+                          onQRPress={() => setQrModalVisible(true)} 
+                        />
+                        <MobileMoreSheet 
+                          visible={moreSheetVisible} 
+                          onClose={() => setMoreSheetVisible(false)} 
+                        />
+                        <QRScannerModal 
+                          visible={qrModalVisible} 
+                          onClose={() => setQrModalVisible(false)} 
+                        />
+                      </>
+                    )}
+                  </View>
                 </View>
-              </View>
-            </ScrollProvider>
-          </AuthProvider>
-        </ToastProvider>
-        <StatusBar style="dark" translucent backgroundColor="transparent" />
-      </ThemeProvider>
+              </ScrollProvider>
+            </AuthProvider>
+          </ToastProvider>
+          <StatusBar style="dark" translucent backgroundColor="transparent" />
+        </ThemeProvider>
+      </ThemeContextProvider>
     </SafeAreaProvider>
   );
 }

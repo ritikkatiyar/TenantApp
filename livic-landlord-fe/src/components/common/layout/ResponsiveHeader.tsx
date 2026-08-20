@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface ResponsiveHeaderProps {
   title: string;
@@ -14,12 +14,15 @@ export function ResponsiveHeader({
   onBack,
   rightAction,
 }: ResponsiveHeaderProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
     <View style={styles.container}>
       <View style={styles.leftSection}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.7}>
-            <MaterialIcons name="arrow-back" size={24} color={Theme.Colors.primary} />
+            <MaterialIcons name="arrow-back" size={24} color={theme.Colors.primary} />
           </TouchableOpacity>
         )}
         <Text style={styles.title} numberOfLines={1}>
@@ -31,17 +34,17 @@ export function ResponsiveHeader({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Theme.Spacing.unit,
+    paddingVertical: theme.Spacing.unit,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 104, 117, 0.08)',
     backgroundColor: 'transparent',
-    marginBottom: Theme.Spacing.stackMd,
+    marginBottom: theme.Spacing.stackMd,
   },
   leftSection: {
     flexDirection: 'row',
@@ -49,14 +52,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backButton: {
-    marginRight: Theme.Spacing.stackSm,
-    padding: Theme.Spacing.unit,
-    borderRadius: Theme.Rounded.full,
+    marginRight: theme.Spacing.stackSm,
+    padding: theme.Spacing.unit,
+    borderRadius: theme.Rounded.full,
     backgroundColor: 'rgba(0, 104, 117, 0.05)',
   },
   title: {
-    ...Theme.Typography.headlineMd,
-    color: Theme.Colors.onBackground,
+    ...theme.Typography.headlineMd,
+    color: theme.Colors.onBackground,
     flex: 1,
   },
   rightSection: {

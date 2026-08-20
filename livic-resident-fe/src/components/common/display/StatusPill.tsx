@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ViewStyle, StyleProp } from 'react-native';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface StatusPillProps {
   status: string;
@@ -8,6 +8,9 @@ interface StatusPillProps {
 }
 
 export function StatusPill({ status, style }: StatusPillProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const normalized = status.trim().toUpperCase();
 
   const getStatusStyles = () => {
@@ -28,7 +31,7 @@ export function StatusPill({ status, style }: StatusPillProps) {
       case 'FAILED':
         return {
           bg: 'rgba(186, 26, 26, 0.1)',
-          text: Theme.Colors.error,
+          text: theme.Colors.error,
           border: 'rgba(186, 26, 26, 0.2)',
         };
       case 'PENDING':
@@ -48,7 +51,7 @@ export function StatusPill({ status, style }: StatusPillProps) {
       default:
         return {
           bg: 'rgba(107, 122, 125, 0.1)',
-          text: Theme.Colors.outline,
+          text: theme.Colors.outline,
           border: 'rgba(107, 122, 125, 0.2)',
         };
     }
@@ -65,11 +68,11 @@ export function StatusPill({ status, style }: StatusPillProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   pill: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     borderWidth: 1,
     alignSelf: 'flex-start',
     justifyContent: 'center',

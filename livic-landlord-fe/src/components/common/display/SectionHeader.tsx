@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Text, ViewStyle, StyleProp } from 'react-native';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface SectionHeaderProps {
   title: string;
@@ -15,6 +15,9 @@ export function SectionHeader({
   rightAction,
   style,
 }: SectionHeaderProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
     <View style={[styles.container, style]}>
       <View style={styles.textContainer}>
@@ -32,25 +35,25 @@ export function SectionHeader({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Theme.Spacing.unit,
-    marginVertical: Theme.Spacing.stackSm,
+    paddingVertical: theme.Spacing.unit,
+    marginVertical: theme.Spacing.stackSm,
   },
   textContainer: {
     flex: 1,
-    paddingRight: Theme.Spacing.gutter,
+    paddingRight: theme.Spacing.gutter,
   },
   title: {
-    ...Theme.Typography.headlineLg,
-    color: Theme.Colors.onBackground,
+    ...theme.Typography.headlineLg,
+    color: theme.Colors.onBackground,
   },
   subtitle: {
-    ...Theme.Typography.labelMuted,
-    color: Theme.Colors.outline,
+    ...theme.Typography.labelMuted,
+    color: theme.Colors.outline,
     marginTop: 2,
   },
   rightAction: {

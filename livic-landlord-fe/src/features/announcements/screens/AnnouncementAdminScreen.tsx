@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import {
   ScrollView,
@@ -31,6 +32,9 @@ interface AnnouncementAdminScreenProps {
 }
 
 export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
@@ -81,13 +85,13 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
               rightContent={
                 <>
                   {isWideDesktop && (
-                    <BlurView intensity={50} tint="light" style={styles.searchBox}>
+                    <BlurView intensity={50} tint={isDark ? 'dark' : 'light'} style={styles.searchBox}>
                       <MaterialIcons name="search" size={22} color="#6b7a7d" />
                       <Text style={styles.searchPlaceholder}>Search announcements...</Text>
                     </BlurView>
                   )}
                   <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}>
-                    <Ionicons name="notifications-outline" size={23} color={Theme.Colors.onSurface} />
+                    <Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} />
                   </TouchableOpacity>
                 </>
               }
@@ -150,7 +154,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
             style={styles.toggleHistoryBtn}
             onPress={() => setShowHistory(!showHistory)}
           >
-            <MaterialIcons name={showHistory ? "edit" : "history"} size={22} color="#006875" />
+            <MaterialIcons name={showHistory ? "edit" : "history"} size={22} color={theme.Colors.primary} />
             <Text style={styles.toggleHistoryText}>{showHistory ? "Compose" : "History"}</Text>
           </TouchableOpacity>
         </View>
@@ -205,7 +209,7 @@ function formatTimestamp(value: string) {
   });
 }
 
-function getCategoryColor(cat: string) {
+function getCategoryColor(cat: string, theme: any) {
   switch (cat) {
     case 'EMERGENCY':
       return '#ba1a1a';
@@ -216,11 +220,11 @@ function getCategoryColor(cat: string) {
     case 'EVENT':
       return '#7b2cbf';
     default:
-      return '#6b7a7d';
+      return theme.Colors.onSurfaceVariant;
   }
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
   },
@@ -246,13 +250,13 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '800',
     lineHeight: 40,
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   sidebarBrandSub: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 2,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
   },
   sidebarNav: {
@@ -269,21 +273,21 @@ const styles = StyleSheet.create({
   sidebarLinkActive: {
     backgroundColor: 'rgba(0, 224, 255, 0.10)',
     borderRightWidth: 4,
-    borderRightColor: Theme.Colors.primaryContainer,
+    borderRightColor: theme.Colors.primaryContainer,
   },
   sidebarLinkText: {
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1.6,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   sidebarLinkTextActive: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   sidebarFooter: {
     marginTop: 'auto',
     borderTopWidth: 1,
-    borderTopColor: Theme.Colors.outlineVariant,
+    borderTopColor: theme.Colors.outlineVariant,
     paddingTop: 28,
     gap: 10,
   },
@@ -291,7 +295,7 @@ const styles = StyleSheet.create({
     borderRadius: Theme.Rounded.lg,
     overflow: 'hidden',
     marginBottom: 14,
-    shadowColor: Theme.Colors.secondary,
+    shadowColor: theme.Colors.secondary,
     shadowOpacity: 0.24,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
   },
   topbarTab: {
     fontSize: 18,
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
   },
   compactTopbarTitle: {
     color: '#004b57',
@@ -351,7 +355,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 0, 0, 0.06)',
   },
   searchPlaceholder: {
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontSize: 13,
   },
   topIcon: {
@@ -368,10 +372,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primaryContainer,
   },
   avatarText: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -420,13 +424,13 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 38,
   },
   pageSubtitle: {
     marginTop: 4,
     fontSize: 14,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     maxWidth: 620,
   },
   sectionCard: {
@@ -436,7 +440,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
     overflow: 'hidden',
-    shadowColor: Theme.Colors.primary,
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 30,
@@ -479,7 +483,7 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     marginTop: 5,
     fontSize: 14,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     maxWidth: 520,
   },
   badgeRow: {
@@ -527,7 +531,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    color: Theme.Colors.onSurface,
+    color: theme.Colors.onSurface,
     fontSize: 15,
   },
   textarea: {
@@ -556,13 +560,13 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   chipTextActive: {
     color: '#fff',
   },
   emptyStateText: {
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontSize: 14,
     marginTop: 10,
   },
@@ -607,7 +611,7 @@ const styles = StyleSheet.create({
   historyMeta: {
     fontSize: 12,
     fontWeight: '700',
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
   },
   historyTitle: {
     fontSize: 17,
@@ -617,7 +621,7 @@ const styles = StyleSheet.create({
   },
   historyContent: {
     fontSize: 14,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
     lineHeight: 20,
     marginBottom: 14,
   },
@@ -628,12 +632,12 @@ const styles = StyleSheet.create({
   },
   historyTimestamp: {
     fontSize: 12,
-    color: Theme.Colors.onSurfaceVariant,
+    color: theme.Colors.onSurfaceVariant,
   },
   historyBadge: {
     fontSize: 12,
     fontWeight: '700',
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
   },
   categoryBadge: {
     paddingVertical: 5,
@@ -675,7 +679,7 @@ const styles = StyleSheet.create({
   mobileHeaderTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
   toggleHistoryBtn: {
@@ -690,7 +694,7 @@ const styles = StyleSheet.create({
   toggleHistoryText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   mobileTitle: {
@@ -722,10 +726,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.primaryContainer,
   },
   mobileAvatarText: {
-    color: Theme.Colors.primary,
+    color: theme.Colors.primary,
     fontWeight: '800',
   },
   mobileContent: {
@@ -757,17 +761,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     alignItems: 'center',
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.9)',
   },
   segmentText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   segmentTextActive: {
-    color: '#ffffff',
+    color: theme.Surface.card,
     fontSize: 13,
     fontWeight: '700',
   },

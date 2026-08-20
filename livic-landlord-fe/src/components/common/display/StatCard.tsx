@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, ViewStyle, StyleProp } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from './GlassCard';
 
 interface StatCardProps {
@@ -21,15 +21,18 @@ export function StatCard({
   iconName,
   style,
 }: StatCardProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const getTrendColor = () => {
     switch (trendType) {
       case 'positive':
         return '#00875a'; // Safe positive green
       case 'negative':
-        return Theme.Colors.error;
+        return theme.Colors.error;
       case 'neutral':
       default:
-        return Theme.Colors.outline;
+        return theme.Colors.outline;
     }
   };
 
@@ -53,7 +56,7 @@ export function StatCard({
         </Text>
         {iconName && (
           <View style={styles.iconContainer}>
-            <MaterialIcons name={iconName} size={20} color={Theme.Colors.primary} />
+            <MaterialIcons name={iconName} size={20} color={theme.Colors.primary} />
           </View>
         )}
       </View>
@@ -72,7 +75,7 @@ export function StatCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   card: {
     flex: 1,
     minWidth: 150,
@@ -81,30 +84,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Theme.Spacing.stackSm,
+    marginBottom: theme.Spacing.stackSm,
   },
   label: {
-    ...Theme.Typography.labelMuted,
-    color: Theme.Colors.outline,
+    ...theme.Typography.labelMuted,
+    color: theme.Colors.outline,
     flex: 1,
   },
   iconContainer: {
     width: 32,
     height: 32,
-    borderRadius: Theme.Rounded.md,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    borderRadius: theme.Rounded.md,
+    backgroundColor: theme.Colors.primaryContainer,
     justifyContent: 'center',
     alignItems: 'center',
   },
   value: {
-    ...Theme.Typography.headlineMd,
-    color: Theme.Colors.onBackground,
-    marginBottom: Theme.Spacing.unit / 2,
+    ...theme.Typography.headlineMd,
+    color: theme.Colors.onBackground,
+    marginBottom: theme.Spacing.unit / 2,
   },
   trendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Theme.Spacing.unit / 2,
+    marginTop: theme.Spacing.unit / 2,
   },
   trendIcon: {
     marginRight: 4,

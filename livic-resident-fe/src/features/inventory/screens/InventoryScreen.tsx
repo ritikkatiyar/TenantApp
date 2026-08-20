@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
@@ -22,6 +22,9 @@ import { InventoryMoveInView } from '@/src/features/inventory/components/Invento
 import { InventoryMoveOutView } from '@/src/features/inventory/components/InventoryMoveOutView';
 
 export default function InventoryScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const { handleScroll } = useScrollNav();
@@ -48,7 +51,7 @@ export default function InventoryScreen() {
 
   return (
     <LinearGradient
-      colors={Theme.Colors.backgroundGradient as [string, string, string]}
+      colors={theme.Colors.backgroundGradient as [string, string, string]}
       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       style={styles.root}
     >
@@ -168,7 +171,7 @@ export default function InventoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 120, gap: 16 },

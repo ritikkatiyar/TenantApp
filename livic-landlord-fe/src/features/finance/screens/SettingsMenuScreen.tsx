@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
@@ -20,6 +21,9 @@ import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 export default function SettingsMenuScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -122,7 +126,7 @@ export default function SettingsMenuScreen() {
   const renderMobileContent = () => (
     <Animated.View style={{ opacity: fadeAnim }}>
       {/* Quick Stats Hero */}
-      <BlurView intensity={55} tint="light" style={styles.statsHero}>
+      <BlurView intensity={55} tint={isDark ? 'dark' : 'light'} style={styles.statsHero}>
         <LinearGradient
           colors={['rgba(0, 168, 204, 0.12)', 'rgba(99, 102, 241, 0.08)']}
           start={{ x: 0, y: 0 }}
@@ -194,7 +198,7 @@ export default function SettingsMenuScreen() {
               }}
               style={[styles.listItem, properties.length === 0 && { opacity: 0.6 }]}
             >
-              <BlurView intensity={55} tint="light" style={styles.menuCard}>
+              <BlurView intensity={55} tint={isDark ? 'dark' : 'light'} style={styles.menuCard}>
                 {/* Left accent stripe */}
                 <LinearGradient
                   colors={item.gradientColors}
@@ -240,7 +244,7 @@ export default function SettingsMenuScreen() {
       </View>
 
       {/* Bottom note */}
-      <BlurView intensity={30} tint="light" style={styles.tipCard}>
+      <BlurView intensity={30} tint={isDark ? 'dark' : 'light'} style={styles.tipCard}>
         <MaterialIcons name="lightbulb-outline" size={16} color="#0891b2" />
         <Text style={styles.tipText}>
           Follow steps 1 → 4 for a complete billing cycle each month.
@@ -268,7 +272,7 @@ export default function SettingsMenuScreen() {
         {/* Mobile Compact Header */}
         {!isDesktop && (
           <View style={styles.headerContainer}>
-            <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+            <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
             <Animated.View style={[styles.headerContent, { opacity: headerOpacity }]}>
               <View style={styles.titleWrapper}>
                 <Text style={styles.compactTitleText}>Finance & Billing</Text>
@@ -290,7 +294,7 @@ export default function SettingsMenuScreen() {
             {isDesktop ? (
               <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
                 <Text style={styles.titleLineDesktop}>Finance & Billing</Text>
-                <Text style={{ fontSize: 14, color: '#6b7a7d', marginTop: 4, fontWeight: '500', lineHeight: 20 }}>
+                <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, marginTop: 4, fontWeight: '500', lineHeight: 20 }}>
                   Configure rents, utilities, billing worksheets, monthly rent rolls & financial ledgers
                 </Text>
               </Animated.View>
@@ -305,14 +309,14 @@ export default function SettingsMenuScreen() {
             )}
 
             {!isLoading && properties.length === 0 && (
-              <BlurView intensity={60} tint="light" style={{ padding: 24, borderRadius: 20, marginBottom: 24, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.7)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 24, borderRadius: 20, marginBottom: 24, borderWidth: 1.5, borderColor: theme.Colors.glassStroke, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                   <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                    <MaterialIcons name="business" size={26} color="#006875" />
+                    <MaterialIcons name="business" size={26} color={theme.Colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 16, fontWeight: '800', color: '#163235', marginBottom: 2 }}>No Property Created Yet</Text>
-                    <Text style={{ fontSize: 13, color: '#6b7a7d', lineHeight: 18 }}>Finance & billing setup requires an active property. Create your first property to start configuring charges and rent cycles.</Text>
+                    <Text style={{ fontSize: 13, color: theme.Colors.onSurfaceVariant, lineHeight: 18 }}>Finance & billing setup requires an active property. Create your first property to start configuring charges and rent cycles.</Text>
                   </View>
                 </View>
                 <TouchableOpacity 
@@ -343,7 +347,7 @@ export default function SettingsMenuScreen() {
                     }}
                     style={[styles.gridItem, properties.length === 0 && { opacity: 0.6 }]}
                   >
-                    <BlurView intensity={60} tint="light" style={styles.menuCard}>
+                    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.menuCard}>
                       <View style={styles.cardContent}>
                         <View style={[styles.iconWrapper, { backgroundColor: item.bg }]}>
                           <MaterialIcons name={item.icon as any} size={28} color={item.accentColor} />
@@ -368,7 +372,7 @@ export default function SettingsMenuScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
   scrollContent: {
@@ -385,7 +389,7 @@ const styles = StyleSheet.create({
   titleLineDesktop: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 38,
     letterSpacing: -0.5,
   },
@@ -425,14 +429,14 @@ const styles = StyleSheet.create({
   titleLine: {
     fontSize: 42,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onBackground,
     lineHeight: 46,
     letterSpacing: -1,
     fontFamily: 'Inter',
   },
   mobileSubtitle: {
     fontSize: 14,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 8,
     fontWeight: '500',
     lineHeight: 20,
@@ -445,7 +449,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.75)',
     marginBottom: 24,
-    shadowColor: '#006875',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 20,
@@ -527,12 +531,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   menuCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.85)',
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
-    shadowColor: '#006875',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -596,7 +600,7 @@ const styles = StyleSheet.create({
   },
   menuDesc: {
     fontSize: 13,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     lineHeight: 18,
   },
   chevronWrapper: {
