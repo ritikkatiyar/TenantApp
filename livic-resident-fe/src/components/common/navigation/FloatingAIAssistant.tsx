@@ -19,6 +19,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { usePathname } from 'expo-router';
 import { runAICommand, getJobStatus } from '@/src/features/ai/api/ai.api';
 
@@ -37,6 +38,7 @@ const EXAMPLES = [
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
   const { accessToken } = useAuth();
+  const { theme } = useAppTheme();
 
   const [isOpen, setIsOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -297,12 +299,12 @@ export default function FloatingAIAssistant() {
             <View style={styles.headerTitleRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={styles.headerIconWrapper}>
-                  <MaterialIcons name="assistant" size={16} color="#006875" />
+                  <MaterialIcons name="assistant" size={16} color={theme.Colors.primary} />
                 </View>
                 <Text style={styles.headerTitle}>AI Assistant</Text>
               </View>
               <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
-                <MaterialIcons name="close" size={20} color="#4f6073" />
+                <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
               </TouchableOpacity>
             </View>
           </View>
@@ -331,7 +333,7 @@ export default function FloatingAIAssistant() {
                     disabled={isSending}
                     activeOpacity={0.7}
                   >
-                    <MaterialIcons name="bolt" size={14} color="#006875" />
+                    <MaterialIcons name="bolt" size={14} color={theme.Colors.primary} />
                     <Text style={styles.exampleText} numberOfLines={1}>{ex}</Text>
                   </TouchableOpacity>
                 ))}
@@ -351,13 +353,17 @@ export default function FloatingAIAssistant() {
                     tint="light"
                     style={[
                       styles.msgBubble,
-                      msg.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
+                      msg.role === 'user'
+                        ? [styles.bubbleUser, { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary }]
+                        : styles.bubbleAssistant,
                     ]}
                   >
                     <Text
                       style={[
                         styles.msgText,
-                        msg.role === 'user' ? styles.textUser : styles.textAssistant,
+                        msg.role === 'user'
+                          ? [styles.textUser, { color: '#ffffff' }]
+                          : [styles.textAssistant, { color: theme.Colors.onSurface }],
                       ]}
                     >
                       {msg.text}
@@ -369,8 +375,8 @@ export default function FloatingAIAssistant() {
               {isSending && (
                 <View style={[styles.msgWrapper, styles.msgAssistant]}>
                   <BlurView intensity={90} tint="light" style={[styles.msgBubble, styles.bubbleAssistant, styles.loadingBubble]}>
-                    <ActivityIndicator size="small" color="#006875" />
-                    <Text style={styles.loadingText}>Thinking...</Text>
+                    <ActivityIndicator size="small" color={theme.Colors.primary} />
+                    <Text style={[styles.loadingText, { color: theme.Colors.onSurfaceVariant }]}>Thinking...</Text>
                   </BlurView>
                 </View>
               )}
@@ -379,9 +385,9 @@ export default function FloatingAIAssistant() {
             {/* Chat Footer Input */}
             <View style={styles.inputBar}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { borderColor: `${theme.Colors.primary}33`, color: theme.Colors.onSurface }]}
                 placeholder="Ask AI to help..."
-                placeholderTextColor="#7d8b8e"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={input}
                 onChangeText={setInput}
                 multiline
@@ -486,7 +492,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#006875',
   },
   closeBtn: {
     padding: 6,
@@ -505,7 +510,6 @@ const styles = StyleSheet.create({
   examplesHeader: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6b7a7d',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -545,8 +549,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bubbleUser: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
     borderBottomRightRadius: 4,
   },
   bubbleAssistant: {
@@ -559,11 +561,9 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   textUser: {
-    color: '#fff',
     fontWeight: '600',
   },
   textAssistant: {
-    color: '#151d1e',
     fontWeight: '500',
   },
   loadingBubble: {
@@ -573,7 +573,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 12,
-    color: '#6b7a7d',
     fontWeight: '600',
   },
   inputBar: {
@@ -589,12 +588,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.2)',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
     fontSize: 13.5,
-    color: '#151d1e',
     maxHeight: 80,
   },
   sendBtn: {

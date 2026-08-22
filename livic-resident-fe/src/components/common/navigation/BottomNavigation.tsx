@@ -108,7 +108,7 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
           <View style={styles.pillContent}>
             {/* Home Button */}
             <TouchableOpacity style={styles.navItem} onPress={handleHomePress} activeOpacity={0.7}>
-              <View style={[styles.iconCircle, isHomeActive && styles.iconCircleActive]}>
+              <View style={[styles.iconCircle, isHomeActive && { backgroundColor: `${theme.Colors.primary}18` }]}>
                 <MaterialIcons name="home" size={22} color={isHomeActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
               </View>
               <Text style={[styles.navText, { color: isHomeActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant }, isHomeActive && styles.navTextActive]}>Home</Text>
@@ -117,9 +117,9 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
             {/* Protruding Centerpiece Camera Button */}
             <TouchableOpacity style={styles.heroCameraWrapper} onPress={onQRPress} activeOpacity={0.88}>
               <View style={styles.heroCameraGlow} />
-              <View style={styles.heroCameraButton}>
+              <View style={[styles.heroCameraButton, { backgroundColor: theme.Colors.secondary }]}>
                 <MaterialIcons name="center-focus-strong" size={28} color="#ffffff" />
-                <View style={styles.cameraDotBadge} />
+                <View style={[styles.cameraDotBadge, { backgroundColor: theme.Colors.inversePrimary }]} />
               </View>
             </TouchableOpacity>
 
@@ -219,16 +219,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconCircleActive: {
-    backgroundColor: 'rgba(0, 168, 198, 0.12)',
-  },
   navText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#64748B',
   },
   navTextActive: {
-    color: '#00A8C6',
     fontWeight: '700',
   },
 
@@ -253,7 +248,6 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#006677',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3.5,
@@ -272,7 +266,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#00E676',
   },
 
   /* Option B Iridescent Floating AI Orb */

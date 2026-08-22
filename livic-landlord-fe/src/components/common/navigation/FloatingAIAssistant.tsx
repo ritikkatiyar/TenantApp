@@ -353,13 +353,17 @@ export default function FloatingAIAssistant() {
                     tint="light"
                     style={[
                       styles.msgBubble,
-                      msg.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
+                      msg.role === 'user'
+                        ? [styles.bubbleUser, { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary }]
+                        : styles.bubbleAssistant,
                     ]}
                   >
                     <Text
                       style={[
                         styles.msgText,
-                        msg.role === 'user' ? styles.textUser : styles.textAssistant,
+                        msg.role === 'user'
+                          ? [styles.textUser, { color: '#ffffff' }]
+                          : [styles.textAssistant, { color: theme.Colors.onSurface }],
                       ]}
                     >
                       {msg.text}
@@ -371,8 +375,8 @@ export default function FloatingAIAssistant() {
               {isSending && (
                 <View style={[styles.msgWrapper, styles.msgAssistant]}>
                   <BlurView intensity={90} tint="light" style={[styles.msgBubble, styles.bubbleAssistant, styles.loadingBubble]}>
-                    <ActivityIndicator size="small" color="#006875" />
-                    <Text style={styles.loadingText}>Thinking...</Text>
+                    <ActivityIndicator size="small" color={theme.Colors.primary} />
+                    <Text style={[styles.loadingText, { color: theme.Colors.onSurfaceVariant }]}>Thinking...</Text>
                   </BlurView>
                 </View>
               )}
@@ -381,9 +385,9 @@ export default function FloatingAIAssistant() {
             {/* Chat Footer Input */}
             <View style={styles.inputBar}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { borderColor: `${theme.Colors.primary}33`, color: theme.Colors.onSurface }]}
                 placeholder="Ask AI to help..."
-                placeholderTextColor="#7d8b8e"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={input}
                 onChangeText={setInput}
                 multiline
@@ -545,8 +549,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bubbleUser: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
     borderBottomRightRadius: 4,
   },
   bubbleAssistant: {
