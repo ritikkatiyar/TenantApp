@@ -18,6 +18,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
 import ErrorBoundary from '@/src/components/common/feedback/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { LightColors } from '@/src/theme/Theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,7 +86,7 @@ export default function RootLayout() {
   const showDesktop = mounted && isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
   if (!mounted && Platform.OS === 'web') {
-    return <View style={{ flex: 1, backgroundColor: '#f9fafa' }} />;
+    return <View style={{ flex: 1, backgroundColor: LightColors.background }} />;
   }
 
   return (
@@ -97,7 +98,7 @@ export default function RootLayout() {
               <ToastProvider>
                 <AuthProvider>
                   <ScrollProvider>
-                    <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
+                    <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: LightColors.background }}>
                       {showDesktop && !hideNavigation && <SidebarNavigation />}
                       <View style={{ flex: 1 }}>
                         {!showDesktop && !hideHeader && (

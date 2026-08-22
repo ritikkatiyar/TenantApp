@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, DevSettings } from 'react-native';
 import { useAppTheme, AppTheme } from '@/src/theme/ThemeContext';
 import { logger } from '@/src/utils/logger';
 import { ActionButton } from '../inputs/ActionButton';
+import { LightColors, Typography } from '@/src/theme/Theme';
 
 interface Props {
   children: ReactNode;
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: LightColors.onSurface,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: 12,
+    fontSize: Typography.BodySmall.fontSize,
   },
   button: {
     width: '100%',
