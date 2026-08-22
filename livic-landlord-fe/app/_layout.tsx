@@ -20,6 +20,7 @@ import { ScreenWrapper } from '@/src/components/common/layout/ScreenWrapper';
 import { OnboardingGate } from '@/src/components/common/layout/OnboardingGate';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
+import ErrorBoundary from '@/src/components/common/feedback/ErrorBoundary';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/command-center': 'Portfolio',
@@ -132,13 +133,14 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
+    <SafeAreaProvider>
       <ThemeContextProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <ToastProvider>
-            <AuthProvider>
-              <ScrollProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <ToastProvider>
+                <AuthProvider>
+                  <ScrollProvider>
                 <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
                   {showDesktop && !hideNavigation && <SidebarNavigation />}
                   <View style={{ flex: 1 }}>
@@ -198,8 +200,9 @@ export default function RootLayout() {
           </ToastProvider>
           <StatusBar style="dark" translucent backgroundColor="transparent" />
         </ThemeProvider>
-      </ThemeContextProvider>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  </ThemeContextProvider>
+</SafeAreaProvider>
   );
 }
