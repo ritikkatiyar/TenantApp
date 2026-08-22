@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -27,6 +28,8 @@ const MAX_DRAWER_WIDTH = 300;
 const actualWidth = Math.min(DRAWER_WIDTH, MAX_DRAWER_WIDTH);
 
 export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
   const pathname = usePathname();
   const { signOut, context, user } = useAuth();
@@ -197,7 +200,7 @@ export default function MobileDrawer({ visible, onClose }: MobileDrawerProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   overlay: {
     flex: 1,
     flexDirection: 'row',
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
   drawerContainer: {
     height: '100%',
     backgroundColor: 'rgba(239, 244, 255, 0.45)',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 4, height: 0 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -245,21 +248,21 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 102, 119, 0.25)',
   },
   avatarText: {
-    color: '#006677',
-    fontSize: 18,
+    color: 'black',
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '800',
   },
   userInfo: {
     flex: 1,
   },
   userName: {
-    color: '#0b1c30',
-    fontSize: 16,
+    color: theme.Colors.onSurface,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
   },
   userEmail: {
     color: '#4f6073',
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     marginTop: 2,
   },
   settingsSection: {
@@ -270,9 +273,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    color: '#006677',
+    color: 'black',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 10,
@@ -283,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   roleToggleLabel: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: '#2f3b3e',
   },
@@ -307,20 +310,20 @@ const styles = StyleSheet.create({
   linkItemActive: {
     backgroundColor: 'rgba(255, 255, 255, 0.55)',
     borderColor: 'rgba(255, 255, 255, 0.85)',
-    shadowColor: '#006677',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 1,
   },
   linkText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: '#4f6073',
     marginLeft: 12,
   },
   linkTextActive: {
-    color: '#006677',
+    color: 'black',
     fontWeight: '800',
   },
   drawerFooter: {
@@ -338,7 +341,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   logoutText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     color: '#ff3b30',
     marginLeft: 12,

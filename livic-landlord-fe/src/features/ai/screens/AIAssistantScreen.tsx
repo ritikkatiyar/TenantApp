@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
@@ -14,7 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
@@ -40,6 +41,8 @@ const QUICK_COMMANDS = [
 ];
 
 export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { isDesktop } = useResponsive();
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -180,7 +183,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               end={{ x: 1, y: 1 }}
               style={styles.aiOrbIcon}
             >
-              <MaterialIcons name="auto-awesome" size={20} color="#ffffff" />
+              <MaterialIcons name="auto-awesome" size={20} color={theme.Colors.surfaceContainerLowest} />
             </LinearGradient>
             <View>
               <View style={styles.titleRow}>
@@ -202,7 +205,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               style={styles.headerBtn}
               activeOpacity={0.7}
             >
-              <MaterialIcons name="refresh" size={18} color="#6b7a7d" />
+              <MaterialIcons name="refresh" size={18} color={theme.Colors.onSurfaceVariant} />
               <Text style={styles.headerBtnText}>Clear Chat</Text>
             </TouchableOpacity>
           </View>
@@ -224,7 +227,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                 activeOpacity={0.75}
                 style={styles.suggestionChip}
               >
-                <MaterialIcons name={cmd.icon as any} size={16} color="#006875" />
+                <MaterialIcons name={cmd.icon as any} size={16} color={theme.Colors.primary} />
                 <Text style={styles.suggestionChipText}>{cmd.label}</Text>
               </TouchableOpacity>
             ))}
@@ -250,7 +253,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
             >
               {message.role === 'assistant' && (
                 <View style={styles.assistantAvatar}>
-                  <MaterialIcons name="auto-awesome" size={16} color="#006875" />
+                  <MaterialIcons name="auto-awesome" size={16} color={theme.Colors.primary} />
                 </View>
               )}
 
@@ -285,10 +288,10 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
           {isSending && (
             <View style={[styles.messageRow, styles.messageRowAssistant]}>
               <View style={styles.assistantAvatar}>
-                <MaterialIcons name="auto-awesome" size={16} color="#006875" />
+                <MaterialIcons name="auto-awesome" size={16} color={theme.Colors.primary} />
               </View>
               <View style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
-                <ActivityIndicator size="small" color="#006875" />
+                <ActivityIndicator size="small" color={theme.Colors.primary} />
                 <Text style={styles.loadingText}>Processing command with Gemini 1.5 Pro...</Text>
               </View>
             </View>
@@ -325,7 +328,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               >
                 {!input.trim() || isSending ? (
                   <View style={styles.sendIconDisabled}>
-                    <MaterialIcons name="arrow-upward" size={20} color="#9ca3af" />
+                    <MaterialIcons name="arrow-upward" size={20} color={theme.Colors.onSurfaceVariant} />
                   </View>
                 ) : (
                   <LinearGradient
@@ -334,7 +337,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                     end={{ x: 1, y: 1 }}
                     style={styles.sendIconActive}
                   >
-                    <MaterialIcons name="arrow-upward" size={20} color="#ffffff" />
+                    <MaterialIcons name="arrow-upward" size={20} color={theme.Colors.surfaceContainerLowest} />
                   </LinearGradient>
                 )}
               </TouchableOpacity>
@@ -350,7 +353,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Theme.Spacing.containerPadding,
@@ -401,16 +404,16 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0072ff',
+    shadowColor: theme.Colors.secondary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   workspaceTitle: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '800',
-    color: '#0b1c30',
+    color: theme.Colors.onSurface,
   },
   modelBadge: {
     flexDirection: 'row',
@@ -427,16 +430,16 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.Colors.primary,
   },
   modelBadgeText: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   workspaceSubtitle: {
-    fontSize: 13,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
   headerRight: {
@@ -451,14 +454,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
   },
   headerBtnText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   suggestionsContainer: {
     paddingHorizontal: 24,
@@ -468,10 +471,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   suggestionsLabel: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     letterSpacing: 1.1,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 8,
   },
   suggestionsScroll: {
@@ -481,17 +484,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
   suggestionChipText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   messagesList: {
     flex: 1,
@@ -533,26 +536,26 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   assistantBubble: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
     borderBottomLeftRadius: 4,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
   },
   userMessageText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     lineHeight: 21,
     fontWeight: '600',
-    color: '#ffffff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   assistantMessageText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     lineHeight: 22,
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     fontWeight: '400',
   },
   loadingBubble: {
@@ -561,13 +564,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   loadingText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   timestampText: {
-    fontSize: 11,
-    color: '#9ca3af',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
     paddingHorizontal: 4,
   },
@@ -581,7 +584,7 @@ const styles = StyleSheet.create({
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1.5,
     borderColor: 'rgba(0, 104, 117, 0.25)',
     borderRadius: 16,
@@ -591,8 +594,8 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#151d1e',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
     maxHeight: 100,
     minHeight: 40,
     paddingVertical: 6,
@@ -615,7 +618,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.Colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -626,11 +629,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   inputHint: {
-    fontSize: 11,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
   },
   charCount: {
-    fontSize: 11,
-    color: '#9ca3af',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
   },
 });

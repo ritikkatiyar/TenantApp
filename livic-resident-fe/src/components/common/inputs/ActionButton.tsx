@@ -157,7 +157,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   text: {
     ...theme.Typography.buttonText,
-    color: '#ffffff',
+    color: theme.Colors.surfaceContainerLowest,
     textAlign: 'center',
   },
   textSecondary: {

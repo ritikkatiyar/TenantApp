@@ -105,7 +105,7 @@ export default function SidebarNavigation() {
         ) : (
           <TouchableOpacity style={styles.upgradeButtonCollapsed} onPress={() => router.push('/billing')} activeOpacity={0.85}>
             <LinearGradient colors={[theme.Colors.primary, theme.Colors.secondaryContainer]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.upgradeGradientCollapsed}>
-              <MaterialIcons name="bolt" size={24} color="#fff" />
+              <MaterialIcons name="bolt" size={24} color={theme.Colors.surfaceContainerLowest} />
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -160,20 +160,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarBrand: { flex: 1 },
   sidebarBrandCollapsed: { alignItems: 'center' },
-  sidebarBrandTitleCollapsed: { fontSize: 24, fontWeight: '800', color: theme.Colors.primary },
+  sidebarBrandTitleCollapsed: { fontSize: theme.Typography.HeadlineSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
   collapseButton: {
     padding: 4,
     borderRadius: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
-  sidebarBrandTitle: { fontSize: 28, fontWeight: '800', lineHeight: 34, color: theme.Colors.primary },
-  sidebarBrandSub: { fontSize: 12, fontWeight: '700', letterSpacing: 2, color: theme.Colors.onSurfaceVariant, marginTop: 4 },
+  sidebarBrandTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', lineHeight: 34, color: theme.Colors.primary },
+  sidebarBrandSub: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', letterSpacing: 2, color: theme.Colors.onSurfaceVariant, marginTop: 4 },
   sidebarNavScroll: { flex: 1, marginBottom: 16 },
   sidebarNav: { gap: 14, paddingBottom: 16 },
   sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 18, borderRadius: theme.Rounded.lg },
   sidebarLinkCollapsed: { justifyContent: 'center', paddingHorizontal: 0 },
   sidebarLinkActive: { backgroundColor: 'rgba(0, 224, 255, 0.10)', borderRightWidth: 4, borderRightColor: theme.Colors.primaryContainer },
-  sidebarLinkText: { fontSize: 13, fontWeight: '700', letterSpacing: 1.6, color: theme.Colors.onSurface },
+  sidebarLinkText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', letterSpacing: 1.6, color: theme.Colors.onSurface },
   sidebarLinkTextActive: { color: theme.Colors.primary },
   sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
   sidebarFooterCollapsed: { alignItems: 'center' },
@@ -181,5 +181,5 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   upgradeButtonCollapsed: { borderRadius: 24, overflow: 'hidden', marginBottom: 14, shadowColor: theme.Colors.secondary, shadowOpacity: 0.24, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, width: 48, height: 48 },
   upgradeGradient: { paddingVertical: 16, alignItems: 'center' },
   upgradeGradientCollapsed: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  upgradeText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  upgradeText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
 });

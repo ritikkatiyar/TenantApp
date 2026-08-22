@@ -1,6 +1,10 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 export default function AdminScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Admin Panel</Text>
@@ -9,7 +13,7 @@ export default function AdminScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -17,13 +21,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f4f5',
   },
   text: {
-    fontSize: 24,
+    fontSize: theme.Typography.HeadlineSmall.fontSize,
     fontWeight: 'bold',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   subtext: {
-    fontSize: 16,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 8,
   },
 });

@@ -106,8 +106,8 @@ export default function InventoryScreen() {
                 activeOpacity={0.82}
                 onPress={() => setIsAddModalOpen(true)}
               >
-                <LinearGradient colors={['#0891b2', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addBtn}>
-                  <MaterialIcons name="add" size={18} color="#fff" />
+                <LinearGradient colors={[theme.Colors.primary, '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addBtn}>
+                  <MaterialIcons name="add" size={18} color={theme.Colors.surfaceContainerLowest} />
                   <Text style={styles.addBtnText}>Add Item</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -130,20 +130,20 @@ export default function InventoryScreen() {
                     style={styles.mobileBackBtn}
                     onPress={() => router.push('/leases')}
                   >
-                    <MaterialIcons name="arrow-back" size={20} color="#0891b2" />
+                    <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
                   </TouchableOpacity>
                 )}
                 <View style={styles.searchBox}>
-                  <MaterialIcons name="search" size={18} color="#9ca3af" />
+                  <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
                   <TextInput
                     value={query} onChangeText={setQuery}
                     placeholder="Search inventory..."
-                    placeholderTextColor="#9ca3af"
+                    placeholderTextColor={theme.Colors.onSurfaceVariant}
                     style={styles.searchInput}
                   />
                   {query.length > 0 && (
                     <TouchableOpacity onPress={() => setQuery('')}>
-                      <MaterialIcons name="close" size={16} color="#9ca3af" />
+                      <MaterialIcons name="close" size={16} color={theme.Colors.onSurfaceVariant} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -152,8 +152,8 @@ export default function InventoryScreen() {
                   activeOpacity={0.82}
                   onPress={() => setIsAddModalOpen(true)}
                 >
-                  <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.addIconBtnInner}>
-                    <MaterialIcons name="add" size={20} color="#fff" />
+                  <LinearGradient colors={[theme.Colors.primary, '#0072ff']} style={styles.addIconBtnInner}>
+                    <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -173,7 +173,7 @@ export default function InventoryScreen() {
                 >
                   {active && (
                     <LinearGradient
-                      colors={t.id === 'moveOut' ? ['#dc2626', '#ef4444'] : ['#0891b2', '#0072ff']}
+                      colors={t.id === 'moveOut' ? [theme.Colors.error, '#ef4444'] : [theme.Colors.primary, '#0072ff']}
                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                       style={StyleSheet.absoluteFillObject}
                     />
@@ -189,11 +189,11 @@ export default function InventoryScreen() {
           {isDesktop && activeTab === 'registry' && (
             <View style={styles.desktopSearchRow}>
               <View style={[styles.searchBox, { maxWidth: 420 }]}>
-                <MaterialIcons name="search" size={18} color="#9ca3af" />
+                <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
                 <TextInput
                   value={query} onChangeText={setQuery}
                   placeholder="Search inventory..."
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={theme.Colors.onSurfaceVariant}
                   style={styles.searchInput}
                 />
               </View>
@@ -257,23 +257,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   pageHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 8 },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  kicker: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2, color: '#0891b2', textTransform: 'uppercase' },
+  kicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
   propertyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(8,145,178,0.1)',
+    backgroundColor: 'rgba(0,104,117,0.1)',
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 8,
   },
-  propertyBadgeText: { fontSize: 11, fontWeight: '800', color: '#0891b2' },
-  title: { fontSize: 32, fontWeight: '800', color: '#0b1c30', lineHeight: 38, marginTop: 4 },
-  subtitle: { fontSize: 15, color: '#5b6b6d', marginTop: 8, lineHeight: 22, maxWidth: 600 },
-  contextLine: { color: '#0891b2', fontSize: 12, fontWeight: '800', marginTop: 6 },
+  propertyBadgeText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  title: { fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, lineHeight: 38, marginTop: 4 },
+  subtitle: { fontSize: theme.Typography.BodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 8, lineHeight: 22, maxWidth: 600 },
+  contextLine: { color: theme.Colors.primary, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '800', marginTop: 6 },
   addBtnWrapper: { borderRadius: 14, overflow: 'hidden' },
   addBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: 8 },
-  addBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  addBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
 
   mobileTopBar: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   mobileBackBtn: {
@@ -296,8 +296,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#0b1c30',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
   },
   desktopSearchRow: { marginBottom: 4 },
@@ -310,6 +310,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', overflow: 'hidden',
   },
   tabActive: { borderWidth: 0 },
-  tabText: { fontSize: 13, fontWeight: '700', color: '#5b6b6d' },
-  tabTextActive: { color: '#fff', fontWeight: '800' },
+  tabText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
+  tabTextActive: { color: theme.Colors.surfaceContainerLowest, fontWeight: '800' },
 });

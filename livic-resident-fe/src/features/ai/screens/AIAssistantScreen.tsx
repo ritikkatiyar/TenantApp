@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useEffect } from 'react';
 import {
   ActivityIndicator,
@@ -21,7 +22,7 @@ import { BlurView } from 'expo-blur';
 
 import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
 import { useRouter } from 'expo-router';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { logger } from '@/src/utils/logger';
 
@@ -42,6 +43,8 @@ const EXAMPLES = [
 ];
 
 export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isDesktop } = useResponsive();
@@ -248,7 +251,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                   end={{ x: 1, y: 1 }}
                   style={styles.aiOrbIcon}
                 >
-                  <MaterialIcons name="auto-awesome" size={16} color="#ffffff" />
+                  <MaterialIcons name="auto-awesome" size={16} color={theme.Colors.surfaceContainerLowest} />
                 </LinearGradient>
                 <View>
                   <Text style={styles.dialogueTitle}>AI Command Desk</Text>
@@ -281,7 +284,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                       activeOpacity={0.75}
                       style={styles.chipButton}
                     >
-                      <MaterialIcons name="bolt" size={14} color="#006875" />
+                      <MaterialIcons name="bolt" size={14} color={theme.Colors.primary} />
                       <Text style={styles.chipText}>{example}</Text>
                     </TouchableOpacity>
                   ))}
@@ -299,7 +302,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                 >
                   {message.role === 'assistant' && (
                     <View style={styles.assistantAvatar}>
-                      <MaterialIcons name="auto-awesome" size={14} color="#006875" />
+                      <MaterialIcons name="auto-awesome" size={14} color={theme.Colors.primary} />
                     </View>
                   )}
 
@@ -323,10 +326,10 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               {isSending && (
                 <View style={[styles.msgRow, styles.msgRowAssistant]}>
                   <View style={styles.assistantAvatar}>
-                    <MaterialIcons name="auto-awesome" size={14} color="#006875" />
+                    <MaterialIcons name="auto-awesome" size={14} color={theme.Colors.primary} />
                   </View>
                   <BlurView intensity={95} tint="light" style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
-                    <ActivityIndicator size="small" color="#006875" />
+                    <ActivityIndicator size="small" color={theme.Colors.primary} />
                     <Text style={styles.loadingText}>Analyzing command...</Text>
                   </BlurView>
                 </View>
@@ -368,7 +371,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                       end={{ x: 1, y: 1 }}
                       style={styles.sendButtonActive}
                     >
-                      <MaterialIcons name="arrow-upward" size={18} color="#ffffff" />
+                      <MaterialIcons name="arrow-upward" size={18} color={theme.Colors.surfaceContainerLowest} />
                     </LinearGradient>
                   )}
                 </TouchableOpacity>
@@ -381,7 +384,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   outerWrapper: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -406,7 +409,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderRightWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.9)',
-    shadowColor: '#006677',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.25,
     shadowRadius: 28,
@@ -457,16 +460,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0072ff',
+    shadowColor: theme.Colors.secondary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 3,
   },
   dialogueTitle: {
-    fontSize: 15,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
-    color: '#0b1c30',
+    color: theme.Colors.onSurface,
   },
   onlineBadge: {
     flexDirection: 'row',
@@ -478,12 +481,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.Colors.primary,
   },
   onlineText: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '600',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   closeButton: {
     width: 32,
@@ -508,7 +511,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   suggestionTitle: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     color: '#607174',
     letterSpacing: 0.8,
@@ -525,9 +528,9 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   chipText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   msgRow: {
     flexDirection: 'row',
@@ -567,13 +570,13 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   userText: {
-    color: '#ffffff',
+    color: theme.Colors.surfaceContainerLowest,
     fontSize: 13.5,
     lineHeight: 19,
     fontWeight: '600',
   },
   assistantText: {
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     fontSize: 13.5,
     lineHeight: 19,
     fontWeight: '500',
@@ -584,9 +587,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loadingText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   dialogueFooter: {
     paddingHorizontal: 14,
@@ -609,7 +612,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 13.5,
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     maxHeight: 80,
     minHeight: 36,
     paddingVertical: 4,

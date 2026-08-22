@@ -86,7 +86,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
                 <>
                   {isWideDesktop && (
                     <BlurView intensity={50} tint={isDark ? 'dark' : 'light'} style={styles.searchBox}>
-                      <MaterialIcons name="search" size={22} color="#6b7a7d" />
+                      <MaterialIcons name="search" size={22} color={theme.Colors.onSurfaceVariant} />
                       <Text style={styles.searchPlaceholder}>Search announcements...</Text>
                     </BlurView>
                   )}
@@ -247,13 +247,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 54,
   },
   sidebarBrandTitle: {
-    fontSize: 34,
+    fontSize: theme.Typography.DisplaySmall.fontSize,
     fontWeight: '800',
     lineHeight: 40,
     color: theme.Colors.primary,
   },
   sidebarBrandSub: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
     letterSpacing: 2,
     color: theme.Colors.onSurfaceVariant,
@@ -276,7 +276,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRightColor: theme.Colors.primaryContainer,
   },
   sidebarLinkText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     letterSpacing: 1.6,
     color: theme.Colors.onSurface,
@@ -305,8 +305,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   upgradeText: {
-    color: '#fff',
-    fontSize: 14,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
   },
   desktopMain: {
@@ -330,12 +330,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   topbarTab: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     color: theme.Colors.onSurface,
   },
   compactTopbarTitle: {
     color: '#004b57',
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '700',
   },
   topbarRight: {
@@ -356,7 +356,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   searchPlaceholder: {
     color: theme.Colors.onSurfaceVariant,
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
   },
   topIcon: {
     width: 46,
@@ -376,7 +376,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   avatarText: {
     color: theme.Colors.primary,
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '800',
   },
   desktopContent: {
@@ -402,7 +402,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   desktopSaveButtonWrapper: {
     borderRadius: 100,
     overflow: 'hidden',
-    shadowColor: '#0072ff',
+    shadowColor: theme.Colors.secondary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -417,19 +417,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   desktopSaveButtonText: {
-    color: '#fff',
-    fontSize: 14,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
   },
   pageTitle: {
-    fontSize: 32,
+    fontSize: theme.Typography.headlineLg.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     lineHeight: 38,
   },
   pageSubtitle: {
     marginTop: 4,
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     maxWidth: 620,
   },
@@ -476,13 +476,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     minWidth: 0,
   },
   sectionTitle: {
-    fontSize: 25,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '700',
     color: '#101718',
   },
   sectionSubtitle: {
     marginTop: 5,
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     maxWidth: 520,
   },
@@ -501,9 +501,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     maxWidth: '100%',
   },
   statsBadgeText: {
-    color: '#0072ff',
+    color: theme.Colors.secondary,
     fontWeight: '700',
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     flexShrink: 1,
   },
   formGroup: {
@@ -511,13 +511,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   eyebrow: {
     color: '#00606b',
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
     letterSpacing: 2,
     marginBottom: 7,
   },
   inputLabel: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '600',
     letterSpacing: 1.8,
     color: '#005363',
@@ -532,7 +532,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     color: theme.Colors.onSurface,
-    fontSize: 15,
+    fontSize: theme.Typography.BodyLarge.fontSize,
   },
   textarea: {
     minHeight: 154,
@@ -554,20 +554,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   chipActive: {
-    backgroundColor: '#0072ff',
-    borderColor: '#0072ff',
+    backgroundColor: theme.Colors.secondary,
+    borderColor: theme.Colors.secondary,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
   chipTextActive: {
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   emptyStateText: {
     color: theme.Colors.onSurfaceVariant,
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     marginTop: 10,
   },
   sendButton: {
@@ -586,8 +586,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 18,
   },
   sendButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '700',
   },
   historyList: {
@@ -596,7 +596,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   historyCard: {
     marginBottom: 0,
     borderRadius: 0,
-    backgroundColor: '#fff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderTopWidth: 1,
     borderTopColor: '#e7eeee',
     paddingVertical: 20,
@@ -609,7 +609,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   historyMeta: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
   },
@@ -620,7 +620,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   historyContent: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 20,
     marginBottom: 14,
@@ -631,11 +631,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   historyTimestamp: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
   historyBadge: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -645,8 +645,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 14,
   },
   categoryText: {
-    color: '#fff',
-    fontSize: 11,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
   },
   centerRow: {
@@ -659,7 +659,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
     borderRadius: Theme.Rounded.xl,
-    backgroundColor: '#fff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.05)',
   },
@@ -677,7 +677,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderBottomColor: '#e5eded',
   },
   mobileHeaderTitle: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
@@ -692,20 +692,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   toggleHistoryText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   mobileTitle: {
-    fontSize: 25,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '700',
     color: '#004b57',
   },
   mobileSubtitle: {
     marginTop: 2,
     color: '#66777a',
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
   },
   headerRight: {
     flexDirection: 'row',
@@ -766,13 +766,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.9)',
   },
   segmentText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
   segmentTextActive: {
     color: theme.Surface.card,
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
   },
   segmentRow: {

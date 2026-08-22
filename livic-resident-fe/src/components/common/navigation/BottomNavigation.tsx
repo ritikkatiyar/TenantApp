@@ -12,6 +12,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, usePathname } from 'expo-router';
 import { useScrollNav } from './ScrollContext';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface BottomNavigationProps {
   onMorePress: () => void;
@@ -23,6 +24,7 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
   const router = useRouter();
   const pathname = usePathname();
   const { navTranslateY } = useScrollNav();
+  const { theme, isDark } = useAppTheme();
 
   if (pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') {
     return null;
@@ -53,7 +55,7 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
 
   const pillScale = navTranslateY.interpolate({
     inputRange: [0, 100],
-    outputRange: [1, 0.88],
+    outputRange: [1, 0.95],
     extrapolate: 'clamp',
   });
 
@@ -67,19 +69,19 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
   // When pill fades away on scroll, AI orb stays visible & minimizes to a brief icon docked on the right
   const aiScale = navTranslateY.interpolate({
     inputRange: [0, 100],
-    outputRange: [1, 0.74],
+    outputRange: [1, 0.92],
     extrapolate: 'clamp',
   });
 
   const aiTranslateY = navTranslateY.interpolate({
     inputRange: [0, 100],
-    outputRange: [0, -6],
+    outputRange: [0, -2],
     extrapolate: 'clamp',
   });
 
   const aiTranslateX = navTranslateY.interpolate({
     inputRange: [0, 100],
-    outputRange: [0, 6],
+    outputRange: [0, 2],
     extrapolate: 'clamp',
   });
 
@@ -107,9 +109,9 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
             {/* Home Button */}
             <TouchableOpacity style={styles.navItem} onPress={handleHomePress} activeOpacity={0.7}>
               <View style={[styles.iconCircle, isHomeActive && styles.iconCircleActive]}>
-                <MaterialIcons name="home" size={22} color={isHomeActive ? '#00A8C6' : '#64748B'} />
+                <MaterialIcons name="home" size={22} color={isHomeActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
               </View>
-              <Text style={[styles.navText, isHomeActive && styles.navTextActive]}>Home</Text>
+              <Text style={[styles.navText, { color: isHomeActive ? theme.Colors.primary : theme.Colors.onSurfaceVariant }, isHomeActive && styles.navTextActive]}>Home</Text>
             </TouchableOpacity>
 
             {/* Protruding Centerpiece Camera Button */}
@@ -124,9 +126,9 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
             {/* More Button */}
             <TouchableOpacity style={styles.navItem} onPress={onMorePress} activeOpacity={0.7}>
               <View style={styles.iconCircle}>
-                <MaterialIcons name="widgets" size={22} color="#64748B" />
+                <MaterialIcons name="widgets" size={22} color={theme.Colors.onSurfaceVariant} />
               </View>
-              <Text style={styles.navText}>More</Text>
+              <Text style={[styles.navText, { color: theme.Colors.onSurfaceVariant }]}>More</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -148,14 +150,14 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
       >
         <TouchableOpacity style={styles.aiButtonTouch} onPress={handleAIPress} activeOpacity={0.78}>
           <LinearGradient
-            colors={['#00F2FE', '#4FACFE', '#7F00FF']}
+            colors={['#00e0ff', '#0070ea']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.aiGradientRing}
           >
             <View style={styles.aiMinimalistContainer}>
               <BlurView intensity={Platform.OS === 'ios' ? 85 : 95} tint="light" style={styles.aiBlurBackground} />
-              <Ionicons name="sparkles" size={21} color="#006677" />
+              <MaterialIcons name="assistant" size={21} color={theme.Colors.primary} />
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -243,9 +245,9 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#00D8F6',
-    opacity: 0.3,
-    transform: [{ scale: 1.12 }],
+    backgroundColor: 'transparent',
+    opacity: 0,
+    transform: [{ scale: 1.0 }],
   },
   heroCameraButton: {
     width: 58,
@@ -256,11 +258,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3.5,
     borderColor: '#ffffff',
-    shadowColor: '#008394',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
     position: 'relative',
   },
   cameraDotBadge: {
@@ -282,11 +284,11 @@ const styles = StyleSheet.create({
   },
   aiButtonTouch: {
     borderRadius: 26,
-    shadowColor: '#00F2FE',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   aiGradientRing: {
     padding: 2.5,

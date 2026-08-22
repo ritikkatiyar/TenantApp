@@ -77,7 +77,7 @@ export function AnnouncementHistoryList({
           <ActivityIndicator size="small" color={theme.Colors.primary} style={{ marginVertical: 32 }} />
         ) : !Array.isArray(announcements) || announcements.length === 0 ? (
           <View style={styles.emptyState}>
-            <MaterialIcons name="notifications-none" size={32} color="#6b7a7d" style={{ marginBottom: 8 }} />
+            <MaterialIcons name="notifications-none" size={32} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 8 }} />
             <Text style={styles.emptyText}>No announcement logs for this property.</Text>
           </View>
         ) : (
@@ -134,7 +134,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   sectionHeader: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -142,7 +142,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'Inter',
   },
   composerLabel: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
@@ -160,7 +160,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 48,
   },
   emptyText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     fontFamily: 'Inter',
@@ -196,13 +196,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   historyTitle: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
   historyMeta: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
@@ -216,11 +216,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   severityText: {
     fontSize: 8,
     fontWeight: '900',
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
     fontFamily: 'Inter',
   },
   historyContent: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: '#394648',
     lineHeight: 18,
     marginBottom: 12,
@@ -235,13 +235,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: 10,
   },
   historySender: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   historyTime: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     color: '#8b9ea1',
     fontWeight: '600',
     fontFamily: 'Inter',

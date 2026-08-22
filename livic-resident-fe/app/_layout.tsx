@@ -2,11 +2,9 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, Platform } from 'react-native';
+import { View, Platform, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider } from '@/src/features/auth/context/AuthProvider';
 import { ThemeContextProvider } from '@/src/theme/ThemeContext';
 import BottomNavigation from '@/src/components/common/navigation/BottomNavigation';
@@ -16,8 +14,20 @@ import MobileMoreSheet from '@/src/components/common/navigation/MobileMoreSheet'
 import { ScrollProvider } from '@/src/components/common/navigation/ScrollContext';
 import { ScreenWrapper } from '@/src/components/common/layout/ScreenWrapper';
 import { OnboardingGate } from '@/src/components/common/layout/OnboardingGate';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
+import ErrorBoundary from '@/src/components/common/feedback/ErrorBoundary';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Lazily load QRScannerModal only on native — expo-camera is not SSR/web-export safe
 // and will crash Expo's static export (`npx expo export --platform web`) if imported statically.
@@ -81,69 +91,73 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeContextProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <ToastProvider>
-          <AuthProvider>
-            <ScrollProvider>
-              <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
-                {showDesktop && !hideNavigation && <SidebarNavigation />}
-                <View style={{ flex: 1 }}>
-                  {!showDesktop && !hideHeader && (
-                    <MobileHeader 
-                      title={getHeaderTitle(pathname)} 
-                      onMenuPress={() => setMoreSheetVisible(true)} 
-                    />
-                  )}
-                  <ScreenWrapper isAuth={hideNavigation}>
-                    <OnboardingGate>
-                      <Stack screenOptions={{ headerShown: false }}>
-                        <Stack.Screen name="index" />
-                        <Stack.Screen name="login" />
-                        <Stack.Screen name="signup" />
-                        <Stack.Screen name="onboarding" />
-                        <Stack.Screen name="tenant-home" />
-                        <Stack.Screen 
-                          name="ai" 
-                          options={{ 
-                            presentation: 'transparentModal',
-                            animation: 'fade',
-                            contentStyle: { backgroundColor: 'transparent' }
-                          }} 
-                        />
-                        <Stack.Screen name="tenant-property" />
-                        <Stack.Screen name="tenant-inventory" />
-                        <Stack.Screen name="tenant-maintenance" />
-                        <Stack.Screen name="tenant-payments" />
-                        <Stack.Screen name="settings" />
-                      </Stack>
-                    </OnboardingGate>
-                  </ScreenWrapper>
-                  
-                  {!showDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
-                    <>
-                      <BottomNavigation 
-                        onMorePress={() => setMoreSheetVisible(true)} 
-                        onQRPress={() => setQrModalVisible(true)} 
-                      />
-                      <MobileMoreSheet 
-                        visible={moreSheetVisible} 
-                        onClose={() => setMoreSheetVisible(false)} 
-                      />
-                      <Suspense fallback={null}>
-                        <QRScannerModal 
-                          visible={qrModalVisible} 
-                          onClose={() => setQrModalVisible(false)} 
-                        />
-                      </Suspense>
-                    </>
-                  )}
-                </View>
-              </View>
-            </ScrollProvider>
-          </AuthProvider>
-        </ToastProvider>
-        <StatusBar style="dark" translucent backgroundColor="transparent" />
-        </ThemeProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <ToastProvider>
+                <AuthProvider>
+                  <ScrollProvider>
+                    <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
+                      {showDesktop && !hideNavigation && <SidebarNavigation />}
+                      <View style={{ flex: 1 }}>
+                        {!showDesktop && !hideHeader && (
+                          <MobileHeader 
+                            title={getHeaderTitle(pathname)} 
+                            onMenuPress={() => setMoreSheetVisible(true)} 
+                          />
+                        )}
+                        <ScreenWrapper isAuth={hideNavigation}>
+                          <OnboardingGate>
+                            <Stack screenOptions={{ headerShown: false }}>
+                              <Stack.Screen name="index" />
+                              <Stack.Screen name="login" />
+                              <Stack.Screen name="signup" />
+                              <Stack.Screen name="onboarding" />
+                              <Stack.Screen name="tenant-home" />
+                              <Stack.Screen 
+                                name="ai" 
+                                options={{ 
+                                  presentation: 'transparentModal',
+                                  animation: 'fade',
+                                  contentStyle: { backgroundColor: 'transparent' }
+                                }} 
+                              />
+                              <Stack.Screen name="tenant-property" />
+                              <Stack.Screen name="tenant-inventory" />
+                              <Stack.Screen name="tenant-maintenance" />
+                              <Stack.Screen name="tenant-payments" />
+                              <Stack.Screen name="settings" />
+                            </Stack>
+                          </OnboardingGate>
+                        </ScreenWrapper>
+                        
+                        {!showDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
+                          <>
+                            <BottomNavigation 
+                              onMorePress={() => setMoreSheetVisible(true)} 
+                              onQRPress={() => setQrModalVisible(true)} 
+                            />
+                            <MobileMoreSheet 
+                              visible={moreSheetVisible} 
+                              onClose={() => setMoreSheetVisible(false)} 
+                            />
+                            <Suspense fallback={null}>
+                              <QRScannerModal 
+                                visible={qrModalVisible} 
+                                onClose={() => setQrModalVisible(false)} 
+                              />
+                            </Suspense>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                  </ScrollProvider>
+                </AuthProvider>
+              </ToastProvider>
+              <StatusBar style="dark" translucent backgroundColor="transparent" />
+            </ThemeProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
       </ThemeContextProvider>
     </SafeAreaProvider>
   );

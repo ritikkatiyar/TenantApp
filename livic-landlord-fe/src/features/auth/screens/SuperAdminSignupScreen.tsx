@@ -400,7 +400,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   requirementText: {
     ...theme.Typography.bodyMd,
     color: theme.Colors.onSurfaceVariant,
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     marginLeft: 8,
   },
   requirementTextValid: {
@@ -453,7 +453,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     ...theme.Typography.bodyMd,
     color: theme.Colors.error,
     marginLeft: 8,
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
   },
   footer: {
     width: '100%',

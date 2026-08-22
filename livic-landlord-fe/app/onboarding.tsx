@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -39,6 +40,8 @@ const MODULES = [
 ] as const;
 
 export default function OnboardingScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const [selectedModule, setSelectedModule] = useState<SaveUserPreferenceRequest['activeMode'] | null>(null);
   const [loading, setLoading] = useState(false);
   
@@ -122,7 +125,7 @@ export default function OnboardingScreen() {
             disabled={!inviteCode.trim() || joining}
           >
             {joining ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
             ) : (
               <Text style={styles.continueButtonText}>Join Property</Text>
             )}
@@ -157,7 +160,7 @@ export default function OnboardingScreen() {
             disabled={!selectedModule || loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
             ) : (
               <Text style={styles.continueButtonText}>Continue</Text>
             )}
@@ -172,7 +175,7 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 24,
@@ -185,14 +188,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: theme.Typography.headlineMd.fontSize,
     fontWeight: '700',
     color: '#1a1d1e',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     color: '#6e7781',
     textAlign: 'center',
   },
@@ -207,12 +210,12 @@ const styles = StyleSheet.create({
   card: {
     width: 250,
     padding: 24,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#e1e4e8',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOpacity: 0.05,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -222,11 +225,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f8fd',
   },
   cardIcon: {
-    fontSize: 48,
+    fontSize: theme.Typography.headlineXl.fontSize,
     marginBottom: 16,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '600',
     color: '#24292f',
     marginBottom: 8,
@@ -236,7 +239,7 @@ const styles = StyleSheet.create({
     color: '#0969da',
   },
   cardDesc: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: '#57606a',
     textAlign: 'center',
     lineHeight: 20,
@@ -257,8 +260,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#8c959f',
   },
   continueButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '600',
   },
   inviteContainer: {
@@ -269,13 +272,13 @@ const styles = StyleSheet.create({
   inviteInput: {
     width: '100%',
     borderWidth: 2,
-    borderColor: '#cbd5e1',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 12,
     padding: 16,
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '600',
     color: '#334155',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -284,7 +287,7 @@ const styles = StyleSheet.create({
   },
   toggleBtnText: {
     color: '#0969da',
-    fontSize: 15,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '600',
   },
 });

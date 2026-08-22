@@ -12,7 +12,7 @@ import {
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useProperties } from '@/src/hooks/useProperties';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -169,7 +169,7 @@ export default function ReportsRoute() {
         <GlassCard style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiLabel}>TOTAL STATEMENTS</Text>
-            <MaterialIcons name="receipt-long" size={20} color="#006875" />
+            <MaterialIcons name="receipt-long" size={20} color={theme.Colors.primary} />
           </View>
           <Text style={styles.kpiValue}>{totalElements}</Text>
           <Text style={styles.kpiSub}>Records for {billingMonth}</Text>
@@ -277,17 +277,17 @@ export default function ReportsRoute() {
         {/* Search & Status Filters */}
         <View style={styles.filterControlsRow}>
           <View style={styles.searchBox}>
-            <MaterialIcons name="search" size={20} color="#6b7a7d" />
+            <MaterialIcons name="search" size={20} color={theme.Colors.onSurfaceVariant} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search by tenant name or unit..."
-              placeholderTextColor="#6b7a7d"
+              placeholderTextColor={theme.Colors.onSurfaceVariant}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={18} color="#6b7a7d" />
+                <Ionicons name="close-circle" size={18} color={theme.Colors.onSurfaceVariant} />
               </TouchableOpacity>
             )}
           </View>
@@ -378,7 +378,7 @@ export default function ReportsRoute() {
                     >
                       ₹{stmt.paidAt ? stmt.totalAmount?.toLocaleString() : '0.00'}
                     </Text>
-                    <Text style={[styles.cell, { flex: 1.2, textAlign: 'center', color: '#6b7a7d' }]}>
+                    <Text style={[styles.cell, { flex: 1.2, textAlign: 'center', color: theme.Colors.onSurfaceVariant }]}>
                       {stmt.dueDate ? new Date(stmt.dueDate).toLocaleDateString() : 'N/A'}
                     </Text>
                     <View style={{ flex: 1.4, alignItems: 'center', justifyContent: 'center' }}>
@@ -530,20 +530,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   kpiLabel: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     letterSpacing: 1.2,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   kpiValue: {
-    fontSize: 24,
+    fontSize: theme.Typography.HeadlineSmall.fontSize,
     fontWeight: '900',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     marginBottom: 4,
   },
   kpiSub: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
   },
   glassCard: {
     marginBottom: 20,
@@ -569,18 +569,18 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   monthSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: theme.Rounded.full,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
   },
   monthArrow: {
     padding: 4,
   },
   monthLabel: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onBackground,
     marginHorizontal: 12,
@@ -603,19 +603,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: theme.Rounded.full,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
   },
   propTabActive: {
     backgroundColor: theme.Colors.primary,
     borderColor: theme.Colors.primary,
   },
   propTabText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
   propTabTextActive: {
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   filterControlsRow: {
     flexDirection: 'row',
@@ -628,10 +628,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     minWidth: 260,
     height: 44,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
@@ -639,8 +639,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#151d1e',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
     outlineWidth: 0,
   },
   statusChipsContainer: {
@@ -653,19 +653,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 10,
     backgroundColor: 'rgba(255,255,255,0.7)',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
   },
   statusChipActive: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   statusChipText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   statusChipTextActive: {
-    color: '#ffffff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   listCard: {
     padding: 20,
@@ -685,7 +685,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderBottomColor: '#e2e8f0',
   },
   headerCell: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.outline,
     textTransform: 'uppercase',
@@ -704,21 +704,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderBottomWidth: 0,
   },
   cell: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onBackground,
   },
   tenantAvatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tenantAvatarText: {
-    color: '#ffffff',
+    color: theme.Colors.surfaceContainerLowest,
     fontWeight: '800',
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
   },
   downloadBtn: {
     flexDirection: 'row',
@@ -732,7 +732,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   downloadBtnText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -751,7 +751,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   mobileTenantName: {
-    fontSize: 15,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
   },
@@ -762,13 +762,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: 10,
   },
   mobileDetailLabel: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.outline,
     fontWeight: '500',
   },
   mobileDueDate: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
   },
   mobileAmountsRow: {
@@ -780,7 +780,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopColor: 'rgba(0,0,0,0.04)',
   },
   mobileAmount: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onBackground,
   },
@@ -796,8 +796,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 12,
   },
   paginationInfo: {
-    fontSize: 13,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
   },
   paginationActions: {
     flexDirection: 'row',
@@ -810,22 +810,22 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
     gap: 2,
   },
   pageBtnDisabled: {
-    backgroundColor: '#f8fafc',
-    borderColor: '#f1f5f9',
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderColor: theme.Colors.surfaceContainer,
   },
   pageBtnText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.primary,
   },
   pageBtnTextDisabled: {
-    color: '#9ca3af',
+    color: theme.Colors.onSurfaceVariant,
   },
   pageNumberBadge: {
     paddingHorizontal: 12,
@@ -834,7 +834,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   pageNumberText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -845,8 +845,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
   },
 });
 

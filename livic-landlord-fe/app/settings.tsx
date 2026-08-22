@@ -37,7 +37,7 @@ import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { EmptyState } from '@/src/components/common/display/EmptyState';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 const ALL_PERMISSIONS = [
@@ -55,6 +55,8 @@ const ALL_PERMISSIONS = [
 ];
 
 export default function SystemPreferencesRoute() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { properties, isLoading: propertiesLoading } = useProperties();
@@ -295,7 +297,7 @@ export default function SystemPreferencesRoute() {
                 end={{ x: 1, y: 0 }}
                 style={styles.actionPillGradient}
               >
-                <MaterialIcons name={activeTab === 'invites' ? 'vpn-key' : 'add'} size={18} color="#fff" />
+                <MaterialIcons name={activeTab === 'invites' ? 'vpn-key' : 'add'} size={18} color={theme.Colors.surfaceContainerLowest} />
                 <Text style={styles.actionPillText}>
                   {activeTab === 'invites' ? 'GENERATE INVITE' : 'CREATE ROLE'}
                 </Text>
@@ -314,11 +316,11 @@ export default function SystemPreferencesRoute() {
         >
           <GlassCard style={[styles.hubCard, activeTab === 'roles' && styles.hubCardActive]}>
             <View style={styles.hubCardHeader}>
-              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(8, 145, 178, 0.12)' }]}>
-                <MaterialIcons name="admin-panel-settings" size={24} color="#0891b2" />
+              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(0, 104, 117, 0.12)' }]}>
+                <MaterialIcons name="admin-panel-settings" size={24} color={theme.Colors.primary} />
               </View>
               <View style={styles.hubBadge}>
-                <Text style={[styles.hubBadgeText, { color: '#0891b2' }]}>{roles.length} Roles</Text>
+                <Text style={[styles.hubBadgeText, { color: theme.Colors.primary }]}>{roles.length} Roles</Text>
               </View>
             </View>
             <Text style={styles.hubCardTitle}>Roles & Permissions</Text>
@@ -334,10 +336,10 @@ export default function SystemPreferencesRoute() {
           <GlassCard style={[styles.hubCard, activeTab === 'invites' && styles.hubCardActive]}>
             <View style={styles.hubCardHeader}>
               <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(0, 104, 117, 0.12)' }]}>
-                <MaterialIcons name="vpn-key" size={24} color="#006875" />
+                <MaterialIcons name="vpn-key" size={24} color={theme.Colors.primary} />
               </View>
               <View style={styles.hubBadge}>
-                <Text style={[styles.hubBadgeText, { color: '#006875' }]}>{invites.length} Codes</Text>
+                <Text style={[styles.hubBadgeText, { color: theme.Colors.primary }]}>{invites.length} Codes</Text>
               </View>
             </View>
             <Text style={styles.hubCardTitle}>Staff Join Keys</Text>
@@ -352,11 +354,11 @@ export default function SystemPreferencesRoute() {
         >
           <GlassCard style={[styles.hubCard, activeTab === 'preferences' && styles.hubCardActive]}>
             <View style={styles.hubCardHeader}>
-              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
-                <MaterialIcons name="tune" size={24} color="#8b5cf6" />
+              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(91, 94, 207, 0.12)' }]}>
+                <MaterialIcons name="tune" size={24} color={theme.Colors.secondary} />
               </View>
               <View style={styles.hubBadge}>
-                <Text style={[styles.hubBadgeText, { color: '#8b5cf6' }]}>Automations</Text>
+                <Text style={[styles.hubBadgeText, { color: theme.Colors.secondary }]}>Automations</Text>
               </View>
             </View>
             <Text style={styles.hubCardTitle}>System Preferences</Text>
@@ -371,11 +373,11 @@ export default function SystemPreferencesRoute() {
         >
           <GlassCard style={styles.hubCard}>
             <View style={styles.hubCardHeader}>
-              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(236, 72, 153, 0.12)' }]}>
-                <MaterialIcons name="credit-card" size={24} color="#ec4899" />
+              <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(119, 90, 0, 0.12)' }]}>
+                <MaterialIcons name="credit-card" size={24} color={theme.Colors.tertiary} />
               </View>
               <View style={styles.hubBadge}>
-                <Text style={[styles.hubBadgeText, { color: '#ec4899' }]}>SaaS Tier</Text>
+                <Text style={[styles.hubBadgeText, { color: theme.Colors.tertiary }]}>SaaS Tier</Text>
               </View>
             </View>
             <Text style={styles.hubCardTitle}>Subscription & Plan</Text>
@@ -387,7 +389,7 @@ export default function SystemPreferencesRoute() {
       {/* Main Tab Content */}
       {loading ? (
         <View style={styles.centerLoading}>
-          <ActivityIndicator size="large" color="#006875" />
+          <ActivityIndicator size="large" color={theme.Colors.primary} />
           <Text style={styles.loadingSub}>Loading system preferences...</Text>
         </View>
       ) : activeTab === 'roles' ? (
@@ -435,7 +437,7 @@ export default function SystemPreferencesRoute() {
 
                   <View style={styles.roleCardBottom}>
                     <View style={styles.permCountTag}>
-                      <MaterialIcons name="shield" size={14} color="#006875" />
+                      <MaterialIcons name="shield" size={14} color={theme.Colors.primary} />
                       <Text style={styles.permCountText}>{item.permissionCodes.length} Permissions</Text>
                     </View>
 
@@ -472,7 +474,7 @@ export default function SystemPreferencesRoute() {
                   <GlassCard key={item.id} style={styles.inviteCard}>
                     <View style={styles.inviteCardHeader}>
                       <View style={styles.codeCapsule}>
-                        <MaterialIcons name="key" size={16} color="#006875" />
+                        <MaterialIcons name="key" size={16} color={theme.Colors.primary} />
                         <Text style={styles.inviteCode}>{item.code}</Text>
                       </View>
                       <StatusPill status={item.isActive ? 'ACTIVE' : 'EXPIRED'} />
@@ -504,7 +506,7 @@ export default function SystemPreferencesRoute() {
                         }}
                         activeOpacity={0.7}
                       >
-                        <MaterialIcons name="content-copy" size={16} color="#006875" />
+                        <MaterialIcons name="content-copy" size={16} color={theme.Colors.primary} />
                         <Text style={styles.copyKeyBtnText}>Copy Invitation Code</Text>
                       </TouchableOpacity>
                     )}
@@ -532,7 +534,7 @@ export default function SystemPreferencesRoute() {
           <View style={styles.prefGrid}>
             <GlassCard style={styles.prefCard}>
               <View style={styles.prefCardHeader}>
-                <MaterialIcons name="palette" size={22} color="#006875" />
+                <MaterialIcons name="palette" size={22} color={theme.Colors.primary} />
                 <Text style={styles.prefCardTitle}>Appearance & Theme Mode</Text>
               </View>
               <View style={styles.prefItem}>
@@ -576,7 +578,7 @@ export default function SystemPreferencesRoute() {
                       />
                       <Text
                         style={{
-                          fontSize: 12,
+                          fontSize: theme.Typography.BodySmall.fontSize,
                           fontWeight: '700',
                           textTransform: 'capitalize',
                           color: isSelected ? '#006875' : '#6b7a7d',
@@ -592,7 +594,7 @@ export default function SystemPreferencesRoute() {
 
             <GlassCard style={styles.prefCard}>
               <View style={styles.prefCardHeader}>
-                <MaterialIcons name="receipt-long" size={22} color="#006875" />
+                <MaterialIcons name="receipt-long" size={22} color={theme.Colors.primary} />
                 <Text style={styles.prefCardTitle}>Billing Automation</Text>
               </View>
               <View style={styles.prefItem}>
@@ -620,7 +622,7 @@ export default function SystemPreferencesRoute() {
 
             <GlassCard style={styles.prefCard}>
               <View style={styles.prefCardHeader}>
-                <MaterialIcons name="notifications-active" size={22} color="#0891b2" />
+                <MaterialIcons name="notifications-active" size={22} color={theme.Colors.primary} />
                 <Text style={styles.prefCardTitle}>Communication Channels</Text>
               </View>
               <View style={styles.prefItem}>
@@ -663,7 +665,7 @@ export default function SystemPreferencesRoute() {
                 <Text style={styles.modalSub}>Configure assigned permission matrix</Text>
               </View>
               <TouchableOpacity onPress={() => setSelectedRole(null)} style={styles.closeIconBtn}>
-                <MaterialIcons name="close" size={22} color="#151d1e" />
+                <MaterialIcons name="close" size={22} color={theme.Colors.onSurface} />
               </TouchableOpacity>
             </View>
 
@@ -721,7 +723,7 @@ export default function SystemPreferencesRoute() {
                   style={styles.modalBtnGradient}
                 >
                   {savingPermissions ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
                   ) : (
                     <Text style={styles.modalBtnText}>SAVE PERMISSIONS MATRIX</Text>
                   )}
@@ -743,7 +745,7 @@ export default function SystemPreferencesRoute() {
                 <Text style={styles.modalSub}>Define role parameters & permission scope</Text>
               </View>
               <TouchableOpacity onPress={() => setCustomRoleModalVisible(false)} style={styles.closeIconBtn}>
-                <MaterialIcons name="close" size={22} color="#151d1e" />
+                <MaterialIcons name="close" size={22} color={theme.Colors.onSurface} />
               </TouchableOpacity>
             </View>
 
@@ -752,7 +754,7 @@ export default function SystemPreferencesRoute() {
               <TextInput
                 style={styles.modalTextInput}
                 placeholder="e.g. Senior Floor Manager"
-                placeholderTextColor="#6b7a7d"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={newRoleName}
                 onChangeText={setNewRoleName}
               />
@@ -761,7 +763,7 @@ export default function SystemPreferencesRoute() {
               <TextInput
                 style={[styles.modalTextInput, { height: 70, paddingTop: 10 }]}
                 placeholder="Describe role responsibilities..."
-                placeholderTextColor="#6b7a7d"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={newRoleDesc}
                 onChangeText={setNewRoleDesc}
                 multiline
@@ -810,7 +812,7 @@ export default function SystemPreferencesRoute() {
                   end={{ x: 1, y: 0 }}
                   style={styles.modalBtnGradient}
                 >
-                  {creatingRole ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalBtnText}>CREATE ROLE</Text>}
+                  {creatingRole ? <ActivityIndicator color={theme.Colors.surfaceContainerLowest} /> : <Text style={styles.modalBtnText}>CREATE ROLE</Text>}
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -829,7 +831,7 @@ export default function SystemPreferencesRoute() {
                 <Text style={styles.modalSub}>Create a single-use token for onboarding</Text>
               </View>
               <TouchableOpacity onPress={() => setInviteModalVisible(false)} style={styles.closeIconBtn}>
-                <MaterialIcons name="close" size={22} color="#151d1e" />
+                <MaterialIcons name="close" size={22} color={theme.Colors.onSurface} />
               </TouchableOpacity>
             </View>
 
@@ -864,7 +866,7 @@ export default function SystemPreferencesRoute() {
                 value={inviteMaxUses}
                 onChangeText={setInviteMaxUses}
                 placeholder="1"
-                placeholderTextColor="#6b7a7d"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
               />
 
               <TouchableOpacity
@@ -880,7 +882,7 @@ export default function SystemPreferencesRoute() {
                   style={styles.modalBtnGradient}
                 >
                   {generatingInvite ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
                   ) : (
                     <Text style={styles.modalBtnText}>GENERATE & COPY CODE</Text>
                   )}
@@ -894,7 +896,7 @@ export default function SystemPreferencesRoute() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     padding: Theme.Spacing.containerPadding,
     paddingTop: Platform.OS === 'web' ? 24 : 88,
@@ -911,14 +913,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: theme.Typography.headlineMd.fontSize,
     fontWeight: '900',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    fontSize: 14,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
     maxWidth: 600,
   },
@@ -929,7 +931,7 @@ const styles = StyleSheet.create({
   actionPillBtn: {
     borderRadius: 100,
     overflow: 'hidden',
-    shadowColor: '#0072ff',
+    shadowColor: theme.Colors.secondary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -943,8 +945,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   actionPillText: {
-    color: '#ffffff',
-    fontSize: 12,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -966,7 +968,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.65)',
   },
   hubCardActive: {
-    borderColor: '#006875',
+    borderColor: theme.Colors.primary,
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   hubCardHeader: {
@@ -986,23 +988,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
   },
   hubBadgeText: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
   },
   hubCardTitle: {
-    fontSize: 16,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     marginBottom: 4,
   },
   hubCardDesc: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     lineHeight: 17,
   },
   sectionContainer: {
@@ -1015,13 +1017,13 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   sectionSub: {
-    fontSize: 13,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
   rolesGrid: {
@@ -1043,9 +1045,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   roleName: {
-    fontSize: 16,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   customRolePill: {
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
@@ -1056,9 +1058,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   customRolePillText: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   systemRolePill: {
     backgroundColor: 'rgba(107, 122, 125, 0.08)',
@@ -1069,13 +1071,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(107, 122, 125, 0.2)',
   },
   systemRolePillText: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   roleDesc: {
-    fontSize: 13,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     lineHeight: 19,
   },
   roleCardBottom: {
@@ -1097,28 +1099,28 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   permCountText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   configureBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
   },
   configureBtnDisabled: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   configureBtnText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   configureBtnTextDisabled: {
-    color: '#9ca3af',
+    color: theme.Colors.onSurfaceVariant,
   },
   invitesGrid: {
     gap: 14,
@@ -1145,9 +1147,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   inviteCode: {
-    fontSize: 15,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
   },
   inviteMetaRow: {
@@ -1161,19 +1163,19 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
   },
   inviteMetaLabel: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 4,
     letterSpacing: 0.8,
   },
   inviteMetaVal: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   copyKeyBtn: {
     flexDirection: 'row',
@@ -1182,14 +1184,14 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
     borderColor: 'rgba(0, 104, 117, 0.3)',
   },
   copyKeyBtnText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   prefGrid: {
     gap: 16,
@@ -1205,9 +1207,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   prefCardTitle: {
-    fontSize: 16,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   prefItem: {
     flexDirection: 'row',
@@ -1218,13 +1220,13 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(0, 0, 0, 0.05)',
   },
   prefItemName: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   prefItemDesc: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
   prefBadgeActive: {
@@ -1236,9 +1238,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   prefBadgeText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   modalOverlay: {
     flex: 1,
@@ -1251,10 +1253,10 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 640,
     maxHeight: '85%',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 24,
@@ -1270,19 +1272,19 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e2e8f0',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   modalSub: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
   closeIconBtn: {
     padding: 6,
     borderRadius: 10,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.Colors.surfaceContainer,
   },
   modalBody: {
     padding: 24,
@@ -1291,9 +1293,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   categoryHeading: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1.1,
     marginBottom: 10,
   },
@@ -1313,34 +1315,34 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   permCheckName: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   permCheckNameDisabled: {
-    color: '#9ca3af',
+    color: theme.Colors.onSurfaceVariant,
   },
   permCheckDesc: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
   inputLabel: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     letterSpacing: 1.1,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 6,
   },
   modalTextInput: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 14,
-    color: '#151d1e',
-    backgroundColor: '#f8fafc',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
+    backgroundColor: theme.Colors.surfaceContainerLow,
     marginBottom: 16,
     outlineWidth: 0,
   },
@@ -1355,20 +1357,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   roleSelectChipActive: {
-    borderColor: '#006875',
+    borderColor: theme.Colors.primary,
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   roleSelectChipText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
   },
   roleSelectChipTextActive: {
-    color: '#006875',
+    color: theme.Colors.primary,
   },
   modalFooter: {
     padding: 20,
@@ -1385,8 +1387,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   modalBtnText: {
-    color: '#ffffff',
-    fontSize: 13,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -1397,7 +1399,7 @@ const styles = StyleSheet.create({
   },
   loadingSub: {
     marginTop: 12,
-    fontSize: 13,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
   },
 });

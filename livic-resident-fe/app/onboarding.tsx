@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -7,6 +8,8 @@ import { validateAndApplyJoinCode } from '@/src/features/properties/api/rolePerm
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function ResidentOnboardingScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const [loading, setLoading] = useState(false);
   const [isInviteMode, setIsInviteMode] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -62,7 +65,7 @@ export default function ResidentOnboardingScreen() {
       <View style={styles.cardContainer}>
         <View style={styles.header}>
           <View style={styles.badge}>
-            <MaterialIcons name="home-work" size={20} color="#006875" />
+            <MaterialIcons name="home-work" size={20} color={theme.Colors.primary} />
             <Text style={styles.badgeText}>Resident Portal</Text>
           </View>
           <Text style={styles.title}>Welcome to Livic</Text>
@@ -91,7 +94,7 @@ export default function ResidentOnboardingScreen() {
               activeOpacity={0.8}
             >
               {joining ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
               ) : (
                 <Text style={styles.primaryButtonText}>Join Unit</Text>
               )}
@@ -110,11 +113,11 @@ export default function ResidentOnboardingScreen() {
               activeOpacity={0.8}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
               ) : (
                 <View style={styles.btnContent}>
                   <Text style={styles.primaryButtonText}>Go to Resident Dashboard</Text>
-                  <MaterialIcons name="arrow-forward" size={20} color="#fff" />
+                  <MaterialIcons name="arrow-forward" size={20} color={theme.Colors.surfaceContainerLowest} />
                 </View>
               )}
             </TouchableOpacity>
@@ -124,7 +127,7 @@ export default function ResidentOnboardingScreen() {
               onPress={() => setIsInviteMode(true)}
               activeOpacity={0.8}
             >
-              <MaterialIcons name="vpn-key" size={18} color="#006875" style={{ marginRight: 6 }} />
+              <MaterialIcons name="vpn-key" size={18} color={theme.Colors.primary} style={{ marginRight: 6 }} />
               <Text style={styles.secondaryButtonText}>Have an invite code? Join your unit</Text>
             </TouchableOpacity>
           </View>
@@ -134,22 +137,22 @@ export default function ResidentOnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 24,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardContainer: {
     width: '100%',
     maxWidth: 520,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 24,
     padding: 36,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.Colors.outlineVariant,
     shadowColor: '#0f172a',
     shadowOpacity: 0.06,
     shadowRadius: 20,
@@ -171,9 +174,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   badgeText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 0.5,
   },
   title: {
@@ -184,8 +187,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 15,
-    color: '#64748b',
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -201,19 +204,19 @@ const styles = StyleSheet.create({
   inviteInput: {
     width: '100%',
     borderWidth: 2,
-    borderColor: '#cbd5e1',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 14,
     padding: 16,
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '700',
     color: '#0f172a',
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     textAlign: 'center',
     marginBottom: 20,
   },
   primaryButton: {
     width: '100%',
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -228,8 +231,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '700',
   },
   secondaryButton: {
@@ -240,8 +243,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   secondaryButtonText: {
-    color: '#006875',
-    fontSize: 15,
+    color: theme.Colors.primary,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '600',
   },
 });

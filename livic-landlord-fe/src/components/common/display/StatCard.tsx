@@ -113,7 +113,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginRight: 4,
   },
   trendText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
     fontFamily: 'Inter',
   },

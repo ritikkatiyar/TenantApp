@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import GlassDropdown, { DropdownOption } from '@/src/components/common/inputs/GlassDropdown';
@@ -18,6 +19,8 @@ export function PropertySelector({
   label,
   style,
 }: PropertySelectorProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
 
   const options: DropdownOption[] = (properties || []).map((p) => ({
@@ -51,16 +54,16 @@ export function PropertySelector({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
   label: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
-    color: '#0891b2',
+    color: theme.Colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },

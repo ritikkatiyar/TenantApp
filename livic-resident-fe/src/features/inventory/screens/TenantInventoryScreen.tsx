@@ -110,7 +110,7 @@ export default function TenantInventoryScreen() {
                   <View style={styles.amenityOverlay} />
                   <View style={styles.amenityContent}>
                     <View style={styles.amenityTitleRow}>
-                      <MaterialIcons name={amenity.icon} size={22} color="#fff" />
+                      <MaterialIcons name={amenity.icon} size={22} color={theme.Colors.surfaceContainerLowest} />
                       <Text style={styles.amenityTitle}>{amenity.name}</Text>
                     </View>
                     <Text style={styles.amenityMeta}>{amenity.meta}</Text>
@@ -165,10 +165,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   scrollContent: { padding: 20, paddingBottom: 120, gap: 24 },
   scrollContentDesktop: { padding: 32, maxWidth: 1200, width: '100%', alignSelf: 'center' },
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 18 },
-  kicker: { fontFamily: 'Inter', fontSize: 12, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
-  title: { fontFamily: 'Inter', fontSize: 32, fontWeight: '800', lineHeight: 38, color: theme.Colors.onSurface, marginTop: 6 },
+  kicker: { fontFamily: 'Inter', fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
+  title: { fontFamily: 'Inter', fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '800', lineHeight: 38, color: theme.Colors.onSurface, marginTop: 6 },
   titleMobile: { fontSize: 30, lineHeight: 36 },
-  subtitle: { fontFamily: 'Inter', fontSize: 16, fontWeight: '400', lineHeight: 24, color: theme.Colors.onSurfaceVariant, marginTop: 8, maxWidth: 700 },
+  subtitle: { fontFamily: 'Inter', fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '400', lineHeight: 24, color: theme.Colors.onSurfaceVariant, marginTop: 8, maxWidth: 700 },
   titleBlock: { maxWidth: 720 },
   reportButtonWrapper: {
     height: 46,
@@ -182,7 +182,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 16,
     gap: 8,
   },
-  reportButtonText: { color: theme.Colors.onPrimary, fontWeight: '800', fontSize: 13 },
+  reportButtonText: { color: theme.Colors.onPrimary, fontWeight: '800', fontSize: theme.Typography.BodyMedium.fontSize },
   bentoGrid: { gap: 18 },
   bentoGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   snapshotCard: {
@@ -196,7 +196,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 12,
     overflow: 'hidden',
   },
-  cardTitle: { fontSize: 20, fontWeight: '800', color: theme.Colors.primary, marginBottom: 4 },
+  cardTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary, marginBottom: 4 },
   metricRow: {
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderWidth: 1,
@@ -207,17 +207,17 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  metricLabel: { color: theme.Colors.onSurfaceVariant, fontWeight: '600', fontSize: 13 },
+  metricLabel: { color: theme.Colors.onSurfaceVariant, fontWeight: '600', fontSize: theme.Typography.BodyMedium.fontSize },
   metricValue: { color: theme.Colors.primary, fontFamily: 'Inter', fontWeight: '800' },
   dashedDivider: { borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, borderStyle: 'dashed', marginVertical: 2 },
   verifiedRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
-  verifiedText: { flex: 1, color: theme.Colors.onSurfaceVariant, fontSize: 13, lineHeight: 19, fontStyle: 'italic' },
+  verifiedText: { flex: 1, color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.BodyMedium.fontSize, lineHeight: 19, fontStyle: 'italic' },
   inventoryColumn: { flex: 1.7, gap: 12 },
   sectionHeader: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   sectionTitle: { fontSize: 21, fontWeight: '800', color: theme.Colors.onSurface },
   sectionSubtitle: { color: theme.Colors.onSurfaceVariant, marginTop: 4, maxWidth: 620 },
   readOnlyPill: { backgroundColor: theme.Colors.secondaryFixed, paddingHorizontal: 11, paddingVertical: 5, borderRadius: theme.Rounded.full },
-  readOnlyText: { fontFamily: 'Inter', fontSize: 10, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.secondary },
+  readOnlyText: { fontFamily: 'Inter', fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.secondary },
   itemCard: {
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
@@ -228,20 +228,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   itemImage: { width: '100%', height: 180, backgroundColor: theme.Colors.surfaceVariant },
   itemBody: { padding: 16, gap: 12 },
   itemTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
-  itemTitle: { flex: 1, fontSize: 18, fontWeight: '800', color: theme.Colors.onSurface },
+  itemTitle: { flex: 1, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
   conditionPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,104,117,0.1)', paddingHorizontal: 9, paddingVertical: 5, borderRadius: theme.Rounded.lg },
   conditionPillWarn: { backgroundColor: theme.Colors.tertiaryFixed },
-  conditionPillText: { color: theme.Colors.primary, fontSize: 12, fontWeight: '800' },
+  conditionPillText: { color: theme.Colors.primary, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '800' },
   conditionPillTextWarn: { color: theme.Colors.tertiary },
-  itemDescription: { color: theme.Colors.onSurfaceVariant, fontSize: 14, lineHeight: 20 },
+  itemDescription: { color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.BodyMedium.fontSize, lineHeight: 20 },
   itemFooter: { borderTopWidth: 1, borderTopColor: theme.Colors.surfaceVariant, paddingTop: 12, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
   photoLink: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  photoLinkText: { color: theme.Colors.primary, fontWeight: '800', fontSize: 13 },
-  itemId: { color: theme.Colors.outline, fontFamily: 'Inter', fontSize: 11, fontWeight: '700' },
+  photoLinkText: { color: theme.Colors.primary, fontWeight: '800', fontSize: theme.Typography.BodyMedium.fontSize },
+  itemId: { color: theme.Colors.outline, fontFamily: 'Inter', fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700' },
   amenitySection: { gap: 16 },
   bookButtonWrapper: { borderRadius: theme.Rounded.lg, overflow: 'hidden' },
   bookButton: { paddingHorizontal: 16, paddingVertical: 12 },
-  bookButtonText: { color: theme.Colors.onPrimary, fontWeight: '800', fontSize: 13 },
+  bookButtonText: { color: theme.Colors.onPrimary, fontWeight: '800', fontSize: theme.Typography.BodyMedium.fontSize },
   amenityGrid: { gap: 14 },
   amenityGridDesktop: { flexDirection: 'row' },
   amenityCard: { flex: 1, minHeight: 230, borderRadius: theme.Rounded.lg, overflow: 'hidden', backgroundColor: theme.Colors.surfaceVariant },
@@ -249,6 +249,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   amenityOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.34)' },
   amenityContent: { flex: 1, justifyContent: 'flex-end', padding: 18, gap: 5 },
   amenityTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  amenityTitle: { color: '#fff', fontSize: 18, fontWeight: '800', flex: 1 },
-  amenityMeta: { color: 'rgba(255,255,255,0.84)', fontWeight: '600', fontSize: 13 },
+  amenityTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', flex: 1 },
+  amenityMeta: { color: 'rgba(255,255,255,0.84)', fontWeight: '600', fontSize: theme.Typography.BodyMedium.fontSize },
 });

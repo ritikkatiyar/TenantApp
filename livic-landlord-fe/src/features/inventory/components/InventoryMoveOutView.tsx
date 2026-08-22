@@ -35,7 +35,7 @@ export function InventoryMoveOutView({
     <View style={styles.sectionStack}>
       <BlurView intensity={35} tint={isDark ? 'dark' : 'light'} style={styles.moveBanner}>
         <LinearGradient
-          colors={['rgba(220,38,38,0.8)', 'rgba(217,119,6,0.8)']}
+          colors={['rgba(186,26,26,0.8)', 'rgba(217,119,6,0.8)']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
@@ -45,7 +45,7 @@ export function InventoryMoveOutView({
           <Text style={styles.moveBannerMeta}>{leaseId ? `Lease #${leaseId}` : 'Inspect return conditions and compute deductions'}</Text>
         </View>
         <View style={styles.moveOutDatePill}>
-          <MaterialIcons name="event" size={16} color="#fff" />
+          <MaterialIcons name="event" size={16} color={theme.Colors.surfaceContainerLowest} />
           <Text style={styles.moveOutDateText}>{hasItems ? 'Inspection Active' : 'No Assets Bound'}</Text>
         </View>
       </BlurView>
@@ -54,8 +54,8 @@ export function InventoryMoveOutView({
         <View style={styles.workflowMain}>
           {!hasItems ? (
             <View style={styles.emptyCard}>
-              <LinearGradient colors={['rgba(220,38,38,0.1)', 'rgba(217,119,6,0.1)']} style={styles.emptyIconCircle}>
-                <MaterialIcons name="receipt-long" size={32} color="#dc2626" />
+              <LinearGradient colors={['rgba(186,26,26,0.1)', 'rgba(217,119,6,0.1)']} style={styles.emptyIconCircle}>
+                <MaterialIcons name="receipt-long" size={32} color={theme.Colors.error} />
               </LinearGradient>
               <Text style={styles.emptyTitle}>No Move-In Assets Bound to this Lease</Text>
               <Text style={styles.emptySubtitle}>
@@ -69,8 +69,8 @@ export function InventoryMoveOutView({
 
         <BlurView intensity={65} tint={isDark ? 'dark' : 'light'} style={styles.rail}>
           <View style={styles.railHeader}>
-            <LinearGradient colors={['#dc2626', '#ef4444']} style={styles.railIconCircle}>
-              <MaterialIcons name="receipt-long" size={18} color="#fff" />
+            <LinearGradient colors={[theme.Colors.error, '#ef4444']} style={styles.railIconCircle}>
+              <MaterialIcons name="receipt-long" size={18} color={theme.Colors.surfaceContainerLowest} />
             </LinearGradient>
             <Text style={styles.panelTitle}>Settlement</Text>
           </View>
@@ -89,12 +89,12 @@ export function InventoryMoveOutView({
           </View>
           <TouchableOpacity style={styles.primaryWideBtn} activeOpacity={0.82}>
             <LinearGradient
-              colors={['#059669', '#10b981']}
+              colors={[theme.Colors.primary, '#10b981']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={styles.primaryWideBtnInner}
             >
               <Text style={styles.primaryWideBtnText}>Confirm & Settle</Text>
-              <MaterialIcons name="send" size={16} color="#fff" />
+              <MaterialIcons name="send" size={16} color={theme.Colors.surfaceContainerLowest} />
             </LinearGradient>
           </TouchableOpacity>
         </BlurView>
@@ -107,23 +107,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sectionStack: { gap: 16 },
   moveBanner: { borderRadius: 22, overflow: 'hidden', minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: 16 },
   moveBannerContent: { flex: 1 },
-  moveBannerKicker: { fontSize: 10, fontWeight: '800', color: 'rgba(255,255,255,0.7)', letterSpacing: 1, fontFamily: 'Inter' },
-  moveBannerTitle: { fontSize: 22, fontWeight: '900', color: '#fff', marginTop: 4, fontFamily: 'Inter' },
-  moveBannerMeta: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 4, fontFamily: 'Inter' },
+  moveBannerKicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: 'rgba(255,255,255,0.7)', letterSpacing: 1, fontFamily: 'Inter' },
+  moveBannerTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, marginTop: 4, fontFamily: 'Inter' },
+  moveBannerMeta: { fontSize: theme.Typography.BodySmall.fontSize, color: 'rgba(255,255,255,0.8)', marginTop: 4, fontFamily: 'Inter' },
   moveOutDatePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
-  moveOutDateText: { color: '#fff', fontWeight: '800', fontSize: 13, fontFamily: 'Inter' },
+  moveOutDateText: { color: theme.Colors.surfaceContainerLowest, fontWeight: '800', fontSize: theme.Typography.BodyMedium.fontSize, fontFamily: 'Inter' },
   workflowGrid: { gap: 14 },
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   workflowMain: { flex: 1.9, gap: 12 },
-  panelTitle: { fontSize: 18, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
+  panelTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
 
   emptyCard: {
     borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
     backgroundColor: 'rgba(255,255,255,0.35)', padding: 40, alignItems: 'center', justifyContent: 'center', gap: 10,
   },
   emptyIconCircle: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
-  emptyTitle: { fontSize: 17, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
-  emptySubtitle: { fontSize: 13, color: '#6b7280', textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
+  emptyTitle: { fontSize: 17, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  emptySubtitle: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
 
   rail: { flex: 1, minWidth: 260, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.35)', padding: 16, gap: 14, overflow: 'hidden' },
   railHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -131,9 +131,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   railBody: { gap: 10 },
   railDivider: { height: 1, backgroundColor: 'rgba(0,0,0,0.07)', marginVertical: 2 },
   refundBlock: { backgroundColor: 'rgba(5,150,105,0.08)', borderRadius: 14, padding: 14, gap: 2, borderWidth: 1, borderColor: 'rgba(5,150,105,0.15)' },
-  refundLabel: { fontSize: 10, fontWeight: '800', color: '#059669', letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: 'Inter' },
-  refundAmount: { fontSize: 30, fontWeight: '900', color: '#059669', fontFamily: 'Inter' },
+  refundLabel: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: 'Inter' },
+  refundAmount: { fontSize: 30, fontWeight: '900', color: theme.Colors.primary, fontFamily: 'Inter' },
   primaryWideBtn: { borderRadius: 14, overflow: 'hidden' },
   primaryWideBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
-  primaryWideBtnText: { color: '#fff', fontSize: 14, fontWeight: '800', fontFamily: 'Inter' },
+  primaryWideBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
 });

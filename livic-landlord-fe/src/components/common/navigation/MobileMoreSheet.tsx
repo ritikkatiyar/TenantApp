@@ -204,7 +204,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopRightRadius: 28,
     maxHeight: '85%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -246,7 +246,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginRight: 16,
   },
   avatarText: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
@@ -254,12 +254,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   profileRole: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
     textTransform: 'capitalize',
@@ -301,7 +301,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 2,
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,
   },
@@ -310,7 +310,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
   },
   cardSubtitle: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
 });

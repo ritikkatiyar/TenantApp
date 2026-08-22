@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
@@ -25,6 +26,8 @@ import IssueDetailModal from '@/src/features/issues/components/IssueDetailModal'
 import { Theme } from '@/src/theme/Theme';
 
 export default function EscalationsScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const insets = useSafeAreaInsets();
@@ -85,7 +88,7 @@ export default function EscalationsScreen() {
     switch (status) {
       case 'RESOLVED':
       case 'CLOSED':
-        return { bg: '#d1fae5', text: '#059669', label: status };
+        return { bg: '#d1fae5', text: theme.Colors.primary, label: status };
       case 'IN_PROGRESS':
         return { bg: '#fef3c7', text: '#d97706', label: 'IN PROGRESS' };
       default:
@@ -102,7 +105,7 @@ export default function EscalationsScreen() {
       <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContent}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+          <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
         </TouchableOpacity>
         <View style={styles.titleWrapper}>
           <Text style={styles.compactTitleText}>Escalations</Text>
@@ -151,7 +154,7 @@ export default function EscalationsScreen() {
             <View style={styles.metricsRow}>
               <BlurView intensity={60} tint="light" style={styles.metricCard}>
                 <Text style={styles.metricLabel}>Total Tickets</Text>
-                <Text style={[styles.metricValue, { color: '#006875' }]}>{metrics.total}</Text>
+                <Text style={[styles.metricValue, { color: theme.Colors.primary }]}>{metrics.total}</Text>
               </BlurView>
               <BlurView intensity={60} tint="light" style={styles.metricCard}>
                 <Text style={styles.metricLabel}>Open Issues</Text>
@@ -163,23 +166,23 @@ export default function EscalationsScreen() {
               </BlurView>
               <BlurView intensity={60} tint="light" style={styles.metricCard}>
                 <Text style={styles.metricLabel}>Escalated</Text>
-                <Text style={[styles.metricValue, { color: '#ef4444' }]}>{metrics.escalated}</Text>
+                <Text style={[styles.metricValue, { color: theme.Colors.error }]}>{metrics.escalated}</Text>
               </BlurView>
             </View>
 
             {/* Search Box */}
             <View style={styles.searchBox}>
-              <MaterialIcons name="search" size={20} color="#6b7a7d" />
+              <MaterialIcons name="search" size={20} color={theme.Colors.onSurfaceVariant} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search by ticket #, title, or description..."
-                placeholderTextColor="#6b7a7d"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <MaterialIcons name="close" size={20} color="#6b7a7d" />
+                  <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
                 </TouchableOpacity>
               )}
             </View>
@@ -227,7 +230,7 @@ export default function EscalationsScreen() {
             {/* Content List */}
             {isLoading ? (
               <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#006875" />
+                <ActivityIndicator size="large" color={theme.Colors.primary} />
               </View>
             ) : error ? (
               <BlurView intensity={60} tint="light" style={styles.emptyCard}>
@@ -238,7 +241,7 @@ export default function EscalationsScreen() {
               </BlurView>
             ) : issues.length === 0 ? (
               <BlurView intensity={60} tint="light" style={styles.emptyCard}>
-                <MaterialIcons name="report-off" size={48} color="#6b7a7d" />
+                <MaterialIcons name="report-off" size={48} color={theme.Colors.onSurfaceVariant} />
                 <Text style={styles.emptyTitle}>No issues logged</Text>
                 <Text style={styles.emptySubtitle}>No matching reported issues or maintenance requests found for this property.</Text>
               </BlurView>
@@ -340,7 +343,7 @@ export default function EscalationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1
   },
@@ -380,8 +383,8 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   compactTitleText: {
-    color: '#151d1e',
-    fontSize: 15,
+    color: theme.Colors.onSurface,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
     letterSpacing: 1
   },
@@ -404,15 +407,15 @@ const styles = StyleSheet.create({
     marginBottom: 24
   },
   titleLineDesktop: {
-    fontSize: 32,
+    fontSize: theme.Typography.headlineLg.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     lineHeight: 38,
     letterSpacing: -0.5
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
     marginTop: 4,
     lineHeight: 20
@@ -433,13 +436,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)'
   },
   metricLabel: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginBottom: 4
   },
   metricValue: {
-    fontSize: 24,
+    fontSize: theme.Typography.HeadlineSmall.fontSize,
     fontWeight: '800'
   },
   searchBox: {
@@ -456,8 +459,8 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#151d1e',
-    fontSize: 14,
+    color: theme.Colors.onSurface,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     outlineWidth: 0,
   },
   filtersContainer: {
@@ -474,9 +477,9 @@ const styles = StyleSheet.create({
     flex: 1
   },
   filterLabelText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
     width: 60
   },
   filterScroll: {
@@ -491,15 +494,15 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.8)'
   },
   filterPillActive: {
-    backgroundColor: '#006875'
+    backgroundColor: theme.Colors.primary
   },
   filterText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     color: '#2e3a3c',
     fontWeight: '600'
   },
   filterTextActive: {
-    color: '#fff'
+    color: theme.Colors.surfaceContainerLowest
   },
   centerContainer: {
     padding: 40,
@@ -507,8 +510,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   errorText: {
-    fontSize: 14,
-    color: '#ef4444',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.error,
     textAlign: 'center',
     marginBottom: 16
   },
@@ -521,15 +524,15 @@ const styles = StyleSheet.create({
     marginTop: 20
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     marginTop: 12,
     marginBottom: 6
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 320
@@ -551,19 +554,19 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   cardUnitText: {
-    fontSize: 15,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
-    color: '#151d1e'
+    color: theme.Colors.onSurface
   },
   cardTitleText: {
-    fontSize: 16,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     marginBottom: 6
   },
   cardDescText: {
-    fontSize: 13,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     lineHeight: 18,
     marginBottom: 10
   },
@@ -574,8 +577,8 @@ const styles = StyleSheet.create({
     marginTop: 4
   },
   cardDateText: {
-    fontSize: 12,
-    color: '#6b7a7d'
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant
   },
   pill: {
     paddingHorizontal: 8,
@@ -583,11 +586,11 @@ const styles = StyleSheet.create({
     borderRadius: 6
   },
   pillText: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800'
   },
   filterButton: {
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     borderRadius: 10,
     paddingHorizontal: 16,
     height: 40,
@@ -595,8 +598,8 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   filterButtonText: {
-    color: '#ffffff',
-    fontSize: 13,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700'
   },
   paginationRow: {
@@ -622,8 +625,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)'
   },
   pageText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#151d1e'
+    color: theme.Colors.onSurface
   }
 });

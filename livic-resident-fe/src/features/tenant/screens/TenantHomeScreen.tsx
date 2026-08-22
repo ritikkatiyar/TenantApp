@@ -8,7 +8,7 @@ import { BlurView } from 'expo-blur';
 
 import { ActiveLeaseSummary, getMyContext } from '@/src/features/auth/api/me.api';
 import { getAnnouncements, markAnnouncementRead, Announcement } from '@/src/features/announcements/api/announcement.api';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { Theme } from '@/src/theme/Theme';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -108,7 +108,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
             {criticalUnread.map((ann) => (
               <View key={ann.id} style={styles.criticalBanner}>
                 <View style={styles.criticalBannerLeft}>
-                  <MaterialIcons name="error" size={22} color="#fff" />
+                  <MaterialIcons name="error" size={22} color={theme.Colors.surfaceContainerLowest} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.criticalTitle}>{ann.title}</Text>
                     <Text style={styles.criticalText} numberOfLines={2}>{ann.content}</Text>
@@ -176,7 +176,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
               >
                 <View style={styles.actionStripLeft}>
                   <View style={styles.actionStripIcon}>
-                    <MaterialIcons name="electric-bolt" size={24} color="#fff" />
+                    <MaterialIcons name="electric-bolt" size={24} color={theme.Colors.surfaceContainerLowest} />
                   </View>
                   <View style={{ flex: 1, marginLeft: 14 }}>
                     <Text style={styles.actionStripTitle}>Log Maintenance Request</Text>
@@ -284,9 +284,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   scrollContentDesktop: { paddingTop: 20 },
 
   greetingHeader: { marginBottom: 4 },
-  kicker: { fontSize: 11, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, marginBottom: 4 },
-  greetingText: { fontSize: 28, fontWeight: '800', color: theme.Colors.onBackground },
-  greetingSub: { fontSize: 14, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
+  kicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, marginBottom: 4 },
+  greetingText: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  greetingSub: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
 
   glassCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.65)',
@@ -303,63 +303,63 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
   iconBox: { width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  propertyName: { fontSize: 22, fontWeight: '800', color: theme.Colors.onBackground },
-  unitInfo: { fontSize: 14, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
+  propertyName: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  unitInfo: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   statusBadge: { backgroundColor: 'rgba(0, 104, 117, 0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  statusBadgeText: { color: theme.Colors.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.8 },
+  statusBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '800', letterSpacing: 0.8 },
 
   statsGrid: { flexDirection: 'row', gap: 14, marginBottom: 20 },
   statBox: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.9)' },
-  statLabel: { fontSize: 12, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
-  statSubLabel: { fontSize: 12, color: theme.Colors.onSurfaceVariant, marginLeft: 2 },
-  statValue: { fontSize: 24, fontWeight: '800', color: theme.Colors.primary },
+  statLabel: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  statSubLabel: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginLeft: 2 },
+  statValue: { fontSize: theme.Typography.HeadlineSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
 
   quickActionsRow: { flexDirection: 'row', gap: 10, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(186, 201, 204, 0.3)' },
   quickActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255, 255, 255, 0.8)', paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.15)' },
-  quickActionText: { fontSize: 13, fontWeight: '700', color: theme.Colors.primary },
+  quickActionText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary },
 
   actionStrip: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#0070ea', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
   actionStripLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   actionStripIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.25)', alignItems: 'center', justifyContent: 'center' },
-  actionStripTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
-  actionStripSub: { fontSize: 13, color: 'rgba(255, 255, 255, 0.9)', marginTop: 2 },
-  actionStripBtn: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14 },
-  actionStripBtnText: { color: '#0070ea', fontSize: 13, fontWeight: '800' },
+  actionStripTitle: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800', color: theme.Colors.surfaceContainerLowest },
+  actionStripSub: { fontSize: theme.Typography.BodyMedium.fontSize, color: 'rgba(255, 255, 255, 0.9)', marginTop: 2 },
+  actionStripBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14 },
+  actionStripBtnText: { color: '#0070ea', fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
 
   noticeHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  noticeSectionTitle: { fontSize: 20, fontWeight: '800', color: theme.Colors.onBackground },
-  noticeSectionSub: { fontSize: 13, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
+  noticeSectionTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  noticeSectionSub: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   emptyNoticeBox: { alignItems: 'center', paddingVertical: 32, paddingHorizontal: 20, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(186, 201, 204, 0.4)', borderStyle: 'dashed', backgroundColor: 'rgba(255, 255, 255, 0.4)' },
   emptyNoticeIconWrapper: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  emptyNoticeText: { fontSize: 15, color: theme.Colors.onBackground, fontWeight: '700' },
-  emptyNoticeSub: { fontSize: 13, color: theme.Colors.onSurfaceVariant, marginTop: 4 },
+  emptyNoticeText: { fontSize: theme.Typography.BodyLarge.fontSize, color: theme.Colors.onBackground, fontWeight: '700' },
+  emptyNoticeSub: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 },
 
   noticeItem: { padding: 16, borderRadius: 16, borderWidth: 1, marginBottom: 12 },
   noticeItemRead: { backgroundColor: 'rgba(255, 255, 255, 0.7)', borderColor: 'rgba(186, 201, 204, 0.4)' },
-  noticeItemUnread: { backgroundColor: '#ffffff', borderColor: theme.Colors.primaryContainer, shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
+  noticeItemUnread: { backgroundColor: theme.Colors.surfaceContainerLowest, borderColor: theme.Colors.primaryContainer, shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   noticeItemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   noticeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  noticeBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  noticeBadgeText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.Colors.primary },
-  noticeTitle: { fontSize: 16, fontWeight: '700', color: theme.Colors.onBackground, marginBottom: 4 },
-  noticeSummary: { fontSize: 14, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
-  noticeDate: { fontSize: 12, color: theme.Colors.outline, marginTop: 8, textAlign: 'right' },
+  noticeTitle: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onBackground, marginBottom: 4 },
+  noticeSummary: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
+  noticeDate: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.outline, marginTop: 8, textAlign: 'right' },
 
-  criticalBanner: { backgroundColor: '#ba1a1a', borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  criticalBanner: { backgroundColor: theme.Colors.error, borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   criticalBannerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 },
-  criticalTitle: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  criticalText: { color: 'rgba(255, 255, 255, 0.95)', fontSize: 13, marginTop: 2 },
+  criticalTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800' },
+  criticalText: { color: 'rgba(255, 255, 255, 0.95)', fontSize: theme.Typography.BodyMedium.fontSize, marginTop: 2 },
   criticalDismissBtn: { backgroundColor: 'rgba(255, 255, 255, 0.25)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
-  criticalDismissText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  criticalDismissText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.55)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
+  modalContent: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 22, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
-  modalMeta: { fontSize: 13, color: theme.Colors.onSurfaceVariant, marginBottom: 16 },
-  modalBody: { fontSize: 15, color: theme.Colors.onSurfaceVariant, lineHeight: 24 },
+  modalTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
+  modalMeta: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginBottom: 16 },
+  modalBody: { fontSize: theme.Typography.BodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 24 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  modalCloseBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' }
+  modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' }
 });
 
 

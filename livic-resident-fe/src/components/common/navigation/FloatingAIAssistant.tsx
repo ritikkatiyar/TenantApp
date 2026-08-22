@@ -18,7 +18,7 @@ import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { usePathname } from 'expo-router';
 import { runAICommand, getJobStatus } from '@/src/features/ai/api/ai.api';
 
@@ -266,12 +266,12 @@ export default function FloatingAIAssistant() {
           >
             <Animated.View style={{ transform: [{ scale: bubbleScale }] }}>
               <LinearGradient
-                colors={['#00F2FE', '#4FACFE', '#7F00FF']}
+                colors={['#00e0ff', '#0070ea']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.bubbleGradient}
               >
-                <MaterialIcons name="auto-awesome" size={24} color="#fff" />
+                <MaterialIcons name="assistant" size={24} color="#fff" />
               </LinearGradient>
             </Animated.View>
           </TouchableOpacity>
@@ -297,7 +297,7 @@ export default function FloatingAIAssistant() {
             <View style={styles.headerTitleRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={styles.headerIconWrapper}>
-                  <MaterialIcons name="auto-awesome" size={16} color="#006875" />
+                  <MaterialIcons name="assistant" size={16} color="#006875" />
                 </View>
                 <Text style={styles.headerTitle}>AI Assistant</Text>
               </View>
@@ -398,7 +398,7 @@ export default function FloatingAIAssistant() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#00F2FE', '#0072ff']}
+                  colors={['#00d4ff', '#0072ff']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.sendGradient}
@@ -426,11 +426,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.85)',
     backgroundColor: 'rgba(255, 255, 255, 0.88)',
     overflow: 'hidden',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
     zIndex: 99999,
   },
   bubbleTrigger: {
