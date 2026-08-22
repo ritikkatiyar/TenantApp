@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { Theme } from '@/src/theme/Theme';
 import { usePathname } from 'expo-router';
 import { runAICommand, getJobStatus } from '@/src/features/ai/api/ai.api';
 
@@ -39,6 +40,7 @@ export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
   const { accessToken } = useAuth();
   const { theme } = useAppTheme();
+  const brandGradient = [theme.Colors.primary, theme.Colors.inversePrimary] as const;
 
   const [isOpen, setIsOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -94,8 +96,8 @@ export default function FloatingAIAssistant() {
 
   const handleOpen = () => {
     Animated.sequence([
-      Animated.timing(bubbleScale, { toValue: 0.85, duration: 100, useNativeDriver: true }),
-      Animated.spring(bubbleScale, { toValue: 1, friction: 3, useNativeDriver: true }),
+      Animated.timing(bubbleScale, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+      Animated.spring(bubbleScale, { toValue: 1, friction: 8, useNativeDriver: true }),
     ]).start(() => {
       setIsOpen(true);
     });
@@ -268,12 +270,12 @@ export default function FloatingAIAssistant() {
           >
             <Animated.View style={{ transform: [{ scale: bubbleScale }] }}>
               <LinearGradient
-                colors={['#00e0ff', '#0070ea']}
+                colors={brandGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.bubbleGradient}
               >
-                <MaterialIcons name="assistant" size={24} color="#fff" />
+                <MaterialIcons name="chat" size={24} color={theme.Colors.onPrimary} />
               </LinearGradient>
             </Animated.View>
           </TouchableOpacity>
@@ -299,7 +301,7 @@ export default function FloatingAIAssistant() {
             <View style={styles.headerTitleRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={styles.headerIconWrapper}>
-                  <MaterialIcons name="assistant" size={16} color={theme.Colors.primary} />
+                  <MaterialIcons name="chat" size={16} color={theme.Colors.primary} />
                 </View>
                 <Text style={styles.headerTitle}>AI Assistant</Text>
               </View>
@@ -362,7 +364,7 @@ export default function FloatingAIAssistant() {
                       style={[
                         styles.msgText,
                         msg.role === 'user'
-                          ? [styles.textUser, { color: '#ffffff' }]
+                          ? [styles.textUser, { color: theme.Colors.onPrimary }]
                           : [styles.textAssistant, { color: theme.Colors.onSurface }],
                       ]}
                     >
@@ -404,12 +406,12 @@ export default function FloatingAIAssistant() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
+                  colors={brandGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.sendGradient}
                 >
-                  <MaterialIcons name="send" size={16} color="#fff" />
+                  <MaterialIcons name="send" size={16} color={theme.Colors.onPrimary} />
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -432,7 +434,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.85)',
     backgroundColor: 'rgba(255, 255, 255, 0.88)',
     overflow: 'hidden',
-    shadowColor: '#000000',
+    shadowColor: Theme.Surface.shadowColor,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -490,7 +492,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 15,
+    fontSize: Theme.Typography.TitleSmall.fontSize,
     fontWeight: '800',
   },
   closeBtn: {
@@ -508,7 +510,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   examplesHeader: {
-    fontSize: 11,
+    fontSize: Theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
@@ -525,8 +527,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   exampleText: {
-    fontSize: 12,
-    color: '#006875',
+    fontSize: Theme.Typography.BodySmall.fontSize,
+    color: Theme.Colors.primary,
     fontWeight: '600',
     flex: 1,
   },
@@ -557,7 +559,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   msgText: {
-    fontSize: 13.5,
+    fontSize: Theme.Typography.BodyMedium.fontSize,
     lineHeight: 19,
   },
   textUser: {
@@ -572,7 +574,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loadingText: {
-    fontSize: 12,
+    fontSize: Theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
   },
   inputBar: {
@@ -591,7 +593,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    fontSize: 13.5,
+    fontSize: Theme.Typography.BodyMedium.fontSize,
     maxHeight: 80,
   },
   sendBtn: {

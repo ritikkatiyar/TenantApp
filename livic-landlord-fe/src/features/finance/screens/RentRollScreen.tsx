@@ -26,11 +26,13 @@ import { SectionHeader } from '@/src/components/common/display/SectionHeader';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { useRentRoll } from '@/src/features/finance/hooks/useRentRoll';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
+import { createStyles } from './RentRollScreen.styles';
 
 // Sub-components
 import { PreFlightChecklistCard } from '../components/billing/PreFlightChecklistCard';
 import { RecordCashModal } from '../components/billing/RecordCashModal';
 import { RentRollInvoiceList } from '../components/billing/RentRollInvoiceList';
+import { RentRollHeader } from '../components/billing/RentRollHeader';
 
 export default function RentRollScreen({ token }: { token: string | null }) {
   const { theme, isDark } = useAppTheme();
@@ -430,88 +432,6 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     );
   };
 
-  const renderGlassyHeader = () => (
-    <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-      <View style={styles.headerContent}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-        </TouchableOpacity>
-        <View style={styles.titleWrapper}>
-          <Text style={styles.compactTitleText}>Rent Roll</Text>
-        </View>
-        
-        {!hasGenerated ? (
-          <TouchableOpacity 
-            style={[styles.headerGradientTouch, (isGenerating || !!(checklist && !checklist.isReady)) && { opacity: 0.5 }]}
-            onPress={handleGenerate}
-            disabled={isGenerating || !!(checklist && !checklist.isReady)}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
-            >
-              {isGenerating ? (
-                <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
-              ) : (
-                <>
-                  <MaterialIcons name="flash-on" size={15} color={theme.Colors.surfaceContainerLowest} />
-                  <Text style={styles.headerGradientText}>GENERATE</Text>
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        ) : pendingCount > 0 ? (
-          <TouchableOpacity 
-            style={[styles.headerGradientTouch, isPublishing && { opacity: 0.5 }]}
-            onPress={handlePublish}
-            disabled={isPublishing}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
-            >
-              {isPublishing ? (
-                <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
-              ) : (
-                <>
-                  <MaterialIcons name="send" size={14} color={theme.Colors.surfaceContainerLowest} />
-                  <Text style={styles.headerGradientText}>PUBLISH</Text>
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={[styles.headerGradientTouch, isUnpublishing && { opacity: 0.5 }]}
-            onPress={handleUnpublish}
-            disabled={isUnpublishing}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#ff416c', '#ff4b2b']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
-            >
-              {isUnpublishing ? (
-                <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
-              ) : (
-                <Text style={styles.headerGradientText}>UNPUBLISH</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-
   const renderDesktopShell = () => (
     <LinearGradient
       colors={theme.Colors.backgroundGradient as [string, string, string]}
@@ -540,7 +460,22 @@ export default function RentRollScreen({ token }: { token: string | null }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {renderGlassyHeader()}
+      <RentRollHeader
+        hasGenerated={hasGenerated}
+        isGenerating={isGenerating}
+        checklist={checklist}
+        handleGenerate={handleGenerate}
+        pendingCount={pendingCount}
+        isPublishing={isPublishing}
+        handlePublish={handlePublish}
+        isUnpublishing={isUnpublishing}
+        handleUnpublish={handleUnpublish}
+        router={router}
+        insets={insets}
+        isDark={isDark}
+        theme={theme}
+        styles={styles}
+      />
       <PageShell 
         scrollable 
         edges={[]} 
@@ -552,147 +487,4 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  headerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 999,
-    borderBottomWidth: 1.5,
-    borderBottomColor: theme.Colors.glassFill,
-    overflow: 'hidden',
-  },
-  headerContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-  },
-  titleWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  compactTitleText: {
-    fontSize: theme.Typography.bodyLg.fontSize,
-    fontFamily: 'Inter',
-    fontWeight: '800',
-    color: theme.Colors.onSurface,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.Colors.glassFill,
-    borderWidth: 1,
-    borderColor: theme.Colors.glassFill,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerGradientTouch: {
-    borderRadius: 100,
-    overflow: 'hidden',
-  },
-  headerGradientInner: {
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 100,
-  },
-  headerGradientText: {
-    color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.LabelSmall.fontSize,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  desktopScroll: { paddingVertical: 24, paddingHorizontal: 40, alignItems: 'center' },
-  mobileScroll: { paddingVertical: 10, paddingHorizontal: 20 },
-  inner: { width: '100%', maxWidth: 1080 },
-  selectorContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  arrowBadge: { padding: 6, backgroundColor: theme.Colors.glassFill, borderRadius: 8, borderWidth: 1, borderColor: theme.Colors.glassStroke },
-  monthBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
-  },
-  monthBadgeText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary },
-  
-  resultsContainer: { width: '100%', gap: 16, marginTop: 10 },
-  summaryCard: { padding: 24, backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke, borderRadius: 24 },
-  summaryLabel: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '900', color: theme.Colors.primary, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 },
-  summaryAmount: { fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '900', color: theme.Colors.onSurface, marginBottom: 20 },
-  summaryStatusRow: { flexDirection: 'row', gap: 16, width: '100%' },
-  miniStat: { flex: 1, backgroundColor: theme.Colors.surfaceContainerLow, borderWidth: 1, borderColor: theme.Colors.outlineVariant },
-  actionGroup: { flexDirection: 'row', gap: 12, marginTop: 20 },
-  publishBtn: { flex: 1 },
-  reGenerateBtn: { flex: 1 },
-  
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.Colors.surfaceContainerLow,
-    borderWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 10,
-  },
-  searchInput: { flex: 1, color: theme.Colors.onSurface, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '600' },
-  
-  paginationBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingVertical: 12,
-  },
-  paginationInfo: {
-    fontSize: theme.Typography.BodySmall.fontSize,
-    color: theme.Colors.onSurfaceVariant,
-  },
-  paginationActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  pageIndicator: {
-    paddingHorizontal: 12,
-  },
-  pageIndicatorText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
-    color: theme.Colors.onSurfaceVariant,
-    fontWeight: '600',
-  },
-  pageBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.Colors.glassFill,
-    borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    gap: 4,
-  },
-  pageBtnDisabled: {
-    opacity: 0.5,
-  },
-  pageBtnText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
-    fontWeight: '700',
-    color: theme.Colors.primary,
-  },
-  pageBtnTextDisabled: {
-    color: '#9ca3af',
-  },
-});
+

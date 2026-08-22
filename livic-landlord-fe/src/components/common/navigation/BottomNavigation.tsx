@@ -7,12 +7,13 @@ import {
   Text,
   Animated,
 } from 'react-native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, usePathname } from 'expo-router';
 import { useScrollNav } from './ScrollContext';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { Theme } from '@/src/theme/Theme';
 
 interface BottomNavigationProps {
   onMorePress: () => void;
@@ -24,7 +25,7 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
   const router = useRouter();
   const pathname = usePathname();
   const { navTranslateY } = useScrollNav();
-  const { theme, isDark } = useAppTheme();
+  const { theme } = useAppTheme();
 
   if (pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') {
     return null;
@@ -65,8 +66,7 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
     extrapolate: 'clamp',
   });
 
-  // Smooth Interpolations for Iridescent AI Icon:
-  // When pill fades away on scroll, AI orb stays visible & minimizes to a brief icon docked on the right
+  // When the pill fades on scroll, the AI action stays visible in a compact docked position.
   const aiScale = navTranslateY.interpolate({
     inputRange: [0, 100],
     outputRange: [1, 0.92],
@@ -116,9 +116,8 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
 
             {/* Protruding Centerpiece Camera Button */}
             <TouchableOpacity style={styles.heroCameraWrapper} onPress={onQRPress} activeOpacity={0.88}>
-              <View style={styles.heroCameraGlow} />
               <View style={[styles.heroCameraButton, { backgroundColor: theme.Colors.secondary }]}>
-                <MaterialIcons name="center-focus-strong" size={28} color="#ffffff" />
+                <MaterialIcons name="center-focus-strong" size={28} color={theme.Colors.onSecondary} />
                 <View style={[styles.cameraDotBadge, { backgroundColor: theme.Colors.inversePrimary }]} />
               </View>
             </TouchableOpacity>
@@ -150,14 +149,14 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
       >
         <TouchableOpacity style={styles.aiButtonTouch} onPress={handleAIPress} activeOpacity={0.78}>
           <LinearGradient
-            colors={['#00e0ff', '#0070ea']}
+            colors={[theme.Colors.primary, theme.Colors.inversePrimary]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.aiGradientRing}
           >
             <View style={styles.aiMinimalistContainer}>
               <BlurView intensity={Platform.OS === 'ios' ? 85 : 95} tint="light" style={styles.aiBlurBackground} />
-              <MaterialIcons name="assistant" size={21} color={theme.Colors.primary} />
+              <MaterialIcons name="chat" size={21} color={theme.Colors.primary} />
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -185,7 +184,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     paddingVertical: 6,
     paddingHorizontal: 20,
-    shadowColor: '#003344',
+    shadowColor: Theme.Surface.shadowColor,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.14,
     shadowRadius: 20,
@@ -220,7 +219,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   navText: {
-    fontSize: 10,
+    fontSize: Theme.Typography.LabelSmall.fontSize,
     fontWeight: '600',
   },
   navTextActive: {
@@ -235,15 +234,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1005,
   },
-  heroCameraGlow: {
-    position: 'absolute',
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: 'transparent',
-    opacity: 0,
-    transform: [{ scale: 1.0 }],
-  },
   heroCameraButton: {
     width: 58,
     height: 58,
@@ -251,8 +241,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3.5,
-    borderColor: '#ffffff',
-    shadowColor: '#000000',
+    borderColor: Theme.Colors.surfaceContainerLowest,
+    shadowColor: Theme.Surface.shadowColor,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -277,11 +267,7 @@ const styles = StyleSheet.create({
   },
   aiButtonTouch: {
     borderRadius: 26,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    elevation: 2,
   },
   aiGradientRing: {
     padding: 2.5,

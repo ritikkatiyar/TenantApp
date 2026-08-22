@@ -32,7 +32,7 @@ import { getFloorLayout, UnitResponse } from '@/src/features/properties/api/unit
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
-// Phase 4 modular hook & component imports
+import { useFloorEditorDrawing, UnitBlock, ToolType } from '@/src/features/properties/hooks/useFloorEditorDrawing';
 import { useFloorEditorGestures } from '@/src/features/properties/hooks/useFloorEditorGestures';
 import { useFloorEditorTenantAssignment } from '@/src/features/properties/hooks/useFloorEditorTenantAssignment';
 import { EditorGrid } from '@/src/features/properties/components/floor-editor/EditorGrid';
@@ -54,26 +54,6 @@ interface FloorEditorScreenProps {
   onSave: () => void;
 }
 
-type ToolType = 'PAN' | 'ADD' | 'ERASE';
-
-interface UnitBlock {
-  id: string; 
-  gridX: number;
-  gridY: number;
-  gridWidth: number;
-  gridHeight: number;
-  unitNumber: string;
-  rent?: string;
-  tenants?: string[];
-  activeLeaseId?: string;
-  tenantUserId?: string;
-  tenantPhone?: string | null;
-  status?: 'VACANT' | 'OCCUPIED' | 'MAINTENANCE';
-  capacity?: number;
-  activeLeases?: any[];
-  type?: string;
-}
-
 export default function FloorEditorScreen({
   propertyId,
   floorNumber,
@@ -91,135 +71,44 @@ export default function FloorEditorScreen({
   const isDesktop = windowWidth >= 900;
   const router = useRouter();
 
-  const [activeTool, setActiveTool] = useState<ToolType>('PAN');
-  const [blocks, setBlocks] = useState<UnitBlock[]>([]);
-  const [nextUnitIndex, setNextUnitIndex] = useState(1);
-  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
-  const [currentDrawBlock, setCurrentDrawBlock] = useState<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
-  const drawBlockRef = useRef<{ startX: number, startY: number, endX: number, endY: number } | null>(null);
+  const {
+    activeTool,
+    setActiveTool,
+    blocks,
+    setBlocks,
+    nextUnitIndex,
+    setNextUnitIndex,
+    selectedUnitId,
+    setSelectedUnitId,
+    currentDrawBlock,
+    parentScrollEnabled,
+    setParentScrollEnabled,
+    keyboardHeight,
+    showRightArrow,
+    handleScroll,
+    handleScrollLayout,
+    handleScrollContentSizeChange,
+    handleDrawStart,
+    handleDrawUpdate,
+    handleDrawEnd,
+    updateUnitDetails,
+    handleClearAll,
+    handleBlockPress: hookHandleBlockPress,
+  } = useFloorEditorDrawing({
+    floorNumber,
+    setTypeSelectionModalVisible,
+    setPendingBlockId,
+    setPendingBlockNum,
+  });
 
-  const [parentScrollEnabled, setParentScrollEnabled] = useState(true);
   const sheetScrollRef = useRef<RNScrollView | null>(null);
   const desktopGridWrapperRef = useRef<any>(null);
   const mobileGridWrapperRef = useRef<any>(null);
 
-  // Scroll Indicator Dynamic Visibility Refs & State
-  const [showRightArrow, setShowRightArrow] = useState(false);
-  const scrollContentWidth = useRef(0);
-  const scrollLayoutWidth = useRef(0);
-
-  const updateArrowVisibility = (scrollX: number) => {
-    const canScroll = scrollContentWidth.current > scrollLayoutWidth.current;
-    const isAtEnd = scrollX + scrollLayoutWidth.current >= scrollContentWidth.current - 15;
-    setShowRightArrow(canScroll && !isAtEnd);
-  };
-
-  const handleScroll = (event: any) => {
-    const scrollX = event.nativeEvent.contentOffset.x;
-    scrollLayoutWidth.current = event.nativeEvent.layoutMeasurement.width;
-    scrollContentWidth.current = event.nativeEvent.contentSize.width;
-    updateArrowVisibility(scrollX);
-  };
-
-  const handleScrollLayout = (event: any) => {
-    scrollLayoutWidth.current = event.nativeEvent.layout.width;
-    updateArrowVisibility(0);
-  };
-
-  const handleScrollContentSizeChange = (w: number) => {
-    scrollContentWidth.current = w;
-    updateArrowVisibility(0);
-  };
-
   const gridWidth = GRID_SIZE_X * CELL_SIZE;
   const gridHeight = GRID_SIZE_Y * CELL_SIZE;
 
-  const { height } = Dimensions.get('window');
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (e) => setKeyboardHeight(e.endCoordinates.height)
-    );
-    const hideSubscription = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setKeyboardHeight(0)
-    );
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
-
-  const handleDrawStart = (x: number, y: number) => {
-    const b = { startX: x, startY: y, endX: x, endY: y };
-    drawBlockRef.current = b;
-    setCurrentDrawBlock(b);
-  };
-
-  const handleDrawUpdate = (x: number, y: number) => {
-    if (drawBlockRef.current) {
-      const b = { ...drawBlockRef.current, endX: x, endY: y };
-      drawBlockRef.current = b;
-      setCurrentDrawBlock(b);
-    }
-  };
-
-  const handleDrawEnd = () => {
-    const b = drawBlockRef.current;
-    if (b) {
-      const minX = Math.min(b.startX, b.endX);
-      const minY = Math.min(b.startY, b.endY);
-      const w = Math.abs(b.startX - b.endX) + 1;
-      const h = Math.abs(b.startY - b.endY) + 1;
-
-      setBlocks(prevBlocks => {
-        const overlap = prevBlocks.some(block => 
-          minX < block.gridX + block.gridWidth &&
-          minX + w > block.gridX &&
-          minY < block.gridY + block.gridHeight &&
-          minY + h > block.gridY
-        );
-
-        if (overlap) {
-          Alert.alert('Overlap', 'Units cannot overlap. Please draw in an empty space.');
-          return prevBlocks;
-        }
-
-        const currentNextIndex = nextUnitIndex; 
-        const newUnitNum = `${floorNumber}${(currentNextIndex).toString().padStart(2, '0')}`;
-        const newBlockId = `${minX}-${minY}-${Date.now()}`;
-        const newBlock: UnitBlock = {
-          id: newBlockId,
-          gridX: minX,
-          gridY: minY,
-          gridWidth: w,
-          gridHeight: h,
-          unitNumber: newUnitNum,
-          capacity: 2,
-          type: 'ONE_BHK'
-        };
-
-        setPendingBlockId(newBlockId);
-        setPendingBlockNum(newUnitNum);
-        setTypeSelectionModalVisible(true);
-
-        setNextUnitIndex(prev => prev + 1);
-        return [...prevBlocks, newBlock];
-      });
-
-      drawBlockRef.current = null;
-      setCurrentDrawBlock(null);
-    }
-  };
-
   const selectedBlock = blocks.find(b => b.id === selectedUnitId) || null;
-
-  const updateUnitDetails = (id: string, updates: Partial<UnitBlock>) => {
-    setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
-  };
 
   // API Layout hook (loading/saving layout)
   const {
@@ -274,36 +163,10 @@ export default function FloorEditorScreen({
     setParentScrollEnabled,
   });
 
-  const handleClearAll = () => {
-    Alert.alert('Clear All', 'Are you sure you want to remove all units? This cannot be undone until saved.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear All', style: 'destructive', onPress: () => { setBlocks([]); setNextUnitIndex(1); } }
-    ]);
-  };
-
   const handleBlockPress = (blockIndex: number) => {
-    const block = blocks[blockIndex];
-    if (activeTool === 'ERASE') {
-      const newBlocks = [...blocks];
-      newBlocks.splice(blockIndex, 1);
-      setBlocks(newBlocks);
-    } else if (activeTool === 'PAN') {
-      setSelectedUnitId(block.id);
-      tenantAssignProps.resetTenantAssignmentForm();
-    }
+    hookHandleBlockPress(blockIndex, tenantAssignProps.resetTenantAssignmentForm);
   };
 
-  const renderSidebarLink = (icon: keyof typeof MaterialIcons.glyphMap, label: string, active = false, route?: Href) => (
-    <TouchableOpacity
-      key={label}
-      style={[styles.sidebarLink, active && styles.sidebarLinkActive]}
-      onPress={route ? () => (route === '/command-center' ? onBack() : router.push(route)) : undefined}
-      activeOpacity={route ? 0.75 : 1}
-    >
-      <MaterialIcons name={icon} size={22} color={active ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
-      <Text style={[styles.sidebarLinkText, active && styles.sidebarLinkTextActive]}>{label}</Text>
-    </TouchableOpacity>
-  );
 
   if (isDesktop) {
     return (
