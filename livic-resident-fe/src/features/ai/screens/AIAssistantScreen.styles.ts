@@ -129,7 +129,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   suggestionTitle: {
     fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    color: '#607174',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
   },
   chipButton: {
@@ -187,13 +187,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   userText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: 13.5,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     lineHeight: 19,
     fontWeight: '600',
   },
   assistantText: {
     color: theme.Colors.onSurface,
-    fontSize: 13.5,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     lineHeight: 19,
     fontWeight: '500',
   },
@@ -227,7 +227,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    fontSize: 13.5,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurface,
     maxHeight: 80,
     minHeight: 36,

@@ -125,7 +125,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   if (!isReady) {
     logger.debug('[OnboardingGate] Rendering initial spinner because not ready');
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.Colors.background }}>
         <ActivityIndicator size="large" color={theme.Colors.primary} />
       </View>
     );
@@ -139,7 +139,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   if (isPendingRedirect) {
     logger.debug('[OnboardingGate] Rendering redirect pending spinner');
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.Colors.background }}>
         <ActivityIndicator size="large" color={theme.Colors.primary} />
       </View>
     );
@@ -152,7 +152,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     <>
       {children}
       {showSpinner && (
-        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa', zIndex: 9999 }]}>
+        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.Colors.background, zIndex: 9999 }]}>
           <ActivityIndicator size="large" color={theme.Colors.primary} />
         </View>
       )}

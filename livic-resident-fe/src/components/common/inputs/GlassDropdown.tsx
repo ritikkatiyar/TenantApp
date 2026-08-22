@@ -6,6 +6,7 @@ import {
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useResponsive } from '@/src/hooks/useResponsive';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 export interface DropdownOption {
   label: string;
@@ -31,6 +32,8 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
     const [dropdownCoords, setDropdownCoords] = useState({ top: 0, left: 0, width: 0 });
     const triggerRef = useRef<any>(null);
     const { isDesktop } = useResponsive();
+    const { theme } = useAppTheme();
+    const styles = React.useMemo(() => createStyles(theme), [theme]);
 
     const selectedOption = options.find(o => o.value === value);
 
@@ -74,7 +77,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
           onPress={handleOpen}
         >
           <View style={styles.triggerContent}>
-            {icon && <MaterialIcons name={icon} size={20} color="#006875" style={{ marginRight: 8 }} />}
+            {icon && <MaterialIcons name={icon} size={20} color={theme.Colors.primary} style={{ marginRight: 8 }} />}
             <Text 
               numberOfLines={1} 
               style={[styles.triggerText, !selectedOption && styles.placeholderText, { flex: 1 }]}
@@ -82,7 +85,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
               {selectedOption ? selectedOption.label : placeholder}
             </Text>
           </View>
-          <MaterialIcons name={isOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={24} color="#5b6b6d" />
+          <MaterialIcons name={isOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={24} color={theme.Colors.onSurfaceVariant} />
         </TouchableOpacity>
 
         <Modal
@@ -124,7 +127,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
                             {option.label}
                           </Text>
                           {isSelected && (
-                            <MaterialIcons name="check" size={20} color="#0072ff" />
+                            <MaterialIcons name="check" size={20} color={theme.Colors.primary} />
                           )}
                         </TouchableOpacity>
                       );
@@ -144,7 +147,7 @@ GlassDropdown.displayName = 'GlassDropdown';
 
 export default GlassDropdown;
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   dropdownTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -163,12 +166,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   triggerText: {
-    fontSize: 15,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   placeholderText: {
-    color: '#849495',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
   },
   modalOverlay: {
@@ -178,7 +181,7 @@ const styles = StyleSheet.create({
   dropdownMenu: {
     position: 'absolute',
     maxHeight: 350,
-    shadowColor: '#000',
+    shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
@@ -209,12 +212,12 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.06)',
   },
   optionText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
-    color: '#445152',
+    color: theme.Colors.onSurfaceVariant,
   },
   optionTextSelected: {
-    color: '#0072ff',
+    color: theme.Colors.primary,
     fontWeight: '800',
   },
 });

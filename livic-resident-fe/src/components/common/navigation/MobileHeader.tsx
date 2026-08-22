@@ -105,6 +105,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ff3b30',
+    backgroundColor: theme.Colors.error,
   },
 });

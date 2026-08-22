@@ -145,7 +145,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
                 </View>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Payment Status</Text>
-                  <Text style={[styles.statValue, { color: '#0d8a5f' }]}>Up to Date</Text>
+                  <Text style={[styles.statValue, { color: theme.Colors.primary }]}>Up to Date</Text>
                 </View>
               </View>
 
@@ -318,13 +318,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   quickActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255, 255, 255, 0.8)', paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.15)' },
   quickActionText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary },
 
-  actionStrip: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: '#0070ea', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
+  actionStrip: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
   actionStripLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   actionStripIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.25)', alignItems: 'center', justifyContent: 'center' },
   actionStripTitle: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800', color: theme.Colors.surfaceContainerLowest },
   actionStripSub: { fontSize: theme.Typography.BodyMedium.fontSize, color: 'rgba(255, 255, 255, 0.9)', marginTop: 2 },
   actionStripBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14 },
-  actionStripBtnText: { color: '#0070ea', fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
+  actionStripBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
 
   noticeHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   noticeSectionTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },

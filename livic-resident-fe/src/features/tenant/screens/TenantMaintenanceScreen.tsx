@@ -225,13 +225,13 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
 
             <View style={styles.healthRow}>
               <View style={styles.healthRowLeft}>
-                <View style={[styles.healthPill, { backgroundColor: '#0d8a5f' }]} />
+                <View style={[styles.healthPill, { backgroundColor: theme.Colors.primary }]} />
                 <View>
                   <Text style={styles.healthLabel}>Resolved Tickets (Total)</Text>
-                  <Text style={[styles.healthValue, { color: '#0d8a5f' }]}>{stats?.resolvedCount || '14'}</Text>
+                  <Text style={[styles.healthValue, { color: theme.Colors.primary }]}>{stats?.resolvedCount || '14'}</Text>
                 </View>
               </View>
-              <MaterialIcons name="check-circle" size={24} color="#0d8a5f" />
+              <MaterialIcons name="check-circle" size={24} color={theme.Colors.primary} />
             </View>
           </BlurView>
 
@@ -383,7 +383,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' },
 
-  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: '#0070ea', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
+  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
   promoBadge: { backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginBottom: 12 },
   promoBadgeText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800' },
   promoTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', marginBottom: 6, zIndex: 1 },

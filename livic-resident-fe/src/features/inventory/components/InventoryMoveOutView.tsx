@@ -108,7 +108,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   railDivider: { height: 1, backgroundColor: 'rgba(0,0,0,0.07)', marginVertical: 2 },
   refundBlock: { backgroundColor: 'rgba(5,150,105,0.08)', borderRadius: 14, padding: 14, gap: 2, borderWidth: 1, borderColor: 'rgba(5,150,105,0.15)' },
   refundLabel: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: 'Inter' },
-  refundAmount: { fontSize: 30, fontWeight: '900', color: theme.Colors.primary, fontFamily: 'Inter' },
+  refundAmount: { fontSize: theme.Typography.HeadlineMedium.fontSize, fontWeight: '900', color: theme.Colors.primary, fontFamily: 'Inter' },
   primaryWideBtn: { borderRadius: 14, overflow: 'hidden' },
   primaryWideBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
   primaryWideBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },

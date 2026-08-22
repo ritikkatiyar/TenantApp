@@ -199,8 +199,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                     <View style={styles.historyRight}>
                        <Text style={styles.historyAmount}>₹{cycle.totalAmount?.toLocaleString() || '0'}</Text>
                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                         <View style={[styles.statusSuccess, cycle.status === 'PAID' ? { backgroundColor: '#dcfce7', marginRight: 8 } : { backgroundColor: '#fef3c7', marginRight: 8 }]}>
-                           <Text style={[styles.statusSuccessText, cycle.status === 'PAID' ? { color: '#15803d' } : { color: '#b45309' }]}>
+                         <View style={[styles.statusSuccess, cycle.status === 'PAID' ? { backgroundColor: theme.Colors.primaryContainer, marginRight: 8 } : { backgroundColor: theme.Colors.secondaryContainer, marginRight: 8 }]}>
+                           <Text style={[styles.statusSuccessText, cycle.status === 'PAID' ? { color: theme.Colors.onPrimaryContainer } : { color: theme.Colors.onSecondaryContainer }]}>
                              {cycle.status}
                            </Text>
                          </View>
@@ -252,7 +252,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
               {autopayEnabled ? 'Autopay is ACTIVE. Your rent will be auto-deducted on the 1st of every month.' : 'Never miss a rent due date. Enable Autopay and receive instant payment receipts.'}
             </Text>
             <TouchableOpacity 
-              style={[styles.promoBtn, autopayEnabled && { backgroundColor: '#e0f2fe' }]}
+              style={[styles.promoBtn, autopayEnabled && { backgroundColor: theme.Colors.primaryContainer }]}
               onPress={() => setAutopayEnabled(!autopayEnabled)}
               activeOpacity={0.85}
             >
@@ -300,7 +300,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                       </View>
                       <View style={[styles.checkoutRow, { borderBottomWidth: 0 }]}>
                         <Text style={styles.checkoutLabel}>Processing Fee</Text>
-                        <Text style={[styles.checkoutValue, { color: '#0d8a5f' }]}>₹0.00 (Waived)</Text>
+                        <Text style={[styles.checkoutValue, { color: theme.Colors.primary }]}>₹0.00 (Waived)</Text>
                       </View>
                     </View>
 
@@ -367,13 +367,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cycleBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cycleBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusPillPending: { backgroundColor: '#fef3c7' },
-  statusPillPaid: { backgroundColor: '#dcfce7' },
+  statusPillPending: { backgroundColor: theme.Colors.secondaryContainer },
+  statusPillPaid: { backgroundColor: theme.Colors.primaryContainer },
   statusPillText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
-  statusPillTextPending: { color: '#b45309' },
-  statusPillTextPaid: { color: '#15803d' },
+  statusPillTextPending: { color: theme.Colors.onSecondaryContainer },
+  statusPillTextPaid: { color: theme.Colors.onPrimaryContainer },
 
-  amountText: { fontSize: 38, fontWeight: '800', color: theme.Colors.onSurface },
+  amountText: { fontSize: theme.Typography.headlineXl.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
   dueText: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4, marginBottom: 20 },
   cycleActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   payBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
@@ -402,16 +402,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   historyDesc: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant },
   historyRight: { alignItems: 'flex-end' },
   historyAmount: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 4 },
-  statusSuccess: { backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  statusSuccessText: { color: '#15803d', fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800' },
+  statusSuccess: { backgroundColor: theme.Colors.primaryContainer, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  statusSuccessText: { color: theme.Colors.onPrimaryContainer, fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800' },
   historyFooter: { padding: 14, backgroundColor: 'rgba(255, 255, 255, 0.4)', alignItems: 'center' },
   historyFooterText: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
 
-  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: '#0070ea', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
+  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
   promoTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', marginBottom: 8, zIndex: 1 },
   promoDesc: { color: 'rgba(255, 255, 255, 0.9)', fontSize: theme.Typography.BodyMedium.fontSize, lineHeight: 20, marginBottom: 18, width: '82%', zIndex: 1 },
   promoBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
-  promoBtnText: { color: '#0070ea', fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
+  promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
   promoIcon: { position: 'absolute', right: -25, bottom: -25 },
 
   securityCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
