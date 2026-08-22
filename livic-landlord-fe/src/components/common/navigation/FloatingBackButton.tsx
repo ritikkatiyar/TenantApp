@@ -45,7 +45,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,

@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Dimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -19,6 +20,8 @@ export default function UpgradeModal({
   message,
   onClose,
 }: UpgradeModalProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
 
   const handleUpgrade = () => {
@@ -66,7 +69,7 @@ export default function UpgradeModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'center',
@@ -79,11 +82,11 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     borderRadius: 24,
     padding: 28,
-    backgroundColor: '#0b1c30',
+    backgroundColor: theme.Colors.onSurface,
     borderWidth: 1.5,
     borderColor: 'rgba(0, 224, 255, 0.4)',
     alignItems: 'center',
-    shadowColor: '#00e0ff',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
@@ -101,16 +104,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    color: '#ffffff',
-    fontSize: 18,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '900',
     letterSpacing: 1.5,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#94a3b8',
-    fontSize: 14,
+    color: theme.Colors.onSurfaceVariant,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     lineHeight: 20,
     textAlign: 'center',
     marginBottom: 18,
@@ -127,8 +130,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   planBadgeText: {
-    color: '#cbd5e1',
-    fontSize: 12,
+    color: theme.Colors.outlineVariant,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
   },
   upgradeBtn: {
@@ -139,12 +142,12 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#00e0ff',
+    backgroundColor: theme.Colors.primary,
     marginBottom: 10,
   },
   upgradeBtnText: {
-    color: '#001e2b',
-    fontSize: 14,
+    color: theme.Colors.onPrimary,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
@@ -152,8 +155,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   closeBtnText: {
-    color: '#64748b',
-    fontSize: 13,
+    color: theme.Colors.onSurfaceVariant,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
   },
 });

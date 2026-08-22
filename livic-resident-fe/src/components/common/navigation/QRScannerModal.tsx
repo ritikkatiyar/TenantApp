@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
@@ -19,6 +20,8 @@ interface QRScannerModalProps {
 }
 
 export default function QRScannerModal({ visible, onClose }: QRScannerModalProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
   const [scanned, setScanned] = useState(false);
   const [scannedData, setScannedData] = useState<string | null>(null);
@@ -158,7 +161,7 @@ export default function QRScannerModal({ visible, onClose }: QRScannerModalProps
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Scan QR Code</Text>
           <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.7}>
-            <MaterialIcons name="close" size={24} color="#ffffff" />
+            <MaterialIcons name="close" size={24} color={theme.Colors.surfaceContainerLowest} />
           </TouchableOpacity>
         </View>
 
@@ -195,7 +198,7 @@ export default function QRScannerModal({ visible, onClose }: QRScannerModalProps
 
           {hasPermission === false && (
             <TouchableOpacity style={styles.retryCameraBtn} onPress={startCamera} activeOpacity={0.8}>
-              <MaterialIcons name="videocam" size={20} color="#ffffff" />
+              <MaterialIcons name="videocam" size={20} color={theme.Colors.surfaceContainerLowest} />
               <Text style={styles.retryCameraText}>Enable Camera Access</Text>
             </TouchableOpacity>
           )}
@@ -228,7 +231,7 @@ export default function QRScannerModal({ visible, onClose }: QRScannerModalProps
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'rgba(5, 12, 18, 0.92)',
@@ -245,9 +248,9 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 20 : 10,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '700',
-    color: '#ffffff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   closeButton: {
     width: 40,
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 28,
     height: 28,
-    borderColor: '#00D8F6',
+    borderColor: theme.Colors.primary,
   },
   topLeft: {
     top: 0,
@@ -313,9 +316,9 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     height: 3,
-    backgroundColor: '#00D8F6',
+    backgroundColor: theme.Colors.primary,
     borderRadius: 2,
-    shadowColor: '#00D8F6',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 8,
@@ -330,18 +333,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   scannedText: {
-    color: '#ffffff',
-    fontSize: 18,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '700',
   },
   scannedSubtext: {
-    color: '#00D8F6',
-    fontSize: 13,
+    color: theme.Colors.primary,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
   },
   instructionText: {
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     textAlign: 'center',
     marginTop: 24,
     maxWidth: 280,
@@ -360,8 +363,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 216, 246, 0.4)',
   },
   retryCameraText: {
-    color: '#ffffff',
-    fontSize: 13,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
   },
   shortcutSection: {
@@ -371,7 +374,7 @@ const styles = StyleSheet.create({
   },
   shortcutTitle: {
     color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -394,8 +397,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   shortcutText: {
-    color: '#ffffff',
-    fontSize: 13,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
   },
 });

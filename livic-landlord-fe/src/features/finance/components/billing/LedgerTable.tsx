@@ -1,0 +1,362 @@
+import React from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useAppTheme } from '@/src/theme/ThemeContext';
+import type { LedgerEntryResponse } from '../../api/ledger.api';
+
+interface LedgerTableProps {
+  ledger: LedgerEntryResponse[];
+  properties: any[] | null;
+  isLoading: boolean;
+  isDesktop: boolean;
+  isDark: boolean;
+}
+
+export function LedgerTable({
+  ledger,
+  properties,
+  isLoading,
+  isDesktop,
+  isDark,
+}: LedgerTableProps) {
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const router = useRouter();
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(undefined, { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getTransactionTypeColor = (type: string) => {
+    switch (type) {
+      case 'PAYMENT_RECEIVED':
+        return { text: theme.Colors.primary, bg: '#d1fae5' };
+      case 'INVOICE_GENERATED':
+        return { text: '#2563eb', bg: '#dbeafe' };
+      case 'LATE_FEE_APPLIED':
+        return { text: theme.Colors.error, bg: '#fee2e2' };
+      case 'REFUND':
+        return { text: '#d97706', bg: '#fef3c7' };
+      case 'ADJUSTMENT':
+      default:
+        return { text: '#4b5563', bg: '#f3f4f6' };
+    }
+  };
+
+  const formatTransactionType = (type: string) => {
+    return type.replace(/_/g, ' ');
+  };
+
+  if (!properties || properties.length === 0) {
+    return (
+      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCardCentered}>
+        <View style={styles.emptyIconCircle}>
+          <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
+        </View>
+        <Text style={styles.emptyTitle}>No Property Created Yet</Text>
+        <Text style={styles.emptySubtitle}>
+          Viewing financial ledgers requires an active property. Create your first property to start logging transactions.
+        </Text>
+        <TouchableOpacity 
+          style={{ borderRadius: 100, overflow: 'hidden' }}
+          onPress={() => router.push('/properties/create')}
+        >
+          <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtnGradient}>
+            <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
+            <Text style={styles.createBtnText}>CREATE FIRST PROPERTY</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </BlurView>
+    );
+  }
+
+  if (isLoading) {
+    return <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />;
+  }
+
+  if (ledger.length === 0) {
+    return (
+      <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+        <MaterialIcons name="account-balance" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 12 }} />
+        <Text style={styles.emptyCardTitle}>No transaction logs found.</Text>
+        <Text style={styles.emptyCardSubtitle}>Transactions appear here once rent cycles are generated or payments are made.</Text>
+      </BlurView>
+    );
+  }
+
+  if (isDesktop) {
+    return (
+      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.desktopTableCard}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.th, { flex: 1.5 }]}>DATE</Text>
+          <Text style={[styles.th, { flex: 1 }]}>UNIT</Text>
+          <Text style={[styles.th, { flex: 1.5 }]}>TENANT</Text>
+          <Text style={[styles.th, { flex: 2 }]}>TRANSACTION TYPE</Text>
+          <Text style={[styles.th, { flex: 2.5 }]}>DESCRIPTION</Text>
+          <Text style={[styles.th, { flex: 1.2, textAlign: 'right' }]}>AMOUNT</Text>
+          <Text style={[styles.th, { flex: 1.3, textAlign: 'right' }]}>BALANCE</Text>
+        </View>
+
+        {ledger.map((item) => {
+          const colors = getTransactionTypeColor(item.transactionType);
+          const isPayment = item.amount < 0;
+          return (
+            <View key={item.id} style={styles.tableRow}>
+              <Text style={[styles.td, { flex: 1.5, fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant }]}>{formatDate(item.createdAt)}</Text>
+              <Text style={[styles.td, { flex: 1, fontWeight: '700' }]}>{item.unitName}</Text>
+              <Text style={[styles.td, { flex: 1.5 }]}>{item.tenantName}</Text>
+              <View style={{ flex: 2, flexDirection: 'row' }}>
+                <View style={[styles.pill, { backgroundColor: colors.bg }]}>
+                  <Text style={[styles.pillText, { color: colors.text }]}>
+                    {formatTransactionType(item.transactionType)}
+                  </Text>
+                </View>
+              </View>
+              <Text style={[styles.td, { flex: 2.5, fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant }]} numberOfLines={2}>
+                {item.description}
+              </Text>
+              <Text style={[
+                styles.td, 
+                { 
+                  flex: 1.2, 
+                  textAlign: 'right', 
+                  fontWeight: '800',
+                  color: isPayment ? theme.Colors.primary : theme.Colors.error
+                }
+              ]}>
+                {isPayment ? '+' : '-'} ₹{Math.abs(item.amount).toFixed(2)}
+              </Text>
+              <Text style={[
+                styles.td, 
+                { 
+                  flex: 1.3, 
+                  textAlign: 'right', 
+                  fontWeight: '700',
+                  color: theme.Colors.onBackground
+                }
+              ]}>
+                ₹{(item.balance ?? 0).toFixed(2)}
+              </Text>
+            </View>
+          );
+        })}
+      </BlurView>
+    );
+  }
+
+  return (
+    <View style={styles.listContainer}>
+      {ledger.map((item) => {
+        const colors = getTransactionTypeColor(item.transactionType);
+        const isPayment = item.amount < 0;
+        return (
+          <BlurView key={item.id} intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.mobileCard}>
+            <View style={styles.cardHeaderRow}>
+              <Text style={styles.cardUnitText}>{item.unitName}</Text>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={[
+                  styles.cardAmountText, 
+                  { color: isPayment ? theme.Colors.primary : theme.Colors.error }
+                ]}>
+                  {isPayment ? '+' : '-'} ₹{Math.abs(item.amount).toFixed(2)}
+                </Text>
+                <Text style={{ fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>
+                  Bal: ₹{(item.balance ?? 0).toFixed(2)}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.cardDetailRow}>
+              <Text style={styles.cardTenantText}>{item.tenantName}</Text>
+              <Text style={styles.cardDateText}>{formatDate(item.createdAt)}</Text>
+            </View>
+
+            <View style={[styles.pill, { backgroundColor: colors.bg, alignSelf: 'flex-start', marginTop: 8 }]}>
+              <Text style={[styles.pillText, { color: colors.text, fontSize: theme.Typography.LabelSmall.fontSize }]}>
+                {formatTransactionType(item.transactionType)}
+              </Text>
+            </View>
+
+            <Text style={styles.cardDescText}>{item.description}</Text>
+          </BlurView>
+        );
+      })}
+    </View>
+  );
+}
+
+const createStyles = (theme: any) => StyleSheet.create({
+  emptyCardCentered: {
+    padding: 32,
+    borderRadius: 24,
+    alignItems: 'center',
+    maxWidth: 500,
+    alignSelf: 'center',
+    marginTop: 40,
+    width: '100%',
+    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(0, 104, 117, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  createBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  createBtnText: {
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  emptyCard: {
+    borderRadius: 24,
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
+    marginTop: 20,
+  },
+  emptyCardTitle: {
+    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+    marginBottom: 6,
+  },
+  emptyCardSubtitle: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    textAlign: 'center',
+    paddingHorizontal: 30,
+    lineHeight: 20,
+  },
+  desktopTableCard: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
+    marginTop: 24,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingVertical: 18,
+    borderBottomWidth: 1.5,
+    borderBottomColor: 'rgba(0, 104, 117, 0.1)',
+    backgroundColor: 'rgba(0, 104, 117, 0.03)',
+  },
+  th: {
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.primary,
+    letterSpacing: 1,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 104, 117, 0.05)',
+  },
+  td: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
+    fontWeight: '600',
+  },
+  pill: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  pillText: {
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  listContainer: {
+    gap: 16,
+    marginTop: 16,
+  },
+  mobileCard: {
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
+    overflow: 'hidden',
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  cardUnitText: {
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+  },
+  cardAmountText: {
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontWeight: '900',
+  },
+  cardDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  cardTenantText: {
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurface,
+    fontWeight: '600',
+  },
+  cardDateText: {
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+  },
+  cardDescText: {
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    marginTop: 12,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
+});

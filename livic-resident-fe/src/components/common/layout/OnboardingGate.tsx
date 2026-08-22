@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useEffect, useState } from 'react';
 import { Redirect, usePathname, useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -7,6 +8,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { logger } from '@/src/utils/logger';
 
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
+  const { theme, isDark } = useAppTheme();
   const { isAuthenticated, isReady, accessToken, context, setContext } = useAuth();
   const pathname = usePathname();
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
@@ -123,8 +125,8 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   if (!isReady) {
     logger.debug('[OnboardingGate] Rendering initial spinner because not ready');
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa' }}>
-        <ActivityIndicator size="large" color="#006875" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.Colors.background }}>
+        <ActivityIndicator size="large" color={theme.Colors.primary} />
       </View>
     );
   }
@@ -137,8 +139,8 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   if (isPendingRedirect) {
     logger.debug('[OnboardingGate] Rendering redirect pending spinner');
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa' }}>
-        <ActivityIndicator size="large" color="#006875" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.Colors.background }}>
+        <ActivityIndicator size="large" color={theme.Colors.primary} />
       </View>
     );
   }
@@ -150,8 +152,8 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     <>
       {children}
       {showSpinner && (
-        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafa', zIndex: 9999 }]}>
-          <ActivityIndicator size="large" color="#006875" />
+        <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: theme.Colors.background, zIndex: 9999 }]}>
+          <ActivityIndicator size="large" color={theme.Colors.primary} />
         </View>
       )}
     </>

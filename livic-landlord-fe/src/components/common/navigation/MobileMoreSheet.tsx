@@ -30,24 +30,24 @@ interface MenuItem {
   color: string;
 }
 
-const MENU_ITEMS: MenuItem[] = [
-  { title: 'Portfolio', subtitle: 'Properties & Units', route: '/command-center', icon: 'apartment', color: '#00D8F6' },
-  { title: 'Leases', subtitle: 'Tenant Contracts', route: '/leases', icon: 'receipt-long', color: '#38EF7D' },
-  { title: 'Finance', subtitle: 'Expenses & Income', route: '/expenses', icon: 'payments', color: '#FFB74D' },
-  { title: 'Analytics', subtitle: 'Revenue & Occupancy', route: '/analytics', icon: 'insights', color: '#AB47BC' },
-  { title: 'Reports', subtitle: 'Statements & Logs', route: '/reports', icon: 'assessment', color: '#26A69A' },
-  { title: 'Inventory', subtitle: 'Assets & Stock', route: '/inventory', icon: 'inventory-2', color: '#FF7043' },
-  { title: 'Announcements', subtitle: 'Broadcast Messages', route: '/announcements', icon: 'campaign', color: '#42A5F5' },
-  { title: 'Escalations', subtitle: 'Issues & Repairs', route: '/escalations', icon: 'report-problem', color: '#EF5350' },
-  { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: '#78909C' },
-];
-
 export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { theme, isDark, toggleTheme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
+  const MENU_ITEMS: MenuItem[] = React.useMemo(() => [
+    { title: 'Portfolio', subtitle: 'Properties & Units', route: '/command-center', icon: 'apartment', color: theme.Colors.primary },
+    { title: 'Leases', subtitle: 'Tenant Contracts', route: '/leases', icon: 'receipt-long', color: theme.Colors.secondary },
+    { title: 'Finance', subtitle: 'Expenses & Income', route: '/expenses', icon: 'payments', color: theme.Colors.tertiary },
+    { title: 'Analytics', subtitle: 'Revenue & Occupancy', route: '/analytics', icon: 'insights', color: theme.Colors.primary },
+    { title: 'Reports', subtitle: 'Statements & Logs', route: '/reports', icon: 'assessment', color: theme.Colors.secondary },
+    { title: 'Inventory', subtitle: 'Assets & Stock', route: '/inventory', icon: 'inventory-2', color: theme.Colors.tertiary },
+    { title: 'Announcements', subtitle: 'Broadcast Messages', route: '/announcements', icon: 'campaign', color: theme.Colors.primary },
+    { title: 'Escalations', subtitle: 'Issues & Repairs', route: '/escalations', icon: 'report-problem', color: theme.Colors.error },
+    { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
+  ], [theme]);
   
   const translateY = useRef(new Animated.Value(300)).current;
 
@@ -204,7 +204,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopRightRadius: 28,
     maxHeight: '85%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -246,7 +246,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginRight: 16,
   },
   avatarText: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
@@ -254,12 +254,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   profileRole: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
     textTransform: 'capitalize',
@@ -301,7 +301,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 2,
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,
   },
@@ -310,7 +310,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
   },
   cardSubtitle: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
 });

@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -37,6 +38,8 @@ export default function IssueDetailModal({
   onClose,
   onUpdate
 }: IssueDetailModalProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { width } = useWindowDimensions();
   const isDesktop = width >= 800;
 
@@ -144,7 +147,7 @@ export default function IssueDetailModal({
     switch (status) {
       case 'RESOLVED':
       case 'CLOSED':
-        return { bg: '#d1fae5', text: '#059669', label: status };
+        return { bg: '#d1fae5', text: theme.Colors.primary, label: status };
       case 'IN_PROGRESS':
         return { bg: '#fef3c7', text: '#d97706', label: 'IN PROGRESS' };
       default:
@@ -155,13 +158,13 @@ export default function IssueDetailModal({
   const getTimelineIcon = (type: string) => {
     switch (type) {
       case 'CREATION':
-        return <MaterialIcons name="add-circle" size={18} color="#006875" />;
+        return <MaterialIcons name="add-circle" size={18} color={theme.Colors.primary} />;
       case 'STATUS_CHANGE':
         return <MaterialIcons name="swap-horiz" size={18} color="#d97706" />;
       case 'ESCALATION':
-        return <MaterialIcons name="report-problem" size={18} color="#ef4444" />;
+        return <MaterialIcons name="report-problem" size={18} color={theme.Colors.error} />;
       default:
-        return <MaterialIcons name="comment" size={18} color="#6b7a7d" />;
+        return <MaterialIcons name="comment" size={18} color={theme.Colors.onSurfaceVariant} />;
     }
   };
 
@@ -196,13 +199,13 @@ export default function IssueDetailModal({
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color="#151d1e" />
+              <MaterialIcons name="close" size={24} color={theme.Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
           {isLoading && !issue ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#006875" />
+              <ActivityIndicator size="large" color={theme.Colors.primary} />
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.scrollBody} showsVerticalScrollIndicator={false}>
@@ -235,7 +238,7 @@ export default function IssueDetailModal({
                     </Text>
                   </View>
                   <View style={[styles.badge, { backgroundColor: 'rgba(255, 255, 255, 0.55)' }]}>
-                    <Text style={[styles.badgeText, { color: '#006875' }]}>{issue.category}</Text>
+                    <Text style={[styles.badgeText, { color: theme.Colors.primary }]}>{issue.category}</Text>
                   </View>
                 </View>
               )}
@@ -265,7 +268,7 @@ export default function IssueDetailModal({
                   <Text style={styles.sectionTitle}>Manage Ticket</Text>
                   
                   {isChangingStatus ? (
-                    <ActivityIndicator size="small" color="#006875" />
+                    <ActivityIndicator size="small" color={theme.Colors.primary} />
                   ) : (
                     <View style={styles.actionButtonsRow}>
                       {issue.status === 'OPEN' && (
@@ -301,7 +304,7 @@ export default function IssueDetailModal({
                       <TextInput
                         style={styles.escalateInput}
                         placeholder="Reason for escalation..."
-                        placeholderTextColor="#6b7a7d"
+                        placeholderTextColor={theme.Colors.onSurfaceVariant}
                         value={escalateReason}
                         onChangeText={setEscalateReason}
                       />
@@ -318,7 +321,7 @@ export default function IssueDetailModal({
                           style={styles.confirmEscalateBtn}
                         >
                           {isEscalating ? (
-                            <ActivityIndicator size="small" color="#fff" />
+                            <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
                           ) : (
                             <Text style={styles.confirmEscalateText}>Confirm</Text>
                           )}
@@ -361,7 +364,7 @@ export default function IssueDetailModal({
               <TextInput
                 style={styles.commentInput}
                 placeholder="Write a reply..."
-                placeholderTextColor="#6b7a7d"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={commentText}
                 onChangeText={setCommentText}
                 multiline
@@ -372,9 +375,9 @@ export default function IssueDetailModal({
                 disabled={isSubmittingComment || !commentText.trim()}
               >
                 {isSubmittingComment ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
                 ) : (
-                  <Ionicons name="send" size={18} color="#fff" />
+                  <Ionicons name="send" size={18} color={theme.Colors.surfaceContainerLowest} />
                 )}
               </TouchableOpacity>
             </View>
@@ -385,7 +388,7 @@ export default function IssueDetailModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -399,7 +402,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.75)',
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -418,16 +421,16 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0, 104, 117, 0.1)'
   },
   ticketNum: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '900',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     marginTop: 2
   },
   closeButton: {
@@ -452,7 +455,7 @@ const styles = StyleSheet.create({
     borderRadius: 10
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     textTransform: 'uppercase'
   },
@@ -465,16 +468,16 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
-    color: '#006875',
+    color: theme.Colors.primary,
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5
   },
   descriptionText: {
-    fontSize: 14,
-    color: '#2e3a3c',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
     lineHeight: 20
   },
   metaGrid: {
@@ -489,15 +492,15 @@ const styles = StyleSheet.create({
     flex: 1
   },
   metaLabel: {
-    fontSize: 11,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 2,
     fontWeight: '600'
   },
   metaValue: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    color: '#151d1e'
+    color: theme.Colors.onSurface
   },
   actionsContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.55)',
@@ -520,18 +523,18 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   btnInProg: {
-    backgroundColor: '#006875'
+    backgroundColor: theme.Colors.primary
   },
   btnResolve: {
-    backgroundColor: '#059669'
+    backgroundColor: theme.Colors.primary
   },
   btnEscalate: {
-    backgroundColor: '#ef4444'
+    backgroundColor: theme.Colors.error
   },
   actionBtnText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    color: '#fff'
+    color: theme.Colors.surfaceContainerLowest
   },
   escalateInputContainer: {
     marginTop: 12,
@@ -546,8 +549,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 14,
-    color: '#151d1e',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
     marginBottom: 10
   },
   escalateActionButtons: {
@@ -560,20 +563,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8
   },
   cancelBtnText: {
-    fontSize: 13,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '700'
   },
   confirmEscalateBtn: {
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.Colors.error,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10
   },
   confirmEscalateText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    color: '#fff'
+    color: theme.Colors.surfaceContainerLowest
   },
   timelineSection: {
     marginTop: 10
@@ -614,23 +617,23 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
   authorName: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    color: '#151d1e'
+    color: theme.Colors.onSurface
   },
   timelineDate: {
-    fontSize: 11,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600'
   },
   timelineBody: {
-    fontSize: 13,
-    color: '#2e3a3c',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
     lineHeight: 18
   },
   emptyTimelineText: {
-    fontSize: 13,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 10
@@ -652,15 +655,15 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    fontSize: 14,
-    color: '#151d1e',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
     maxHeight: 100
   },
   sendButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     justifyContent: 'center',
     alignItems: 'center'
   },

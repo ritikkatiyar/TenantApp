@@ -3,7 +3,7 @@ import { useColorScheme as useRNColorScheme, Platform, Animated, StyleSheet, Lay
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as SecureStore from 'expo-secure-store';
-import { getTheme, ColorTokens, SurfaceTokens, Typography, Spacing, Rounded } from './Theme';
+import { getTheme, ColorTokens, SurfaceTokens, Typography, Spacing, Rounded, LightColors } from './Theme';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 24,
-    shadowColor: '#000',
+    shadowColor: LightColors.onSurface,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.45,
     shadowRadius: 20,

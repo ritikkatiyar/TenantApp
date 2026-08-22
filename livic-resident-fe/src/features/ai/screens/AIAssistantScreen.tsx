@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useEffect } from 'react';
 import {
   ActivityIndicator,
@@ -21,9 +22,10 @@ import { BlurView } from 'expo-blur';
 
 import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
 import { useRouter } from 'expo-router';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { logger } from '@/src/utils/logger';
+import { createStyles } from './AIAssistantScreen.styles';
 
 type AIAssistantScreenProps = {
   token: string;
@@ -42,6 +44,8 @@ const EXAMPLES = [
 ];
 
 export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isDesktop } = useResponsive();
@@ -248,7 +252,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                   end={{ x: 1, y: 1 }}
                   style={styles.aiOrbIcon}
                 >
-                  <MaterialIcons name="auto-awesome" size={16} color="#ffffff" />
+                  <MaterialIcons name="auto-awesome" size={16} color={theme.Colors.surfaceContainerLowest} />
                 </LinearGradient>
                 <View>
                   <Text style={styles.dialogueTitle}>AI Command Desk</Text>
@@ -281,7 +285,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                       activeOpacity={0.75}
                       style={styles.chipButton}
                     >
-                      <MaterialIcons name="bolt" size={14} color="#006875" />
+                      <MaterialIcons name="bolt" size={14} color={theme.Colors.primary} />
                       <Text style={styles.chipText}>{example}</Text>
                     </TouchableOpacity>
                   ))}
@@ -299,7 +303,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                 >
                   {message.role === 'assistant' && (
                     <View style={styles.assistantAvatar}>
-                      <MaterialIcons name="auto-awesome" size={14} color="#006875" />
+                      <MaterialIcons name="auto-awesome" size={14} color={theme.Colors.primary} />
                     </View>
                   )}
 
@@ -323,10 +327,10 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               {isSending && (
                 <View style={[styles.msgRow, styles.msgRowAssistant]}>
                   <View style={styles.assistantAvatar}>
-                    <MaterialIcons name="auto-awesome" size={14} color="#006875" />
+                    <MaterialIcons name="auto-awesome" size={14} color={theme.Colors.primary} />
                   </View>
                   <BlurView intensity={95} tint="light" style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
-                    <ActivityIndicator size="small" color="#006875" />
+                    <ActivityIndicator size="small" color={theme.Colors.primary} />
                     <Text style={styles.loadingText}>Analyzing command...</Text>
                   </BlurView>
                 </View>
@@ -334,7 +338,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
             </ScrollView>
 
             {/* Input Bar */}
-            <View style={styles.dialogueFooter}>
+            <View style={[styles.dialogueFooter, { paddingBottom: Math.max(insets.bottom, 10) }]}>
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.textInput}
@@ -368,7 +372,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                       end={{ x: 1, y: 1 }}
                       style={styles.sendButtonActive}
                     >
-                      <MaterialIcons name="arrow-upward" size={18} color="#ffffff" />
+                      <MaterialIcons name="arrow-upward" size={18} color={theme.Colors.surfaceContainerLowest} />
                     </LinearGradient>
                   )}
                 </TouchableOpacity>
@@ -381,259 +385,3 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  outerWrapper: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  backdropOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.35)',
-  },
-  keyboardAvoid: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  dialogueContainer: {
-    width: '100%',
-    height: '52%',
-    minHeight: 380,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: 'hidden',
-    borderTopWidth: 1.5,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 28,
-    elevation: 16,
-  },
-  dialogueContainerDesktop: {
-    maxWidth: 680,
-    height: 480,
-    borderRadius: 28,
-    marginBottom: 24,
-    borderWidth: 1.5,
-  },
-  glassCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.88)',
-  },
-  dragHandleZone: {
-    width: '100%',
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  dragBar: {
-    width: 42,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: 'rgba(0, 104, 117, 0.3)',
-  },
-  dialogueHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-    paddingTop: 2,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  headerTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  aiOrbIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  dialogueTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0b1c30',
-  },
-  onlineBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 1,
-  },
-  greenDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10b981',
-  },
-  onlineText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#006875',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-  },
-  messageStream: {
-    flex: 1,
-  },
-  messageStreamContent: {
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    gap: 10,
-  },
-  suggestionBlock: {
-    gap: 6,
-    marginBottom: 6,
-  },
-  suggestionTitle: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#607174',
-    letterSpacing: 0.8,
-  },
-  chipButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderColor: 'rgba(255, 255, 255, 0.95)',
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  chipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#006875',
-  },
-  msgRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    marginVertical: 2,
-  },
-  msgRowUser: {
-    justifyContent: 'flex-end',
-  },
-  msgRowAssistant: {
-    justifyContent: 'flex-start',
-  },
-  assistantAvatar: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'rgba(0, 104, 117, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
-  },
-  bubble: {
-    maxWidth: '82%',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    overflow: 'hidden',
-  },
-  userBubble: {
-    borderBottomRightRadius: 4,
-  },
-  assistantBubble: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderColor: 'rgba(255, 255, 255, 0.95)',
-    borderWidth: 1,
-    borderBottomLeftRadius: 4,
-  },
-  userText: {
-    color: '#ffffff',
-    fontSize: 13.5,
-    lineHeight: 19,
-    fontWeight: '600',
-  },
-  assistantText: {
-    color: '#151d1e',
-    fontSize: 13.5,
-    lineHeight: 19,
-    fontWeight: '500',
-  },
-  loadingBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  loadingText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#006875',
-  },
-  dialogueFooter: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderColor: 'rgba(0, 104, 117, 0.2)',
-    borderWidth: 1.5,
-    borderRadius: 22,
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    gap: 8,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 13.5,
-    color: '#151d1e',
-    maxHeight: 80,
-    minHeight: 36,
-    paddingVertical: 4,
-    ...Platform.select({
-      web: {
-        outlineStyle: 'none',
-      } as any,
-    }),
-  },
-  sendButtonWrapper: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  sendButtonActive: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonDisabled: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-  },
-});

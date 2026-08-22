@@ -5,7 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { getTenantRentCycles, markRentCyclePaid, RentCycle, fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -131,7 +131,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                   end={{ x: 1, y: 0 }}
                   style={[styles.payBtn, (activeCycle?.status === 'PAID' || paySuccess) && styles.payBtnDisabled]}
                 >
-                  <MaterialIcons name="bolt" size={20} color="#fff" />
+                  <MaterialIcons name="bolt" size={20} color={theme.Colors.surfaceContainerLowest} />
                   <Text style={styles.payBtnText}>
                     {activeCycle?.status === 'PAID' || paySuccess ? 'Rent Settled ✓' : 'Pay Rent Now'}
                   </Text>
@@ -199,8 +199,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                     <View style={styles.historyRight}>
                        <Text style={styles.historyAmount}>₹{cycle.totalAmount?.toLocaleString() || '0'}</Text>
                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                         <View style={[styles.statusSuccess, cycle.status === 'PAID' ? { backgroundColor: '#dcfce7', marginRight: 8 } : { backgroundColor: '#fef3c7', marginRight: 8 }]}>
-                           <Text style={[styles.statusSuccessText, cycle.status === 'PAID' ? { color: '#15803d' } : { color: '#b45309' }]}>
+                         <View style={[styles.statusSuccess, cycle.status === 'PAID' ? { backgroundColor: theme.Colors.primaryContainer, marginRight: 8 } : { backgroundColor: theme.Colors.secondaryContainer, marginRight: 8 }]}>
+                           <Text style={[styles.statusSuccessText, cycle.status === 'PAID' ? { color: theme.Colors.onPrimaryContainer } : { color: theme.Colors.onSecondaryContainer }]}>
                              {cycle.status}
                            </Text>
                          </View>
@@ -230,8 +230,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
               ) : (
                 <View style={{ padding: 24, alignItems: 'center' }}>
                   <MaterialIcons name="receipt-long" size={36} color={theme.Colors.primary} style={{ marginBottom: 8 }} />
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: theme.Colors.onBackground }}>No Billing Transactions Found</Text>
-                  <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>Your property ledger account is up to date.</Text>
+                  <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onBackground }}>No Billing Transactions Found</Text>
+                  <Text style={{ fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>Your property ledger account is up to date.</Text>
                 </View>
               )}
             </View>
@@ -252,7 +252,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
               {autopayEnabled ? 'Autopay is ACTIVE. Your rent will be auto-deducted on the 1st of every month.' : 'Never miss a rent due date. Enable Autopay and receive instant payment receipts.'}
             </Text>
             <TouchableOpacity 
-              style={[styles.promoBtn, autopayEnabled && { backgroundColor: '#e0f2fe' }]}
+              style={[styles.promoBtn, autopayEnabled && { backgroundColor: theme.Colors.primaryContainer }]}
               onPress={() => setAutopayEnabled(!autopayEnabled)}
               activeOpacity={0.85}
             >
@@ -300,14 +300,14 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                       </View>
                       <View style={[styles.checkoutRow, { borderBottomWidth: 0 }]}>
                         <Text style={styles.checkoutLabel}>Processing Fee</Text>
-                        <Text style={[styles.checkoutValue, { color: '#0d8a5f' }]}>₹0.00 (Waived)</Text>
+                        <Text style={[styles.checkoutValue, { color: theme.Colors.primary }]}>₹0.00 (Waived)</Text>
                       </View>
                     </View>
 
                     {paying ? (
                       <View style={{ paddingVertical: 20, alignItems: 'center' }}>
                         <ActivityIndicator size="large" color={theme.Colors.primary} />
-                        <Text style={{ marginTop: 12, fontSize: 14, color: theme.Colors.onSurfaceVariant, fontWeight: '600' }}>Processing secure payment...</Text>
+                        <Text style={{ marginTop: 12, fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' }}>Processing secure payment...</Text>
                       </View>
                     ) : (
                       <TouchableOpacity onPress={handlePayRent} activeOpacity={0.85}>
@@ -317,7 +317,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                           end={{ x: 1, y: 0 }}
                           style={styles.modalPayBtn}
                         >
-                          <MaterialIcons name="lock" size={20} color="#fff" />
+                          <MaterialIcons name="lock" size={20} color={theme.Colors.surfaceContainerLowest} />
                           <Text style={styles.modalPayBtnText}>Confirm & Pay ₹{activeCycle?.totalAmount?.toLocaleString() || '10,000.00'}</Text>
                         </LinearGradient>
                       </TouchableOpacity>
@@ -365,79 +365,79 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cycleTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   cycleBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cycleBadgeText: { color: theme.Colors.primary, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  cycleBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusPillPending: { backgroundColor: '#fef3c7' },
-  statusPillPaid: { backgroundColor: '#dcfce7' },
-  statusPillText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
-  statusPillTextPending: { color: '#b45309' },
-  statusPillTextPaid: { color: '#15803d' },
+  statusPillPending: { backgroundColor: theme.Colors.secondaryContainer },
+  statusPillPaid: { backgroundColor: theme.Colors.primaryContainer },
+  statusPillText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
+  statusPillTextPending: { color: theme.Colors.onSecondaryContainer },
+  statusPillTextPaid: { color: theme.Colors.onPrimaryContainer },
 
-  amountText: { fontSize: 38, fontWeight: '800', color: theme.Colors.onSurface },
-  dueText: { fontSize: 14, color: theme.Colors.onSurfaceVariant, marginTop: 4, marginBottom: 20 },
+  amountText: { fontSize: theme.Typography.headlineXl.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
+  dueText: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4, marginBottom: 20 },
   cycleActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   payBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
   payBtnDisabled: { opacity: 0.7 },
-  payBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  payBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' },
   invoiceBtn: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.2)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, minWidth: 140 },
-  invoiceBtnText: { color: theme.Colors.primary, fontSize: 15, fontWeight: '700' },
+  invoiceBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' },
 
   statsRow: { flexDirection: 'row', gap: 14 },
   statBox: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
   statIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: 11, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5, marginBottom: 2 },
-  statValue: { fontSize: 14, fontWeight: '800' },
+  statLabel: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5, marginBottom: 2 },
+  statValue: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
 
   historyCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.3)' },
-  historyTitle: { fontSize: 18, fontWeight: '800', color: theme.Colors.onSurface },
-  historySub: { fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
+  historyTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
+  historySub: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   filterBox: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255, 255, 255, 0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.4)' },
-  filterText: { fontSize: 13, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  filterText: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
   historyList: { backgroundColor: 'rgba(255, 255, 255, 0.7)' },
   historyItem: { padding: 18, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.25)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   historyMain: { flex: 1 },
-  historyDate: { fontSize: 14, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 4 },
+  historyDate: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 4 },
   historyRowData: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  historyDesc: { fontSize: 13, color: theme.Colors.onSurfaceVariant },
+  historyDesc: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant },
   historyRight: { alignItems: 'flex-end' },
-  historyAmount: { fontSize: 15, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 4 },
-  statusSuccess: { backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  statusSuccessText: { color: '#15803d', fontSize: 10, fontWeight: '800' },
+  historyAmount: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 4 },
+  statusSuccess: { backgroundColor: theme.Colors.primaryContainer, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  statusSuccessText: { color: theme.Colors.onPrimaryContainer, fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800' },
   historyFooter: { padding: 14, backgroundColor: 'rgba(255, 255, 255, 0.4)', alignItems: 'center' },
-  historyFooterText: { fontSize: 12, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  historyFooterText: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
 
-  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: '#0070ea', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
-  promoTitle: { color: '#fff', fontSize: 20, fontWeight: '800', marginBottom: 8, zIndex: 1 },
-  promoDesc: { color: 'rgba(255, 255, 255, 0.9)', fontSize: 13, lineHeight: 20, marginBottom: 18, width: '82%', zIndex: 1 },
-  promoBtn: { backgroundColor: '#fff', alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
-  promoBtnText: { color: '#0070ea', fontSize: 13, fontWeight: '800' },
+  promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
+  promoTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', marginBottom: 8, zIndex: 1 },
+  promoDesc: { color: 'rgba(255, 255, 255, 0.9)', fontSize: theme.Typography.BodyMedium.fontSize, lineHeight: 20, marginBottom: 18, width: '82%', zIndex: 1 },
+  promoBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
+  promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
   promoIcon: { position: 'absolute', right: -25, bottom: -25 },
 
   securityCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
   securityHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  securityTitle: { fontSize: 12, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8 },
-  securityDesc: { fontSize: 13, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
+  securityTitle: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8 },
+  securityDesc: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.6)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: '#ffffff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
+  modalContent: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: 22, fontWeight: '800', color: theme.Colors.onBackground },
-  modalSubTitle: { fontSize: 14, color: theme.Colors.onSurfaceVariant, marginBottom: 16 },
+  modalTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  modalSubTitle: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginBottom: 16 },
   
   checkoutBox: { backgroundColor: 'rgba(0, 104, 117, 0.05)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.15)', marginBottom: 20 },
   checkoutRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.2)' },
-  checkoutLabel: { fontSize: 14, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
-  checkoutValue: { fontSize: 14, color: theme.Colors.onBackground, fontWeight: '800' },
+  checkoutLabel: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  checkoutValue: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onBackground, fontWeight: '800' },
 
   modalPayBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
-  modalPayBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  modalPayBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' },
 
   successIconBox: { marginBottom: 12 },
-  successTitle: { fontSize: 22, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
-  successDesc: { fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  successTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
+  successDesc: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, alignItems: 'center', width: '100%' },
-  modalCloseBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' }
+  modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' }
 });
 
 

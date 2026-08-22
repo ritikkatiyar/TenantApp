@@ -6,7 +6,6 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   ActivityIndicator,
-  Modal,
   TextInput,
   ScrollView,
   Alert
@@ -16,31 +15,24 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
-import { Theme } from '@/src/theme/Theme';
-import { 
-  batchGenerateRentCycle, 
-  listRentCycles, 
-  getPreFlightChecklist, 
-  batchPublishRentCycle,
-  batchUnpublishRentCycle,
-  recordCashPayment,
-  publishRentCycle,
-  RentCycleResponse, 
-  PreFlightChecklistResponse 
-} from '@/src/features/finance/api/rentCycle.api';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { PageShell } from '@/src/components/common/layout/PageShell';
-import { ResponsiveHeader } from '@/src/components/common/layout/ResponsiveHeader';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import { SectionHeader } from '@/src/components/common/display/SectionHeader';
-import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
-import { EmptyState } from '@/src/components/common/display/EmptyState';
+import { useRentRoll } from '@/src/features/finance/hooks/useRentRoll';
+import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
+import { createStyles } from './RentRollScreen.styles';
 
+// Sub-components
+import { PreFlightChecklistCard } from '../components/billing/PreFlightChecklistCard';
+import { RecordCashModal } from '../components/billing/RecordCashModal';
+import { RentRollInvoiceList } from '../components/billing/RentRollInvoiceList';
+import { RentRollHeader } from '../components/billing/RentRollHeader';
 
 export default function RentRollScreen({ token }: { token: string | null }) {
   const { theme, isDark } = useAppTheme();
@@ -83,28 +75,14 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     setBillingMonth(`${year}-${String(month).padStart(2, '0')}`);
   };
   
-  const [dueDate, setDueDate] = useState<string>(() => {
+  const [dueDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 5);
     return d.toISOString().split('T')[0];
   });
 
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isListLoading, setIsListLoading] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
-  const [invoices, setInvoices] = useState<RentCycleResponse[]>([]);
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [publishedCount, setPublishedCount] = useState(0);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [hasGenerated, setHasGenerated] = useState(false);
-  const [checklist, setChecklist] = useState<PreFlightChecklistResponse | null>(null);
-
   const [page, setPage] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(20);
-  const [totalPages, setTotalPages] = useState<number>(0);
-  const [totalElements, setTotalElements] = useState<number>(0);
+  const pageSize = 20;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -116,11 +94,30 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
+  useEffect(() => {
+    setPage(0);
+  }, [billingMonth, propertyId, debouncedSearchQuery]);
+
+  // Custom hook wrapping react-query queries and mutations
+  const {
+    rentCyclesData,
+    checklist,
+    isLoading,
+    generateRentCycle,
+    isGenerating,
+    publishRentCycles,
+    isPublishing,
+    publishSingleInvoice,
+    unpublishRentCycles,
+    isUnpublishing,
+    recordCashPayment,
+    isRecordingCash,
+  } = useRentRoll(propertyId, billingMonth, debouncedSearchQuery, page, pageSize, token);
+
   const [selectedInvoice, setSelectedInvoice] = useState<RentCycleResponse | null>(null);
   const [cashAmount, setCashAmount] = useState<string>('');
   const [cashNote, setCashNote] = useState<string>('');
   const [showCashModal, setShowCashModal] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [receiptSuccess, setReceiptSuccess] = useState(false);
 
   const handleOpenCashModal = (invoice: RentCycleResponse) => {
@@ -139,81 +136,18 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       return;
     }
     try {
-      setIsRecording(true);
-      await recordCashPayment(selectedInvoice.id, amountNum, cashNote, token);
+      await recordCashPayment({ id: selectedInvoice.id, amount: amountNum, note: cashNote });
       setReceiptSuccess(true);
       showToast("Cash payment recorded successfully!", "success");
-      checkExistingInvoices(page);
     } catch (e: any) {
       showToast(e.message || "Failed to record cash payment.", "error");
-    } finally {
-      setIsRecording(false);
     }
   };
-
-  useEffect(() => {
-    if (token && propertyId) {
-      setPage(0);
-      checkExistingInvoices(0);
-    }
-  }, [billingMonth, token, propertyId, debouncedSearchQuery]);
-
-  const checkExistingInvoices = async (targetPage: number = 0) => {
-    if (!token || !propertyId) return;
-    try {
-      setIsListLoading(true);
-      const isSearchActive = !!debouncedSearchQuery.trim();
-      const data = await listRentCycles(
-        billingMonth,
-        token,
-        propertyId as string,
-        targetPage,
-        pageSize,
-        undefined,
-        debouncedSearchQuery
-      );
-
-      const hasContent = !!(data && data.content && data.content.length > 0);
-      const hasMetrics = !!(data && ((data.totalExpectedRevenue || 0) > 0 || (data.publishedCount || 0) > 0 || (data.pendingDraftsCount || 0) > 0 || (data.totalElements || 0) > 0));
-
-      if (hasContent || hasMetrics || isSearchActive) {
-        setInvoices(data?.content || []);
-        if (data?.totalExpectedRevenue !== undefined && (!isSearchActive || !hasGenerated)) {
-          setTotalRevenue(data.totalExpectedRevenue);
-          setPublishedCount(data.publishedCount || 0);
-          setPendingCount(data.pendingDraftsCount || 0);
-        }
-        setTotalPages(data?.totalPages || 0);
-        setTotalElements(data?.totalElements || 0);
-        setPage(data?.number ?? targetPage);
-        setHasGenerated(true);
-      } else {
-        setInvoices([]);
-        setTotalRevenue(0);
-        setPublishedCount(0);
-        setPendingCount(0);
-        setTotalPages(0);
-        setTotalElements(0);
-        setPage(0);
-        setHasGenerated(false);
-        const flightData = await getPreFlightChecklist(propertyId as string, billingMonth, token);
-        setChecklist(flightData);
-      }
-    } catch (e) {
-      // Handled silently
-    } finally {
-      setIsInitialLoading(false);
-      setIsListLoading(false);
-    }
-  };
-
-
 
   const handleGenerate = async () => {
     if (!token || !propertyId) return;
     try {
-      setIsGenerating(true);
-      const res = await batchGenerateRentCycle(propertyId as string, billingMonth, dueDate, token);
+      const res = await generateRentCycle(dueDate);
       const total = res.succeeded.length + res.failed.length;
       if (res.failed.length === 0) {
         showToast(`All ${res.succeeded.length} rent cycles generated successfully!`, "success");
@@ -225,19 +159,15 @@ export default function RentRollScreen({ token }: { token: string | null }) {
           [{ text: 'OK' }]
         );
       }
-      await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to generate rent cycle.", "error");
-    } finally {
-      setIsGenerating(false);
     }
   };
 
   const handlePublish = async () => {
     if (!token || !propertyId) return;
     try {
-      setIsPublishing(true);
-      const res = await batchPublishRentCycle(propertyId as string, billingMonth, token);
+      const res = await publishRentCycles();
       const total = res.succeeded.length + res.failed.length;
       if (res.failed.length === 0) {
         showToast("Invoices published to tenants successfully!", "success");
@@ -249,11 +179,8 @@ export default function RentRollScreen({ token }: { token: string | null }) {
           [{ text: 'OK' }]
         );
       }
-      await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to publish invoices.", "error");
-    } finally {
-      setIsPublishing(false);
     }
   };
 
@@ -261,9 +188,8 @@ export default function RentRollScreen({ token }: { token: string | null }) {
     if (!token) return;
     try {
       showToast("Publishing invoice...", "info");
-      await publishRentCycle(invoice.id, token);
+      await publishSingleInvoice(invoice.id);
       showToast("Invoice published successfully!", "success");
-      await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to publish invoice.", "error");
     }
@@ -272,8 +198,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const handleUnpublish = async () => {
     if (!token || !propertyId) return;
     try {
-      setIsUnpublishing(true);
-      const res = await batchUnpublishRentCycle(propertyId as string, billingMonth, token);
+      const res = await unpublishRentCycles();
       const total = res.succeeded.length + res.failed.length;
       if (res.failed.length === 0) {
         showToast("Invoices reverted to draft successfully!", "success");
@@ -285,24 +210,29 @@ export default function RentRollScreen({ token }: { token: string | null }) {
           [{ text: 'OK' }]
         );
       }
-      await checkExistingInvoices();
     } catch (e: any) {
       showToast(e.message || "Failed to unpublish invoices.", "error");
-    } finally {
-      setIsUnpublishing(false);
     }
   };
+
+  const invoices = rentCyclesData?.content || [];
+  const totalRevenue = rentCyclesData?.totalExpectedRevenue || 0;
+  const publishedCount = rentCyclesData?.publishedCount || 0;
+  const pendingCount = rentCyclesData?.pendingDraftsCount || 0;
+  const totalPages = rentCyclesData?.totalPages || 0;
+  const totalElements = rentCyclesData?.totalElements || 0;
+  const hasGenerated = invoices.length > 0 || publishedCount > 0 || pendingCount > 0;
 
   const renderContent = () => {
     if (!properties || properties.length === 0) {
       return (
         <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%' }}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%', backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke }}>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
               <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
             </View>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: '#163235', marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
-            <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+            <Text style={{ fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
+            <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
               Generating rent rolls and invoices requires an active property. Create your first property to start running rent cycles.
             </Text>
             <TouchableOpacity 
@@ -310,8 +240,8 @@ export default function RentRollScreen({ token }: { token: string | null }) {
               onPress={() => router.push('/properties/create')}
             >
               <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
-                <MaterialIcons name="add" size={20} color="#fff" />
-                <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+                <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
+                <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
               </LinearGradient>
             </TouchableOpacity>
           </BlurView>
@@ -319,7 +249,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       );
     }
 
-    if (isInitialLoading) {
+    if (isLoading && invoices.length === 0) {
       return (
         <View style={{ flex: 1, justifyContent: 'center', padding: 40 }}>
           <ActivityIndicator size="large" color={theme.Colors.primary} />
@@ -351,48 +281,13 @@ export default function RentRollScreen({ token }: { token: string | null }) {
         />
 
         {!hasGenerated ? (
-          <GlassCard style={styles.card}>
-            <Text style={styles.cardTitle}>Draft Billing Worksheet</Text>
-            <Text style={styles.cardText}>
-              Rent cycles have not been compiled yet for this billing month. Verify your readings and configuration checklist below.
-            </Text>
-
-            {checklist && (
-              <View style={styles.checklistGrid}>
-                <View style={styles.checklistItem}>
-                  <Text style={styles.checklistLabel}>Active Leases</Text>
-                  <Text style={styles.checklistValue}>{checklist.activeLeases} / {checklist.totalUnits}</Text>
-                </View>
-                <View style={styles.checklistItem}>
-                  <Text style={styles.checklistLabel}>Utility Readings</Text>
-                  <Text style={styles.checklistValue}>
-                    {checklist.meterReadingsEntered} / {checklist.meterReadingsExpected}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            <View style={[styles.statusBox, checklist && !checklist.isReady && { backgroundColor: '#fee2e2' }]}>
-              <MaterialIcons 
-                name={checklist && !checklist.isReady ? "warning" : "info-outline"} 
-                size={20} 
-                color={checklist && !checklist.isReady ? "#b91c1c" : theme.Colors.primary} 
-              />
-              <Text style={[styles.statusText, checklist && !checklist.isReady && { color: '#b91c1c' }]}>
-                {checklist && !checklist.isReady ? "Please complete required readings before generating." : `Ready to compile invoices for ${billingMonth}`}
-              </Text>
-            </View>
-
-            {isDesktop && (
-              <ActionButton
-                title="GENERATE INVOICES"
-                onPress={handleGenerate}
-                loading={isGenerating}
-                disabled={isGenerating || !!(checklist && !checklist.isReady)}
-                style={styles.generateBtn}
-              />
-            )}
-          </GlassCard>
+          <PreFlightChecklistCard
+            checklist={checklist}
+            billingMonth={billingMonth}
+            isGenerating={isGenerating}
+            isDesktop={isDesktop}
+            onGenerate={handleGenerate}
+          />
         ) : (
           <View style={styles.resultsContainer}>
             <GlassCard style={styles.summaryCard}>
@@ -449,92 +344,30 @@ export default function RentRollScreen({ token }: { token: string | null }) {
             </GlassCard>
 
             <View style={styles.searchBox}>
-              <MaterialIcons name="search" size={20} color="#6b7a7d" />
+              <MaterialIcons name="search" size={20} color={theme.Colors.onSurfaceVariant} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search by Unit, Tenant name, or Phone..."
-                placeholderTextColor="#6b7a7d"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
-              {isListLoading ? (
-                <ActivityIndicator size="small" color="#006875" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color={theme.Colors.primary} />
               ) : searchQuery.length > 0 ? (
                 <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <MaterialIcons name="close" size={20} color="#6b7a7d" />
+                  <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
                 </TouchableOpacity>
               ) : null}
             </View>
 
-            <View style={styles.invoiceList}>
-{invoices.length === 0 ? (
-                <EmptyState
-                  iconName="search-off"
-                  title="No Invoices Found"
-                  description={
-                    debouncedSearchQuery.trim()
-                      ? `No rent cycles match "${debouncedSearchQuery.trim()}". Try searching with a different name or unit number.`
-                      : 'No rent cycles found for this billing month.'
-                  }
-                  actionText={debouncedSearchQuery.trim() ? "Clear Search" : undefined}
-                  onAction={debouncedSearchQuery.trim() ? () => setSearchQuery('') : undefined}
-                />
-              ) : (
-                (() => {
-                  const sortedInvoices = [...invoices].sort((a, b) => {
-                    const numA = parseInt(a.unitNumber?.replace(/\D/g, '')) || 0;
-                    const numB = parseInt(b.unitNumber?.replace(/\D/g, '')) || 0;
-                    if (numA !== numB) return numA - numB;
-                    return (a.tenantName || '').localeCompare(b.tenantName || '');
-                  });
-                  return sortedInvoices.map((invoice, idx) => (
-                    <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
-                      <View style={styles.invoiceHeader}>
-                        <View>
-                          <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
-                          <Text style={{ fontSize: 12, color: theme.Colors.outline, marginTop: 2 }}>ID: #{invoice.id?.substring(0, 8)}</Text>
-                        </View>
-                        <Text style={styles.invoiceTotal}>₹ {invoice.totalAmount?.toFixed(2)}</Text>
-                      </View>
-                      
-                      <View style={styles.chargesList}>
-                        {invoice.charges?.map((charge, i) => (
-                          <View key={i} style={styles.chargeRow}>
-                            <Text style={styles.chargeDesc}>{charge.description || charge.chargeType}</Text>
-                            <Text style={styles.chargeAmt}>₹ {charge.amount?.toFixed(2)}</Text>
-                          </View>
-                        ))}
-                      </View>
-                      
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                        <StatusPill status={invoice.status} />
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          {invoice.status === 'PENDING' && (
-                            <TouchableOpacity 
-                              style={[styles.recordCashBtn, { marginRight: 8 }]} 
-                              onPress={() => handlePublishSingle(invoice)}
-                            >
-                              <MaterialIcons name="send" size={16} color={theme.Colors.primary} />
-                              <Text style={styles.recordCashBtnText}>Publish</Text>
-                            </TouchableOpacity>
-                          )}
-                          {invoice.status !== 'PAID' && (
-                            <TouchableOpacity 
-                              style={styles.recordCashBtn} 
-                              onPress={() => handleOpenCashModal(invoice)}
-                            >
-                              <MaterialIcons name="payments" size={16} color={theme.Colors.primary} />
-                              <Text style={styles.recordCashBtnText}>Record Cash</Text>
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      </View>
-                    </GlassCard>
-                  ));
-                })()
-              )}
-            </View>
-
+            <RentRollInvoiceList
+              invoices={invoices}
+              debouncedSearchQuery={debouncedSearchQuery}
+              onClearSearch={() => setSearchQuery('')}
+              onPublishSingle={handlePublishSingle}
+              onOpenCashModal={handleOpenCashModal}
+            />
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
@@ -547,14 +380,14 @@ export default function RentRollScreen({ token }: { token: string | null }) {
 
                 <View style={styles.paginationActions}>
                   <TouchableOpacity
-                    onPress={() => page > 0 && checkExistingInvoices(page - 1)}
+                    onPress={() => page > 0 && setPage(page - 1)}
                     disabled={page === 0}
                     style={[styles.pageBtn, page === 0 && styles.pageBtnDisabled]}
                   >
                     <MaterialIcons
                       name="chevron-left"
                       size={20}
-                      color={page === 0 ? '#9ca3af' : Theme.Colors.primary}
+                      color={page === 0 ? '#9ca3af' : theme.Colors.primary}
                     />
                     <Text style={[styles.pageBtnText, page === 0 && styles.pageBtnTextDisabled]}>Prev</Text>
                   </TouchableOpacity>
@@ -566,7 +399,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                   </View>
 
                   <TouchableOpacity
-                    onPress={() => page < totalPages - 1 && checkExistingInvoices(page + 1)}
+                    onPress={() => page < totalPages - 1 && setPage(page + 1)}
                     disabled={page >= totalPages - 1}
                     style={[styles.pageBtn, page >= totalPages - 1 && styles.pageBtnDisabled]}
                   >
@@ -574,7 +407,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
                     <MaterialIcons
                       name="chevron-right"
                       size={20}
-                      color={page >= totalPages - 1 ? '#9ca3af' : Theme.Colors.primary}
+                      color={page >= totalPages - 1 ? '#9ca3af' : theme.Colors.primary}
                     />
                   </TouchableOpacity>
                 </View>
@@ -583,185 +416,21 @@ export default function RentRollScreen({ token }: { token: string | null }) {
           </View>
         )}
 
-
-        {/* Record Cash Modal */}
-        <Modal
+        <RecordCashModal
           visible={showCashModal}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowCashModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <BlurView intensity={90} tint="dark" style={styles.modalBlur}>
-              <View style={styles.modalContent}>
-                {!receiptSuccess ? (
-                  <>
-                    <View style={styles.modalHeader}>
-                      <Text style={styles.modalTitle}>Confirm Cash Settlement</Text>
-                      <TouchableOpacity onPress={() => setShowCashModal(false)}>
-                        <MaterialIcons name="close" size={24} color={theme.Colors.onBackground} />
-                      </TouchableOpacity>
-                    </View>
-
-                    <Text style={styles.modalSubtitle}>
-                      Record a direct cash settlement for Apt {selectedInvoice?.unitNumber} ({selectedInvoice?.tenantName})
-                    </Text>
-
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Cash Amount Received (₹)</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={cashAmount}
-                        onChangeText={setCashAmount}
-                        keyboardType="decimal-pad"
-                        placeholder="0.00"
-                      />
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Settlement Note</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={cashNote}
-                        onChangeText={setCashNote}
-                        placeholder="Add a payment note"
-                      />
-                    </View>
-
-                    <ActionButton
-                      title="CONFIRM CASH COLLECTION"
-                      onPress={handleConfirmCashPayment}
-                      loading={isRecording}
-                      style={{ marginTop: 16 }}
-                    />
-                  </>
-                ) : (
-                  <View style={styles.successContainer}>
-                    <View style={styles.successIconCircle}>
-                      <MaterialIcons name="check-circle" size={48} color="#16a34a" />
-                    </View>
-                    <Text style={styles.successTitle}>Payment Confirmed!</Text>
-                    <Text style={styles.successSubtitle}>
-                      Direct cash transaction successfully completed and reconciled.
-                    </Text>
-
-                    <View style={styles.checklistReceipt}>
-                      <View style={styles.checkItem}>
-                        <MaterialIcons name="check" size={16} color="#16a34a" />
-                        <Text style={styles.checkText}>Signature transaction generated</Text>
-                      </View>
-                      <View style={styles.checkItem}>
-                        <MaterialIcons name="check" size={16} color="#16a34a" />
-                        <Text style={styles.checkText}>Ledger accounts balanced & updated</Text>
-                      </View>
-                      <View style={styles.checkItem}>
-                        <MaterialIcons name="check" size={16} color="#16a34a" />
-                        <Text style={styles.checkText}>Receipt notification dispatched</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.receiptMeta}>
-                      <Text style={styles.metaLabel}>Settled Amount:</Text>
-                      <Text style={styles.metaValue}>₹ {parseFloat(cashAmount).toFixed(2)}</Text>
-                    </View>
-
-                    <ActionButton
-                      title="CLOSE"
-                      onPress={() => setShowCashModal(false)}
-                      style={{ marginTop: 24, width: '100%' }}
-                    />
-                  </View>
-                )}
-              </View>
-            </BlurView>
-          </View>
-        </Modal>
+          selectedInvoice={selectedInvoice}
+          cashAmount={cashAmount}
+          cashNote={cashNote}
+          isRecording={isRecordingCash}
+          receiptSuccess={receiptSuccess}
+          setCashAmount={setCashAmount}
+          setCashNote={setCashNote}
+          onClose={() => setShowCashModal(false)}
+          onConfirm={handleConfirmCashPayment}
+        />
       </View>
     );
   };
-
-  const renderGlassyHeader = () => (
-    <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-      <View style={styles.headerContent}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
-        </TouchableOpacity>
-        <View style={styles.titleWrapper}>
-          <Text style={styles.compactTitleText}>Rent Roll</Text>
-        </View>
-        
-        {/* Top Right Blue Gradient Action Button */}
-        {!hasGenerated ? (
-          <TouchableOpacity 
-            style={[styles.headerGradientTouch, (isGenerating || !!(checklist && !checklist.isReady)) && { opacity: 0.5 }]}
-            onPress={handleGenerate}
-            disabled={isGenerating || !!(checklist && !checklist.isReady)}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
-            >
-              {isGenerating ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <MaterialIcons name="flash-on" size={15} color="#fff" />
-                  <Text style={styles.headerGradientText}>GENERATE</Text>
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        ) : pendingCount > 0 ? (
-          <TouchableOpacity 
-            style={[styles.headerGradientTouch, isPublishing && { opacity: 0.5 }]}
-            onPress={handlePublish}
-            disabled={isPublishing}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
-            >
-              {isPublishing ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <MaterialIcons name="send" size={14} color="#fff" />
-                  <Text style={styles.headerGradientText}>PUBLISH</Text>
-                </>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={[styles.headerGradientTouch, isUnpublishing && { opacity: 0.5 }]}
-            onPress={handleUnpublish}
-            disabled={isUnpublishing}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#ff416c', '#ff4b2b']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerGradientInner}
-            >
-              {isUnpublishing ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.headerGradientText}>UNPUBLISH</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
 
   const renderDesktopShell = () => (
     <LinearGradient
@@ -791,7 +460,22 @@ export default function RentRollScreen({ token }: { token: string | null }) {
 
   return (
     <View style={{ flex: 1 }}>
-      {renderGlassyHeader()}
+      <RentRollHeader
+        hasGenerated={hasGenerated}
+        isGenerating={isGenerating}
+        checklist={checklist}
+        handleGenerate={handleGenerate}
+        pendingCount={pendingCount}
+        isPublishing={isPublishing}
+        handlePublish={handlePublish}
+        isUnpublishing={isUnpublishing}
+        handleUnpublish={handleUnpublish}
+        router={router}
+        insets={insets}
+        isDark={isDark}
+        theme={theme}
+        styles={styles}
+      />
       <PageShell 
         scrollable 
         edges={[]} 
@@ -803,342 +487,4 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  headerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 999,
-    borderBottomWidth: 1.5,
-    borderBottomColor: theme.Colors.glassFill,
-    overflow: 'hidden',
-  },
-  headerContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-  },
-  titleWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  compactTitleText: {
-    fontSize: 18,
-    fontFamily: 'Inter',
-    fontWeight: '800',
-    color: '#0b1c30',
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.Colors.glassFill,
-    borderWidth: 1,
-    borderColor: theme.Colors.glassFill,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  headerGradientTouch: {
-    borderRadius: 100,
-    overflow: 'hidden',
-    shadowColor: '#00d4ff',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  headerGradientInner: {
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 100,
-  },
-  headerGradientText: {
-    color: theme.Surface.card,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  desktopScroll: { paddingVertical: 24, paddingHorizontal: 40, alignItems: 'center' },
-  mobileScroll: { paddingVertical: 10, paddingHorizontal: 20 },
-  inner: { width: '100%', maxWidth: 1080 },
-  selectorContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  arrowBadge: { padding: 6, backgroundColor: theme.Colors.glassFill, borderRadius: 8, borderWidth: 1, borderColor: theme.Colors.glassStroke },
-  monthBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
-  },
-  monthBadgeText: { fontSize: 14, fontWeight: '700', color: theme.Colors.primary },
-  
-  card: { padding: Theme.Spacing.containerPadding, alignItems: 'center', marginTop: 10 },
-  cardTitle: { ...theme.Typography.headlineMd, color: theme.Colors.onBackground, marginBottom: 12 },
-  cardText: { ...theme.Typography.bodyMd, color: theme.Colors.outline, textAlign: 'center', marginBottom: 32, maxWidth: 500, lineHeight: 22 },
-  checklistGrid: { flexDirection: 'row', gap: 24, marginBottom: 24, width: '100%', justifyContent: 'center' },
-  checklistItem: { backgroundColor: 'rgba(255,255,255,0.7)', padding: 16, borderRadius: 12, alignItems: 'center', flex: 1, maxWidth: 200 },
-  checklistLabel: { fontSize: 12, fontWeight: '700', color: theme.Colors.outline, textTransform: 'uppercase', marginBottom: 8 },
-  checklistValue: { fontSize: 20, fontWeight: '800', color: theme.Colors.primary },
-  statusBox: { flexDirection: 'row', backgroundColor: '#e0f2fe', padding: 16, borderRadius: 12, marginBottom: 32, width: '100%', alignItems: 'center', gap: 8 },
-  statusText: { fontSize: 14, fontWeight: '700', color: '#0369a1' },
-  generateBtn: { width: '100%', maxWidth: 300 },
-  
-  resultsContainer: { width: '100%' },
-  summaryCard: {
-    padding: Theme.Spacing.containerPadding,
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  summaryLabel: { fontSize: 14, fontWeight: '700', color: theme.Colors.outline, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
-  summaryAmount: { fontSize: 36, fontWeight: '800', color: '#00875a', marginBottom: 24 },
-  summaryStatusRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 24,
-    width: '100%',
-  },
-  miniStat: {
-    flex: 1,
-  },
-  actionGroup: {
-    width: '100%',
-    gap: 12,
-  },
-  publishBtn: {
-    width: '100%',
-  },
-  reGenerateBtn: {
-    width: '100%',
-  },
-  
-  invoiceList: { gap: 16 },
-  invoiceCard: { padding: 20 },
-  invoiceHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(0,104,117,0.1)' },
-  invoiceUnit: { fontSize: 16, fontWeight: '800', color: theme.Colors.onBackground },
-  invoiceTotal: { fontSize: 18, fontWeight: '800', color: theme.Colors.primary },
-  chargesList: { gap: 8, marginBottom: 16 },
-  chargeRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  chargeDesc: { fontSize: 14, color: theme.Colors.outline, fontWeight: '500' },
-  chargeAmt: { fontSize: 14, color: theme.Colors.onBackground, fontWeight: '600' },
-  
-  recordCashBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: theme.Colors.primary,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#fff',
-  },
-  recordCashBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: theme.Colors.primary,
-  },
-
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalBlur: {
-    width: '90%',
-    maxWidth: 480,
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  modalContent: {
-    padding: 24,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: theme.Colors.outline,
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: theme.Colors.outline,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  textInput: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: theme.Colors.onBackground,
-  },
-  successContainer: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  successIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(22, 163, 74, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  successTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
-    marginBottom: 8,
-  },
-  successSubtitle: {
-    fontSize: 14,
-    color: theme.Colors.outline,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  checklistReceipt: {
-    width: '100%',
-    backgroundColor: 'rgba(0,0,0,0.02)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    gap: 12,
-  },
-  checkItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  checkText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.Colors.onSurfaceVariant,
-  },
-  receiptMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-  },
-  metaLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.Colors.outline,
-  },
-  metaValue: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#16a34a',
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
-    gap: 8,
-    marginVertical: 16,
-    width: '100%',
-  },
-  searchInput: {
-    flex: 1,
-    color: theme.Colors.onBackground,
-    fontSize: 14,
-    outlineWidth: 0,
-  },
-  paginationBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-  },
-  paginationInfo: {
-    fontSize: 13,
-    color: '#6b7a7d',
-  },
-  paginationActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  pageBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  pageBtnDisabled: {
-    opacity: 0.5,
-    backgroundColor: '#f8fafc',
-  },
-  pageBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Theme.Colors.primary,
-  },
-  pageBtnTextDisabled: {
-    color: '#9ca3af',
-  },
-  pageIndicator: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-  },
-  pageIndicatorText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Theme.Colors.primary,
-  },
-});
 

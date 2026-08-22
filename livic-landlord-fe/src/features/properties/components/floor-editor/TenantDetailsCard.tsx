@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { 
   View, 
@@ -105,6 +106,8 @@ export function TenantDetailsCard({
   parentScrollEnabled = true,
   setParentScrollEnabled = () => {},
 }: TenantDetailsCardProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   return (
     <>
       {isCreatingNewTenant ? (
@@ -120,8 +123,8 @@ export function TenantDetailsCard({
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>PHONE NUMBER</Text>
             <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <MaterialIcons name="phone" size={18} color="#7b8a8d" />
-              <TextInput style={[styles.textInput, { color: '#7b8a8d' }]} value={tenantPhoneSearch} editable={false} />
+              <MaterialIcons name="phone" size={18} color={theme.Colors.onSurfaceVariant} />
+              <TextInput style={[styles.textInput, { color: theme.Colors.onSurfaceVariant }]} value={tenantPhoneSearch} editable={false} />
             </View>
           </View>
 
@@ -245,8 +248,8 @@ export function TenantDetailsCard({
               </View>
             ) : selectedBlock.activeLeases && selectedBlock.activeLeases.length >= selectedBlock.capacity ? (
               <View style={styles.successContainer}>
-                <MaterialIcons name="check-circle" size={18} color="#2e7d32" />
-                <Text style={[styles.warningText, { color: '#2e7d32' }]}>
+                <MaterialIcons name="check-circle" size={18} color={theme.Colors.tertiary} />
+                <Text style={[styles.warningText, { color: theme.Colors.tertiary }]}>
                   Unit is fully occupied (Capacity: {selectedBlock.capacity}/{selectedBlock.capacity} reached).
                 </Text>
               </View>
@@ -255,11 +258,11 @@ export function TenantDetailsCard({
                 {!isCreatingNewTenant && (
                   <View style={{ marginBottom: 12 }}>
                     <View style={styles.inputWrapper}>
-                      <MaterialIcons name="phone" size={18} color="#006875" />
+                      <MaterialIcons name="phone" size={18} color={theme.Colors.primary} />
                       <TextInput
                         style={styles.textInput}
                         placeholder="Search by 10-digit phone"
-                        placeholderTextColor="#9ba9ab"
+                        placeholderTextColor={theme.Colors.outlineVariant}
                         value={tenantPhoneSearch}
                         onChangeText={(val) => {
                           const cleaned = val.replace(/[^0-9]/g, '').slice(0, 10);
@@ -272,9 +275,9 @@ export function TenantDetailsCard({
                       />
                       <TouchableOpacity onPress={handleSearchTenant} disabled={tenantSearchLoading}>
                         {tenantSearchLoading ? (
-                          <ActivityIndicator size="small" color="#006875" />
+                          <ActivityIndicator size="small" color={theme.Colors.primary} />
                         ) : (
-                          <MaterialIcons name="person-add" size={20} color="#006875" />
+                          <MaterialIcons name="person-add" size={20} color={theme.Colors.primary} />
                         )}
                       </TouchableOpacity>
                     </View>
@@ -299,7 +302,7 @@ export function TenantDetailsCard({
                               setSuggestions([]);
                             }}
                           >
-                            <MaterialIcons name="phone" size={16} color="#006875" />
+                            <MaterialIcons name="phone" size={16} color={theme.Colors.primary} />
                             <View style={styles.suggestionTextContainer}>
                               <Text style={styles.suggestionName}>{userItem.fullName}</Text>
                               <Text style={styles.suggestionPhone}>{userItem.phoneNumber || 'No phone'}</Text>
@@ -328,7 +331,7 @@ export function TenantDetailsCard({
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <MaterialIcons name="person-add" size={20} color="#006875" />
+                      <MaterialIcons name="person-add" size={20} color={theme.Colors.primary} />
                       <Text style={styles.quickCreatePromptText}>
                         No tenant found. Create new tenant for &quot;{tenantPhoneSearch}&quot;?
                       </Text>
@@ -344,9 +347,9 @@ export function TenantDetailsCard({
                     <View style={styles.quickCreateField}>
                       <Text style={styles.quickCreateLabel}>PHONE NUMBER</Text>
                       <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                        <MaterialIcons name="phone" size={18} color="#7b8a8d" />
+                        <MaterialIcons name="phone" size={18} color={theme.Colors.onSurfaceVariant} />
                         <TextInput
-                          style={[styles.textInput, { color: '#7b8a8d' }]}
+                          style={[styles.textInput, { color: theme.Colors.onSurfaceVariant }]}
                           value={tenantPhoneSearch}
                           editable={false}
                         />
@@ -356,7 +359,7 @@ export function TenantDetailsCard({
                     <View style={styles.quickCreateField}>
                       <Text style={styles.quickCreateLabel}>FULL NAME</Text>
                       <View style={styles.inputWrapper}>
-                        <MaterialIcons name="person" size={18} color="#006875" />
+                        <MaterialIcons name="person" size={18} color={theme.Colors.primary} />
                         <TextInput
                           style={styles.textInput}
                           placeholder="e.g. John Doe"
@@ -468,7 +471,7 @@ export function TenantDetailsCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   createTenantPanel: {
     gap: 12,
     paddingTop: 8,
@@ -485,9 +488,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,104,117,0.1)',
   },
   createTenantTitle: {
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1,
     fontFamily: 'Inter',
   },
@@ -495,9 +498,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   inputLabel: {
-    fontSize: 9,
+    fontSize: theme.Typography.LabelSmall.fontSize - 2,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     fontFamily: 'Inter',
   },
@@ -514,9 +517,9 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
     padding: 0,
   },
@@ -531,28 +534,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   statusToggleText: {
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   statusActiveOccupied: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   statusTextActive: {
-    color: '#fff',
+    color: theme.Colors.onPrimary,
   },
   errorText: {
-    color: '#e53935',
-    fontSize: 13,
+    color: theme.Colors.error,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     paddingLeft: 4,
     marginTop: 4,
     fontFamily: 'Inter',
   },
   errorTextFlat: {
-    color: '#e53935',
-    fontSize: 13,
+    color: theme.Colors.error,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     marginTop: -8,
     marginBottom: 12,
     paddingLeft: 4,
@@ -576,14 +579,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   tenantTagText: {
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   sheetSubtitle: {
-    fontSize: 11,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
     fontFamily: 'Inter',
   },
@@ -604,9 +607,9 @@ const styles = StyleSheet.create({
   },
   warningText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '700',
-    color: '#c62828',
+    color: theme.Colors.error,
     lineHeight: 18,
     fontFamily: 'Inter',
   },
@@ -628,7 +631,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0,104,117,0.15)',
     marginTop: 6,
-    shadowColor: '#000',
+    shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
@@ -647,14 +650,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   suggestionName: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   suggestionPhone: {
-    fontSize: 11,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
     fontFamily: 'Inter',
   },
@@ -668,9 +671,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   quickCreatePromptText: {
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
     flex: 1,
   },
@@ -684,9 +687,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   quickCreateTitle: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize - 1,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     fontFamily: 'Inter',
   },
@@ -694,9 +697,9 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   quickCreateLabel: {
-    fontSize: 8,
+    fontSize: theme.Typography.LabelSmall.fontSize - 3,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1,
     fontFamily: 'Inter',
   },
@@ -712,14 +715,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tenantMatchName: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#1b5e20',
+    color: theme.Colors.tertiary,
     fontFamily: 'Inter',
   },
   tenantMatchEmail: {
-    fontSize: 11,
-    color: '#4e7051',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
 });

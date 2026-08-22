@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';

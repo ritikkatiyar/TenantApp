@@ -66,14 +66,14 @@ export function MeterReadingSummary({
 
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Total Consumption</Text>
-        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: 16 }]}>
+        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: theme.Typography.BodyLarge.fontSize }]}>
           {totalConsumption.toFixed(2)} {unitType || 'Units'}
         </Text>
       </View>
 
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Estimated Billing</Text>
-        <Text style={[styles.summaryValue, { color: '#2e7d32', fontSize: 20, fontWeight: '800' }]}>
+        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800' }]}>
           ₹{totalEstimatedCost.toFixed(2)}
         </Text>
       </View>
@@ -100,7 +100,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   summaryCardTitle: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -120,16 +120,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   summaryMetricLabel: {
-    fontSize: 9,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
     fontFamily: 'Inter',
   },
   summaryMetricValue: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '900',
-    color: '#163235',
+    color: theme.Colors.onSurface,
     marginTop: 6,
     fontFamily: 'Inter',
   },
@@ -145,15 +145,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 6,
   },
   summaryLabel: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
     fontFamily: 'Inter',
   },
   summaryValue: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#163235',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   warningAlertBox: {
@@ -169,9 +169,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   warningAlertText: {
     flex: 1,
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
-    color: '#765a00',
+    color: theme.Colors.tertiary,
     lineHeight: 16,
     fontFamily: 'Inter',
   },

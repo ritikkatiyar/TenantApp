@@ -347,7 +347,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     ...theme.Typography.bodyMd,
     color: theme.Colors.error,
     marginLeft: 8,
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
   },
   footer: {
     width: '100%',

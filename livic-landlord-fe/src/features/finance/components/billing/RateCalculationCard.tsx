@@ -1,0 +1,313 @@
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAppTheme } from '@/src/theme/ThemeContext';
+
+interface RateCalculationCardProps {
+  calcMethod: string;
+  setCalcMethod: (val: string) => void;
+  baseRate: string;
+  setBaseRate: (val: string) => void;
+  unitType: string;
+  setUnitType: (val: string) => void;
+  isDesktop: boolean;
+  isDark: boolean;
+}
+
+export function RateCalculationCard({
+  calcMethod,
+  setCalcMethod,
+  baseRate,
+  setBaseRate,
+  unitType,
+  setUnitType,
+  isDesktop,
+  isDark,
+}: RateCalculationCardProps) {
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
+
+  const unitScrollRef = useRef<ScrollView>(null);
+  const scrollTimeout = useRef<any>(null);
+
+  const units = ['kWh', 'Liters', 'kL', 'Units', 'SqFt', 'Gallons'];
+
+  return (
+    <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
+      <View style={styles.cardHeader}>
+        <MaterialCommunityIcons name="calculator-variant-outline" size={20} color={theme.Colors.primary} />
+        <Text style={styles.cardTitle}>Rate & Calculation</Text>
+      </View>
+
+      <Text style={styles.label}>CALCULATION METHOD</Text>
+      
+      <View style={styles.radioGroup}>
+        {[
+          { title: 'Fixed Rate', sub: 'Standard monthly fee' },
+          { title: 'Metered/Consumption', sub: 'Based on usage units' }
+        ].map((method, index) => (
+          <TouchableOpacity 
+            key={index} 
+            style={styles.radioRow}
+            onPress={() => setCalcMethod(method.title)}
+          >
+            <View style={styles.radioCircle}>
+              {calcMethod === method.title && <View style={styles.radioDot} />}
+            </View>
+            <View>
+              <Text style={styles.radioTitle}>{method.title}</Text>
+              <Text style={styles.radioSub}>{method.sub}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {calcMethod === 'Fixed Rate' ? (
+        <>
+          <Text style={styles.label}>BASE RATE</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.currencySymbol}>₹</Text>
+            <TextInput 
+              style={styles.inputWithIcon} 
+              placeholder="0.00" 
+              placeholderTextColor="#849495"
+              keyboardType="numeric"
+              value={baseRate}
+              onChangeText={setBaseRate}
+            />
+          </View>
+        </>
+      ) : (
+        <View>
+          <Text style={styles.label}>RATE PER UNIT / TYPE</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={[styles.inputContainer, styles.rateInputContainer]}>
+              <Text style={styles.currencySymbol}>₹</Text>
+              <TextInput 
+                style={styles.inputWithIcon} 
+                placeholder="0.00" 
+                placeholderTextColor="#849495"
+                keyboardType="numeric"
+                value={baseRate}
+                onChangeText={setBaseRate}
+              />
+            </View>
+            
+            {isDesktop ? (
+              <View style={styles.desktopUnits}>
+                {units.map((unit) => (
+                  <TouchableOpacity
+                    key={unit}
+                    style={[
+                      styles.unitBtn,
+                      unitType === unit && { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
+                    ]}
+                    onPress={() => setUnitType(unit)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[
+                      styles.unitText,
+                      unitType === unit && { color: theme.Surface.card, fontWeight: '800' },
+                    ]}>{unit}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.mobileUnitsScrollWrapper}>
+                <LinearGradient 
+                  colors={['transparent', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.6)', 'transparent']} 
+                  locations={[0, 0.22, 0.78, 1]}
+                  style={StyleSheet.absoluteFillObject} 
+                />
+                
+                <ScrollView 
+                  ref={unitScrollRef}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}
+                  snapToInterval={40}
+                  decelerationRate="fast"
+                  contentContainerStyle={{ paddingVertical: 25 }}
+                  scrollEventThrottle={16}
+                  onScroll={(e) => {
+                    if (Platform.OS === 'web') {
+                      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+                      const y = e.nativeEvent.contentOffset.y;
+                      scrollTimeout.current = setTimeout(() => {
+                        const index = Math.max(0, Math.round(y / 40));
+                        if(units[index]) {
+                          setUnitType(units[index]);
+                          unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
+                        }
+                      }, 150);
+                    }
+                  }}
+                  onMomentumScrollEnd={(e) => {
+                    const index = Math.round(e.nativeEvent.contentOffset.y / 40);
+                    if(units[index]) setUnitType(units[index]);
+                  }}
+                >
+                  {units.map((unit, index) => {
+                    const isActive = unitType === unit;
+                    return (
+                      <TouchableOpacity 
+                        key={unit} 
+                        style={styles.scrollItem}
+                        onPress={() => {
+                          setUnitType(unit);
+                          unitScrollRef.current?.scrollTo({ y: index * 40, animated: true });
+                        }}
+                      >
+                        <Text style={[
+                          styles.scrollText,
+                          isActive && { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700', color: theme.Colors.primary },
+                        ]}>{unit}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+    </BlurView>
+  );
+}
+
+const createStyles = (theme: any) => StyleSheet.create({
+  card: {
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+  },
+  label: {
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.primary,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  radioGroup: {
+    marginBottom: 24,
+    gap: 16,
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  radioCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: theme.Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: theme.Colors.primary,
+  },
+  radioTitle: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontWeight: '700',
+    color: theme.Colors.onSurface,
+  },
+  radioSub: {
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  inputContainer: {
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 20,
+  },
+  rateInputContainer: {
+    flex: 1,
+    marginBottom: 0,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    borderRightWidth: 0,
+  },
+  currencySymbol: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
+    fontWeight: '700',
+    marginRight: 8,
+  },
+  inputWithIcon: {
+    flex: 1,
+    height: '100%',
+    color: theme.Colors.onSurface,
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontWeight: '600',
+  },
+  desktopUnits: {
+    flex: 1.5,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginLeft: 16,
+  },
+  unitBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  unitText: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurfaceVariant,
+  },
+  mobileUnitsScrollWrapper: {
+    width: 100,
+    height: 90,
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: theme.Colors.glassStroke,
+    borderTopRightRadius: 14,
+    borderBottomRightRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  scrollItem: {
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  scrollText: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontWeight: '500',
+    color: 'rgba(132, 148, 149, 0.4)',
+  },
+});

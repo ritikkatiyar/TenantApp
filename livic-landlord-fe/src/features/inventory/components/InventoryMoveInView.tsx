@@ -102,7 +102,7 @@ export function InventoryMoveInView({
     <View style={styles.sectionStack}>
       <BlurView intensity={35} tint={isDark ? 'dark' : 'light'} style={styles.moveBanner}>
         <LinearGradient
-          colors={['rgba(8,145,178,0.85)', 'rgba(79,70,229,0.85)']}
+          colors={['rgba(0,104,117,0.85)', 'rgba(79,70,229,0.85)']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
@@ -145,8 +145,8 @@ export function InventoryMoveInView({
             assignedItems.map((item) => <AssignmentCard key={item.id} item={item} />)
           ) : availableItems.length === 0 ? (
             <View style={styles.emptyCard}>
-              <LinearGradient colors={['rgba(8,145,178,0.1)', 'rgba(0,114,255,0.1)']} style={styles.emptyIconCircle}>
-                <MaterialIcons name="inventory-2" size={32} color="#0891b2" />
+              <LinearGradient colors={['rgba(0,104,117,0.1)', 'rgba(0,114,255,0.1)']} style={styles.emptyIconCircle}>
+                <MaterialIcons name="inventory-2" size={32} color={theme.Colors.primary} />
               </LinearGradient>
               <Text style={styles.emptyTitle}>No Property Inventory Available</Text>
               <Text style={styles.emptySubtitle}>
@@ -154,8 +154,8 @@ export function InventoryMoveInView({
               </Text>
               {onAddItem && (
                 <TouchableOpacity style={styles.emptyAddBtn} onPress={onAddItem}>
-                  <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.emptyAddBtnInner}>
-                    <MaterialIcons name="add" size={16} color="#fff" />
+                  <LinearGradient colors={[theme.Colors.primary, '#0072ff']} style={styles.emptyAddBtnInner}>
+                    <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
                     <Text style={styles.emptyAddBtnText}>Add Item to Registry</Text>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -181,7 +181,7 @@ export function InventoryMoveInView({
                           style={[styles.checkbox, isSelected && styles.checkboxActive]}
                           onPress={() => toggleSelect(item.id)}
                         >
-                          {isSelected && <MaterialIcons name="check" size={14} color="#fff" />}
+                          {isSelected && <MaterialIcons name="check" size={14} color={theme.Colors.surfaceContainerLowest} />}
                         </TouchableOpacity>
                         <View>
                           <Text style={styles.itemName}>{item.name}</Text>
@@ -206,8 +206,8 @@ export function InventoryMoveInView({
 
         <BlurView intensity={65} tint={isDark ? 'dark' : 'light'} style={styles.rail}>
           <View style={styles.railHeader}>
-            <LinearGradient colors={['#0891b2', '#0072ff']} style={styles.railIconCircle}>
-              <MaterialIcons name="fact-check" size={18} color="#fff" />
+            <LinearGradient colors={[theme.Colors.primary, '#0072ff']} style={styles.railIconCircle}>
+              <MaterialIcons name="fact-check" size={18} color={theme.Colors.surfaceContainerLowest} />
             </LinearGradient>
             <Text style={styles.panelTitle}>Summary</Text>
           </View>
@@ -227,15 +227,15 @@ export function InventoryMoveInView({
                 onPress={handleConfirmAssignment}
               >
                 <LinearGradient
-                  colors={selectedItemIds.size > 0 ? ['#0891b2', '#0072ff'] : ['#9ca3af', '#6b7280']}
+                  colors={selectedItemIds.size > 0 ? [theme.Colors.primary, '#0072ff'] : ['#9ca3af', '#6b7280']}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={styles.confirmBtnInner}
                 >
                   {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
                   ) : (
                     <>
-                      <MaterialIcons name="how-to-reg" size={18} color="#fff" />
+                      <MaterialIcons name="how-to-reg" size={18} color={theme.Colors.surfaceContainerLowest} />
                       <Text style={styles.confirmBtnText}>Confirm Assignment ({selectedItemIds.size})</Text>
                     </>
                   )}
@@ -256,12 +256,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between', overflow: 'hidden', minHeight: 90, gap: 16,
   },
   moveBannerContent: { flex: 1, gap: 2 },
-  moveBannerKicker: { fontSize: 10, fontWeight: '800', letterSpacing: 1.2, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', fontFamily: 'Inter' },
-  moveBannerTitle: { fontSize: 22, fontWeight: '900', color: '#fff', fontFamily: 'Inter' },
-  moveBannerMeta: { fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2, fontFamily: 'Inter' },
+  moveBannerKicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', fontFamily: 'Inter' },
+  moveBannerTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, fontFamily: 'Inter' },
+  moveBannerMeta: { fontSize: theme.Typography.BodySmall.fontSize, color: 'rgba(255,255,255,0.75)', marginTop: 2, fontFamily: 'Inter' },
   progressBox: { alignItems: 'flex-end', gap: 4, minWidth: 100 },
-  progressFraction: { fontSize: 24, fontWeight: '900', color: '#fff', fontFamily: 'Inter' },
-  progressSublabel: { fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'Inter' },
+  progressFraction: { fontSize: theme.Typography.HeadlineSmall.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, fontFamily: 'Inter' },
+  progressSublabel: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'Inter' },
   progressTrack: { width: 100, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
   progressFill: { height: 6, borderRadius: 3 },
 
@@ -269,43 +269,43 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   workflowMain: { flex: 1, gap: 12 },
   workflowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  panelTitle: { fontSize: 18, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
+  panelTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
   panelActions: { flexDirection: 'row', gap: 8 },
   ghostBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)' },
-  ghostBtnText: { fontSize: 12, fontWeight: '700', color: '#0891b2', fontFamily: 'Inter' },
+  ghostBtnText: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.primary, fontFamily: 'Inter' },
 
   itemCard: {
     borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)',
     backgroundColor: 'rgba(255,255,255,0.4)', padding: 14, overflow: 'hidden',
   },
   itemCardSelected: {
-    borderColor: '#0891b2',
-    backgroundColor: 'rgba(8,145,178,0.08)',
+    borderColor: theme.Colors.primary,
+    backgroundColor: 'rgba(0,104,117,0.08)',
   },
   itemCardContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   itemCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   checkbox: {
-    width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: '#9ca3af',
-    justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff',
+    width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: theme.Colors.onSurfaceVariant,
+    justifyContent: 'center', alignItems: 'center', backgroundColor: theme.Colors.surfaceContainerLowest,
   },
-  checkboxActive: { borderColor: '#0891b2', backgroundColor: '#0891b2' },
-  itemName: { fontSize: 15, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
-  itemMeta: { fontSize: 12, color: '#6b7280', marginTop: 2, fontFamily: 'Inter' },
+  checkboxActive: { borderColor: theme.Colors.primary, backgroundColor: theme.Colors.primary },
+  itemName: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  itemMeta: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontFamily: 'Inter' },
   itemCardRight: { alignItems: 'flex-end', gap: 4 },
   conditionChip: { backgroundColor: 'rgba(5,150,105,0.1)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  conditionText: { fontSize: 11, fontWeight: '800', color: '#059669', fontFamily: 'Inter' },
-  itemValue: { fontSize: 13, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
+  conditionText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, fontFamily: 'Inter' },
+  itemValue: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
 
   emptyCard: {
     borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
     backgroundColor: 'rgba(255,255,255,0.35)', padding: 40, alignItems: 'center', justifyContent: 'center', gap: 10,
   },
   emptyIconCircle: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
-  emptyTitle: { fontSize: 17, fontWeight: '800', color: '#0b1c30', fontFamily: 'Inter' },
-  emptySubtitle: { fontSize: 13, color: '#6b7280', textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
+  emptyTitle: { fontSize: theme.Typography.TitleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  emptySubtitle: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
   emptyAddBtn: { marginTop: 8, borderRadius: 12, overflow: 'hidden' },
   emptyAddBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10 },
-  emptyAddBtnText: { color: '#fff', fontSize: 13, fontWeight: '800', fontFamily: 'Inter' },
+  emptyAddBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
 
   rail: {
     width: '100%', maxWidth: 320, borderRadius: 20, borderWidth: 1,
@@ -318,5 +318,5 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   railFooter: { marginTop: 6 },
   confirmBtn: { borderRadius: 14, overflow: 'hidden' },
   confirmBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 16 },
-  confirmBtnText: { color: '#fff', fontSize: 13, fontWeight: '800', fontFamily: 'Inter' },
+  confirmBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
 });

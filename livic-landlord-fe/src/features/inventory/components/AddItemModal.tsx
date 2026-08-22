@@ -38,13 +38,6 @@ const CATEGORIES = [
   { id: 'OTHER', label: 'Other', icon: 'inventory-2' },
 ];
 
-const CONDITIONS = [
-  { id: 'EXCELLENT', label: 'Excellent', color: '#059669' },
-  { id: 'GOOD', label: 'Good', color: '#0891b2' },
-  { id: 'FAIR', label: 'Fair', color: '#d97706' },
-  { id: 'DAMAGED', label: 'Damaged', color: '#dc2626' },
-];
-
 export function AddItemModal({
   visible,
   propertyId,
@@ -53,6 +46,13 @@ export function AddItemModal({
   onSuccess,
 }: AddItemModalProps) {
   const { theme, isDark } = useAppTheme();
+
+  const CONDITIONS = React.useMemo(() => [
+    { id: 'EXCELLENT', label: 'Excellent', color: theme.Colors.primary },
+    { id: 'GOOD', label: 'Good', color: theme.Colors.primary },
+    { id: 'FAIR', label: 'Fair', color: theme.Colors.tertiary },
+    { id: 'DAMAGED', label: 'Damaged', color: theme.Colors.error },
+  ], [theme]);
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const [name, setName] = useState('');
@@ -165,7 +165,7 @@ export function AddItemModal({
               <Text style={styles.modalTitle}>Add New Item</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <MaterialIcons name="close" size={20} color="#6b7280" />
+              <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
             </TouchableOpacity>
           </View>
 
@@ -177,20 +177,20 @@ export function AddItemModal({
                 <Image source={{ uri: previewUri }} style={styles.previewImage} resizeMode="cover" />
                 <View style={styles.previewOverlay}>
                   <View style={styles.previewMeta}>
-                    <MaterialIcons name="image" size={16} color="#fff" />
+                    <MaterialIcons name="image" size={16} color={theme.Colors.surfaceContainerLowest} />
                     <Text style={styles.previewFileName} numberOfLines={1}>
                       {selectedFile?.name || 'Selected photo'}
                     </Text>
                   </View>
                   <TouchableOpacity style={styles.removePhotoBtn} onPress={handleRemovePhoto}>
-                    <MaterialIcons name="delete" size={16} color="#fff" />
+                    <MaterialIcons name="delete" size={16} color={theme.Colors.surfaceContainerLowest} />
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
               <TouchableOpacity style={styles.uploadDropzone} activeOpacity={0.8} onPress={handlePickPhoto}>
                 <View style={styles.uploadIconCircle}>
-                  <MaterialIcons name="cloud-upload" size={24} color="#0891b2" />
+                  <MaterialIcons name="cloud-upload" size={24} color={theme.Colors.primary} />
                 </View>
                 <Text style={styles.uploadTitle}>Click to upload asset photo</Text>
                 <Text style={styles.uploadSubtitle}>PNG, JPG or WebP · Uploads directly to Cloudinary CDN</Text>
@@ -202,7 +202,7 @@ export function AddItemModal({
               value={name}
               onChangeText={setName}
               placeholder="e.g. Samsung Bespoke Refrigerator"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.Colors.onSurfaceVariant}
               style={styles.input}
             />
 
@@ -219,7 +219,7 @@ export function AddItemModal({
                     <MaterialIcons
                       name={cat.icon as any}
                       size={14}
-                      color={isSelected ? '#0891b2' : '#6b7280'}
+                      color={isSelected ? theme.Colors.primary : '#6b7280'}
                     />
                     <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                       {cat.label}
@@ -235,14 +235,14 @@ export function AddItemModal({
                 style={[styles.toggleBtn, scope === 'UNIT_PRIVATE' && styles.toggleBtnActive]}
                 onPress={() => { setScope('UNIT_PRIVATE'); setStatus('AVAILABLE'); }}
               >
-                <MaterialIcons name="meeting-room" size={16} color={scope === 'UNIT_PRIVATE' ? '#0891b2' : '#6b7280'} />
+                <MaterialIcons name="meeting-room" size={16} color={scope === 'UNIT_PRIVATE' ? theme.Colors.primary : '#6b7280'} />
                 <Text style={[styles.toggleText, scope === 'UNIT_PRIVATE' && styles.toggleTextActive]}>Private Unit</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toggleBtn, scope === 'PROPERTY_SHARED' && styles.toggleBtnActive]}
                 onPress={() => { setScope('PROPERTY_SHARED'); setStatus('SHARED'); }}
               >
-                <MaterialIcons name="apartment" size={16} color={scope === 'PROPERTY_SHARED' ? '#0891b2' : '#6b7280'} />
+                <MaterialIcons name="apartment" size={16} color={scope === 'PROPERTY_SHARED' ? theme.Colors.primary : '#6b7280'} />
                 <Text style={[styles.toggleText, scope === 'PROPERTY_SHARED' && styles.toggleTextActive]}>Shared Property</Text>
               </TouchableOpacity>
             </View>
@@ -276,7 +276,7 @@ export function AddItemModal({
                   value={serialNumber}
                   onChangeText={setSerialNumber}
                   placeholder="e.g. SAM-8231-90X"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={theme.Colors.onSurfaceVariant}
                   style={styles.input}
                 />
               </View>
@@ -286,7 +286,7 @@ export function AddItemModal({
                   value={replacementValue}
                   onChangeText={setReplacementValue}
                   placeholder="e.g. 86000"
-                  placeholderTextColor="#9ca3af"
+                  placeholderTextColor={theme.Colors.onSurfaceVariant}
                   keyboardType="numeric"
                   style={styles.input}
                 />
@@ -298,7 +298,7 @@ export function AddItemModal({
               value={notes}
               onChangeText={setNotes}
               placeholder="Warranty info, compressor details, etc."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={theme.Colors.onSurfaceVariant}
               multiline
               numberOfLines={3}
               style={[styles.input, { height: 70, textAlignVertical: 'top' }]}
@@ -311,19 +311,19 @@ export function AddItemModal({
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSubmit} disabled={loading} style={styles.submitBtn}>
               <LinearGradient
-                colors={['#0891b2', '#0072ff']}
+                colors={[theme.Colors.primary, '#0072ff']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.submitBtnInner}
               >
                 {loading ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
                     <Text style={styles.submitBtnText}>{loadingStep || 'Saving...'}</Text>
                   </View>
                 ) : (
                   <>
-                    <MaterialIcons name="check" size={18} color="#fff" />
+                    <MaterialIcons name="check" size={18} color={theme.Colors.surfaceContainerLowest} />
                     <Text style={styles.submitBtnText}>Save Item</Text>
                   </>
                 )}
@@ -351,7 +351,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Surface.card,
     borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.25,
     shadowRadius: 24,
@@ -367,20 +367,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
-  modalKicker: { fontSize: 10, fontWeight: '800', color: '#0891b2', letterSpacing: 1 },
-  modalTitle: { fontSize: 20, fontWeight: '900', color: '#0b1c30', marginTop: 2 },
-  closeBtn: { padding: 8, borderRadius: 20, backgroundColor: '#f3f4f6' },
+  modalKicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1 },
+  modalTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '900', color: theme.Colors.onSurface, marginTop: 2 },
+  closeBtn: { padding: 8, borderRadius: 20, backgroundColor: theme.Colors.surfaceContainer },
   modalBody: { paddingHorizontal: 24, paddingVertical: 16 },
-  label: { fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 6, marginTop: 10 },
+  label: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 6, marginTop: 10 },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 14,
-    color: '#0b1c30',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   chip: {
@@ -391,12 +391,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#f9fafb',
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
-  chipSelected: { borderColor: '#0891b2', backgroundColor: 'rgba(8,145,178,0.08)' },
-  chipText: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
-  chipTextSelected: { color: '#0891b2', fontWeight: '800' },
+  chipSelected: { borderColor: theme.Colors.primary, backgroundColor: 'rgba(0,104,117,0.08)' },
+  chipText: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
+  chipTextSelected: { color: theme.Colors.primary, fontWeight: '800' },
   toggleRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
   toggleBtn: {
     flex: 1,
@@ -407,12 +407,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#f9fafb',
+    borderColor: theme.Colors.outlineVariant,
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
-  toggleBtnActive: { borderColor: '#0891b2', backgroundColor: 'rgba(8,145,178,0.08)' },
-  toggleText: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
-  toggleTextActive: { color: '#0891b2', fontWeight: '800' },
+  toggleBtnActive: { borderColor: theme.Colors.primary, backgroundColor: 'rgba(0,104,117,0.08)' },
+  toggleText: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '600', color: theme.Colors.onSurfaceVariant },
+  toggleTextActive: { color: theme.Colors.primary, fontWeight: '800' },
   dot: { width: 6, height: 6, borderRadius: 3 },
   twoCol: { flexDirection: 'row', gap: 12 },
 
@@ -420,32 +420,32 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   uploadDropzone: {
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#cbd5e1',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     gap: 6,
   },
   uploadIconCircle: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(8,145,178,0.1)',
+    backgroundColor: 'rgba(0,104,117,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
   },
-  uploadTitle: { fontSize: 13, fontWeight: '800', color: '#0b1c30' },
-  uploadSubtitle: { fontSize: 11, color: '#64748b' },
+  uploadTitle: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
+  uploadSubtitle: { fontSize: theme.Typography.LabelSmall.fontSize, color: theme.Colors.onSurfaceVariant },
 
   previewContainer: {
     borderRadius: 16,
     overflow: 'hidden',
     height: 140,
     position: 'relative',
-    backgroundColor: '#000',
+    backgroundColor: 'black',
   },
   previewImage: {
     width: '100%',
@@ -464,8 +464,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   previewMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
-  previewFileName: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  removePhotoBtn: { padding: 4, backgroundColor: '#dc2626', borderRadius: 8 },
+  previewFileName: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700' },
+  removePhotoBtn: { padding: 4, backgroundColor: theme.Colors.error, borderRadius: 8 },
 
   modalFooter: {
     flexDirection: 'row',
@@ -476,10 +476,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 16,
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
-    backgroundColor: '#fafafa',
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   cancelBtn: { paddingHorizontal: 16, paddingVertical: 10 },
-  cancelBtnText: { fontSize: 14, fontWeight: '700', color: '#6b7280' },
+  cancelBtnText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
   submitBtn: { borderRadius: 12, overflow: 'hidden' },
   submitBtnInner: {
     flexDirection: 'row',
@@ -488,5 +488,5 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
-  submitBtnText: { fontSize: 14, fontWeight: '800', color: '#fff' },
+  submitBtnText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.surfaceContainerLowest },
 });

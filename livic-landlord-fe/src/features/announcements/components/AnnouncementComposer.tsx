@@ -107,8 +107,8 @@ export function AnnouncementComposer({
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
         {[
           { val: 'INFO' as const, color: theme.Colors.primary },
-          { val: 'WARNING' as const, color: '#e28743' },
-          { val: 'CRITICAL' as const, color: '#ba1a1a' },
+          { val: 'WARNING' as const, color: theme.Colors.tertiary },
+          { val: 'CRITICAL' as const, color: theme.Colors.error },
         ].map(({ val, color }) => (
           <TouchableOpacity
             key={val}
@@ -165,10 +165,10 @@ export function AnnouncementComposer({
           style={styles.composerSendGradient}
         >
           {sendingBroadcast ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
           ) : (
             <>
-              <MaterialIcons name="send" size={18} color="#fff" />
+              <MaterialIcons name="send" size={18} color={theme.Colors.surfaceContainerLowest} />
               <Text style={styles.composerSendText}>BROADCAST NOW</Text>
             </>
           )}
@@ -188,7 +188,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   sectionHeader: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -196,7 +196,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'Inter',
   },
   composerLabel: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
@@ -211,7 +211,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(0, 104, 117, 0.08)',
     paddingHorizontal: 16,
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
@@ -237,13 +237,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.primary,
   },
   chipText: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   chipTextActive: {
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   composerSendBtn: {
     borderRadius: 20,
@@ -263,8 +263,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 14,
   },
   composerSendText: {
-    color: '#fff',
-    fontSize: 14,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     fontFamily: 'Inter',
   },

@@ -6,7 +6,7 @@ import { GlassCard } from '@/src/components/common/display/GlassCard';
 import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 export default function ResidentSettingsScreen() {
   const { theme, isDark, mode, setMode } = useAppTheme();
@@ -118,12 +118,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 24,
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: theme.Typography.headlineMd.fontSize,
     fontWeight: '800',
     marginBottom: 4,
   },
   heroSubtitle: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
   },
   grid: {
     gap: 16,
@@ -138,7 +138,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 16,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '700',
   },
   item: {
@@ -148,11 +148,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   itemName: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
   },
   itemDesc: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     marginTop: 2,
   },
   themeOptionsRow: {
@@ -172,7 +172,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 6,
   },
   themeOptionText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
     textTransform: 'capitalize',
   },

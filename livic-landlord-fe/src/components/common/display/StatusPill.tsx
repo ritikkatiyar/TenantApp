@@ -79,7 +79,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
     fontFamily: 'Inter',
     letterSpacing: 0.5,

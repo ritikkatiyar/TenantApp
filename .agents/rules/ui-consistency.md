@@ -178,6 +178,9 @@ All desktop-level screens must utilize the globally shared `<DesktopNavBar>` com
 2. **Usage**: Pass in `activeTab` to highlight the current section (e.g., `activeTab="Properties"`), `onBack` (optional) to trigger the back action with `backText` (e.g., `backText="Back to Portfolio"`), and `rightContent` to inject custom elements like search boxes or settings icons.
 3. **Consistency**: Do not wrap `DesktopNavBar` inside a scrolling container; it must be pinned to the top of the `desktopMain` layout to act as a constant component without re-rendering the page during interactions.
 
+### E. Filter Rows & Header Layouts
+- **Filter Rows (`desktopFilterRow`)**: When rendering a filter row above a grid of smaller cards (e.g., unit cards), do NOT wrap the filter row in a bordered glassmorphic card container. Render it transparently (`flexDirection: 'row'`, `alignItems: 'flex-end'`, `gap: 24`, `marginBottom: 32`, no background/border) without background colors or borders. This prevents the filter row from appearing visually unbalanced (longer or wider) compared to the individual small cards below it.
+
 ---
 
 ## 4. Native Interactions & Polish
@@ -205,6 +208,13 @@ All desktop-level screens must utilize the globally shared `<DesktopNavBar>` com
 3. **No Unused Imports**: Strip unused React Native components, icons, or router references prior to committing.
 4. **SVG and Icon Consistency**: Leverage icons exclusively from `@expo/vector-icons` (`MaterialIcons`, `Feather`, `MaterialCommunityIcons`, `Ionicons`) configured with unified sizes (typically `20` / `24` pixels) matching category headers.
 
- # # #   F .   F i l t e r   R o w s   &   H e a d e r   L a y o u t s 
- -   * * F i l t e r   R o w s   ( d e s k t o p F i l t e r R o w ) * * :   W h e n   r e n d e r i n g   a   f i l t e r   r o w   a b o v e   a   g r i d   o f   s m a l l e r   c a r d s   ( e . g . ,   u n i t   c a r d s ) ,   d o   N O T   w r a p   t h e   f i l t e r   r o w   i n   a   b o r d e r e d   g l a s s m o r p h i c   c a r d   c o n t a i n e r .   R e n d e r   i t   t r a n s p a r e n t l y   (  l e x D i r e c t i o n :   ' r o w ' ,    l i g n I t e m s :   ' f l e x - e n d ' ,   g a p :   2 4 ,   m a r g i n B o t t o m :   3 2 )   w i t h o u t   b a c k g r o u n d   c o l o r s   o r   b o r d e r s .   T h i s   p r e v e n t s   t h e   f i l t e r   r o w   f r o m   a p p e a r i n g   v i s u a l l y   u n b a l a n c e d   ( ' l o n g e r '   o r   w i d e r )   c o m p a r e d   t o   t h e   i n d i v i d u a l   s m a l l   c a r d s   b e l o w   i t .  
- 
+---
+
+## 6. Strict UAT Readiness & Styling Constraints
+
+1. **No Hardcoded Hex Colors or Font Sizes**: No screen or component file may hardcode a hex color or numeric fontSize. All colors and typography must reference the centralized design tokens from `useAppTheme()` (e.g., `theme.Colors.onSurface`, `theme.Typography.bodyMd`). Any hardcoded `color: '#...'`, `fontSize: <number>`, or hex-literal `backgroundColor` outside `src/theme/Theme.ts` is prohibited and will trigger build/lint errors.
+2. **Light & Dark Mode Coexistence**: Every text or background color used in a screen must work in BOTH `LightColors` and `DarkColors` from `Theme.ts`. Hardcoded values that fail contrast checks in either mode are prohibited.
+3. **Breakpoint Hook Enforcement**: All desktop, mobile, and tablet viewport breakpoint checks must use the shared `useResponsive()` hook. Inline checks such as `width >= 900` are prohibited outside that hook.
+4. **React Query for Global/Shared Data**: Any component fetching shared or global data (such as properties list, tenant list, etc.) must consume it via a shared react-query hook, not a local `useState` + `useEffect` + API call implementation. Local re-fetching of global data is prohibited.
+5. **Primary Navigation Style Limits**: Primary navigation chrome (such as bottom navigation and FABs) may use at most a 2-color brand gradient from the existing teal/primary palette (e.g. `accentGradientStart`/`End` or `primary`/`inversePrimary`). Multi-hue rainbow gradients (3+ unrelated hues), glow/halo shadow effects, and playful iconography (sparkles, stars, bursts) are prohibited on primary navigation components.
+6. **Skeleton Loading States**: Loading states for any data fetch must use the shared `<Skeleton>` primitive (once added in Phase 1) rather than a bare `ActivityIndicator` on any screen displaying more than a single data point.

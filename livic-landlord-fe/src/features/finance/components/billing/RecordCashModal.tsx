@@ -1,0 +1,254 @@
+import React from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { MaterialIcons } from '@expo/vector-icons';
+import { ActionButton } from '@/src/components/common/inputs/ActionButton';
+import { useAppTheme } from '@/src/theme/ThemeContext';
+import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
+
+interface RecordCashModalProps {
+  visible: boolean;
+  selectedInvoice: RentCycleResponse | null;
+  cashAmount: string;
+  cashNote: string;
+  isRecording: boolean;
+  receiptSuccess: boolean;
+  setCashAmount: (val: string) => void;
+  setCashNote: (val: string) => void;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+export function RecordCashModal({
+  visible,
+  selectedInvoice,
+  cashAmount,
+  cashNote,
+  isRecording,
+  receiptSuccess,
+  setCashAmount,
+  setCashNote,
+  onClose,
+  onConfirm,
+}: RecordCashModalProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <BlurView intensity={90} tint="dark" style={styles.modalBlur}>
+          <View style={styles.modalContent}>
+            {!receiptSuccess ? (
+              <>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Confirm Cash Settlement</Text>
+                  <TouchableOpacity onPress={onClose}>
+                    <MaterialIcons name="close" size={24} color={theme.Colors.onSurface} />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.modalSubtitle}>
+                  Record a direct cash settlement for Apt {selectedInvoice?.unitNumber} ({selectedInvoice?.tenantName})
+                </Text>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Cash Amount Received (₹)</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={cashAmount}
+                    onChangeText={setCashAmount}
+                    keyboardType="decimal-pad"
+                    placeholder="0.00"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Settlement Note</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={cashNote}
+                    onChangeText={setCashNote}
+                    placeholder="Add a payment note"
+                  />
+                </View>
+
+                <ActionButton
+                  title="CONFIRM CASH COLLECTION"
+                  onPress={onConfirm}
+                  loading={isRecording}
+                  style={{ marginTop: 16 }}
+                />
+              </>
+            ) : (
+              <View style={styles.successContainer}>
+                <View style={styles.successIconCircle}>
+                  <MaterialIcons name="check-circle" size={48} color="#16a34a" />
+                </View>
+                <Text style={styles.successTitle}>Payment Confirmed!</Text>
+                <Text style={styles.successSubtitle}>
+                  Direct cash transaction successfully completed and reconciled.
+                </Text>
+
+                <View style={styles.checklistReceipt}>
+                  <View style={styles.checkItem}>
+                    <MaterialIcons name="check" size={16} color="#16a34a" />
+                    <Text style={styles.checkText}>Signature transaction generated</Text>
+                  </View>
+                  <View style={styles.checkItem}>
+                    <MaterialIcons name="check" size={16} color="#16a34a" />
+                    <Text style={styles.checkText}>Ledger accounts balanced & updated</Text>
+                  </View>
+                  <View style={styles.checkItem}>
+                    <MaterialIcons name="check" size={16} color="#16a34a" />
+                    <Text style={styles.checkText}>Receipt notification dispatched</Text>
+                  </View>
+                </View>
+
+                <View style={styles.receiptMeta}>
+                  <Text style={styles.metaLabel}>Settled Amount:</Text>
+                  <Text style={styles.metaValue}>₹ {parseFloat(cashAmount || '0').toFixed(2)}</Text>
+                </View>
+
+                <ActionButton
+                  title="CLOSE"
+                  onPress={onClose}
+                  style={{ marginTop: 24, width: '100%' }}
+                />
+              </View>
+            )}
+          </View>
+        </BlurView>
+      </View>
+    </Modal>
+  );
+}
+
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBlur: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxWidth: 480,
+    backgroundColor: theme.Colors.surfaceContainerLowest,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: theme.Colors.outlineVariant,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+  },
+  modalSubtitle: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontWeight: '700',
+    color: theme.Colors.primary,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  textInput: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    color: theme.Colors.onSurface,
+    paddingHorizontal: 16,
+    fontSize: theme.Typography.BodyMedium.fontSize,
+  },
+  successContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  successIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(22, 163, 74, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+    marginBottom: 8,
+  },
+  successSubtitle: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  checklistReceipt: {
+    width: '100%',
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    gap: 8,
+    marginBottom: 20,
+  },
+  checkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  checkText: {
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  receiptMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    borderBottomWidth: 1.5,
+    borderBottomColor: theme.Colors.outlineVariant,
+    paddingBottom: 12,
+    marginBottom: 12,
+  },
+  metaLabel: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  metaValue: {
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    color: theme.Colors.onSurface,
+    fontWeight: '800',
+  },
+});

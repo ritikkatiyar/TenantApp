@@ -62,7 +62,7 @@ export function BroadcastComposerModal({
               <Text style={styles.composerSubtitle}>{selectedPropertyForBroadcast?.name}</Text>
             </View>
             <TouchableOpacity onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#163235" />
+              <MaterialIcons name="close" size={24} color={theme.Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
@@ -108,8 +108,8 @@ export function BroadcastComposerModal({
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
               {[
                 { val: 'INFO' as const, color: theme.Colors.primary },
-                { val: 'WARNING' as const, color: '#e28743' },
-                { val: 'CRITICAL' as const, color: '#ba1a1a' },
+                { val: 'WARNING' as const, color: theme.Colors.tertiary },
+                { val: 'CRITICAL' as const, color: theme.Colors.error },
               ].map(({ val, color }) => (
                 <TouchableOpacity
                   key={val}
@@ -165,10 +165,10 @@ export function BroadcastComposerModal({
               style={styles.composerSendGradient}
             >
               {sendingBroadcast ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
               ) : (
                 <>
-                  <MaterialIcons name="send" size={18} color="#fff" />
+                  <MaterialIcons name="send" size={18} color={theme.Colors.surfaceContainerLowest} />
                   <Text style={styles.composerSendText}>BROADCAST NOW</Text>
                 </>
               )}
@@ -193,7 +193,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopRightRadius: 36,
     padding: 28,
     maxHeight: '90%',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
@@ -208,13 +208,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 24,
   },
   composerTitle: {
-    fontSize: 22,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
   composerSubtitle: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 2,
@@ -224,7 +224,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   composerLabel: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
@@ -239,7 +239,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.Surface.border,
     paddingHorizontal: 16,
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
@@ -265,18 +265,18 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.primary,
   },
   chipText: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   chipTextActive: {
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   composerSendBtn: {
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#006875',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -290,8 +290,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 14,
   },
   composerSendText: {
-    color: '#fff',
-    fontSize: 14,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     fontFamily: 'Inter',
   },

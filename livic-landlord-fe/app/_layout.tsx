@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useColorScheme } from 'react-native';
 import { AuthProvider } from '@/src/features/auth/context/AuthProvider';
 import { ThemeContextProvider } from '@/src/theme/ThemeContext';
 import BottomNavigation from '@/src/components/common/navigation/BottomNavigation';
@@ -17,8 +18,10 @@ import QRScannerModal from '@/src/components/common/navigation/QRScannerModal';
 import { ScrollProvider } from '@/src/components/common/navigation/ScrollContext';
 import { ScreenWrapper } from '@/src/components/common/layout/ScreenWrapper';
 import { OnboardingGate } from '@/src/components/common/layout/OnboardingGate';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
+import ErrorBoundary from '@/src/components/common/feedback/ErrorBoundary';
+import { LightColors } from '@/src/theme/Theme';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/command-center': 'Portfolio',
@@ -61,6 +64,15 @@ const PRIMARY_ROUTES = [
   '/escalations',
   '/settings'
 ];
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -118,17 +130,19 @@ export default function RootLayout() {
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
   if (!mounted && Platform.OS === 'web') {
-    return <View style={{ flex: 1, backgroundColor: '#f9fafa' }} />;
+    return <View style={{ flex: 1, backgroundColor: LightColors.background }} />;
   }
 
   return (
     <SafeAreaProvider>
       <ThemeContextProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <ToastProvider>
-            <AuthProvider>
-              <ScrollProvider>
-                <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: '#f9fafa' }}>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <ToastProvider>
+                <AuthProvider>
+                  <ScrollProvider>
+                <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: LightColors.background }}>
                   {showDesktop && !hideNavigation && <SidebarNavigation />}
                   <View style={{ flex: 1 }}>
                     {!showDesktop && !hideHeader && (
@@ -187,7 +201,9 @@ export default function RootLayout() {
           </ToastProvider>
           <StatusBar style="dark" translucent backgroundColor="transparent" />
         </ThemeProvider>
-      </ThemeContextProvider>
-    </SafeAreaProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  </ThemeContextProvider>
+</SafeAreaProvider>
   );
 }

@@ -13,13 +13,14 @@ import {
   Platform,
   Keyboard,
   Pressable,
-  Easing,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
+import { useAppTheme } from '@/src/theme/ThemeContext';
+import { Theme } from '@/src/theme/Theme';
 import { usePathname } from 'expo-router';
 import { runAICommand, getJobStatus } from '@/src/features/ai/api/ai.api';
 
@@ -38,6 +39,8 @@ const EXAMPLES = [
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
   const { accessToken } = useAuth();
+  const { theme } = useAppTheme();
+  const brandGradient = [theme.Colors.primary, theme.Colors.inversePrimary] as const;
 
   const [isOpen, setIsOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -53,28 +56,20 @@ export default function FloatingAIAssistant() {
 
   const scrollRef = useRef<ScrollView>(null);
   
-  // ─── Animation Values ───
-  const expandProgress = useRef(new Animated.Value(0)).current;   // 0 = bubble, 1 = fully open
-  const bubbleScale = useRef(new Animated.Value(1)).current;      // bubble press bounce
-  const headerSlide = useRef(new Animated.Value(0)).current;      // header staggered entry
-  const contentSlide = useRef(new Animated.Value(0)).current;     // body staggered entry
-  const inputSlide = useRef(new Animated.Value(0)).current;       // input bar staggered entry
-  const shimmerAnim = useRef(new Animated.Value(0)).current;      // glow pulse on bubble
-  const backdropOpacity = useRef(new Animated.Value(0)).current;  // backdrop fade
+  // Animations
+  const animValue = useRef(new Animated.Value(0)).current; // 0: closed, 1: open
+  const bubbleScale = useRef(new Animated.Value(1)).current; // For bounce effect
 
-  // Idle shimmer pulse on the bubble
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmerAnim, { toValue: 1, duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(shimmerAnim, { toValue: 0, duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, []);
+    Animated.spring(animValue, {
+      toValue: isOpen ? 1 : 0,
+      tension: 50,
+      friction: 8,
+      useNativeDriver: false,
+    }).start();
+  }, [isOpen]);
 
-  // Keyboard height listener
+  // Keyboard height listener for mobile keyboard compensation
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
@@ -99,69 +94,18 @@ export default function FloatingAIAssistant() {
     return null;
   }
 
-  // ─── Open Animation (bubble → panel with staggered children) ───
   const handleOpen = () => {
-    // 1. Press-bounce the bubble
     Animated.sequence([
-      Animated.timing(bubbleScale, { toValue: 0.7, duration: 120, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.timing(bubbleScale, { toValue: 1.05, duration: 100, useNativeDriver: true }),
-    ]).start();
-
-    // 2. After a short beat, expand the card
-    setTimeout(() => {
+      Animated.timing(bubbleScale, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+      Animated.spring(bubbleScale, { toValue: 1, friction: 8, useNativeDriver: true }),
+    ]).start(() => {
       setIsOpen(true);
-
-      // Expand card + fade backdrop
-      Animated.parallel([
-        Animated.spring(expandProgress, {
-          toValue: 1,
-          tension: 65,
-          friction: 10,
-          useNativeDriver: false,
-        }),
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-
-      // 3. Stagger children: header → content → input
-      headerSlide.setValue(0);
-      contentSlide.setValue(0);
-      inputSlide.setValue(0);
-
-      Animated.stagger(80, [
-        Animated.spring(headerSlide, { toValue: 1, tension: 80, friction: 12, useNativeDriver: true }),
-        Animated.spring(contentSlide, { toValue: 1, tension: 80, friction: 12, useNativeDriver: true }),
-        Animated.spring(inputSlide, { toValue: 1, tension: 80, friction: 12, useNativeDriver: true }),
-      ]).start();
-    }, 150);
+    });
   };
 
-  // ─── Close Animation (panel → bubble) ───
   const handleClose = () => {
     Keyboard.dismiss();
-
-    // Reverse stagger (fast)
-    Animated.parallel([
-      Animated.timing(inputSlide, { toValue: 0, duration: 120, useNativeDriver: true }),
-      Animated.timing(contentSlide, { toValue: 0, duration: 120, useNativeDriver: true }),
-      Animated.timing(headerSlide, { toValue: 0, duration: 120, useNativeDriver: true }),
-      Animated.timing(backdropOpacity, { toValue: 0, duration: 250, useNativeDriver: true }),
-    ]).start();
-
-    // Collapse after children fade
-    setTimeout(() => {
-      Animated.spring(expandProgress, {
-        toValue: 0,
-        tension: 70,
-        friction: 10,
-        useNativeDriver: false,
-      }).start(() => {
-        setIsOpen(false);
-      });
-    }, 100);
+    setIsOpen(false);
   };
 
   const sendMessage = async (text: string) => {
@@ -252,85 +196,52 @@ export default function FloatingAIAssistant() {
   const windowWidth = Dimensions.get('window').width;
   const windowHeight = Dimensions.get('window').height;
 
-  // ─── Interpolated Layout Values ───
-  const BUBBLE_SIZE = 56;
-  const PANEL_WIDTH = windowWidth * 0.92;
+  const cardWidth = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [56, windowWidth * 0.92],
+  });
+
   const cardMaxHeight = keyboardHeight > 0 
     ? Math.min(360, windowHeight * 0.42) 
     : Math.min(520, windowHeight * 0.65);
 
-  const cardWidth = expandProgress.interpolate({
+  const cardHeight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [BUBBLE_SIZE, PANEL_WIDTH],
+    outputRange: [56, cardMaxHeight],
   });
 
-  const cardHeight = expandProgress.interpolate({
+  const cardBorderRadius = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [BUBBLE_SIZE, cardMaxHeight],
+    outputRange: [28, 24],
   });
 
-  const cardBorderRadius = expandProgress.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [28, 28, 24],
-  });
-
-  const cardRight = expandProgress.interpolate({
+  const cardRight = animValue.interpolate({
     inputRange: [0, 1],
     outputRange: [20, (windowWidth * 0.08) / 2],
   });
 
   const cardBottom = keyboardHeight > 0 ? keyboardHeight + 10 : 20;
 
-  // Trigger icon fades out as panel opens
-  const triggerOpacity = expandProgress.interpolate({
-    inputRange: [0, 0.3],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
-  // Panel content fades in after expansion hits 70%
-  const contentOpacity = expandProgress.interpolate({
-    inputRange: [0, 0.6, 1],
+  const contentOpacity = animValue.interpolate({
+    inputRange: [0, 0.8, 1],
     outputRange: [0, 0, 1],
   });
 
-  // ─── Stagger transforms for child sections ───
-  const headerTranslateY = headerSlide.interpolate({
-    inputRange: [0, 1],
-    outputRange: [18, 0],
-  });
-  const contentTranslateY = contentSlide.interpolate({
-    inputRange: [0, 1],
-    outputRange: [24, 0],
-  });
-  const inputTranslateY = inputSlide.interpolate({
-    inputRange: [0, 1],
-    outputRange: [30, 0],
-  });
-
-  // Idle bubble glow
-  const bubbleGlowScale = shimmerAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.25],
-  });
-  const bubbleGlowOpacity = shimmerAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.2, 0.55, 0.2],
+  const triggerOpacity = animValue.interpolate({
+    inputRange: [0, 0.2, 1],
+    outputRange: [1, 0, 0],
   });
 
   return (
     <>
-      {/* Backdrop */}
-      <Animated.View
-        style={[
-          styles.backdrop,
-          { opacity: backdropOpacity, pointerEvents: isOpen ? 'auto' : 'none' },
-        ]}
-      >
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={handleClose} />
-      </Animated.View>
+      {/* Translucent Backdrop when open */}
+      {isOpen && (
+        <Pressable 
+          style={styles.backdrop} 
+          onPress={handleClose} 
+        />
+      )}
 
-      {/* Main Container — morphs from bubble → panel */}
       <Animated.View
         style={[
           styles.container,
@@ -345,7 +256,7 @@ export default function FloatingAIAssistant() {
       >
         <BlurView intensity={95} tint="light" style={StyleSheet.absoluteFillObject} />
 
-        {/* ─── Closed State: Floating Bubble ─── */}
+        {/* 1. Closed State Floating Bubble Trigger */}
         <Animated.View
           style={[
             StyleSheet.absoluteFillObject,
@@ -357,46 +268,28 @@ export default function FloatingAIAssistant() {
             onPress={handleOpen}
             activeOpacity={0.8}
           >
-            {/* Glow ring */}
-            <Animated.View
-              style={[
-                styles.glowRing,
-                {
-                  transform: [{ scale: bubbleGlowScale }],
-                  opacity: bubbleGlowOpacity,
-                },
-              ]}
-            />
             <Animated.View style={{ transform: [{ scale: bubbleScale }] }}>
               <LinearGradient
-                colors={['#00F2FE', '#4FACFE', '#7F00FF']}
+                colors={brandGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.bubbleGradient}
               >
-                <MaterialIcons name="auto-awesome" size={24} color="#fff" />
+                <MaterialIcons name="chat" size={24} color={theme.Colors.onPrimary} />
               </LinearGradient>
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
 
-        {/* ─── Open State: AI Panel ─── */}
+        {/* 2. Open State AI Desk Sheet */}
         <Animated.View
           style={[
             styles.chatContent,
             { opacity: contentOpacity, pointerEvents: isOpen ? 'auto' : 'none' },
           ]}
         >
-          {/* Header — staggered entry */}
-          <Animated.View
-            style={[
-              styles.header,
-              {
-                opacity: headerSlide,
-                transform: [{ translateY: headerTranslateY }],
-              },
-            ]}
-          >
+          {/* Header with Drag / Minimize Bar */}
+          <View style={styles.header}>
             <TouchableOpacity 
               style={styles.dragBarWrapper} 
               activeOpacity={0.6}
@@ -407,110 +300,96 @@ export default function FloatingAIAssistant() {
 
             <View style={styles.headerTitleRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <LinearGradient
-                  colors={['#00F2FE', '#4FACFE', '#7F00FF']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.headerIconGradient}
-                >
-                  <MaterialIcons name="auto-awesome" size={14} color="#fff" />
-                </LinearGradient>
+                <View style={styles.headerIconWrapper}>
+                  <MaterialIcons name="chat" size={16} color={theme.Colors.primary} />
+                </View>
                 <Text style={styles.headerTitle}>AI Assistant</Text>
               </View>
+              <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
+                <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
+              </TouchableOpacity>
             </View>
-          </Animated.View>
+          </View>
 
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={{ flex: 1 }}
           >
-            {/* Messages — staggered entry */}
-            <Animated.View
-              style={{
-                flex: 1,
-                opacity: contentSlide,
-                transform: [{ translateY: contentTranslateY }],
-              }}
+            {/* Scrollable Message History */}
+            <ScrollView
+              ref={scrollRef}
+              style={styles.messagesList}
+              contentContainerStyle={styles.messagesContainer}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
             >
-              <ScrollView
-                ref={scrollRef}
-                style={styles.messagesList}
-                contentContainerStyle={styles.messagesContainer}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
-              >
-                {/* Example Queries */}
-                <View style={styles.examplesWrapper}>
-                  <Text style={styles.examplesHeader}>Try asking:</Text>
-                  {EXAMPLES.map((ex) => (
-                    <TouchableOpacity
-                      key={ex}
-                      style={styles.examplePill}
-                      onPress={() => sendMessage(ex)}
-                      disabled={isSending}
-                      activeOpacity={0.7}
-                    >
-                      <MaterialIcons name="bolt" size={14} color="#006875" />
-                      <Text style={styles.exampleText} numberOfLines={1}>{ex}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+              {/* Example Queries */}
+              <View style={styles.examplesWrapper}>
+                <Text style={styles.examplesHeader}>Try asking:</Text>
+                {EXAMPLES.map((ex) => (
+                  <TouchableOpacity
+                    key={ex}
+                    style={styles.examplePill}
+                    onPress={() => sendMessage(ex)}
+                    disabled={isSending}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="bolt" size={14} color={theme.Colors.primary} />
+                    <Text style={styles.exampleText} numberOfLines={1}>{ex}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-                {/* Chat Bubbles */}
-                {messages.map((msg) => (
-                  <View
-                    key={msg.id}
+              {/* Chat Bubbles */}
+              {messages.map((msg) => (
+                <View
+                  key={msg.id}
+                  style={[
+                    styles.msgWrapper,
+                    msg.role === 'user' ? styles.msgUser : styles.msgAssistant,
+                  ]}
+                >
+                  <BlurView
+                    intensity={95}
+                    tint="light"
                     style={[
-                      styles.msgWrapper,
-                      msg.role === 'user' ? styles.msgUser : styles.msgAssistant,
+                      styles.msgBubble,
+                      msg.role === 'user'
+                        ? [styles.bubbleUser, { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary }]
+                        : styles.bubbleAssistant,
                     ]}
                   >
-                    <BlurView
-                      intensity={95}
-                      tint="light"
+                    <Text
                       style={[
-                        styles.msgBubble,
-                        msg.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
+                        styles.msgText,
+                        msg.role === 'user'
+                          ? [styles.textUser, { color: theme.Colors.onPrimary }]
+                          : [styles.textAssistant, { color: theme.Colors.onSurface }],
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.msgText,
-                          msg.role === 'user' ? styles.textUser : styles.textAssistant,
-                        ]}
-                      >
-                        {msg.text}
-                      </Text>
-                    </BlurView>
-                  </View>
-                ))}
+                      {msg.text}
+                    </Text>
+                  </BlurView>
+                </View>
+              ))}
 
-                {isSending && (
-                  <View style={[styles.msgWrapper, styles.msgAssistant]}>
-                    <BlurView intensity={90} tint="light" style={[styles.msgBubble, styles.bubbleAssistant, styles.loadingBubble]}>
-                      <ActivityIndicator size="small" color="#006875" />
-                      <Text style={styles.loadingText}>Thinking...</Text>
-                    </BlurView>
-                  </View>
-                )}
-              </ScrollView>
-            </Animated.View>
+              {isSending && (
+                <View style={[styles.msgWrapper, styles.msgAssistant]}>
+                  <BlurView intensity={90} tint="light" style={[styles.msgBubble, styles.bubbleAssistant, styles.loadingBubble]}>
+                    <ActivityIndicator size="small" color={theme.Colors.primary} />
+                    <Text style={[styles.loadingText, { color: theme.Colors.onSurfaceVariant }]}>Thinking...</Text>
+                  </BlurView>
+                </View>
+              )}
+            </ScrollView>
 
-            {/* Input Bar — staggered entry */}
-            <Animated.View
-              style={[
-                styles.inputBar,
-                {
-                  opacity: inputSlide,
-                  transform: [{ translateY: inputTranslateY }],
-                },
-              ]}
-            >
+            {/* Chat Footer Input */}
+            <View style={styles.inputBar}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { borderColor: `${theme.Colors.primary}33`, color: theme.Colors.onSurface }]}
                 placeholder="Ask AI to help..."
-                placeholderTextColor="#7d8b8e"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={input}
                 onChangeText={setInput}
                 multiline
@@ -527,15 +406,15 @@ export default function FloatingAIAssistant() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#00F2FE', '#0072ff']}
+                  colors={brandGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.sendGradient}
                 >
-                  <MaterialIcons name="send" size={16} color="#fff" />
+                  <MaterialIcons name="send" size={16} color={theme.Colors.onPrimary} />
                 </LinearGradient>
               </TouchableOpacity>
-            </Animated.View>
+            </View>
           </KeyboardAvoidingView>
         </Animated.View>
       </Animated.View>
@@ -555,11 +434,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.85)',
     backgroundColor: 'rgba(255, 255, 255, 0.88)',
     overflow: 'hidden',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowColor: Theme.Surface.shadowColor,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
     zIndex: 99999,
   },
   bubbleTrigger: {
@@ -567,15 +446,6 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  glowRing: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(79, 172, 254, 0.4)',
   },
   bubbleGradient: {
     width: 54,
@@ -613,17 +483,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 4,
   },
-  headerIconGradient: {
+  headerIconWrapper: {
     width: 28,
     height: 28,
     borderRadius: 8,
+    backgroundColor: 'rgba(0, 104, 117, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 15,
+    fontSize: Theme.Typography.TitleSmall.fontSize,
     fontWeight: '800',
-    color: '#006875',
+  },
+  closeBtn: {
+    padding: 6,
   },
   messagesList: {
     flex: 1,
@@ -637,9 +510,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   examplesHeader: {
-    fontSize: 11,
+    fontSize: Theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
-    color: '#6b7a7d',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -655,8 +527,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   exampleText: {
-    fontSize: 12,
-    color: '#006875',
+    fontSize: Theme.Typography.BodySmall.fontSize,
+    color: Theme.Colors.primary,
     fontWeight: '600',
     flex: 1,
   },
@@ -679,8 +551,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bubbleUser: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
     borderBottomRightRadius: 4,
   },
   bubbleAssistant: {
@@ -689,15 +559,13 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   msgText: {
-    fontSize: 13.5,
+    fontSize: Theme.Typography.BodyMedium.fontSize,
     lineHeight: 19,
   },
   textUser: {
-    color: '#fff',
     fontWeight: '600',
   },
   textAssistant: {
-    color: '#151d1e',
     fontWeight: '500',
   },
   loadingBubble: {
@@ -706,8 +574,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loadingText: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: Theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
   },
   inputBar: {
@@ -723,12 +590,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.2)',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    fontSize: 13.5,
-    color: '#151d1e',
+    fontSize: Theme.Typography.BodyMedium.fontSize,
     maxHeight: 80,
   },
   sendBtn: {

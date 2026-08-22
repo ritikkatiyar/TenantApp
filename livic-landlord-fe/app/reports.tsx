@@ -12,13 +12,14 @@ import {
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useProperties } from '@/src/hooks/useProperties';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { listRentCycles, RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
 import { fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { createStyles } from './reports.styles';
 
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
@@ -107,26 +108,10 @@ export default function ReportsRoute() {
     return () => clearTimeout(timer);
   }, [loadStatements]);
 
-  const handlePrevMonth = () => {
+  const adjustMonth = (delta: number) => {
     const [y, m] = billingMonth.split('-').map(Number);
-    let month = m - 1;
-    let year = y;
-    if (month === 0) {
-      month = 12;
-      year -= 1;
-    }
-    setBillingMonth(`${year}-${String(month).padStart(2, '0')}`);
-  };
-
-  const handleNextMonth = () => {
-    const [y, m] = billingMonth.split('-').map(Number);
-    let month = m + 1;
-    let year = y;
-    if (month === 13) {
-      month = 1;
-      year += 1;
-    }
-    setBillingMonth(`${year}-${String(month).padStart(2, '0')}`);
+    const date = new Date(y, m - 1 + delta, 1);
+    setBillingMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
   };
 
   const handleOpenStatement = async (cycleId: string) => {
@@ -169,7 +154,7 @@ export default function ReportsRoute() {
         <GlassCard style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiLabel}>TOTAL STATEMENTS</Text>
-            <MaterialIcons name="receipt-long" size={20} color="#006875" />
+            <MaterialIcons name="receipt-long" size={20} color={theme.Colors.primary} />
           </View>
           <Text style={styles.kpiValue}>{totalElements}</Text>
           <Text style={styles.kpiSub}>Records for {billingMonth}</Text>
@@ -178,9 +163,9 @@ export default function ReportsRoute() {
         <GlassCard style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiLabel}>TOTAL BILLED</Text>
-            <MaterialIcons name="payments" size={20} color="#0284c7" />
+            <MaterialIcons name="payments" size={20} color={theme.Colors.secondary} />
           </View>
-          <Text style={[styles.kpiValue, { color: '#0284c7' }]}>
+          <Text style={[styles.kpiValue, { color: theme.Colors.secondary }]}>
             ₹{totalRevenue.toLocaleString()}
           </Text>
           <Text style={styles.kpiSub}>{publishedCount} published invoices</Text>
@@ -189,9 +174,9 @@ export default function ReportsRoute() {
         <GlassCard style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiLabel}>PAGE COLLECTED</Text>
-            <MaterialIcons name="check-circle" size={20} color="#16a34a" />
+            <MaterialIcons name="check-circle" size={20} color={theme.Colors.tertiary} />
           </View>
-          <Text style={[styles.kpiValue, { color: '#16a34a' }]}>
+          <Text style={[styles.kpiValue, { color: theme.Colors.tertiary }]}>
             ₹{totalCollected.toLocaleString()}
           </Text>
           <Text style={styles.kpiSub}>
@@ -202,9 +187,9 @@ export default function ReportsRoute() {
         <GlassCard style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiLabel}>PENDING DRAFTS</Text>
-            <MaterialIcons name="pending" size={20} color="#d97706" />
+            <MaterialIcons name="pending" size={20} color={theme.Colors.tertiary} />
           </View>
-          <Text style={[styles.kpiValue, { color: '#d97706' }]}>
+          <Text style={[styles.kpiValue, { color: theme.Colors.tertiary }]}>
             {pendingDraftsCount}
           </Text>
           <Text style={styles.kpiSub}>Drafts awaiting publishing</Text>
@@ -223,7 +208,7 @@ export default function ReportsRoute() {
 
           {/* Month Selector */}
           <View style={styles.monthSelector}>
-            <TouchableOpacity onPress={handlePrevMonth} style={styles.monthArrow}>
+            <TouchableOpacity onPress={() => adjustMonth(-1)} style={styles.monthArrow}>
               <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
             </TouchableOpacity>
             <Text style={styles.monthLabel}>
@@ -232,7 +217,7 @@ export default function ReportsRoute() {
                 year: 'numeric',
               })}
             </Text>
-            <TouchableOpacity onPress={handleNextMonth} style={styles.monthArrow}>
+            <TouchableOpacity onPress={() => adjustMonth(1)} style={styles.monthArrow}>
               <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
             </TouchableOpacity>
           </View>
@@ -277,17 +262,17 @@ export default function ReportsRoute() {
         {/* Search & Status Filters */}
         <View style={styles.filterControlsRow}>
           <View style={styles.searchBox}>
-            <MaterialIcons name="search" size={20} color="#6b7a7d" />
+            <MaterialIcons name="search" size={20} color={theme.Colors.onSurfaceVariant} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search by tenant name or unit..."
-              placeholderTextColor="#6b7a7d"
+              placeholderTextColor={theme.Colors.onSurfaceVariant}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={18} color="#6b7a7d" />
+                <Ionicons name="close-circle" size={18} color={theme.Colors.onSurfaceVariant} />
               </TouchableOpacity>
             )}
           </View>
@@ -378,7 +363,7 @@ export default function ReportsRoute() {
                     >
                       ₹{stmt.paidAt ? stmt.totalAmount?.toLocaleString() : '0.00'}
                     </Text>
-                    <Text style={[styles.cell, { flex: 1.2, textAlign: 'center', color: '#6b7a7d' }]}>
+                    <Text style={[styles.cell, { flex: 1.2, textAlign: 'center', color: theme.Colors.onSurfaceVariant }]}>
                       {stmt.dueDate ? new Date(stmt.dueDate).toLocaleDateString() : 'N/A'}
                     </Text>
                     <View style={{ flex: 1.4, alignItems: 'center', justifyContent: 'center' }}>
@@ -502,351 +487,4 @@ export default function ReportsRoute() {
     </PageShell>
   );
 }
-
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  container: {
-    padding: theme.Spacing.containerPadding,
-    paddingTop: Platform.OS === 'web' ? 24 : 88,
-  },
-  containerDesktop: {
-    paddingTop: 24,
-  },
-  kpiRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    marginBottom: 20,
-  },
-  kpiCard: {
-    flex: 1,
-    minWidth: 220,
-    padding: 18,
-    borderRadius: 16,
-  },
-  kpiHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  kpiLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    color: '#6b7a7d',
-  },
-  kpiValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#151d1e',
-    marginBottom: 4,
-  },
-  kpiSub: {
-    fontSize: 12,
-    color: '#6b7a7d',
-  },
-  glassCard: {
-    marginBottom: 20,
-    padding: 20,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  sectionTitle: {
-    ...theme.Typography.headlineMd,
-    color: theme.Colors.onBackground,
-  },
-  sectionSubtitle: {
-    ...theme.Typography.labelMuted,
-    color: theme.Colors.outline,
-    marginTop: 4,
-    maxWidth: 540,
-  },
-  monthSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: theme.Rounded.full,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  monthArrow: {
-    padding: 4,
-  },
-  monthLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.Colors.onBackground,
-    marginHorizontal: 12,
-    minWidth: 130,
-    textAlign: 'center',
-  },
-  propertyTabs: {
-    flexDirection: 'row',
-    marginTop: 18,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.06)',
-    paddingTop: 16,
-  },
-  propertyTabsContent: {
-    gap: 8,
-  },
-  propTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: theme.Rounded.full,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  propTabActive: {
-    backgroundColor: theme.Colors.primary,
-    borderColor: theme.Colors.primary,
-  },
-  propTabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.Colors.onSurfaceVariant,
-  },
-  propTabTextActive: {
-    color: '#fff',
-  },
-  filterControlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 16,
-  },
-  searchBox: {
-    flex: 1,
-    minWidth: 260,
-    height: 44,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#151d1e',
-    outlineWidth: 0,
-  },
-  statusChipsContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  statusChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  statusChipActive: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
-  },
-  statusChipText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6b7a7d',
-  },
-  statusChipTextActive: {
-    color: '#ffffff',
-  },
-  listCard: {
-    padding: 20,
-  },
-  listCardDesktop: {
-    padding: 0,
-  },
-  table: {
-    width: '100%',
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  headerCell: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: theme.Colors.outline,
-    textTransform: 'uppercase',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
-  },
-  rowMobile: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-    borderBottomWidth: 0,
-  },
-  cell: {
-    fontSize: 14,
-    color: theme.Colors.onBackground,
-  },
-  tenantAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#006875',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tenantAvatarText: {
-    color: '#ffffff',
-    fontWeight: '800',
-    fontSize: 13,
-  },
-  downloadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.2)',
-  },
-  downloadBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: theme.Colors.primary,
-  },
-  mobileCard: {
-    width: '100%',
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
-    marginBottom: 12,
-  },
-  mobileCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  mobileTenantName: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
-  },
-  mobileCardDetail: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  mobileDetailLabel: {
-    fontSize: 13,
-    color: theme.Colors.outline,
-    fontWeight: '500',
-  },
-  mobileDueDate: {
-    fontSize: 12,
-    color: '#6b7a7d',
-    fontWeight: '500',
-  },
-  mobileAmountsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.04)',
-  },
-  mobileAmount: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: theme.Colors.onBackground,
-  },
-  paginationBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 18,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  paginationInfo: {
-    fontSize: 13,
-    color: '#6b7a7d',
-  },
-  paginationActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  pageBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    gap: 2,
-  },
-  pageBtnDisabled: {
-    backgroundColor: '#f8fafc',
-    borderColor: '#f1f5f9',
-  },
-  pageBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.Colors.primary,
-  },
-  pageBtnTextDisabled: {
-    color: '#9ca3af',
-  },
-  pageNumberBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-  },
-  pageNumberText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: theme.Colors.primary,
-  },
-  center: {
-    padding: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6b7a7d',
-  },
-});
 

@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useEffect, useState , useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text, Animated, PanResponder, TouchableOpacity, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,6 +15,8 @@ interface Building3DViewProps {
 }
 
 export default function Building3DView({ propertyId, token, onFloorClick, resetRotationTrigger, maxContainerHeight = 260 }: Building3DViewProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const [units, setUnits] = useState<UnitResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<View>(null);
@@ -386,15 +389,15 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
           {/* Glassmorphic Occupancy Status Legend Badge */}
           <View style={styles.legendContainer} pointerEvents="none">
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
+              <View style={[styles.legendDot, { backgroundColor: theme.Colors.primary }]} />
               <Text style={styles.legendText}>Vacant</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#f59e0b' }]} />
+              <View style={[styles.legendDot, { backgroundColor: theme.Colors.tertiary }]} />
               <Text style={styles.legendText}>Partial</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#ef4444' }]} />
+              <View style={[styles.legendDot, { backgroundColor: theme.Colors.error }]} />
               <Text style={styles.legendText}>Occupied</Text>
             </View>
           </View>
@@ -483,8 +486,8 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                           unitBorderColor = isHovered ? '#ffffff' : 'rgba(245, 158, 11, 0.95)';
                         } else {
                           // OCCUPIED: Crimson Red
-                          unitBackgroundColor = isHovered ? 'rgba(239, 68, 68, 0.95)' : 'rgba(239, 68, 68, 0.75)';
-                          unitBorderColor = isHovered ? '#ffffff' : 'rgba(239, 68, 68, 0.95)';
+                          unitBackgroundColor = isHovered ? 'rgba(186, 26, 26, 0.95)' : 'rgba(186, 26, 26, 0.75)';
+                          unitBorderColor = isHovered ? '#ffffff' : 'rgba(186, 26, 26, 0.95)';
                         }
 
                         return (
@@ -509,7 +512,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -538,8 +541,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   emptyText: {
-    color: '#6b7a7d',
-    fontSize: 10,
+    color: theme.Colors.onSurfaceVariant,
+    fontSize: theme.Typography.LabelSmall.fontSize,
   },
   isometricWrapper: {
     // Width and height are set dynamically inline
@@ -577,7 +580,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     zIndex: 20,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -594,8 +597,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   legendText: {
-    fontSize: 9,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    color: '#0b1c30',
+    color: theme.Colors.onSurface,
   },
 });

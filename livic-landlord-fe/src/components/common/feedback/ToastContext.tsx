@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Platform, Alert, TouchableOpacity, Modal } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -65,6 +67,8 @@ function ToastItem({
 }) {
   const insets = useSafeAreaInsets();
   const config = TOAST_CONFIG[toast.type];
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
 
   const isWeb = Platform.OS === 'web';
 
@@ -130,6 +134,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const slideAnim = useRef(new Animated.Value(60)).current;
   const timerRef = useRef<any>(null);
   const originalAlertRef = useRef(Alert.alert);
+  const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   
   interface ConfirmButton {
     text: string;
@@ -155,6 +161,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const showToast = useCallback((message: string, type: ToastType = 'info', title?: string) => {
     if (timerRef.current) clearTimeout(timerRef.current);
+
+    if (Platform.OS !== 'web') {
+      if (type === 'success') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      } else if (type === 'error') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      } else if (type === 'warning') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+      } else {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      }
+    }
 
     // Auto-derive title if not provided
     const autoTitle = title ?? (
@@ -186,6 +204,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const isConfirmation = buttons && buttons.length > 1;
 
       if (isConfirmation) {
+        if (Platform.OS !== 'web') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        }
         setConfirmDialog({
           title: titleStr,
           message: msg,
@@ -293,7 +314,7 @@ export function useToast() {
   return context;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   toastWrapper: {
     position: 'absolute',
     left: 16,
@@ -312,7 +333,7 @@ const styles = StyleSheet.create({
     // blur-like shadow on native
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: theme.Colors.onSurface,
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.18,
         shadowRadius: 24,
@@ -352,14 +373,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   toastTitle: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     fontFamily: 'Inter',
     letterSpacing: 0.2,
   },
   toastMessage: {
-    color: '#2c3e50',
-    fontSize: 13,
+    color: theme.Colors.onSurface,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '500',
     lineHeight: 18,
   },
@@ -387,7 +408,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -401,16 +422,16 @@ const styles = StyleSheet.create({
     })
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
-    color: '#1a1f26',
+    color: theme.Colors.onSurface,
     marginBottom: 8,
     textAlign: 'center',
     fontFamily: 'Inter',
   },
   modalMessage: {
-    fontSize: 14,
-    color: '#4e5d6d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
@@ -429,26 +450,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
   },
   modalButtonDestructive: {
-    backgroundColor: '#ff3b30',
+    backgroundColor: theme.Colors.error,
   },
   modalButtonCancel: {
-    backgroundColor: '#f1f3f5',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: theme.Colors.outlineVariant,
   },
   modalButtonText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontFamily: 'Inter',
   },
   modalButtonTextDestructive: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
   },
   modalButtonTextCancel: {
-    color: '#495057',
+    color: theme.Colors.onSurfaceVariant,
   },
 });

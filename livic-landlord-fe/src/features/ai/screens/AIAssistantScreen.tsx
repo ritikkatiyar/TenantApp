@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
@@ -14,12 +15,14 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { Theme } from '@/src/theme/Theme';
 import { logger } from '@/src/utils/logger';
+import { createStyles } from './AIAssistantScreen.styles';
 
 type AIAssistantScreenProps = {
   token: string;
@@ -40,9 +43,12 @@ const QUICK_COMMANDS = [
 ];
 
 export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { isDesktop } = useResponsive();
   const scrollViewRef = useRef<ScrollView>(null);
 
+  const insets = useSafeAreaInsets();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -180,7 +186,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               end={{ x: 1, y: 1 }}
               style={styles.aiOrbIcon}
             >
-              <MaterialIcons name="auto-awesome" size={20} color="#ffffff" />
+              <MaterialIcons name="auto-awesome" size={20} color={theme.Colors.surfaceContainerLowest} />
             </LinearGradient>
             <View>
               <View style={styles.titleRow}>
@@ -202,7 +208,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               style={styles.headerBtn}
               activeOpacity={0.7}
             >
-              <MaterialIcons name="refresh" size={18} color="#6b7a7d" />
+              <MaterialIcons name="refresh" size={18} color={theme.Colors.onSurfaceVariant} />
               <Text style={styles.headerBtnText}>Clear Chat</Text>
             </TouchableOpacity>
           </View>
@@ -224,7 +230,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                 activeOpacity={0.75}
                 style={styles.suggestionChip}
               >
-                <MaterialIcons name={cmd.icon as any} size={16} color="#006875" />
+                <MaterialIcons name={cmd.icon as any} size={16} color={theme.Colors.primary} />
                 <Text style={styles.suggestionChipText}>{cmd.label}</Text>
               </TouchableOpacity>
             ))}
@@ -250,7 +256,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
             >
               {message.role === 'assistant' && (
                 <View style={styles.assistantAvatar}>
-                  <MaterialIcons name="auto-awesome" size={16} color="#006875" />
+                  <MaterialIcons name="auto-awesome" size={16} color={theme.Colors.primary} />
                 </View>
               )}
 
@@ -285,10 +291,10 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
           {isSending && (
             <View style={[styles.messageRow, styles.messageRowAssistant]}>
               <View style={styles.assistantAvatar}>
-                <MaterialIcons name="auto-awesome" size={16} color="#006875" />
+                <MaterialIcons name="auto-awesome" size={16} color={theme.Colors.primary} />
               </View>
               <View style={[styles.bubble, styles.assistantBubble, styles.loadingBubble]}>
-                <ActivityIndicator size="small" color="#006875" />
+                <ActivityIndicator size="small" color={theme.Colors.primary} />
                 <Text style={styles.loadingText}>Processing command with Gemini 1.5 Pro...</Text>
               </View>
             </View>
@@ -300,7 +306,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
-          <View style={styles.inputDock}>
+          <View style={[styles.inputDock, { paddingBottom: Math.max(insets.bottom, 14) }]}>
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.textInput}
@@ -325,7 +331,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               >
                 {!input.trim() || isSending ? (
                   <View style={styles.sendIconDisabled}>
-                    <MaterialIcons name="arrow-upward" size={20} color="#9ca3af" />
+                    <MaterialIcons name="arrow-upward" size={20} color={theme.Colors.onSurfaceVariant} />
                   </View>
                 ) : (
                   <LinearGradient
@@ -334,7 +340,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
                     end={{ x: 1, y: 1 }}
                     style={styles.sendIconActive}
                   >
-                    <MaterialIcons name="arrow-upward" size={20} color="#ffffff" />
+                    <MaterialIcons name="arrow-upward" size={20} color={theme.Colors.surfaceContainerLowest} />
                   </LinearGradient>
                 )}
               </TouchableOpacity>
@@ -350,287 +356,3 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: Theme.Spacing.containerPadding,
-    paddingTop: Platform.OS === 'web' ? 24 : 88,
-  },
-  containerDesktop: {
-    paddingTop: 24,
-  },
-  chatWorkspace: {
-    flex: 1,
-    borderRadius: 24,
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    minHeight: 520,
-  },
-  chatWorkspaceDesktop: {
-    marginVertical: 4,
-  },
-  workspaceHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.06)',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  aiOrbIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  workspaceTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0b1c30',
-  },
-  modelBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.2)',
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10b981',
-  },
-  modelBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#006875',
-  },
-  workspaceSubtitle: {
-    fontSize: 13,
-    color: '#6b7a7d',
-    marginTop: 2,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  headerBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7a7d',
-  },
-  suggestionsContainer: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.04)',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  suggestionsLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.1,
-    color: '#6b7a7d',
-    marginBottom: 8,
-  },
-  suggestionsScroll: {
-    gap: 8,
-  },
-  suggestionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  suggestionChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#006875',
-  },
-  messagesList: {
-    flex: 1,
-  },
-  messagesListContent: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    gap: 16,
-  },
-  messageRow: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'flex-start',
-  },
-  messageRowUser: {
-    justifyContent: 'flex-end',
-  },
-  messageRowAssistant: {
-    justifyContent: 'flex-start',
-  },
-  assistantAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 104, 117, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  bubbleWrapper: {
-    maxWidth: '75%',
-  },
-  bubble: {
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-  },
-  userBubble: {
-    borderBottomRightRadius: 4,
-  },
-  assistantBubble: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderBottomLeftRadius: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  userMessageText: {
-    fontSize: 14,
-    lineHeight: 21,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  assistantMessageText: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: '#151d1e',
-    fontWeight: '400',
-  },
-  loadingBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  loadingText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#006875',
-  },
-  timestampText: {
-    fontSize: 11,
-    color: '#9ca3af',
-    marginTop: 4,
-    paddingHorizontal: 4,
-  },
-  inputDock: {
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.06)',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-  },
-  inputBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderWidth: 1.5,
-    borderColor: 'rgba(0, 104, 117, 0.25)',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    gap: 12,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#151d1e',
-    maxHeight: 100,
-    minHeight: 40,
-    paddingVertical: 6,
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-    outlineWidth: 0,
-  },
-  sendButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  sendIconActive: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendIconDisabled: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputHintRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    paddingHorizontal: 4,
-  },
-  inputHint: {
-    fontSize: 11,
-    color: '#6b7a7d',
-  },
-  charCount: {
-    fontSize: 11,
-    color: '#9ca3af',
-  },
-});

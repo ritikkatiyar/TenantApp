@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
@@ -46,28 +47,30 @@ export function EditorGrid({
   currentDrawBlock,
   handleBlockPress,
 }: EditorGridProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const getBlockColorStyles = (b: UnitBlock) => {
     const activeCount = b.activeLeases ? b.activeLeases.length : 0;
     const capacity = b.capacity || 1;
 
     if (activeCount === 0) {
       return {
-        backgroundColor: '#43a047',
-        borderColor: '#2e7d32',
+        backgroundColor: theme.Colors.primary,
+        borderColor: theme.Colors.primary,
         textColor: '#ffffff',
         accentColor: '#c8e6c9'
       };
     } else if (activeCount < capacity) {
       return {
-        backgroundColor: '#fb8c00',
-        borderColor: '#e65100',
+        backgroundColor: theme.Colors.secondary,
+        borderColor: theme.Colors.secondary,
         textColor: '#ffffff',
         accentColor: '#fff3e0'
       };
     } else {
       return {
-        backgroundColor: '#e53935',
-        borderColor: '#b71c1c',
+        backgroundColor: theme.Colors.error,
+        borderColor: theme.Colors.error,
         textColor: '#ffffff',
         accentColor: '#ffcdd2'
       };
@@ -134,7 +137,7 @@ export function EditorGrid({
                 >
                   <View style={{ flexDirection: 'column', gap: 1 }}>
                     <Text style={[styles.cellText, { color: colorStyles.textColor }]}>{block.unitNumber}</Text>
-                    <Text style={{ fontSize: 9, fontWeight: '700', color: colorStyles.textColor + 'cc' }}>
+                    <Text style={{ fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700', color: colorStyles.textColor + 'cc' }}>
                       {UNIT_TYPE_OPTIONS.find(opt => opt.value === block.type)?.label || '1 BHK'}
                     </Text>
                   </View>
@@ -191,7 +194,7 @@ export function EditorGrid({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   grid: {
     backgroundColor: 'rgba(255, 255, 255, 0.45)',
     borderRadius: 8,
@@ -214,20 +217,20 @@ const styles = StyleSheet.create({
   cellActive: {
     borderRadius: 6,
     borderWidth: 1.5,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 3,
   },
   cellText: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '900',
     fontFamily: 'Inter',
   },
   cellDrawingStart: {
     backgroundColor: 'rgba(0, 229, 255, 0.25)',
-    borderColor: '#00e5ff',
+    borderColor: theme.Colors.primary,
     borderWidth: 2,
     borderStyle: 'dashed',
     borderRadius: 6,
@@ -265,15 +268,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   badgeText: {
-    fontSize: 9,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   badgeTextSmall: {
-    fontSize: 7,
+    fontSize: theme.Typography.LabelSmall.fontSize - 4,
     fontWeight: '800',
-    color: '#1a1a1a',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
 });

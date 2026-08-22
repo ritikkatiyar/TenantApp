@@ -18,7 +18,9 @@ import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
+import { useAppTheme } from '@/src/theme/ThemeContext';
+import { Theme } from '@/src/theme/Theme';
 import { usePathname } from 'expo-router';
 import { runAICommand, getJobStatus } from '@/src/features/ai/api/ai.api';
 
@@ -37,6 +39,8 @@ const EXAMPLES = [
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
   const { accessToken } = useAuth();
+  const { theme } = useAppTheme();
+  const brandGradient = [theme.Colors.primary, theme.Colors.inversePrimary] as const;
 
   const [isOpen, setIsOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -92,8 +96,8 @@ export default function FloatingAIAssistant() {
 
   const handleOpen = () => {
     Animated.sequence([
-      Animated.timing(bubbleScale, { toValue: 0.85, duration: 100, useNativeDriver: true }),
-      Animated.spring(bubbleScale, { toValue: 1, friction: 3, useNativeDriver: true }),
+      Animated.timing(bubbleScale, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+      Animated.spring(bubbleScale, { toValue: 1, friction: 8, useNativeDriver: true }),
     ]).start(() => {
       setIsOpen(true);
     });
@@ -266,12 +270,12 @@ export default function FloatingAIAssistant() {
           >
             <Animated.View style={{ transform: [{ scale: bubbleScale }] }}>
               <LinearGradient
-                colors={['#00F2FE', '#4FACFE', '#7F00FF']}
+                colors={brandGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.bubbleGradient}
               >
-                <MaterialIcons name="auto-awesome" size={24} color="#fff" />
+                <MaterialIcons name="chat" size={24} color={theme.Colors.onPrimary} />
               </LinearGradient>
             </Animated.View>
           </TouchableOpacity>
@@ -297,12 +301,12 @@ export default function FloatingAIAssistant() {
             <View style={styles.headerTitleRow}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={styles.headerIconWrapper}>
-                  <MaterialIcons name="auto-awesome" size={16} color="#006875" />
+                  <MaterialIcons name="chat" size={16} color={theme.Colors.primary} />
                 </View>
                 <Text style={styles.headerTitle}>AI Assistant</Text>
               </View>
               <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
-                <MaterialIcons name="close" size={20} color="#4f6073" />
+                <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
               </TouchableOpacity>
             </View>
           </View>
@@ -331,7 +335,7 @@ export default function FloatingAIAssistant() {
                     disabled={isSending}
                     activeOpacity={0.7}
                   >
-                    <MaterialIcons name="bolt" size={14} color="#006875" />
+                    <MaterialIcons name="bolt" size={14} color={theme.Colors.primary} />
                     <Text style={styles.exampleText} numberOfLines={1}>{ex}</Text>
                   </TouchableOpacity>
                 ))}
@@ -351,13 +355,17 @@ export default function FloatingAIAssistant() {
                     tint="light"
                     style={[
                       styles.msgBubble,
-                      msg.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
+                      msg.role === 'user'
+                        ? [styles.bubbleUser, { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary }]
+                        : styles.bubbleAssistant,
                     ]}
                   >
                     <Text
                       style={[
                         styles.msgText,
-                        msg.role === 'user' ? styles.textUser : styles.textAssistant,
+                        msg.role === 'user'
+                          ? [styles.textUser, { color: theme.Colors.onPrimary }]
+                          : [styles.textAssistant, { color: theme.Colors.onSurface }],
                       ]}
                     >
                       {msg.text}
@@ -369,8 +377,8 @@ export default function FloatingAIAssistant() {
               {isSending && (
                 <View style={[styles.msgWrapper, styles.msgAssistant]}>
                   <BlurView intensity={90} tint="light" style={[styles.msgBubble, styles.bubbleAssistant, styles.loadingBubble]}>
-                    <ActivityIndicator size="small" color="#006875" />
-                    <Text style={styles.loadingText}>Thinking...</Text>
+                    <ActivityIndicator size="small" color={theme.Colors.primary} />
+                    <Text style={[styles.loadingText, { color: theme.Colors.onSurfaceVariant }]}>Thinking...</Text>
                   </BlurView>
                 </View>
               )}
@@ -379,9 +387,9 @@ export default function FloatingAIAssistant() {
             {/* Chat Footer Input */}
             <View style={styles.inputBar}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { borderColor: `${theme.Colors.primary}33`, color: theme.Colors.onSurface }]}
                 placeholder="Ask AI to help..."
-                placeholderTextColor="#7d8b8e"
+                placeholderTextColor={theme.Colors.onSurfaceVariant}
                 value={input}
                 onChangeText={setInput}
                 multiline
@@ -398,12 +406,12 @@ export default function FloatingAIAssistant() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={['#00F2FE', '#0072ff']}
+                  colors={brandGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.sendGradient}
                 >
-                  <MaterialIcons name="send" size={16} color="#fff" />
+                  <MaterialIcons name="send" size={16} color={theme.Colors.onPrimary} />
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -426,11 +434,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.85)',
     backgroundColor: 'rgba(255, 255, 255, 0.88)',
     overflow: 'hidden',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowColor: Theme.Surface.shadowColor,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
     zIndex: 99999,
   },
   bubbleTrigger: {
@@ -484,9 +492,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 15,
+    fontSize: Theme.Typography.TitleSmall.fontSize,
     fontWeight: '800',
-    color: '#006875',
   },
   closeBtn: {
     padding: 6,
@@ -503,9 +510,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   examplesHeader: {
-    fontSize: 11,
+    fontSize: Theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
-    color: '#6b7a7d',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -521,8 +527,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   exampleText: {
-    fontSize: 12,
-    color: '#006875',
+    fontSize: Theme.Typography.BodySmall.fontSize,
+    color: Theme.Colors.primary,
     fontWeight: '600',
     flex: 1,
   },
@@ -545,8 +551,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bubbleUser: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
     borderBottomRightRadius: 4,
   },
   bubbleAssistant: {
@@ -555,15 +559,13 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   msgText: {
-    fontSize: 13.5,
+    fontSize: Theme.Typography.BodyMedium.fontSize,
     lineHeight: 19,
   },
   textUser: {
-    color: '#fff',
     fontWeight: '600',
   },
   textAssistant: {
-    color: '#151d1e',
     fontWeight: '500',
   },
   loadingBubble: {
@@ -572,8 +574,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loadingText: {
-    fontSize: 12,
-    color: '#6b7a7d',
+    fontSize: Theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
   },
   inputBar: {
@@ -589,12 +590,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.2)',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    fontSize: 13.5,
-    color: '#151d1e',
+    fontSize: Theme.Typography.BodyMedium.fontSize,
     maxHeight: 80,
   },
   sendBtn: {

@@ -80,7 +80,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   pageTitle: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
   },
@@ -112,7 +112,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Surface.border,
   },
   backButtonTextDesktop: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onBackground,
   },
@@ -120,13 +120,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
   },
 });

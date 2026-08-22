@@ -29,21 +29,21 @@ interface MenuItem {
   color: string;
 }
 
-const MENU_ITEMS: MenuItem[] = [
-  { title: 'My Home', subtitle: 'Dashboard & Feed', route: '/tenant-home', icon: 'home', color: '#00D8F6' },
-  { title: 'My Property', subtitle: 'Lease & Building', route: '/tenant-property', icon: 'apartment', color: '#38EF7D' },
-  { title: 'Items & Assets', subtitle: 'Furnishings & Inventory', route: '/tenant-inventory', icon: 'inventory', color: '#FF7043' },
-  { title: 'Payments', subtitle: 'Invoices & Receipts', route: '/tenant-payments', icon: 'payments', color: '#FFB74D' },
-  { title: 'Support & Repair', subtitle: 'Maintenance Requests', route: '/tenant-maintenance', icon: 'build', color: '#EF5350' },
-  { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: '#78909C' },
-];
-
 export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { theme, isDark, toggleTheme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
+  const MENU_ITEMS: MenuItem[] = React.useMemo(() => [
+    { title: 'My Home', subtitle: 'Dashboard & Feed', route: '/tenant-home', icon: 'home', color: theme.Colors.primary },
+    { title: 'My Property', subtitle: 'Lease & Building', route: '/tenant-property', icon: 'apartment', color: theme.Colors.secondary },
+    { title: 'Items & Assets', subtitle: 'Furnishings & Inventory', route: '/tenant-inventory', icon: 'inventory', color: theme.Colors.tertiary },
+    { title: 'Payments', subtitle: 'Invoices & Receipts', route: '/tenant-payments', icon: 'payments', color: theme.Colors.primary },
+    { title: 'Support & Repair', subtitle: 'Maintenance Requests', route: '/tenant-maintenance', icon: 'build', color: theme.Colors.error },
+    { title: 'Settings', subtitle: 'Profile & App Config', route: '/settings', icon: 'settings', color: theme.Colors.onSurfaceVariant },
+  ], [theme]);
 
   const translateY = useRef(new Animated.Value(300)).current;
 
@@ -200,7 +200,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopRightRadius: 28,
     maxHeight: '85%',
     paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -242,7 +242,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginRight: 16,
   },
   avatarText: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
@@ -250,12 +250,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    fontSize: 18,
+    fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   profileRole: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
     textTransform: 'capitalize',
@@ -297,7 +297,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 2,
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,
   },
@@ -306,7 +306,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
   },
   cardSubtitle: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
 });

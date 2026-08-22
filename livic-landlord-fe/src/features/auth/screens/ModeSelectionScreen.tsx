@@ -210,7 +210,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: Theme.Rounded.md,
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: 'bold',
     color: theme.Colors.outline,
   },

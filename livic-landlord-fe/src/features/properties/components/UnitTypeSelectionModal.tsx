@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import {
   Modal,
@@ -34,6 +35,8 @@ export default function UnitTypeSelectionModal({
   onSelect,
   selectedValue,
 }: UnitTypeSelectionModalProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
 
@@ -53,7 +56,7 @@ export default function UnitTypeSelectionModal({
                 <Text style={styles.subtitle}>Choose the layout style to generate for all floors.</Text>
               </View>
               <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <MaterialIcons name="close" size={22} color="#5b6b6d" />
+                <MaterialIcons name="close" size={22} color={theme.Colors.onSurfaceVariant} />
               </TouchableOpacity>
             </View>
 
@@ -88,7 +91,7 @@ export default function UnitTypeSelectionModal({
                       </View>
                       {isSelected && (
                         <View style={styles.checkBadge}>
-                          <MaterialIcons name="check" size={12} color="#fff" />
+                          <MaterialIcons name="check" size={12} color={theme.Colors.surfaceContainerLowest} />
                         </View>
                       )}
                     </TouchableOpacity>
@@ -119,7 +122,7 @@ export default function UnitTypeSelectionModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -132,7 +135,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 24,
@@ -158,13 +161,13 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0, 0, 0, 0.05)',
   },
   title: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   subtitle: {
-    fontSize: 12,
-    color: '#5b6b6d',
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
     fontWeight: '500',
   },
@@ -190,7 +193,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   cardSelected: {
-    borderColor: '#0072ff',
+    borderColor: theme.Colors.secondary,
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
   },
   iconWrapper: {
@@ -210,16 +213,16 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   cardLabel: {
-    fontSize: 15,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   cardLabelSelected: {
-    color: '#0072ff',
+    color: theme.Colors.secondary,
   },
   cardDesc: {
-    fontSize: 11,
-    color: '#5b6b6d',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     marginTop: 3,
     lineHeight: 14,
   },
@@ -230,7 +233,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#0072ff',
+    backgroundColor: theme.Colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -251,9 +254,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   cancelBtnText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#5b6b6d',
+    color: theme.Colors.onSurfaceVariant,
   },
   confirmBtnWrapper: {
     borderRadius: 12,
@@ -266,8 +269,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmBtnText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
   },
 });

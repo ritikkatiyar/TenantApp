@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +11,8 @@ interface MobileHeaderProps {
 }
 
 export default function MobileHeader({ title }: MobileHeaderProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const insets = useSafeAreaInsets();
 
   return (
@@ -25,7 +28,7 @@ export default function MobileHeader({ title }: MobileHeaderProps) {
         </View>
         
         <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
-          <Ionicons name="notifications-outline" size={23} color="#0b1c30" />
+          <Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} />
           <View style={styles.notificationBadge} />
         </TouchableOpacity>
       </View>
@@ -33,7 +36,7 @@ export default function MobileHeader({ title }: MobileHeaderProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   headerWrapper: {
     position: 'absolute',
     top: 0,
@@ -43,7 +46,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.4)',
     backgroundColor: 'rgba(248, 249, 255, 0.4)',
-    shadowColor: '#006677',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
     shadowRadius: 12,
@@ -66,7 +69,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.65)',
-    shadowColor: '#006677',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -78,9 +81,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   titleText: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
-    color: '#0b1c30',
+    color: theme.Colors.onSurface,
   },
   notificationButton: {
     padding: 8,
@@ -88,7 +91,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.65)',
-    shadowColor: '#006677',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -102,6 +105,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ff3b30',
+    backgroundColor: theme.Colors.error,
   },
 });
