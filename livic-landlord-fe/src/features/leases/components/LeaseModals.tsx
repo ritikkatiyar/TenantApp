@@ -12,6 +12,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 // ── Modal shell ──────────────────────────────────────────────────────────────
 function ModalShell({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: React.ReactNode }) {
   const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -30,6 +31,7 @@ function ModalFooter({
   submitIcon: string; submitColors: [string, string]; disabled?: boolean;
 }) {
   const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.footer}>
       <TouchableOpacity onPress={onCancel} style={styles.cancelBtn}>
@@ -66,6 +68,7 @@ export function BookRoomModal({
   onSubmit: () => void;
 }) {
   const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={styles.card}>
@@ -113,7 +116,7 @@ export function BookRoomModal({
           <Text style={[styles.label, { color: theme.Colors.onSurface }]}>Email Address (Optional)</Text>
           <TextInput value={bookingTenantEmail} onChangeText={setBookingTenantEmail} placeholder="tenant@example.com" placeholderTextColor={theme.Colors.onSurfaceVariant} keyboardType="email-address" style={[styles.input, { color: theme.Colors.onSurface, borderColor: `${theme.Colors.primary}30` }]} />
         </ScrollView>
-        <ModalFooter onCancel={onClose} onSubmit={onSubmit} submitLabel="Confirm Booking" submitIcon="check" submitColors={[theme.Colors.primary, '#0072ff']} />
+        <ModalFooter onCancel={onClose} onSubmit={onSubmit} submitLabel="Confirm Booking" submitIcon="check" submitColors={[theme.Colors.primary, theme.Colors.secondary]} />
       </View>
     </ModalShell>
   );
@@ -124,6 +127,7 @@ export function ServeNoticeModal({ visible, onClose, noticeMoveOutDate, setNotic
   visible: boolean; onClose: () => void; noticeMoveOutDate: string; setNoticeMoveOutDate: (v: string) => void; onSubmit: () => void;
 }) {
   const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -138,7 +142,7 @@ export function ServeNoticeModal({ visible, onClose, noticeMoveOutDate, setNotic
           <Text style={[styles.label, { color: theme.Colors.onSurface }]}>Expected Vacate Date (YYYY-MM-DD) *</Text>
           <TextInput value={noticeMoveOutDate} onChangeText={setNoticeMoveOutDate} placeholder="2026-09-30" placeholderTextColor={theme.Colors.onSurfaceVariant} style={[styles.input, { color: theme.Colors.onSurface, borderColor: `${theme.Colors.error}30` }]} />
         </View>
-        <ModalFooter onCancel={onClose} onSubmit={onSubmit} submitLabel="Serve Notice" submitIcon="warning" submitColors={[theme.Colors.error, '#ef4444']} />
+        <ModalFooter onCancel={onClose} onSubmit={onSubmit} submitLabel="Serve Notice" submitIcon="warning" submitColors={[theme.Colors.error, theme.Colors.errorContainer]} />
       </View>
     </ModalShell>
   );
@@ -149,6 +153,7 @@ export function CashTokenModal({ visible, onClose, cashAmount, setCashAmount, ca
   visible: boolean; onClose: () => void; cashAmount: string; setCashAmount: (v: string) => void; cashNote: string; setCashNote: (v: string) => void; onSubmit: () => void;
 }) {
   const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -165,7 +170,7 @@ export function CashTokenModal({ visible, onClose, cashAmount, setCashAmount, ca
           <Text style={[styles.label, { color: theme.Colors.onSurface }]}>Receipt / Payment Notes</Text>
           <TextInput value={cashNote} onChangeText={setCashNote} placeholder="Handed in person / receipt #123" placeholderTextColor={theme.Colors.onSurfaceVariant} style={[styles.input, { color: theme.Colors.onSurface, borderColor: `${theme.Colors.primary}30` }]} />
         </View>
-        <ModalFooter onCancel={onClose} onSubmit={onSubmit} submitLabel="Record Payment" submitIcon="payments" submitColors={[theme.Colors.primary, '#0072ff']} />
+        <ModalFooter onCancel={onClose} onSubmit={onSubmit} submitLabel="Record Payment" submitIcon="payments" submitColors={[theme.Colors.primary, theme.Colors.secondary]} />
       </View>
     </ModalShell>
   );
@@ -179,6 +184,7 @@ export function ConvertToLeaseModal({ visible, onClose, convMonthlyRentAmount, s
   onSubmit: () => void;
 }) {
   const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 480 }]}>
@@ -195,7 +201,7 @@ export function ConvertToLeaseModal({ visible, onClose, convMonthlyRentAmount, s
           <Text style={[styles.label, { color: theme.Colors.onSurface }]}>Security Deposit (₹) *</Text>
           <TextInput value={convSecurityDeposit} onChangeText={setConvSecurityDeposit} placeholder="50000" placeholderTextColor={theme.Colors.onSurfaceVariant} keyboardType="numeric" style={[styles.input, { color: theme.Colors.onSurface, borderColor: `${theme.Colors.primary}30` }]} />
         </View>
-        <ModalFooter onCancel={onClose} onSubmit={onSubmit} submitLabel="Activate Lease" submitIcon="how-to-reg" submitColors={[theme.Colors.primary, '#10b981']} />
+        <ModalFooter onCancel={onClose} onSubmit={onSubmit} submitLabel="Activate Lease" submitIcon="how-to-reg" submitColors={[theme.Colors.primary, theme.Colors.secondary]} />
       </View>
     </ModalShell>
   );
@@ -209,6 +215,7 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
   onSubmit: () => void; isSaving: boolean;
 }) {
   const { theme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.card, { maxWidth: 440 }]}>
@@ -222,10 +229,10 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
         <View style={styles.body}>
           {editingLease && (
             <View style={{ marginBottom: 14, padding: 12, backgroundColor: `${theme.Colors.primary}12`, borderRadius: 12, borderWidth: 1, borderColor: `${theme.Colors.primary}30` }}>
-              <Text style={{ fontSize: 14, fontWeight: '800', color: theme.Colors.primary }}>
+              <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.primary }}>
                 Unit {editingLease.unitNumber} • {editingLease.tenantName || 'Tenant'}
               </Text>
-              {editingLease.tenantPhone ? <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>{editingLease.tenantPhone}</Text> : null}
+              {editingLease.tenantPhone ? <Text style={{ fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>{editingLease.tenantPhone}</Text> : null}
             </View>
           )}
           <Text style={[styles.label, { color: theme.Colors.onSurface }]}>Monthly Rent Amount (₹) *</Text>
@@ -238,7 +245,7 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
             <Text style={[styles.cancelBtnText, { color: theme.Colors.onSurface }]}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onSubmit} disabled={isSaving} style={styles.submitBtn}>
-            <LinearGradient colors={[theme.Colors.primary, '#0072ff']} style={styles.submitBtnInner}>
+            <LinearGradient colors={[theme.Colors.primary, theme.Colors.secondary]} style={styles.submitBtnInner}>
               {isSaving ? <ActivityIndicator size="small" color="#ffffff" /> : (
                 <>
                   <MaterialIcons name="check" size={18} color="#ffffff" />
@@ -253,21 +260,21 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  card: { width: '100%', maxWidth: 560, backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: 24, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 12 },
+  card: { width: '100%', maxWidth: 560, backgroundColor: theme.Colors.surface, borderRadius: 24, overflow: 'hidden', shadowColor: theme.Colors.onSurface, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 12 },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 20, paddingBottom: 12 },
-  kicker: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
-  title: { fontSize: 20, fontWeight: '900' },
+  kicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
+  title: { fontSize: theme.Typography.TitleMedium.fontSize, fontWeight: '900' },
   closeBtn: { padding: 4 },
   body: { paddingHorizontal: 20, paddingBottom: 8, maxHeight: 420 },
-  label: { fontSize: 12, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, marginBottom: 14, backgroundColor: 'rgba(255,255,255,0.8)' },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.7)' },
-  chipText: { fontSize: 13, fontWeight: '600' },
-  footer: { flexDirection: 'row', gap: 12, padding: 16, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
-  cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.6)' },
-  cancelBtnText: { fontSize: 14, fontWeight: '700' },
+  label: { fontSize: theme.Typography.LabelMedium.fontSize, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: theme.Typography.BodyMedium.fontSize, marginBottom: 14, backgroundColor: 'rgba(255,255,255,0.8)' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: theme.Colors.outlineVariant, backgroundColor: theme.Colors.surfaceContainerLowest },
+  chipText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '600' },
+  footer: { flexDirection: 'row', gap: 12, padding: 16, paddingTop: 8, borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant },
+  cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.Colors.outlineVariant, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.Colors.surfaceContainerLow },
+  cancelBtnText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700' },
   submitBtn: { flex: 2, borderRadius: 12, overflow: 'hidden' },
   submitBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12 },
   submitBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },

@@ -168,7 +168,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 18 },
   kicker: { fontFamily: 'Inter', fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
   title: { fontFamily: 'Inter', fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '800', lineHeight: 38, color: theme.Colors.onSurface, marginTop: 6 },
-  titleMobile: { fontSize: 30, lineHeight: 36 },
+  titleMobile: { fontSize: theme.Typography.HeadlineMedium.fontSize, lineHeight: 36 },
   subtitle: { fontFamily: 'Inter', fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '400', lineHeight: 24, color: theme.Colors.onSurfaceVariant, marginTop: 8, maxWidth: 700 },
   titleBlock: { maxWidth: 720 },
   reportButtonWrapper: {
@@ -215,7 +215,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   verifiedText: { flex: 1, color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.BodyMedium.fontSize, lineHeight: 19, fontStyle: 'italic' },
   inventoryColumn: { flex: 1.7, gap: 12 },
   sectionHeader: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  sectionTitle: { fontSize: 21, fontWeight: '800', color: theme.Colors.onSurface },
+  sectionTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
   sectionSubtitle: { color: theme.Colors.onSurfaceVariant, marginTop: 4, maxWidth: 620 },
   readOnlyPill: { backgroundColor: theme.Colors.secondaryFixed, paddingHorizontal: 11, paddingVertical: 5, borderRadius: Theme.Rounded.full },
   readOnlyText: { fontFamily: 'Inter', fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.secondary },

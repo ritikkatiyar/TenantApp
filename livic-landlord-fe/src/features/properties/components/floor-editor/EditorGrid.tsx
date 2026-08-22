@@ -230,7 +230,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cellDrawingStart: {
     backgroundColor: 'rgba(0, 229, 255, 0.25)',
-    borderColor: '#00e5ff',
+    borderColor: theme.Colors.primary,
     borderWidth: 2,
     borderStyle: 'dashed',
     borderRadius: 6,

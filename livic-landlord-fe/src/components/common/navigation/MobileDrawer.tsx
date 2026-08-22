@@ -261,7 +261,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
   },
   userEmail: {
-    color: '#4f6073',
+    color: theme.Colors.onSurfaceVariant,
     fontSize: theme.Typography.BodySmall.fontSize,
     marginTop: 2,
   },
@@ -274,11 +274,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sectionTitle: {
     fontSize: theme.Typography.LabelSmall.fontSize,
-    fontWeight: '800',
-    color: 'black',
-    textTransform: 'uppercase',
+    fontWeight: '700',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
-    marginBottom: 10,
+    textTransform: 'uppercase',
+    marginBottom: 12,
   },
   roleToggleRow: {
     flexDirection: 'row',
@@ -288,7 +288,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   roleToggleLabel: {
     fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
-    color: '#2f3b3e',
+    color: theme.Colors.onSurface,
   },
   linksScroll: {
     flex: 1,
@@ -319,7 +319,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   linkText: {
     fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
-    color: '#4f6073',
+    color: theme.Colors.onSurfaceVariant,
     marginLeft: 12,
   },
   linkTextActive: {
@@ -343,7 +343,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   logoutText: {
     fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#ff3b30',
+    color: theme.Colors.error,
     marginLeft: 12,
   },
 });

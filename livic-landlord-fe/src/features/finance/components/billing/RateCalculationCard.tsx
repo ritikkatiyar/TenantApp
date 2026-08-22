@@ -161,7 +161,7 @@ export function RateCalculationCard({
                       >
                         <Text style={[
                           styles.scrollText,
-                          isActive && { fontSize: 16, fontWeight: '700', color: theme.Colors.primary },
+                          isActive && { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700', color: theme.Colors.primary },
                         ]}>{unit}</Text>
                       </TouchableOpacity>
                     );
@@ -306,7 +306,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: '100%',
   },
   scrollText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '500',
     color: 'rgba(132, 148, 149, 0.4)',
   },

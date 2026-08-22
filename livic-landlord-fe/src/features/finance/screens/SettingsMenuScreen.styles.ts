@@ -47,7 +47,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   compactTitleText: {
-    fontSize: 17,
+    fontSize: theme.Typography.TitleMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',

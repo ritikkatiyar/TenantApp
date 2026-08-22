@@ -421,7 +421,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   toggleBtnActive: {
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    shadowColor: '#005',
+    shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,

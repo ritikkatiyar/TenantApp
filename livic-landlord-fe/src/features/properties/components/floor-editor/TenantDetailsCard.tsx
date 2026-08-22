@@ -488,7 +488,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(0,104,117,0.1)',
   },
   createTenantTitle: {
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1,
@@ -498,7 +498,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 6,
   },
   inputLabel: {
-    fontSize: 9,
+    fontSize: theme.Typography.LabelSmall.fontSize - 2,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -517,7 +517,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',
@@ -534,7 +534,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   statusToggleText: {
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '900',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
@@ -548,14 +548,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   errorText: {
     color: theme.Colors.error,
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     paddingLeft: 4,
     marginTop: 4,
     fontFamily: 'Inter',
   },
   errorTextFlat: {
     color: theme.Colors.error,
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     marginTop: -8,
     marginBottom: 12,
     paddingLeft: 4,
@@ -579,13 +579,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   tenantTagText: {
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   sheetSubtitle: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
     fontFamily: 'Inter',
@@ -607,7 +607,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   warningText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.error,
     lineHeight: 18,
@@ -631,7 +631,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0,104,117,0.15)',
     marginTop: 6,
-    shadowColor: '#000',
+    shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
@@ -650,13 +650,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   suggestionName: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   suggestionPhone: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
     fontFamily: 'Inter',
@@ -671,7 +671,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   quickCreatePromptText: {
-    fontSize: 12,
+    fontSize: theme.Typography.LabelMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
@@ -687,7 +687,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   quickCreateTitle: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize - 1,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -697,7 +697,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 5,
   },
   quickCreateLabel: {
-    fontSize: 8,
+    fontSize: theme.Typography.LabelSmall.fontSize - 3,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1,
@@ -715,13 +715,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   tenantMatchName: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.tertiary,
     fontFamily: 'Inter',
   },
   tenantMatchEmail: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
