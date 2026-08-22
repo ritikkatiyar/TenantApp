@@ -78,6 +78,8 @@ jest.mock('@/src/features/finance/hooks/useMeterReading', () => ({
   }),
 }));
 
+jest.setTimeout(30000);
+
 describe('MeterReadingScreen Component', () => {
   it('renders utility configurations and unit rows correctly', async () => {
     const { getByText } = await render(

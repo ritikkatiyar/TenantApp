@@ -70,7 +70,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   statTitle: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5 },
   statIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
-  statVal: { fontSize: theme.Typography.headlineSm.fontSize, fontWeight: '900', color: theme.Colors.onSurface },
+  statVal: { fontSize: theme.Typography.HeadlineSmall.fontSize, fontWeight: '900', color: theme.Colors.onSurface },
 
   tabsRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)', marginTop: 8, paddingHorizontal: 16 },
   tabsRowDesktop: { paddingHorizontal: 0, marginTop: 16 },

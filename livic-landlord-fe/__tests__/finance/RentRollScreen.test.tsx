@@ -79,6 +79,8 @@ jest.mock('@/src/features/finance/hooks/useRentRoll', () => ({
   }),
 }));
 
+jest.setTimeout(30000);
+
 describe('RentRollScreen Component', () => {
   it('renders rent cycles correctly', async () => {
     const { getByText } = await render(

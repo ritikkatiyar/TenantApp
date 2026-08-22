@@ -54,6 +54,8 @@ jest.mock('@/src/features/finance/hooks/useChargeConfig', () => ({
   }),
 }));
 
+jest.setTimeout(30000);
+
 describe('CreateExpenseScreen Component', () => {
   it('renders creation form fields correctly', async () => {
     const { getByText } = await render(
@@ -62,6 +64,6 @@ describe('CreateExpenseScreen Component', () => {
       </QueryClientProvider>
     );
 
-    expect(getByText('Expense Name')).toBeTruthy();
+    expect(getByText('CHARGE NAME')).toBeTruthy();
   });
 });

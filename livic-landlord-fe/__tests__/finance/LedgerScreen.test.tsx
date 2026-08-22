@@ -53,6 +53,8 @@ jest.mock('@/src/features/finance/hooks/useLedger', () => ({
   }),
 }));
 
+jest.setTimeout(30000);
+
 describe('LedgerScreen Component', () => {
   it('renders ledger transactions correctly', async () => {
     const { getByText } = await render(

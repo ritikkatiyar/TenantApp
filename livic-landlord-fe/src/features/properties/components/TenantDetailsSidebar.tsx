@@ -404,7 +404,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   sheetUnitTitle: {
-    fontSize: theme.Typography.headlineSmall?.fontSize || 24,
+    fontSize: theme.Typography.HeadlineSmall.fontSize,
     fontWeight: '900',
     color: theme.Colors.onSurface,
   },

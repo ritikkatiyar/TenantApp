@@ -118,7 +118,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   floorTitle: {
-    fontSize: theme.Typography.headlineSm.fontSize,
+    fontSize: theme.Typography.HeadlineSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
@@ -389,7 +389,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginRight: 16,
   },
   floorNumberText: {
-    fontSize: theme.Typography.headlineSm.fontSize,
+    fontSize: theme.Typography.HeadlineSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
