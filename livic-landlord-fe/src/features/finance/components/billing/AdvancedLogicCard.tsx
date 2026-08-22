@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Haptics from 'expo-haptics';
 import { View, Text, StyleSheet, Switch, TextInput } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,7 +38,10 @@ export function AdvancedLogicCard({
         <Text style={styles.settingText}>Apply Sales Tax</Text>
         <Switch 
           value={applySalesTax} 
-          onValueChange={setApplySalesTax}
+          onValueChange={(val) => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setApplySalesTax(val);
+          }}
           trackColor={{ false: '#d1d5db', true: '#00F0FF' }}
           thumbColor="#ffffff"
         />
@@ -47,7 +51,10 @@ export function AdvancedLogicCard({
         <Text style={styles.settingText}>Auto-Carry Forward</Text>
         <Switch 
           value={autoCarryForward} 
-          onValueChange={setAutoCarryForward}
+          onValueChange={(val) => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setAutoCarryForward(val);
+          }}
           trackColor={{ false: '#d1d5db', true: '#00F0FF' }}
           thumbColor="#ffffff"
         />

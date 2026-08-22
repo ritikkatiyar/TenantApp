@@ -209,7 +209,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 48,
+    height: 46,
     paddingHorizontal: 24,
   },
   desktopSaveButtonText: {

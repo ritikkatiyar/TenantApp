@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Platform, Alert, TouchableOpacity, Modal } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -156,6 +157,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const showToast = useCallback((message: string, type: ToastType = 'info', title?: string) => {
     if (timerRef.current) clearTimeout(timerRef.current);
 
+    if (Platform.OS !== 'web') {
+      if (type === 'success') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      } else if (type === 'error') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      } else if (type === 'warning') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+      } else {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      }
+    }
+
     // Auto-derive title if not provided
     const autoTitle = title ?? (
       type === 'success' ? 'Success' :
@@ -186,6 +199,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const isConfirmation = buttons && buttons.length > 1;
 
       if (isConfirmation) {
+        if (Platform.OS !== 'web') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        }
         setConfirmDialog({
           title: titleStr,
           message: msg,

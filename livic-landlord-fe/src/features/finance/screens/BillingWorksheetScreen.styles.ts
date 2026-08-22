@@ -125,13 +125,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '900',
     color: theme.Colors.onSurface,
   },
-  desktopSaveButtonWrapper: { borderRadius: 16, overflow: 'hidden' },
+  desktopSaveButtonWrapper: { borderRadius: 23, overflow: 'hidden' },
   desktopSaveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 14,
+    height: 46,
     gap: 8,
   },
   desktopSaveButtonText: {

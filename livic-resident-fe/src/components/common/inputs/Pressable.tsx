@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   focused: {
     ...Platform.select({
       web: {
-        boxShadow: '0 0 0 2px rgba(0, 104, 117, 0.4)',
+        boxShadow: '0 0 0 3px rgba(0, 104, 117, 0.5)',
       } as any,
       default: {},
     }),

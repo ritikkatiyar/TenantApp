@@ -338,7 +338,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
             </ScrollView>
 
             {/* Input Bar */}
-            <View style={styles.dialogueFooter}>
+            <View style={[styles.dialogueFooter, { paddingBottom: Math.max(insets.bottom, 10) }]}>
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.textInput}

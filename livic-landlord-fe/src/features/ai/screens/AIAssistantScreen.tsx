@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { getJobStatus, runAICommand } from '@/src/features/ai/api/ai.api';
 import { useResponsive } from '@/src/hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
@@ -47,6 +48,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
   const { isDesktop } = useResponsive();
   const scrollViewRef = useRef<ScrollView>(null);
 
+  const insets = useSafeAreaInsets();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -304,7 +306,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
-          <View style={styles.inputDock}>
+          <View style={[styles.inputDock, { paddingBottom: Math.max(insets.bottom, 14) }]}>
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.textInput}

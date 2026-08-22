@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   ActivityIndicator,
   Clipboard,
@@ -244,7 +245,10 @@ export function SettingsTabContent({
                   {!isOwner && !isTenant && (
                     <Switch
                       value={item.isActive}
-                      onValueChange={(val) => handleToggleRoleActive(item, val)}
+                      onValueChange={(val) => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        handleToggleRoleActive(item, val);
+                      }}
                       disabled={!canEdit}
                       trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
                       thumbColor={item.isActive ? '#00d4ff' : '#9ca3af'}
@@ -439,7 +443,10 @@ export function SettingsTabContent({
             </View>
             <Switch
               value={enableLateFee}
-              onValueChange={setEnableLateFee}
+              onValueChange={(val) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setEnableLateFee(val);
+              }}
               trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
               thumbColor={enableLateFee ? '#00d4ff' : '#9ca3af'}
             />
@@ -458,7 +465,10 @@ export function SettingsTabContent({
             </View>
             <Switch
               value={enableWhatsappAlerts}
-              onValueChange={setEnableWhatsappAlerts}
+              onValueChange={(val) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setEnableWhatsappAlerts(val);
+              }}
               trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
               thumbColor={enableWhatsappAlerts ? '#00d4ff' : '#9ca3af'}
             />
@@ -470,7 +480,10 @@ export function SettingsTabContent({
             </View>
             <Switch
               value={enableEmailAlerts}
-              onValueChange={setEnableEmailAlerts}
+              onValueChange={(val) => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setEnableEmailAlerts(val);
+              }}
               trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
               thumbColor={enableEmailAlerts ? '#00d4ff' : '#9ca3af'}
             />

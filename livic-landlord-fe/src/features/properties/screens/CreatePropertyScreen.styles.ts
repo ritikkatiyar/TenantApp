@@ -277,7 +277,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '600',
   },
   desktopSaveButtonWrapper: {
-    borderRadius: 16,
+    borderRadius: 23,
     overflow: 'hidden',
   },
   desktopSaveButton: {
@@ -285,7 +285,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 14,
+    height: 46,
     gap: 8,
   },
   desktopSaveButtonText: {
