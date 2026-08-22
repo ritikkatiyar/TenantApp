@@ -1,15 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import BillingWorksheetScreen from '../../src/features/finance/screens/BillingWorksheetScreen';
+import CreateExpenseScreen from '../../src/features/finance/screens/CreateExpenseScreen';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({
@@ -18,6 +12,7 @@ jest.mock('expo-router', () => ({
   }),
   useLocalSearchParams: () => ({
     propertyId: 'prop-123',
+    chargeId: undefined,
   }),
 }));
 
@@ -41,21 +36,32 @@ jest.mock('@/src/hooks/useProperties', () => ({
   }),
 }));
 
-jest.mock('@/src/features/finance/api/charge.api', () => ({
-  getActiveChargesForProperty: jest.fn(() => Promise.resolve([])),
+jest.mock('@/src/components/common/feedback/ToastContext', () => ({
+  useToast: () => ({
+    showToast: jest.fn(),
+  }),
 }));
 
-jest.mock('@/src/features/finance/api/worksheet.api', () => ({
-  getOrCreateWorksheet: jest.fn(() => Promise.resolve([])),
+jest.mock('@/src/features/finance/hooks/useChargeConfig', () => ({
+  useChargeConfig: () => ({
+    chargeConfig: null,
+    isLoading: false,
+    refetch: jest.fn(),
+    createConfig: jest.fn(),
+    isCreating: false,
+    updateConfig: jest.fn(),
+    isUpdating: false,
+  }),
 }));
 
-describe('BillingWorksheetScreen Component', () => {
-  it('renders correctly', async () => {
+describe('CreateExpenseScreen Component', () => {
+  it('renders creation form fields correctly', async () => {
     const { getByText } = await render(
       <QueryClientProvider client={queryClient}>
-        <BillingWorksheetScreen token="token" />
+        <CreateExpenseScreen token="token" />
       </QueryClientProvider>
     );
-    expect(getByText('Worksheets')).toBeTruthy();
-  }, 30000);
+
+    expect(getByText('Expense Name')).toBeTruthy();
+  });
 });

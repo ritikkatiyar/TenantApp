@@ -1,15 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import BillingWorksheetScreen from '../../src/features/finance/screens/BillingWorksheetScreen';
+import LedgerScreen from '../../src/features/finance/screens/LedgerScreen';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({
@@ -41,21 +35,32 @@ jest.mock('@/src/hooks/useProperties', () => ({
   }),
 }));
 
-jest.mock('@/src/features/finance/api/charge.api', () => ({
-  getActiveChargesForProperty: jest.fn(() => Promise.resolve([])),
+jest.mock('@/src/features/finance/hooks/useLedger', () => ({
+  useLedger: () => ({
+    ledger: [
+      {
+        id: 'txn-1',
+        date: '2023-10-01T10:00:00.000Z',
+        description: 'Rent Payment - Unit 101',
+        amount: 15000,
+        type: 'CREDIT',
+        referenceId: 'ref-1',
+      }
+    ],
+    totalPages: 1,
+    isLoading: false,
+    refetch: jest.fn(),
+  }),
 }));
 
-jest.mock('@/src/features/finance/api/worksheet.api', () => ({
-  getOrCreateWorksheet: jest.fn(() => Promise.resolve([])),
-}));
-
-describe('BillingWorksheetScreen Component', () => {
-  it('renders correctly', async () => {
+describe('LedgerScreen Component', () => {
+  it('renders ledger transactions correctly', async () => {
     const { getByText } = await render(
       <QueryClientProvider client={queryClient}>
-        <BillingWorksheetScreen token="token" />
+        <LedgerScreen token="token" />
       </QueryClientProvider>
     );
-    expect(getByText('Worksheets')).toBeTruthy();
-  }, 30000);
+
+    expect(getByText('Rent Payment - Unit 101')).toBeTruthy();
+  });
 });

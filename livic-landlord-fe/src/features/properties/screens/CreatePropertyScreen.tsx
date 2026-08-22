@@ -247,6 +247,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
 
         {showSubmit ? (
           <TouchableOpacity
+            testID="save-button"
             style={[styles.submitButton, loading && { opacity: 0.8 }]}
             activeOpacity={0.85}
             onPress={() => handleSave(scrollViewRef)}
@@ -326,6 +327,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
               </View>
 
               <TouchableOpacity 
+                testID="save-button"
                 style={[styles.desktopSaveButtonWrapper, loading && { opacity: 0.8 }]} 
                 onPress={() => handleSave(scrollViewRef)}
                 disabled={loading}
@@ -401,6 +403,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
           </TouchableOpacity>
 
           <TouchableOpacity
+            testID="save-button"
             onPress={() => handleSave(scrollViewRef)}
             disabled={loading}
             style={{
