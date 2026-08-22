@@ -179,7 +179,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 24,
-    backgroundColor: '#f9fafa',
+    backgroundColor: theme.Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

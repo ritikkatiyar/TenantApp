@@ -18,7 +18,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0f4f5',
+    backgroundColor: theme.Colors.background,
   },
   text: {
     fontSize: theme.Typography.HeadlineSmall.fontSize,

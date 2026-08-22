@@ -109,7 +109,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     padding: 20,
     minHeight: 220,
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 10,

@@ -129,7 +129,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     boxShadow: isDark ? '0px 4px 15px rgba(0, 229, 255, 0.25)' : '0px 4px 15px rgba(0, 112, 234, 0.25)',
   },
   primaryDisabled: {
-    backgroundColor: '#99d9f9',
+    backgroundColor: theme.Colors.outlineVariant,
     paddingHorizontal: theme.Spacing.gutter,
   },
   secondary: {
