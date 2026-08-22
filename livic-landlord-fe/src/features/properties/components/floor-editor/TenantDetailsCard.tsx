@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { 
   View, 
@@ -105,6 +106,8 @@ export function TenantDetailsCard({
   parentScrollEnabled = true,
   setParentScrollEnabled = () => {},
 }: TenantDetailsCardProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   return (
     <>
       {isCreatingNewTenant ? (
@@ -468,7 +471,7 @@ export function TenantDetailsCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   createTenantPanel: {
     gap: 12,
     paddingTop: 8,

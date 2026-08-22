@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +7,8 @@ import { Theme } from '@/src/theme/Theme';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 export default function UnitDetailScreen() {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { handleScroll } = useScrollNav();
   return (
     <LinearGradient
@@ -32,7 +35,7 @@ export default function UnitDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
     flex: 1,
   },
@@ -46,15 +49,15 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 32,
+    fontSize: theme.Typography.headlineLg.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
   },
   content: {
     padding: 24,
   },
   placeholderText: {
-    fontSize: 16,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    color: theme.Colors.onSurfaceVariant,
   }
 });

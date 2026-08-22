@@ -100,7 +100,7 @@ export function MeterReadingFloorCard({
                 <View style={styles.rowMiddle}>
                   {currentVal !== null && !isInvalidCurrent && (
                     <>
-                      <Text style={[styles.consumedText, isError && { color: '#ef4444' }]}>
+                      <Text style={[styles.consumedText, isError && { color: theme.Colors.error }]}>
                         {consumed > 0 ? '+' : ''}{consumed} {unitType || 'Units'}
                       </Text>
                       {!isError && <Text style={styles.costText}>Est: ₹{estCost.toFixed(2)}</Text>}
@@ -178,9 +178,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 20,
   },
   floorHeaderText: {
-    fontSize: 16,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
-    color: '#163235',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   rowCard: {
@@ -199,20 +199,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1.5,
   },
   unitName: {
-    fontSize: 15,
+    fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '800',
-    color: '#163235',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   tenantName: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 2,
     fontFamily: 'Inter',
   },
   prevReading: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 4,
@@ -225,9 +225,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     width: 70,
-    color: '#163235',
+    color: theme.Colors.onSurface,
     fontWeight: '600',
   },
   rowMiddle: {
@@ -236,13 +236,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
   },
   consumedText: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    color: '#2e7d32',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   costText: {
-    fontSize: 11,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 4,
@@ -259,25 +259,25 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0, 104, 117, 0.15)',
     paddingHorizontal: 12,
-    fontSize: 13,
-    color: '#163235',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurface,
     fontWeight: '700',
     fontFamily: 'Inter',
     textAlign: 'right',
   },
   inputError: {
-    borderColor: '#ba1a1a',
+    borderColor: theme.Colors.error,
     backgroundColor: 'rgba(186, 26, 26, 0.05)',
   },
   unitTypeLabel: {
     marginLeft: 6,
-    fontSize: 13,
-    color: '#5b6b6d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
   },
   errorText: {
-    fontSize: 10,
-    color: '#ba1a1a',
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    color: theme.Colors.error,
     fontWeight: '700',
     marginTop: 4,
     fontFamily: 'Inter',
@@ -308,7 +308,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   pageButtonText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
@@ -317,7 +317,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: '#a0aab2',
   },
   pageInfoText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',

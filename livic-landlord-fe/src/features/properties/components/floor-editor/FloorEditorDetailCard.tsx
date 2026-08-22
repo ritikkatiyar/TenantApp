@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -42,6 +43,8 @@ export function FloorEditorDetailCard({
   onClose,
   tenantAssignProps
 }: FloorEditorDetailCardProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.sheetHeader}>
@@ -53,7 +56,7 @@ export function FloorEditorDetailCard({
           onPress={onClose}
           style={styles.closeButton}
         >
-          <MaterialIcons name="close" size={20} color="#6b7a7d" />
+          <MaterialIcons name="close" size={20} color={theme.Colors.onSurfaceVariant} />
         </TouchableOpacity>
       </View>
 
@@ -88,7 +91,7 @@ export function FloorEditorDetailCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -96,14 +99,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sheetUnitTitle: {
-    fontSize: 24,
+    fontSize: theme.Typography.HeadlineSmall.fontSize,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   sheetSubtitle: {
-    fontSize: 14,
-    color: '#6b7a7d',
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     fontFamily: 'Inter',
   },
@@ -138,13 +141,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   statusToggleText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   statusTextActive: {
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
 });

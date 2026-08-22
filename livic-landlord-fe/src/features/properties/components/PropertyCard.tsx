@@ -142,7 +142,7 @@ export function PropertyCard({
                   style={styles.manageButton}
                 >
                   <Text style={styles.manageButtonText}>MANAGE</Text>
-                  <MaterialIcons name="arrow-forward" size={16} color="#fff" />
+                  <MaterialIcons name="arrow-forward" size={16} color={theme.Colors.surfaceContainerLowest} />
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -154,7 +154,7 @@ export function PropertyCard({
                 }}
               >
                 <View style={styles.broadcastButton}>
-                  <MaterialIcons name="campaign" size={16} color="#006875" />
+                  <MaterialIcons name="campaign" size={16} color={theme.Colors.primary} />
                   <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
                 </View>
               </TouchableOpacity>
@@ -185,11 +185,11 @@ export function PropertyCard({
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           activeOpacity={0.7}
         >
-          <MaterialIcons name="3d-rotation" size={18} color="#006875" />
+          <MaterialIcons name="3d-rotation" size={18} color={theme.Colors.primary} />
         </TouchableOpacity>
         
-        <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(239, 68, 68, 0.25)' }]}>
-          <Text style={[styles.statusPillText, item.isActive === false && { color: '#ef4444' }]}>
+        <View style={[styles.statusPillOverlay, item.isActive === false && { backgroundColor: 'rgba(186, 26, 26, 0.25)' }]}>
+          <Text style={[styles.statusPillText, item.isActive === false && { color: theme.Colors.error }]}>
             {item.isActive === false ? 'INACTIVE' : 'ACTIVE'}
           </Text>
         </View>
@@ -219,7 +219,7 @@ export function PropertyCard({
           onPress={() => handleDeleteProperty(item.id, item.name)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
+          <MaterialIcons name="delete-outline" size={20} color={theme.Colors.error} />
         </TouchableOpacity>
       </View>
 
@@ -227,7 +227,7 @@ export function PropertyCard({
         <View style={styles.propertyInfo}>
           <Text style={styles.propertyName}>{item.name}</Text>
           <View style={styles.addressContainer}>
-            <MaterialIcons name="location-on" size={14} color="#6b7a7d" />
+            <MaterialIcons name="location-on" size={14} color={theme.Colors.onSurfaceVariant} />
             <Text style={styles.propertyAddress}>{item.address}, {item.city}</Text>
           </View>
         </View>
@@ -256,7 +256,7 @@ export function PropertyCard({
           style={styles.manageButton}
         >
           <Text style={styles.manageButtonText}>Manage Property</Text>
-          <MaterialIcons name="arrow-forward" size={16} color="#fff" />
+          <MaterialIcons name="arrow-forward" size={16} color={theme.Colors.surfaceContainerLowest} />
         </LinearGradient>
       </TouchableOpacity>
 
@@ -268,7 +268,7 @@ export function PropertyCard({
         }}
       >
         <View style={styles.broadcastButton}>
-          <MaterialIcons name="campaign" size={16} color="#006875" />
+          <MaterialIcons name="campaign" size={16} color={theme.Colors.primary} />
           <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
         </View>
       </TouchableOpacity>
@@ -281,7 +281,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 24,
     padding: 24,
     overflow: 'visible',
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.05,
     shadowRadius: 16,
@@ -353,7 +353,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     zIndex: 10,
   },
   statusPillText: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
@@ -371,7 +371,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 4,
   },
   propertyName: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
@@ -382,7 +382,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 4,
   },
   propertyAddress: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
     fontFamily: 'Inter',
@@ -403,14 +403,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   propertyMetricLabel: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
     fontFamily: 'Inter',
   },
   desktopMetricValue: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
@@ -441,8 +441,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 12,
   },
   manageButtonText: {
-    color: '#fff',
-    fontSize: 13,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     fontFamily: 'Inter',
   },
@@ -468,7 +468,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   broadcastButtonText: {
     color: theme.Colors.primary,
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     fontFamily: 'Inter',
   },
@@ -493,7 +493,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   propertyMetricValue: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     marginTop: 4,

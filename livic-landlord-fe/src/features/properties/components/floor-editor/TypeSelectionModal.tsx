@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -47,6 +48,8 @@ export function TypeSelectionModal({
   updateUnitDetails,
   setBlocks,
 }: TypeSelectionModalProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const handleSelectOption = (value: string) => {
     if (pendingBlockId) {
       let cap = 2;
@@ -104,7 +107,7 @@ export function TypeSelectionModal({
                   onPress={() => handleSelectOption(option.value)}
                 >
                   <View style={styles.typeCardIconWrapper}>
-                    <MaterialIcons name={iconName} size={28} color="#006875" />
+                    <MaterialIcons name={iconName} size={28} color={theme.Colors.primary} />
                   </View>
                   <Text style={styles.typeCardLabel}>{option.label}</Text>
                   <Text style={styles.typeCardDesc}>{desc}</Text>
@@ -117,7 +120,7 @@ export function TypeSelectionModal({
             style={[styles.typeCancelButton, { backgroundColor: 'rgba(229, 57, 53, 0.08)' }]}
             onPress={handleDiscard}
           >
-            <Text style={[styles.typeCancelText, { color: '#e53935' }]}>Discard Unit</Text>
+            <Text style={[styles.typeCancelText, { color: theme.Colors.error }]}>Discard Unit</Text>
           </TouchableOpacity>
         </LinearGradient>
       </View>
@@ -125,7 +128,7 @@ export function TypeSelectionModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -135,12 +138,12 @@ const styles = StyleSheet.create({
   typeModalContent: {
     width: '100%',
     maxWidth: 480,
-    backgroundColor: '#fff',
+    backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 32,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.75)',
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -148,16 +151,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   typeModalTitle: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '900',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     marginBottom: 4,
     fontFamily: 'Inter',
   },
   typeModalSubtitle: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     marginBottom: 20,
     fontFamily: 'Inter',
   },
@@ -188,17 +191,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   typeCardLabel: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     marginBottom: 2,
     fontFamily: 'Inter',
     textAlign: 'center',
   },
   typeCardDesc: {
-    fontSize: 10,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
-    color: '#7b8a8d',
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
     textAlign: 'center',
   },
@@ -210,7 +213,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   typeCancelText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '900',
     fontFamily: 'Inter',
   },

@@ -40,6 +40,7 @@ import { EditorToolbar } from '@/src/features/properties/components/floor-editor
 import { TypeSelectionModal } from '@/src/features/properties/components/floor-editor/TypeSelectionModal';
 import { useFloorEditorLayoutApi } from '@/src/features/properties/hooks/useFloorEditorLayoutApi';
 import { FloorEditorDetailCard } from '@/src/features/properties/components/floor-editor/FloorEditorDetailCard';
+import { createStyles } from './FloorEditorScreen.styles';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
@@ -342,11 +343,11 @@ export default function FloorEditorScreen({
                       style={styles.desktopSaveButton}
                     >
                       {saving ? (
-                        <ActivityIndicator color="#fff" />
+                        <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
                       ) : (
                         <>
                           <Text style={styles.desktopSaveButtonText}>Save Layout</Text>
-                          <MaterialIcons name="check" size={18} color="#fff" />
+                          <MaterialIcons name="check" size={18} color={theme.Colors.surfaceContainerLowest} />
                         </>
                       )}
                     </LinearGradient>
@@ -362,12 +363,12 @@ export default function FloorEditorScreen({
                       <View ref={desktopGridWrapperRef} style={styles.desktopGridWrapper}>
                         {saving ? (
                           <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color="#006875" />
+                            <ActivityIndicator size="large" color={theme.Colors.primary} />
                             <Text style={styles.loadingText}>Saving Layout...</Text>
                           </View>
                         ) : loading ? (
                           <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color="#006875" />
+                            <ActivityIndicator size="large" color={theme.Colors.primary} />
                             <Text style={styles.loadingText}>Loading Layout...</Text>
                           </View>
                         ) : (
@@ -425,9 +426,9 @@ export default function FloorEditorScreen({
                         </BlurView>
                       ) : (
                         <BlurView intensity={60} tint="light" style={[styles.desktopCard, { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
-                          <MaterialIcons name="info-outline" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
-                          <Text style={{ fontSize: 18, fontWeight: '700', color: '#151d1e', textAlign: 'center', marginBottom: 8 }}>No Unit Selected</Text>
-                          <Text style={{ fontSize: 14, color: '#6b7a7d', textAlign: 'center', lineHeight: 20 }}>
+                          <MaterialIcons name="info-outline" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
+                          <Text style={{ fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '700', color: theme.Colors.onSurface, textAlign: 'center', marginBottom: 8 }}>No Unit Selected</Text>
+                          <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
                             Select any unit block in the grid layout to configure unit capacity and assign tenants.
                           </Text>
                         </BlurView>
@@ -468,7 +469,7 @@ export default function FloorEditorScreen({
         <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
           <View>
             <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+              <MaterialIcons name="arrow-back" size={24} color={theme.Colors.onSurface} />
             </TouchableOpacity>
             <View style={styles.titleContainer}>
               <Text style={styles.titleLine}>Edit Floor {floorNumber}</Text>
@@ -483,7 +484,7 @@ export default function FloorEditorScreen({
             style={{
               borderRadius: 100,
               overflow: 'hidden',
-              shadowColor: '#00d4ff',
+              shadowColor: theme.Colors.primary,
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
               shadowRadius: 8,
@@ -497,11 +498,11 @@ export default function FloorEditorScreen({
               style={{ paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 4 }}
             >
               {saving ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
               ) : (
                 <>
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
-                  <MaterialIcons name="check" size={16} color="#fff" />
+                  <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
+                  <MaterialIcons name="check" size={16} color={theme.Colors.surfaceContainerLowest} />
                 </>
               )}
             </LinearGradient>
@@ -524,12 +525,12 @@ export default function FloorEditorScreen({
             <View ref={mobileGridWrapperRef} style={styles.gridWrapper}>
               {saving ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#006875" />
+                  <ActivityIndicator size="large" color={theme.Colors.primary} />
                   <Text style={styles.loadingText}>Saving Layout...</Text>
                 </View>
               ) : loading ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#006875" />
+                  <ActivityIndicator size="large" color={theme.Colors.primary} />
                   <Text style={styles.loadingText}>Loading Layout...</Text>
                 </View>
               ) : (
@@ -571,7 +572,7 @@ export default function FloorEditorScreen({
                   }}
                   style={styles.backButton}
                 >
-                  <MaterialIcons name="arrow-back" size={24} color="#151d1e" />
+                  <MaterialIcons name="arrow-back" size={24} color={theme.Colors.onSurface} />
                 </TouchableOpacity>
               </View>
             </SafeAreaView>
@@ -630,283 +631,3 @@ export default function FloorEditorScreen({
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  titleContainer: {
-    marginTop: 16,
-  },
-  titleLine: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: '#151d1e',
-    lineHeight: 46,
-    letterSpacing: -1,
-    fontFamily: 'Inter',
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-  },
-  gridWrapper: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  canvasContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#006875',
-    letterSpacing: 0.5,
-    fontFamily: 'Inter',
-  },
-  isometricContainer: {
-    padding: 100,
-  },
-  detailSheetWrapper: {
-    position: 'absolute',
-    bottom: 80,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    paddingHorizontal: 20,
-  },
-  detailSheet: {
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
-    overflow: 'hidden',
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  sheetUnitTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#151d1e',
-    fontFamily: 'Inter',
-  },
-  sheetSubtitle: {
-    fontSize: 14,
-    color: '#6b7a7d',
-    fontWeight: '600',
-    fontFamily: 'Inter',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sheetContent: {
-    gap: 16,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  statusToggle: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-  },
-  statusActiveVacant: {
-    backgroundColor: 'rgba(46, 125, 50, 0.1)',
-    borderColor: 'rgba(46, 125, 50, 0.2)',
-  },
-  statusActiveOccupied: {
-    backgroundColor: 'rgba(0, 104, 117, 0.1)',
-    borderColor: 'rgba(0, 104, 117, 0.2)',
-  },
-  statusToggleText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#6b7a7d',
-    fontFamily: 'Inter',
-  },
-  statusTextActive: {
-    color: '#006875',
-    fontFamily: 'Inter',
-  },
-  saveButton: {
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-    fontFamily: 'Inter',
-  },
-  desktopShell: {
-    flex: 1,
-  },
-  desktopMain: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  flex: {
-    flex: 1,
-  },
-  desktopContent: {
-    paddingHorizontal: 32,
-    paddingBottom: 32,
-  },
-  desktopInner: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 32,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
-    padding: 32,
-    overflow: 'hidden',
-  },
-  desktopHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  largeTitleContainer: {
-    flex: 1,
-  },
-  titleLineDesktop: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#151d1e',
-    fontFamily: 'Inter',
-  },
-  desktopSaveButtonWrapper: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  desktopSaveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-  },
-  desktopSaveButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-    fontFamily: 'Inter',
-  },
-  desktopMainContent: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 32,
-  },
-  desktopCanvasColumn: {
-    flex: 1.6,
-  },
-  desktopSidebarColumn: {
-    flex: 0.9,
-  },
-  desktopGridWrapper: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  desktopCard: {
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  sidebarLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    gap: 12,
-  },
-  sidebarLinkActive: {
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-  },
-  sidebarLinkText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.Colors.onSurfaceVariant,
-    fontFamily: 'Inter',
-  },
-  sidebarLinkTextActive: {
-    color: theme.Colors.primary,
-    fontWeight: '800',
-  },
-});

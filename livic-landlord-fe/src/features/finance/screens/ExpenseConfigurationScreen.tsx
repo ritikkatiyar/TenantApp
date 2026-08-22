@@ -1,34 +1,29 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   Animated, 
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
-  Platform,
-  Modal
+  ScrollView
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
-import { 
-  getChargesForProperty, 
-  deactivateChargeConfig, 
-  reactivateChargeConfig, 
-  deleteChargeConfigPermanently, 
-  ChargeConfigResponse 
-} from '@/src/features/finance/api/charge.api';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { useExpenseConfiguration } from '@/src/features/finance/hooks/useExpenseConfiguration';
 
+// Sub-components
+import { ExpenseConfigCard } from '../components/billing/ExpenseConfigCard';
+import { ConfirmModal } from '../components/billing/ConfirmModal';
 
 export default function ExpenseConfigurationScreen({ token }: { token: string | null }) {
   const { theme, isDark } = useAppTheme();
@@ -43,15 +38,20 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   const { properties } = useProperties();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   const { showToast } = useToast();
-  
-  const [charges, setCharges] = useState<ChargeConfigResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    charges,
+    isLoading,
+    deactivateConfig,
+    reactivateConfig,
+    deleteConfig,
+  } = useExpenseConfiguration(propertyId, token);
 
   const [confirmModal, setConfirmModal] = useState<{
     visible: boolean;
     title: string;
     message: string;
-    onConfirm: () => void | Promise<void>;
+    onConfirm: () => void;
   }>({
     visible: false,
     title: '',
@@ -59,126 +59,61 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     onConfirm: () => {},
   });
 
-  const requestConfirmation = (title: string, message: string, onConfirm: () => void | Promise<void>) => {
+  const requestConfirmation = (title: string, message: string, onConfirm: () => void) => {
     setConfirmModal({
       visible: true,
       title,
       message,
-      onConfirm: async () => {
+      onConfirm: () => {
         setConfirmModal(prev => ({ ...prev, visible: false }));
-        await onConfirm();
+        onConfirm();
       }
     });
   };
 
-  const loadCharges = React.useCallback(async () => {
-    if (!token || !propertyId) return;
-    try {
-      setIsLoading(true);
-      const data = await getChargesForProperty(propertyId, true, token);
-      setCharges(data);
-    } catch (e: any) {
-      console.error(e);
-      showToast("Failed to load charges", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [propertyId, token]);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      loadCharges();
-    }, [loadCharges])
-  );
-
-  useEffect(() => {
-    loadCharges();
-  }, [loadCharges]);
-
-  const getIconData = (name: string, category: string) => {
-    const n = name.toLowerCase();
-    const c = category.toLowerCase();
-    if (n.includes('elect') || n.includes('power')) return { name: 'bolt', bg: '#cffafe', color: '#0891b2' }; 
-    if (n.includes('water')) return { name: 'water-drop', bg: '#e0e7ff', color: '#4f46e5' }; 
-    if (n.includes('maintain') || n.includes('facility') || c.includes('service')) return { name: 'build', bg: '#fee2e2', color: '#dc2626' }; 
-    if (n.includes('security') || c.includes('operation')) return { name: 'security', bg: '#ccfbf1', color: '#0d9488' }; 
-    return { name: 'receipt-long', bg: '#f3f4f6', color: '#4b5563' }; 
-  };
-
-  const formatEnum = (val: string) => {
-    if (!val) return '';
-    return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase().replace('_', ' ');
-  };
-
-  const handleDeactivate = async (id: string) => {
-    const performDeactivate = async () => {
-      if (!token) return;
-      try {
-        await deactivateChargeConfig(id, token);
-        showToast("Charge configuration deactivated successfully.", "success");
-        loadCharges();
-      } catch (e: any) {
-        showToast(e.message || "Failed to deactivate", "error");
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      requestConfirmation(
-        "Deactivate Charge",
-        "Are you sure you want to deactivate this charge configuration? It will not be applied to future billing cycles.",
-        performDeactivate
-      );
-    } else {
-      Alert.alert("Deactivate Charge", "Are you sure you want to deactivate this charge configuration? It will not be applied to future billing cycles.", [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Deactivate", 
-          style: "destructive",
-          onPress: performDeactivate
+  const handleDeactivate = (id: string) => {
+    requestConfirmation(
+      "Deactivate Charge?",
+      "Deactivating this configuration will prevent compiling future invoices. Active worksheets will not be affected.",
+      async () => {
+        try {
+          await deactivateConfig(id);
+          showToast("Charge configuration deactivated", "success");
+        } catch (e: any) {
+          showToast(e.message || "Failed to deactivate charge.", "error");
         }
-      ]);
-    }
-  };
-
-  const handleReactivate = async (id: string) => {
-    if (!token) return;
-    try {
-      await reactivateChargeConfig(id, token);
-      showToast("Charge configuration reactivated successfully.", "success");
-      loadCharges();
-    } catch (e: any) {
-      showToast(e.message || "Failed to reactivate", "error");
-    }
-  };
-
-  const handleDeletePermanently = async (id: string) => {
-    const performDelete = async () => {
-      if (!token) return;
-      try {
-        await deleteChargeConfigPermanently(id, token);
-        showToast("Charge configuration deleted permanently.", "success");
-        loadCharges();
-      } catch (e: any) {
-        showToast(e.message || "Failed to delete permanently", "error");
       }
-    };
+    );
+  };
 
-    if (Platform.OS === 'web') {
-      requestConfirmation(
-        "Delete Permanently",
-        "Are you sure you want to delete this configuration permanently? This action cannot be undone.",
-        performDelete
-      );
-    } else {
-      Alert.alert("Delete Permanently", "Are you sure you want to delete this configuration permanently? This action cannot be undone.", [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete Permanently", 
-          style: "destructive",
-          onPress: performDelete
+  const handleReactivate = (id: string) => {
+    requestConfirmation(
+      "Reactivate Charge?",
+      "This will resume invoice generation triggers and ledger mappings for this category.",
+      async () => {
+        try {
+          await reactivateConfig(id);
+          showToast("Charge configuration reactivated!", "success");
+        } catch (e: any) {
+          showToast(e.message || "Failed to reactivate charge.", "error");
         }
-      ]);
-    }
+      }
+    );
+  };
+
+  const handleDeletePermanently = (id: string) => {
+    requestConfirmation(
+      "Delete Permanently?",
+      "This action cannot be undone. All active worksheets, meter records & drafts using this charge configuration will be permanently deleted.",
+      async () => {
+        try {
+          await deleteConfig(id);
+          showToast("Charge configuration permanently deleted.", "success");
+        } catch (e: any) {
+          showToast(e.message || "Failed to delete configuration.", "error");
+        }
+      }
+    );
   };
 
   const headerOpacity = scrollY.interpolate({
@@ -193,259 +128,196 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     extrapolate: 'clamp',
   });
 
-  return (
+  const renderContent = () => {
+    if (!properties || properties.length === 0) {
+      return (
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+          <View style={styles.emptyIconCircle}>
+            <MaterialIcons name="business" size={36} color={theme.Colors.primary} />
+          </View>
+          <Text style={styles.emptyTitle}>No Property Created Yet</Text>
+          <Text style={styles.emptySubtitle}>
+            Setup your property profile and floor layout to activate expense configuration panels.
+          </Text>
+          <TouchableOpacity 
+            style={styles.createPropertyButton} 
+            activeOpacity={0.8}
+            onPress={() => router.push('/properties/create')}
+          >
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.createPropertyGradient}
+            >
+              <MaterialIcons name="add" size={24} color={theme.Colors.surfaceContainerLowest} />
+              <Text style={styles.createPropertyText}>CREATE FIRST PROPERTY</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </BlurView>
+      );
+    }
+
+    if (isLoading && charges.length === 0) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', padding: 40 }}>
+          <ActivityIndicator size="large" color={theme.Colors.primary} />
+        </View>
+      );
+    }
+
+    if (charges.length === 0) {
+      return (
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+          <View style={styles.emptyIconCircle}>
+            <MaterialIcons name="receipt-long" size={36} color={theme.Colors.onSurfaceVariant} />
+          </View>
+          <Text style={styles.emptyTitle}>No charges found.</Text>
+          <Text style={styles.emptySubtitle}>
+            Start tracking your overheads by adding your first charge category.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.createPropertyButton} 
+            activeOpacity={0.8}
+            onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+          >
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.createPropertyGradient}
+            >
+              <MaterialIcons name="add" size={24} color={theme.Colors.surfaceContainerLowest} />
+              <Text style={styles.createPropertyText}>CREATE CHARGE</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </BlurView>
+      );
+    }
+
+    return (
+      <View style={isDesktop ? styles.gridContainer : styles.listContainer}>
+        {charges.map(charge => (
+          <ExpenseConfigCard
+            key={charge.id}
+            charge={charge}
+            propertyId={propertyId}
+            onDeactivate={handleDeactivate}
+            onReactivate={handleReactivate}
+            onDelete={handleDeletePermanently}
+            isDesktop={isDesktop}
+            isDark={isDark}
+          />
+        ))}
+      </View>
+    );
+  };
+
+  const renderDesktopShell = () => (
+    <LinearGradient
+      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.desktopShell}
+    >
+      <View style={styles.desktopMain}>
+        <DesktopNavBar 
+          onBack={() => router.push('/expenses')} 
+          backText="Back to Finance & Billing" 
+          properties={properties || []}
+          selectedPropertyId={propertyId}
+          onPropertyChange={(id) => router.replace({ pathname: '/expenses/configuration', params: { propertyId: id } } as any)}
+        />
+
+        <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.desktopInner}>
+            <View style={styles.desktopHeaderRow}>
+              <View style={styles.largeTitleContainer}>
+                <Text style={styles.titleLineDesktop}>Billing Configurations</Text>
+                <Text style={styles.subtitleDesktop}>Manage ledger entries, metered utilities, penalty strategies & tax groups</Text>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.desktopCreateButtonWrapper} 
+                onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.desktopCreateButton}
+                >
+                  <Text style={styles.desktopCreateButtonText}>CONFIGURE EXPENSE</Text>
+                  <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            {renderContent()}
+          </View>
+        </ScrollView>
+      </View>
+    </LinearGradient>
+  );
+
+  const renderMobileShell = () => (
     <LinearGradient
       colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
     >
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {/* Pinned header */}
-        {isDesktop ? (
-          <DesktopNavBar 
-            onBack={() => router.push('/expenses')} 
-            backText="Back to Finance & Billing" 
-            properties={properties || []}
-            selectedPropertyId={propertyId}
-            onPropertyChange={(id) => router.replace(`/expenses/charge-config?propertyId=${id}`)}
-          />
-        ) : (
-          <View style={[styles.headerContainer, !isDesktop && { paddingTop: insets.top, height: 56 + insets.top }]}>
-            <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-            <View style={styles.headerContent}>
-              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
-              </TouchableOpacity>
-              <View style={styles.titleWrapper}>
-                <Text style={styles.compactTitleText}>Charge Configuration</Text>
-              </View>
-              <TouchableOpacity 
-                style={styles.headerGradientTouch}
-                onPress={() => router.push(`/expenses/create-expense?propertyId=${propertyId}` as any)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.headerGradientInner}
-                >
-                  <MaterialIcons name="add" size={15} color="#fff" />
-                  <Text style={styles.headerGradientText}>NEW</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+      <SafeAreaView style={styles.safeArea} edges={[]}>
+        <Animated.View style={[styles.headerContainer, { opacity: headerOpacity, paddingTop: insets.top, height: 56 + insets.top }]}>
+          <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
+            </TouchableOpacity>
+            <View style={styles.titleWrapper}>
+              <Text style={styles.compactTitleText}>Configurations</Text>
             </View>
+            <TouchableOpacity 
+              style={styles.headerCreateTouch}
+              onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#00d4ff', '#0072ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.headerCreateInner}
+              >
+                <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
+                <Text style={styles.headerCreateText}>ADD</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-        )}
+        </Animated.View>
 
         <Animated.ScrollView
-          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
-          showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false, listener: handleScroll }
+            { useNativeDriver: true, listener: handleScroll }
           )}
           scrollEventThrottle={16}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: 68 + insets.top }
+          ]}
+          showsVerticalScrollIndicator={false}
         >
-          <View style={isDesktop ? styles.desktopInner : null}>
-            {/* Hero Titles - Desktop only; mobile uses glassy header */}
-            {isDesktop && (
-              <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-                <Text style={styles.titleLineDesktop}>Charge Configuration</Text>
-              </Animated.View>
-            )}
+          <View style={styles.inner}>
+            <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
+              <Text style={styles.screenTitle}>Billing Elements</Text>
+              <Text style={styles.screenSubtitle}>Configure ledger charge codes, utility scales and automation thresholds</Text>
+            </Animated.View>
 
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionHeader}>Active Definitions ({(charges || []).length})</Text>
-              {(charges || []).length > 0 && !isLoading && (
-                <TouchableOpacity 
-                  style={styles.headerAddButtonWrapper}
-                  activeOpacity={0.85}
-                  onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
-                >
-                  <LinearGradient
-                    colors={['#00d4ff', '#0072ff']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.headerAddButton}
-                  >
-                    <Text style={styles.headerAddButtonText}>ADD NEW</Text>
-                    <MaterialIcons name="add" size={16} color="#fff" />
-                  </LinearGradient>
-                </TouchableOpacity>
-              )}
-            </View>
+            {renderContent()}
 
-            {isLoading ? (
-              <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 40 }} />
-            ) : (!properties || properties.length === 0) ? (
-              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
-                <View style={styles.emptyIconCircle}>
-                  <MaterialIcons name="business" size={36} color={theme.Colors.primary} />
-                </View>
-                <Text style={styles.emptyTitle}>No Property Created Yet</Text>
-                <Text style={styles.emptySubtitle}>
-                  Finance & billing setup requires an active property. Create your first property to start configuring charges and rent cycles.
-                </Text>
-                
-                <TouchableOpacity 
-                  style={styles.createPropertyButton} 
-                  activeOpacity={0.8}
-                  onPress={() => router.push('/properties/create')}
-                >
-                  <LinearGradient
-                    colors={['#00d4ff', '#0072ff']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.createPropertyGradient}
-                  >
-                    <MaterialIcons name="add" size={24} color="#fff" />
-                    <Text style={styles.createPropertyText}>CREATE FIRST PROPERTY</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </BlurView>
-            ) : (charges || []).length === 0 ? (
-              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
-                <View style={styles.emptyIconCircle}>
-                  <MaterialIcons name="receipt-long" size={36} color="#6b7a7d" />
-                </View>
-                <Text style={styles.emptyTitle}>No charges found.</Text>
-                <Text style={styles.emptySubtitle}>
-                  Start tracking your overheads by adding your first charge category.
-                </Text>
-                
-                <TouchableOpacity 
-                  style={styles.createPropertyButton} 
-                  activeOpacity={0.8}
-                  onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
-                >
-                  <LinearGradient
-                    colors={['#00d4ff', '#0072ff']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.createPropertyGradient}
-                  >
-                    <MaterialIcons name="add" size={24} color="#fff" />
-                    <Text style={styles.createPropertyText}>CREATE CHARGE</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.learnMoreContainer}>
-                  <MaterialIcons name="help-outline" size={16} color={theme.Colors.primary} />
-                  <Text style={styles.learnMoreText}>LEARN ABOUT CHARGE TRACKING</Text>
-                </TouchableOpacity>
-              </BlurView>
-            ) : (
-              <View style={isDesktop ? styles.gridContainer : styles.listContainer}>
-                {(charges || []).map(charge => {
-                  const iconObj = getIconData(charge.chargeName, charge.chargeCategory);
-                  return (
-                    <View 
-                      key={charge.id}
-                      style={[
-                        isDesktop ? styles.gridCardWrapper : styles.listCardWrapper,
-                        !charge.isActive && { opacity: 0.7 }
-                      ]}
-                    >
-                      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.expenseCard}>
-                        {/* Upper card area is pressable to edit the config */}
-                        <TouchableOpacity 
-                          activeOpacity={0.7}
-                          onPress={() => {
-                            router.push(`/create-expense?propertyId=${propertyId}&chargeId=${charge.id}`);
-                          }}
-                        >
-                          <View style={styles.cardHeader}>
-                            <View style={[styles.iconWrapper, { backgroundColor: iconObj.bg }]}>
-                              <MaterialIcons name={iconObj.name as any} size={24} color={iconObj.color} />
-                            </View>
-                            <View style={styles.cardTextContainer}>
-                              <Text style={styles.cardTitle}>{charge.chargeName}</Text>
-                              <Text style={styles.cardSub}>
-                                {formatEnum(charge.chargeCategory)} • {formatEnum(charge.billingFrequency)}
-                              </Text>
-                            </View>
-                            <View style={styles.cardRight}>
-                              <View style={[styles.badge, { backgroundColor: charge.isActive ? '#ccfbf1' : '#fee2e2' }]}>
-                                 <Text style={[styles.badgeText, { color: charge.isActive ? '#0d9488' : '#ef4444' }]}>
-                                   {charge.isActive ? 'ACTIVE' : 'INACTIVE'}
-                                 </Text>
-                              </View>
-                              {charge.baseRate != null ? (
-                                <View style={styles.amountContainer}>
-                                  <Text style={styles.amountBold}>₹{charge.baseRate}</Text>
-                                  {charge.calculationStrategy === 'METERED' ? (
-                                    <Text style={styles.amountSuffix}>/ {charge.unitType || 'unit'}</Text>
-                                  ) : (
-                                    <Text style={styles.amountSuffix}>/ mo</Text>
-                                  )}
-                                </View>
-                              ) : null}
-                            </View>
-                          </View>
-                        </TouchableOpacity>
-                        
-                        {/* Actions Row - sibling to the edit pressable (no nesting) */}
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', paddingTop: 16 }}>
-                          
-                          {charge.calculationStrategy === 'METERED' ? (
-                            <TouchableOpacity 
-                              onPress={() => {
-                                router.push(`/properties/${propertyId}/meter-readings`);
-                              }} 
-                              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                            >
-                              <MaterialCommunityIcons name="speedometer" size={16} color="#00bcd4" />
-                              <Text style={{ color: '#00bcd4', fontSize: 13, fontWeight: '700' }}>Record Readings</Text>
-                            </TouchableOpacity>
-                          ) : (
-                            <View />
-                          )}
-
-                          {!charge.isSystemRequired ? (
-                            <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
-                              {charge.isActive ? (
-                                <TouchableOpacity 
-                                  onPress={() => handleDeactivate(charge.id)} 
-                                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                                >
-                                  <Feather name="minus-circle" size={14} color="#ef4444" />
-                                  <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>Deactivate</Text>
-                                </TouchableOpacity>
-                              ) : (
-                                <>
-                                  <TouchableOpacity 
-                                    onPress={() => handleReactivate(charge.id)} 
-                                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                                  >
-                                    <MaterialIcons name="restore" size={14} color={theme.Colors.primary} />
-                                    <Text style={{ color: theme.Colors.primary, fontSize: 12, fontWeight: '600' }}>Reactivate</Text>
-                                  </TouchableOpacity>
-                                  <TouchableOpacity 
-                                    onPress={() => handleDeletePermanently(charge.id)} 
-                                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                                  >
-                                    <Feather name="trash-2" size={14} color="#ba1a1a" />
-                                    <Text style={{ color: '#ba1a1a', fontSize: 12, fontWeight: '600' }}>Delete Permanently</Text>
-                                  </TouchableOpacity>
-                                </>
-                              )}
-                            </View>
-                          ) : (
-                            <Text style={{ color: '#849495', fontSize: 11, fontStyle: 'italic' }}>System Required</Text>
-                          )}
-                        </View>
-                      </BlurView>
-                    </View>
-                  );
-                })}
-
-              </View>
-            )}
-
-            {/* Dashed Create Button at Bottom (Mobile) */}
-            {!isDesktop && (charges || []).length > 0 && !isLoading && (
+            {!isDesktop && charges.length > 0 && !isLoading && (
               <TouchableOpacity 
                 style={styles.dashedButton} 
                 activeOpacity={0.7}
@@ -460,99 +332,43 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
           </View>
         </Animated.ScrollView>
       </SafeAreaView>
-
-      {/* Custom Confirmation Modal */}
-      <Modal visible={confirmModal.visible} animationType="fade" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
-          <View style={[styles.modalPopup, { width: 400, padding: 24, borderRadius: 24, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.8)' }]}>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#163235', marginBottom: 12 }}>
-              {confirmModal.title}
-            </Text>
-            <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, lineHeight: 20, marginBottom: 24, fontWeight: '500' }}>
-              {confirmModal.message}
-            </Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
-              <TouchableOpacity 
-                style={{
-                  paddingVertical: 10,
-                  paddingHorizontal: 16,
-                  borderRadius: 100,
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                }}
-                onPress={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
-              >
-                <Text style={{ fontSize: 13, fontWeight: '700', color: theme.Colors.onSurfaceVariant }}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={{
-                  borderRadius: 100,
-                  overflow: 'hidden',
-                  shadowColor: '#ef4444',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 8,
-                  elevation: 2,
-                }}
-                onPress={confirmModal.onConfirm}
-              >
-                <LinearGradient
-                  colors={['#ff4b4b', '#dc2626']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{
-                    paddingVertical: 10,
-                    paddingHorizontal: 20,
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: theme.Surface.card, letterSpacing: 0.5 }}>
-                    Confirm
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </LinearGradient>
+  );
+
+  return (
+    <View style={{ flex: 1 }}>
+      {isDesktop ? renderDesktopShell() : renderMobileShell()}
+
+      <ConfirmModal
+        visible={confirmModal.visible}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
+        onConfirm={confirmModal.onConfirm}
+      />
+    </View>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
+  gradient: { flex: 1 },
+  safeArea: { flex: 1 },
   headerContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 56,
-    zIndex: 999,
+    zIndex: 998,
     borderBottomWidth: 1.5,
     borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
-    flex: 1,
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-  },
-  titleWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  compactTitleText: {
-    fontSize: 18,
-    fontFamily: 'Inter',
-    fontWeight: '800',
-    color: '#0b1c30',
   },
   backButton: {
     width: 36,
@@ -563,331 +379,178 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.glassFill,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  headerGradientTouch: {
-    borderRadius: 100,
-    overflow: 'hidden',
-    shadowColor: '#00d4ff',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  headerGradientInner: {
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 100,
-  },
-  headerGradientText: {
-    color: theme.Surface.card,
-    fontSize: 11,
+  titleWrapper: { flex: 1, alignItems: 'center' },
+  compactTitleText: {
+    color: theme.Colors.onSurface,
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontFamily: 'Inter',
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  desktopBackButton: {
+  headerCreateTouch: { borderRadius: 12, overflow: 'hidden' },
+  headerCreateInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 4,
   },
-  desktopBackButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.Colors.onBackground,
-  },
-  desktopInner: {
-    width: '100%',
-    maxWidth: 1080,
-    alignSelf: 'center',
+  headerCreateText: {
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 120,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
+  inner: { width: '100%' },
   titleContainer: {
-    marginBottom: 32,
+    marginTop: 10,
+    marginBottom: 24,
   },
-  titleLine: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
-    lineHeight: 52,
-    letterSpacing: -1,
+  screenTitle: {
+    fontSize: theme.Typography.headlineLg.fontSize,
+    fontFamily: 'Outfit',
+    fontWeight: '900',
+    color: theme.Colors.onSurface,
   },
-  titleLineDesktop: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
-    lineHeight: 38,
-    letterSpacing: -0.5,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  sectionHeader: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#849495',
-  },
-  headerAddButtonWrapper: {
-    borderRadius: 19,
-    overflow: 'hidden',
-    shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  headerAddButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 38,
-    paddingHorizontal: 18,
-  },
-  headerAddButtonText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: theme.Surface.card,
-    letterSpacing: 0.5,
-  },
-  expenseCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  iconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-    backgroundColor: '#cffafe',
-  },
-  cardTextContainer: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: theme.Colors.onBackground,
-    marginBottom: 4,
-  },
-  cardSub: {
-    fontSize: 13,
-    color: '#5b6b6d',
-    fontWeight: '500',
-  },
-  cardRight: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  amountContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  amountBold: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
-  },
-  amountSuffix: {
-    fontSize: 12,
-    color: '#849495',
-    fontWeight: '500',
-    marginLeft: 4,
-  },
-  dashedButton: {
-    marginTop: 16,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#67e8f9',
-    borderStyle: 'dashed',
-    backgroundColor: 'rgba(236, 254, 255, 0.5)',
-    paddingVertical: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  dashedIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.Surface.card,
-    borderWidth: 1,
-    borderColor: '#67e8f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dashedButtonText: {
-    color: '#0891b2',
-    fontSize: 15,
-    fontWeight: '500',
+  screenSubtitle: {
+    fontSize: theme.Typography.BodySmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    marginTop: 4,
+    fontWeight: '600',
+    lineHeight: 18,
   },
   emptyCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 24,
-    padding: 30,
+    padding: 32,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    overflow: 'hidden',
+    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+    marginTop: 10,
   },
   emptyIconCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#f0f4f5',
-    alignItems: 'center',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(0, 104, 117, 0.1)',
     justifyContent: 'center',
-    marginBottom: 20,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: theme.Colors.onBackground,
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+    marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 15,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 30,
-    paddingHorizontal: 20,
+    marginBottom: 24,
+    lineHeight: 20,
   },
-  createPropertyButton: {
-    width: '100%',
-    borderRadius: 100,
-    overflow: 'hidden',
-    marginBottom: 25,
-    boxShadow: '0px 8px 15px rgba(0, 114, 255, 0.2)',
-    elevation: 5,
-  },
+  createPropertyButton: { borderRadius: 100, overflow: 'hidden' },
   createPropertyGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 18,
-    gap: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 8,
   },
   createPropertyText: {
-    color: '#fff',
-    fontSize: 15,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 1,
-  },
-  learnMoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  learnMoreText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: theme.Colors.primary,
-    letterSpacing: 0.5,
-  },
-  desktopHeader: {
-    paddingHorizontal: 30,
-    paddingTop: 20,
-  },
-  desktopHeaderInner: {
-    width: '100%',
-    maxWidth: 1200,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  mobileHeaderInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    flex: 1,
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 24,
+    justifyContent: 'space-between',
+    width: '100%',
   },
   listContainer: {
-    flexDirection: 'column',
-  },
-  gridCardWrapper: {
-    width: '48.5%',
-    minWidth: 320,
-  },
-  listCardWrapper: {
     width: '100%',
-    marginBottom: 16,
   },
-  dashedButtonDesktop: {
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#67e8f9',
-    borderStyle: 'dashed',
-    backgroundColor: 'rgba(236, 254, 255, 0.5)',
-    paddingVertical: 24,
+  dashedButton: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(0, 188, 212, 0.4)',
+    borderRadius: 24,
+    paddingVertical: 20,
+    backgroundColor: 'rgba(0, 188, 212, 0.03)',
+    marginTop: 10,
     gap: 12,
-    width: '48.5%',
-    minWidth: 320,
-    minHeight: 160,
   },
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.4)', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: 20 
+  dashedIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 188, 212, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  modalPopup: { 
-    backgroundColor: theme.Surface.card, 
-    borderRadius: 24, 
-    padding: 24, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 10 }, 
-    shadowOpacity: 0.15, 
-    shadowRadius: 20, 
-    elevation: 10 
+  dashedButtonText: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: '#00bcd4',
+    fontWeight: '800',
+  },
+  desktopShell: { flex: 1 },
+  desktopMain: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  desktopContent: {
+    paddingHorizontal: 40,
+    paddingBottom: 40,
+  },
+  desktopInner: {
+    maxWidth: 1080,
+    width: '100%',
+    alignSelf: 'center',
+    paddingTop: 24,
+  },
+  desktopHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 32,
+  },
+  largeTitleContainer: { flex: 1 },
+  titleLineDesktop: {
+    fontSize: theme.Typography.headlineLg.fontSize,
+    fontWeight: '900',
+    color: theme.Colors.onSurface,
+  },
+  subtitleDesktop: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  desktopCreateButtonWrapper: { borderRadius: 16, overflow: 'hidden' },
+  desktopCreateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  desktopCreateButtonText: {
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
 });

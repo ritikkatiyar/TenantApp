@@ -1,3 +1,4 @@
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -28,6 +29,8 @@ export function EditorToolbar({
   handleScrollLayout,
   handleScrollContentSizeChange,
 }: EditorToolbarProps) {
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   if (isDesktop) {
     return (
       <BlurView intensity={80} tint="light" style={styles.floatingToolbar}>
@@ -61,8 +64,8 @@ export function EditorToolbar({
           style={styles.floatingToolButton}
           onPress={handleClearAll}
         >
-          <MaterialIcons name="delete-sweep" size={18} color="#e53935" />
-          <Text style={[styles.floatingToolText, { color: '#e53935' }]}>Clear</Text>
+          <MaterialIcons name="delete-sweep" size={18} color={theme.Colors.error} />
+          <Text style={[styles.floatingToolText, { color: theme.Colors.error }]}>Clear</Text>
         </TouchableOpacity>
       </BlurView>
     );
@@ -110,8 +113,8 @@ export function EditorToolbar({
             style={styles.toolButton}
             onPress={handleClearAll}
           >
-            <MaterialIcons name="delete-sweep" size={20} color="#e53935" />
-            <Text style={[styles.toolText, { color: '#e53935' }]}>Clear</Text>
+            <MaterialIcons name="delete-sweep" size={20} color={theme.Colors.error} />
+            <Text style={[styles.toolText, { color: theme.Colors.error }]}>Clear</Text>
           </TouchableOpacity>
         </ScrollView>
         {showRightArrow && (
@@ -121,7 +124,7 @@ export function EditorToolbar({
             style={styles.scrollIndicator}
             pointerEvents="none"
           >
-            <MaterialIcons name="chevron-right" size={18} color="#ffffff" />
+            <MaterialIcons name="chevron-right" size={18} color={theme.Colors.surfaceContainerLowest} />
           </Animated.View>
         )}
       </View>
@@ -129,7 +132,7 @@ export function EditorToolbar({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   // Desktop specific floating toolbar styles
   floatingToolbar: {
     position: 'absolute',
@@ -144,7 +147,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.65)',
     gap: 8,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
@@ -162,16 +165,16 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   floatingToolButtonActive: {
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
   },
   floatingToolText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   floatingToolTextActive: {
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   floatingDivider: {
     width: 1.5,
@@ -190,9 +193,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   toolsTitle: {
-    fontSize: 9,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     marginBottom: 8,
     fontFamily: 'Inter',
@@ -223,17 +226,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   toolButtonActive: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   toolText: {
-    fontSize: 13,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   toolTextActive: {
-    color: '#fff',
+    color: theme.Colors.surfaceContainerLowest,
   },
   scrollIndicator: {
     position: 'absolute',
@@ -241,13 +244,13 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 24,
-    backgroundColor: '#006875',
+    backgroundColor: theme.Colors.primary,
     borderTopRightRadius: 14,
     borderBottomRightRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: -2, height: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 3,

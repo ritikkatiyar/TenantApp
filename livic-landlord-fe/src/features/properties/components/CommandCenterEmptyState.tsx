@@ -15,7 +15,7 @@ export function CommandCenterEmptyState({ onNavigateToCreateProperty }: CommandC
   return (
     <BlurView intensity={40} tint={isDark ? "dark" : "light"} style={styles.emptyCard}>
       <View style={styles.emptyIconCircle}>
-        <MaterialIcons name="domain-disabled" size={36} color="#6b7a7d" />
+        <MaterialIcons name="domain-disabled" size={36} color={theme.Colors.onSurfaceVariant} />
       </View>
       <Text style={styles.emptyTitle}>No properties found.</Text>
       <Text style={styles.emptySubtitle}>
@@ -33,13 +33,13 @@ export function CommandCenterEmptyState({ onNavigateToCreateProperty }: CommandC
           end={{ x: 1, y: 0 }}
           style={styles.createPropertyGradient}
         >
-          <MaterialIcons name="add" size={24} color="#fff" />
+          <MaterialIcons name="add" size={24} color={theme.Colors.surfaceContainerLowest} />
           <Text style={styles.createPropertyText}>CREATE PROPERTY</Text>
         </LinearGradient>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.learnMoreContainer}>
-        <MaterialIcons name="help-outline" size={16} color="#006875" />
+        <MaterialIcons name="help-outline" size={16} color={theme.Colors.primary} />
         <Text style={styles.learnMoreText}>LEARN ABOUT PROPERTY MANAGEMENT</Text>
       </TouchableOpacity>
     </BlurView>
@@ -54,7 +54,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: theme.Surface.border,
-    shadowColor: '#000',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.05,
     shadowRadius: 16,
@@ -72,14 +72,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.primaryContainer,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     marginBottom: 10,
     fontFamily: 'Inter',
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 22,
@@ -90,7 +90,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   createPropertyButton: {
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#0072ff',
+    shadowColor: theme.Colors.secondary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -105,8 +105,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 28,
   },
   createPropertyText: {
-    color: '#fff',
-    fontSize: 14,
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
     fontFamily: 'Inter',
@@ -117,7 +117,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   learnMoreText: {
-    fontSize: 12,
+    fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1,

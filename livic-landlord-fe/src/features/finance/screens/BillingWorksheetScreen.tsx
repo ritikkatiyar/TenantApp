@@ -7,24 +7,26 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   Alert,
-  Platform,
   ScrollView,
-  TextInput,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-import GlassDropdown, { DropdownOption } from '@/src/components/common/inputs/GlassDropdown';
+import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useProperties } from '@/src/hooks/useProperties';
-import { getActiveChargesForProperty, ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
-import { getOrCreateWorksheet, batchSaveWorksheet, WorksheetEntryResponse } from '@/src/features/finance/api/worksheet.api';
+import { useBillingWorksheet } from '@/src/features/finance/hooks/useBillingWorksheet';
 import { formatErrorMessage } from '@/src/utils/errors';
+import { SkeletonRow } from '@/src/components/common/feedback/Skeleton';
+
+// Sub-components
+import { WorksheetFloorList } from '../components/billing/WorksheetFloorList';
 
 export default function BillingWorksheetScreen({ token }: { token: string | null }) {
   const { theme, isDark } = useAppTheme();
@@ -38,7 +40,6 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
   const { properties } = useProperties();
   const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
   
-  const [charges, setCharges] = useState<ChargeConfigResponse[]>([]);
   const [selectedChargeId, setSelectedChargeId] = useState<string | null>(null);
   const [billingMonth, setBillingMonth] = useState<string>(() => {
     const d = new Date();
@@ -68,259 +69,116 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
     }
     setBillingMonth(`${year}-${String(month).padStart(2, '0')}`);
   };
-  
-  const [entries, setEntries] = useState<WorksheetEntryResponse[]>([]);
+
   const [editValues, setEditValues] = useState<Record<string, string>>({});
-  
-  const [isLoadingCharges, setIsLoadingCharges] = useState(false);
-  const [isLoadingWorksheet, setIsLoadingWorksheet] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
-  const [expandedFloors, setExpandedFloors] = useState<Record<number, boolean>>({});
-  const [floorPages, setFloorPages] = useState<Record<number, number>>({});
-  const [floorPage, setFloorPage] = useState(1);
+  // React-Query Custom Hook
+  const {
+    charges,
+    entries,
+    isLoading,
+    isSaving,
+    saveWorksheet,
+  } = useBillingWorksheet(propertyId, selectedChargeId, billingMonth, token);
 
-  const toggleFloor = (floor: number) => {
-    setExpandedFloors(prev => ({ ...prev, [floor]: !prev[floor] }));
-  };
+  useEffect(() => {
+    if (charges.length > 0 && !selectedChargeId) {
+      const rentCharge = charges.find(c => c.chargeCategory === 'RENT');
+      setSelectedChargeId(rentCharge ? rentCharge.id : charges[0].id);
+    }
+  }, [charges]);
 
   useEffect(() => {
     if (entries.length > 0) {
-      setExpandedFloors({});
-      setFloorPages({});
-      setFloorPage(1);
+      const initialValues: Record<string, string> = {};
+      entries.forEach(entry => {
+        initialValues[entry.unitId] = entry.enteredValue !== null && entry.enteredValue !== undefined 
+          ? entry.enteredValue.toString() 
+          : '';
+      });
+      setEditValues(initialValues);
     }
   }, [entries]);
-
-  useEffect(() => {
-    const fetchCharges = async () => {
-      if (!token || !propertyId) return;
-      try {
-        setIsLoadingCharges(true);
-        const data = await getActiveChargesForProperty(propertyId, token);
-        setCharges(data);
-        if (data.length > 0) {
-          const rentCharge = data.find(c => c.chargeCategory === 'RENT');
-          setSelectedChargeId(rentCharge ? rentCharge.id : data[0].id);
-        }
-      } catch (error) {
-        console.error("Failed to load charges", error);
-      } finally {
-        setIsLoadingCharges(false);
-      }
-    };
-    fetchCharges();
-  }, [propertyId, token]);
-
-  useEffect(() => {
-    const fetchWorksheet = async () => {
-      if (!token || !propertyId || !selectedChargeId) return;
-      try {
-        setIsLoadingWorksheet(true);
-        const data = await getOrCreateWorksheet(propertyId, selectedChargeId, billingMonth, token);
-        setEntries(data);
-        
-        const initialValues: Record<string, string> = {};
-        data.forEach(entry => {
-          initialValues[entry.unitId] = entry.enteredValue !== null && entry.enteredValue !== undefined 
-            ? entry.enteredValue.toString() 
-            : '';
-        });
-        setEditValues(initialValues);
-        
-      } catch (error) {
-        console.error("Failed to load worksheet", error);
-      } finally {
-        setIsLoadingWorksheet(false);
-      }
-    };
-    fetchWorksheet();
-  }, [propertyId, selectedChargeId, billingMonth, token]);
 
   const handleSave = async () => {
     if (!token || !propertyId || !selectedChargeId) return;
     try {
-      setIsSaving(true);
       const payloadEntries = Object.entries(editValues).map(([unitId, val]) => ({
         unitId,
         enteredValue: val ? parseFloat(val) : 0
       }));
       
-      await batchSaveWorksheet({
-        propertyId,
-        chargeConfigId: selectedChargeId,
-        billingMonth,
-        entries: payloadEntries
-      }, token);
-      
+      await saveWorksheet(payloadEntries);
       Alert.alert("Success", "Worksheet saved successfully!");
     } catch (error: any) {
       Alert.alert("Error", formatErrorMessage(error));
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const groupedWorksheet = entries.reduce((acc, row) => {
-    const floor = row.floor ?? 0;
-    if (!acc[floor]) acc[floor] = [];
-    acc[floor].push(row);
-    return acc;
-  }, {} as Record<number, typeof entries>);
-
-  const sortedFloors = Object.keys(groupedWorksheet).map(Number).sort((a, b) => a - b);
-  const floorsPerPage = 4;
-  const totalFloorPages = Math.ceil(sortedFloors.length / floorsPerPage);
-  const startFloorIndex = (floorPage - 1) * floorsPerPage;
-  const paginatedFloors = sortedFloors.slice(startFloorIndex, startFloorIndex + floorsPerPage);
-
   const selectedCharge = charges.find(c => c.id === selectedChargeId);
 
-  const renderFloorsList = () => (
-    <View style={{ flex: 1 }}>
-      {paginatedFloors.map(floor => {
-        const isExpanded = expandedFloors[floor];
-        return (
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} key={`floor-${floor}`} style={styles.floorCard}>
-            <TouchableOpacity 
-              style={styles.floorHeader}
-              onPress={() => toggleFloor(floor)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.floorHeaderText}>
-                {floor === 0 ? 'Ground Floor' : `Floor ${floor}`}
-              </Text>
-              <MaterialIcons 
-                name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                size={24} 
-                color={theme.Colors.primary} 
-              />
-            </TouchableOpacity>
-            
-            {(() => {
-              if (!isExpanded) return null;
-              const unitsPerFloorPage = 4;
-              const floorUnits = groupedWorksheet[floor] || [];
-              const totalFloorPagesUnits = Math.ceil(floorUnits.length / unitsPerFloorPage);
-              const currentPage = floorPages[floor] || 1;
-              const startIndex = (currentPage - 1) * unitsPerFloorPage;
-              const paginatedUnits = floorUnits.slice(startIndex, startIndex + unitsPerFloorPage);
-
-              return (
-                <>
-                  {paginatedUnits.map((entry, index) => {
-                    const isLast = index === paginatedUnits.length - 1;
-                    return (
-                      <View key={entry.id} style={[styles.rowCard, isLast && { borderBottomWidth: 0 }]}>
-                        <View style={styles.rowLeft}>
-                          <Text style={styles.unitName}>{entry.unitName}</Text>
-                          <Text style={styles.tenantName} numberOfLines={1}>{entry.tenantName}</Text>
-                        </View>
-                        
-                        <View style={styles.rowRight}>
-                          {entry.isBilled ? (
-                            <View style={styles.billedBadge}>
-                              <Text style={styles.billedBadgeText}>BILLED (₹{entry.enteredValue})</Text>
-                            </View>
-                          ) : (
-                            selectedCharge?.calculationStrategy === 'METERED' ? (
-                              <TouchableOpacity 
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  backgroundColor: 'rgba(0, 104, 117, 0.08)',
-                                  borderColor: 'rgba(0, 104, 117, 0.3)',
-                                  borderWidth: 1,
-                                  borderRadius: 12,
-                                  paddingVertical: 6,
-                                  paddingHorizontal: 12,
-                                  gap: 6,
-                                }}
-                                onPress={() => router.push(`/properties/${propertyId}/meter-readings`)}
-                              >
-                                <MaterialIcons name="speed" size={16} color={theme.Colors.primary} />
-                                <Text style={{ color: theme.Colors.primary, fontSize: 13, fontWeight: '700' }}>Enter Readings</Text>
-                              </TouchableOpacity>
-                            ) : (
-                              <View style={styles.inputWrapper}>
-                                {selectedCharge?.calculationStrategy !== 'METERED' && (
-                                  <Text style={styles.currencySymbol}>₹</Text>
-                                )}
-                                <TextInput
-                                  style={[styles.input, selectedCharge?.calculationStrategy !== 'METERED' && { paddingLeft: 24 }]}
-                                  value={editValues[entry.unitId]}
-                                  onChangeText={(val) => setEditValues(prev => ({ ...prev, [entry.unitId]: val }))}
-                                  keyboardType="numeric"
-                                  placeholder="0"
-                                  placeholderTextColor="#9ba9ab"
-                                />
-                              </View>
-                            )
-                          )}
-                        </View>
-                      </View>
-                    );
-                  })}
-                  
-                  {totalFloorPagesUnits > 1 && (
-                    <View style={styles.paginationRow}>
-                      <TouchableOpacity 
-                        style={[styles.pageButton, currentPage === 1 && styles.pageButtonDisabled]}
-                        disabled={currentPage === 1}
-                        onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage - 1 }))}
-                      >
-                        <MaterialIcons name="chevron-left" size={20} color={currentPage === 1 ? '#a0aab2' : theme.Colors.primary} />
-                        <Text style={[styles.pageButtonText, currentPage === 1 && styles.pageButtonTextDisabled]}>Prev</Text>
-                      </TouchableOpacity>
-                      
-                      <Text style={styles.pageInfoText}>
-                        Page {currentPage} of {totalFloorPagesUnits}
-                      </Text>
-                      
-                      <TouchableOpacity 
-                        style={[styles.pageButton, currentPage === totalFloorPagesUnits && styles.pageButtonDisabled]}
-                        disabled={currentPage === totalFloorPagesUnits}
-                        onPress={() => setFloorPages(prev => ({ ...prev, [floor]: currentPage + 1 }))}
-                      >
-                        <Text style={[styles.pageButtonText, currentPage === totalFloorPagesUnits && styles.pageButtonTextDisabled]}>Next</Text>
-                        <MaterialIcons name="chevron-right" size={20} color={currentPage === totalFloorPagesUnits ? '#a0aab2' : theme.Colors.primary} />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </>
-              );
-            })()}
-          </BlurView>
-        );
-      })}
-
-      {totalFloorPages > 1 && (
-        <View style={styles.mainPaginationRow}>
-          <TouchableOpacity 
-            style={[styles.pageButton, floorPage === 1 && styles.pageButtonDisabled]}
-            disabled={floorPage === 1}
-            onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
-          >
-            <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : theme.Colors.primary} />
-            <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.pageInfoText}>
-            Floors Page {floorPage} of {totalFloorPages}
+  const renderContent = () => {
+    if (!properties || properties.length === 0) {
+      return (
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+          <MaterialIcons name="business" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+          <Text style={[styles.emptyText, { fontWeight: '800', color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLg.fontSize, marginBottom: 8 }]}>No Property Created Yet</Text>
+          <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40, marginBottom: 20 }]}>
+            Billing worksheets require an active property. Create your first property to start managing worksheets.
           </Text>
-          
           <TouchableOpacity 
-            style={[styles.pageButton, floorPage === totalFloorPages && styles.pageButtonDisabled]}
-            disabled={floorPage === totalFloorPages}
-            onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
+            style={{ borderRadius: 100, overflow: 'hidden' }}
+            onPress={() => router.push('/properties/create')}
           >
-            <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
-            <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : theme.Colors.primary} />
+            <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
+              <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+            </LinearGradient>
           </TouchableOpacity>
+        </BlurView>
+      );
+    }
+
+    if (isLoading && charges.length === 0) {
+      return (
+        <View style={{ padding: 40, gap: 16 }}>
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
         </View>
-      )}
-    </View>
-  );
+      );
+    }
+
+    if (charges.length === 0) {
+      return (
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+          <MaterialIcons name="receipt-long" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
+          <Text style={styles.emptyText}>No active charges configured for this property.</Text>
+        </BlurView>
+      );
+    }
+
+    if (entries.length === 0) {
+      return (
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+          <MaterialIcons name="domain-disabled" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
+          <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40 }]}>
+            No occupied units with active leases found for this property. Assign a tenant first to view billing worksheets.
+          </Text>
+        </BlurView>
+      );
+    }
+
+    return (
+      <WorksheetFloorList
+        entries={entries}
+        editValues={editValues}
+        setEditValues={setEditValues}
+        selectedCharge={selectedCharge}
+        propertyId={propertyId}
+      />
+    );
+  };
 
   const renderDesktopShell = () => (
     <LinearGradient
@@ -340,13 +198,11 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
         <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
           <View style={styles.desktopInner}>
-            {/* Header Row */}
             <View style={styles.desktopHeaderRow}>
               <View style={styles.largeTitleContainer}>
                 <Text style={styles.titleLineDesktop}>Billing Worksheets</Text>
               </View>
 
-              {/* Action Save Button */}
               <TouchableOpacity 
                 style={[styles.desktopSaveButtonWrapper, (isSaving || entries.length === 0) && { opacity: 0.5 }]} 
                 onPress={handleSave}
@@ -360,18 +216,17 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                   style={styles.desktopSaveButton}
                 >
                   {isSaving ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color={theme.Colors.surfaceContainerLowest} size="small" />
                   ) : (
                     <>
                       <Text style={styles.desktopSaveButtonText}>SAVE MAPPINGS</Text>
-                      <MaterialIcons name="check" size={18} color="#fff" />
+                      <MaterialIcons name="check" size={18} color={theme.Colors.surfaceContainerLowest} />
                     </>
                   )}
                 </LinearGradient>
               </TouchableOpacity>
             </View>
 
-            {/* Filter Section Row */}
             <View style={styles.desktopFilterRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.filterLabelCaps}>CHARGE CONFIGURATION</Text>
@@ -403,43 +258,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               </View>
             </View>
 
-            {/* Content */}
-            {(!properties || properties.length === 0) ? (
-              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
-                <MaterialIcons name="business" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-                <Text style={[styles.emptyText, { fontWeight: '800', color: '#163235', fontSize: 18, marginBottom: 8 }]}>No Property Created Yet</Text>
-                <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40, marginBottom: 20 }]}>
-                  Billing worksheets require an active property. Create your first property to start managing worksheets.
-                </Text>
-                <TouchableOpacity 
-                  style={{ borderRadius: 100, overflow: 'hidden' }}
-                  onPress={() => router.push('/properties/create')}
-                >
-                  <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 24, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <MaterialIcons name="add" size={20} color="#fff" />
-                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </BlurView>
-            ) : isLoadingCharges ? (
-              <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
-            ) : charges.length === 0 ? (
-              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
-                <MaterialIcons name="receipt-long" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
-                <Text style={styles.emptyText}>No active charges configured for this property.</Text>
-              </BlurView>
-            ) : isLoadingWorksheet ? (
-              <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
-            ) : entries.length === 0 ? (
-              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
-                <MaterialIcons name="domain-disabled" size={48} color="#6b7a7d" style={{ marginBottom: 16 }} />
-                <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40 }]}>
-                  No occupied units with active leases found for this property. Assign a tenant first to view billing worksheets.
-                </Text>
-              </BlurView>
-            ) : (
-              renderFloorsList()
-            )}
+            {renderContent()}
           </View>
         </ScrollView>
       </View>
@@ -454,12 +273,11 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
-        {/* Pinned Glassy Overlay Header */}
         <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
           <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
           <View style={styles.headerContent}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color="#0b1c30" />
+              <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
             </TouchableOpacity>
             <View style={styles.titleWrapper}>
               <Text style={styles.compactTitleText}>Worksheets</Text>
@@ -477,10 +295,10 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                 style={styles.headerGradientInner}
               >
                 {isSaving ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
                 ) : (
                   <>
-                    <MaterialIcons name="check" size={15} color="#fff" />
+                    <MaterialIcons name="check" size={15} color={theme.Colors.surfaceContainerLowest} />
                     <Text style={styles.headerGradientText}>SAVE</Text>
                   </>
                 )}
@@ -489,7 +307,6 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
           </View>
         </View>
 
-        {/* Filters */}
         <View style={[styles.filterSection, { paddingTop: 68 + insets.top }]}>
           <View style={styles.mobileDropdownWrapper}>
             <GlassDropdown 
@@ -501,45 +318,30 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
             />
           </View>
           
-          <View style={styles.monthSelectorRowMobile}>
-            <Text style={styles.filterLabelCaps}>MONTH</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 4 }}>
-                <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
-              </TouchableOpacity>
-              
-              <Text style={styles.monthBadgeTextMobile}>{billingMonth}</Text>
-              
-              <TouchableOpacity onPress={handleNextMonth} style={{ padding: 4 }}>
-                <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
-              </TouchableOpacity>
+          <View style={styles.monthSelectorRow}>
+            <TouchableOpacity onPress={handlePrevMonth} style={styles.monthAdjustButton}>
+              <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
+            </TouchableOpacity>
+            
+            <View style={styles.monthBadge}>
+              <MaterialIcons name="calendar-today" size={16} color={theme.Colors.primary} />
+              <Text style={styles.monthBadgeText}>{billingMonth}</Text>
             </View>
+            
+            <TouchableOpacity onPress={handleNextMonth} style={styles.monthAdjustButton}>
+              <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
+            </TouchableOpacity>
           </View>
         </View>
 
-        <ScrollView
+        <ScrollView 
           onScroll={handleScroll}
           scrollEventThrottle={16}
-          contentContainerStyle={[styles.mobileListContent, { paddingBottom: 120 }]}
-          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          {isLoadingCharges ? (
-            <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 50 }} />
-          ) : charges.length === 0 ? (
-            <View style={styles.emptyStateCard}>
-              <Text style={styles.emptyText}>No active charges configured for this property.</Text>
-            </View>
-          ) : isLoadingWorksheet ? (
-            <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 50 }} />
-          ) : entries.length === 0 ? (
-            <View style={styles.emptyStateCard}>
-              <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 20 }]}>
-                No occupied units with active leases found for this property. Assign a tenant first to view billing worksheets.
-              </Text>
-            </View>
-          ) : (
-            renderFloorsList()
-          )}
+          {renderContent()}
+          <View style={{ height: 80 }} />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -547,7 +349,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
   return (
     <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1 }}
     >
       {isDesktop ? renderDesktopShell() : renderMobileShell()}
@@ -558,378 +360,169 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
-  
-  // Desktop shell specific
-  desktopShell: { flex: 1, flexDirection: 'row' },
-  desktopMain: { flex: 1, height: '100%' },
-  desktopContent: { paddingBottom: 80 },
-  desktopInner: {
-    width: '100%',
-    maxWidth: 1080,
-    alignSelf: 'center',
-    paddingHorizontal: 40,
-    paddingTop: 24,
-  },
-  desktopHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  largeTitleContainer: { flex: 1 },
-  titleLineDesktop: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
-    lineHeight: 38,
-    letterSpacing: -0.5,
-  },
-  desktopSaveButtonWrapper: {
-    borderRadius: 23,
-    overflow: 'hidden',
-    shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  desktopSaveButton: {
-    height: 46,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  desktopSaveButtonText: {
-    color: theme.Surface.card,
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  desktopFilterRow: {
-    flexDirection: 'row',
-    gap: 24,
-    alignItems: 'flex-end',
-    marginBottom: 32,
-  },
-  
-  // Mobile shell specific
   headerContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
     borderBottomColor: theme.Colors.glassFill,
     overflow: 'hidden',
   },
   headerContent: {
-    flex: 1,
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
   },
   backButton: {
-    width: 36, 
+    width: 36,
     height: 36,
     borderRadius: 18,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: theme.Colors.glassFill,
-    justifyContent: 'center', 
-    alignItems: 'center',
-    shadowColor: '#006677',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  titleWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  compactTitleText: {
-    fontSize: 18,
-    fontFamily: 'Inter',
-    fontWeight: '800',
-    color: '#0b1c30',
-  },
-  headerSaveBtnWrapper: {
-    borderRadius: 19,
-    overflow: 'hidden',
-    shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  headerSaveBtn: {
-    height: 38,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    alignItems: 'center',
   },
-  headerSaveText: {
-    color: theme.Surface.card,
-    fontSize: 12,
+  titleWrapper: { flex: 1, alignItems: 'center' },
+  compactTitleText: {
+    color: theme.Colors.onSurface,
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontFamily: 'Inter',
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  floatingSaveBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    paddingBottom: 28,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.5)',
-    overflow: 'hidden',
-  },
-  floatingSaveBtn: {
-    borderRadius: 18,
-    overflow: 'hidden',
-    shadowColor: '#0072ff',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  floatingSaveBtnInner: {
-    height: 56,
+  headerGradientTouch: { borderRadius: 12, overflow: 'hidden' },
+  headerGradientInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 4,
   },
-  floatingSaveText: {
-    color: theme.Surface.card,
-    fontSize: 15,
+  headerGradientText: {
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   filterSection: {
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    backgroundColor: 'transparent',
   },
   mobileDropdownWrapper: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  monthSelectorRowMobile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    marginTop: 8,
-    justifyContent: 'space-between',
-  },
-  monthBadgeTextMobile: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.Colors.primary,
-  },
-  mobileListContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-
-  // Shared Filters
-  filterLabelCaps: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#5b6b6d',
-    letterSpacing: 1,
+    zIndex: 1000,
     marginBottom: 8,
   },
-  monthBadge: {
+  monthSelectorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  monthBadgeText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.Colors.primary,
-  },
-
-  // Grid & Cards
-  emptyStateCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 24,
-    padding: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
+  monthAdjustButton: {
+    padding: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',
   },
-  emptyText: {
-    fontSize: 15,
-    color: theme.Colors.onSurfaceVariant,
-  },
-  unitName: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
-    marginBottom: 2,
-  },
-  tenantName: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: theme.Colors.onSurfaceVariant,
-  },
-  inputWrapper: {
-    width: '100%',
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  currencySymbol: {
-    position: 'absolute',
-    left: 12,
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#849495',
-    zIndex: 1,
-  },
-  input: {
-    backgroundColor: '#fff', 
-    borderRadius: 10,
-    borderWidth: 1, 
-    borderColor: 'rgba(0, 104, 117, 0.15)',
-    width: '100%', 
-    paddingVertical: 10, 
-    paddingHorizontal: 12,
-    fontSize: 16, 
-    fontWeight: '600', 
-    color: theme.Colors.onBackground, 
-    textAlign: 'left',
-  },
-  billedBadge: {
-    backgroundColor: '#ccfbf1',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  billedBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#0d9488',
-  },
-  
-  // Floor and Pagination Styles
-  floorCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  floorHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  floorHeaderText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: theme.Colors.primary,
-    letterSpacing: 0.5,
-  },
-  rowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,104,117,0.1)',
-  },
-  rowLeft: {
+  monthBadge: {
     flex: 1,
-  },
-  rowRight: {
-    width: 140,
-    alignItems: 'flex-end',
-  },
-  paginationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,104,117,0.1)',
-  },
-  mainPaginationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    marginTop: 8,
+    justifyContent: 'center',
+    gap: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+    paddingVertical: 8,
+    marginTop: 0,
   },
-  pageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-  },
-  pageButtonDisabled: {
-    opacity: 0.5,
-  },
-  pageButtonText: {
-    fontSize: 13,
+  monthBadgeText: {
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '700',
-    color: theme.Colors.primary,
+    color: theme.Colors.onSurface,
   },
-  pageButtonTextDisabled: {
-    color: '#a0aab2',
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
-  pageInfoText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#5b6b6d',
+  desktopShell: { flex: 1 },
+  desktopMain: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'center',
   },
-  headerGradientTouch: {
-    borderRadius: 100,
-    overflow: 'hidden',
-    shadowColor: '#00d4ff',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+  desktopContent: {
+    paddingHorizontal: 40,
+    paddingBottom: 40,
   },
-  headerGradientInner: {
-    paddingVertical: 7,
-    paddingHorizontal: 14,
+  desktopInner: {
+    maxWidth: 1080,
+    width: '100%',
+    alignSelf: 'center',
+    paddingTop: 24,
+  },
+  desktopHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    borderRadius: 100,
+    justifyContent: 'space-between',
+    marginBottom: 24,
   },
-  headerGradientText: {
-    color: theme.Surface.card,
-    fontSize: 11,
+  largeTitleContainer: { flex: 1 },
+  titleLineDesktop: {
+    fontSize: theme.Typography.headlineLg.fontSize,
+    fontWeight: '900',
+    color: theme.Colors.onSurface,
+  },
+  desktopSaveButtonWrapper: { borderRadius: 16, overflow: 'hidden' },
+  desktopSaveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  desktopSaveButtonText: {
+    color: theme.Colors.surfaceContainerLowest,
+    fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+  },
+  desktopFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 20,
+    marginBottom: 24,
+    zIndex: 1000,
+  },
+  filterLabelCaps: {
+    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.primary,
+    letterSpacing: 1.5,
+    marginBottom: 6,
+  },
+  emptyStateCard: {
+    borderRadius: 24,
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1.5,
+    borderColor: theme.Colors.glassStroke,
+    marginTop: 20,
+  },
+  emptyText: {
+    fontSize: theme.Typography.BodyLarge.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '500',
   },
 });
