@@ -152,7 +152,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   dashedButtonText: {
     fontSize: theme.Typography.BodyMedium.fontSize,
-    color: '#00bcd4',
+    color: theme.Colors.secondary,
     fontWeight: '800',
   },
   desktopShell: { flex: 1 },

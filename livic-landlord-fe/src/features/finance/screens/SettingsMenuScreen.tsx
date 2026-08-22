@@ -148,7 +148,7 @@ export default function SettingsMenuScreen() {
                 {pendingCount !== null ? pendingCount : '—'}
               </Text>
               <Text style={styles.statLabel}>Pending</Text>
-              <View style={[styles.statDot, { backgroundColor: '#f59e0b' }]} />
+              <View style={[styles.statDot, { backgroundColor: theme.Colors.tertiary }]} />
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -158,7 +158,7 @@ export default function SettingsMenuScreen() {
                   : '—'}
               </Text>
               <Text style={styles.statLabel}>Total</Text>
-              <View style={[styles.statDot, { backgroundColor: '#6366f1' }]} />
+              <View style={[styles.statDot, { backgroundColor: theme.Colors.secondary }]} />
             </View>
           </View>
           <Text style={styles.statsSubtitle}>This billing cycle</Text>

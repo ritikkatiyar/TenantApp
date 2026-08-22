@@ -393,7 +393,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
               <Text style={styles.legendText}>Vacant</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#f59e0b' }]} />
+              <View style={[styles.legendDot, { backgroundColor: theme.Colors.tertiary }]} />
               <Text style={styles.legendText}>Partial</Text>
             </View>
             <View style={styles.legendItem}>

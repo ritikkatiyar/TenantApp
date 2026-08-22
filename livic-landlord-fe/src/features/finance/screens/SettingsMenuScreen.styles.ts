@@ -104,7 +104,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'Inter',
   },
   statWarning: {
-    color: '#d97706',
+    color: theme.Colors.tertiary,
   },
   statLabel: {
     fontSize: theme.Typography.LabelSmall.fontSize,
@@ -127,7 +127,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statsSubtitle: {
     textAlign: 'center',
     fontSize: theme.Typography.LabelSmall.fontSize,
-    color: '#849495',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     letterSpacing: 0.3,
   },
@@ -147,7 +147,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   workflowLabel: {
     fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '800',
-    color: '#849495',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1.2,
   },
 

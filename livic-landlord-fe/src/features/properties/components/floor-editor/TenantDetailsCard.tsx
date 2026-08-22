@@ -123,8 +123,8 @@ export function TenantDetailsCard({
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>PHONE NUMBER</Text>
             <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <MaterialIcons name="phone" size={18} color="#7b8a8d" />
-              <TextInput style={[styles.textInput, { color: '#7b8a8d' }]} value={tenantPhoneSearch} editable={false} />
+              <MaterialIcons name="phone" size={18} color={theme.Colors.onSurfaceVariant} />
+              <TextInput style={[styles.textInput, { color: theme.Colors.onSurfaceVariant }]} value={tenantPhoneSearch} editable={false} />
             </View>
           </View>
 
@@ -248,8 +248,8 @@ export function TenantDetailsCard({
               </View>
             ) : selectedBlock.activeLeases && selectedBlock.activeLeases.length >= selectedBlock.capacity ? (
               <View style={styles.successContainer}>
-                <MaterialIcons name="check-circle" size={18} color="#2e7d32" />
-                <Text style={[styles.warningText, { color: '#2e7d32' }]}>
+                <MaterialIcons name="check-circle" size={18} color={theme.Colors.tertiary} />
+                <Text style={[styles.warningText, { color: theme.Colors.tertiary }]}>
                   Unit is fully occupied (Capacity: {selectedBlock.capacity}/{selectedBlock.capacity} reached).
                 </Text>
               </View>
@@ -258,11 +258,11 @@ export function TenantDetailsCard({
                 {!isCreatingNewTenant && (
                   <View style={{ marginBottom: 12 }}>
                     <View style={styles.inputWrapper}>
-                      <MaterialIcons name="phone" size={18} color="#006875" />
+                      <MaterialIcons name="phone" size={18} color={theme.Colors.primary} />
                       <TextInput
                         style={styles.textInput}
                         placeholder="Search by 10-digit phone"
-                        placeholderTextColor="#9ba9ab"
+                        placeholderTextColor={theme.Colors.outlineVariant}
                         value={tenantPhoneSearch}
                         onChangeText={(val) => {
                           const cleaned = val.replace(/[^0-9]/g, '').slice(0, 10);
@@ -275,9 +275,9 @@ export function TenantDetailsCard({
                       />
                       <TouchableOpacity onPress={handleSearchTenant} disabled={tenantSearchLoading}>
                         {tenantSearchLoading ? (
-                          <ActivityIndicator size="small" color="#006875" />
+                          <ActivityIndicator size="small" color={theme.Colors.primary} />
                         ) : (
-                          <MaterialIcons name="person-add" size={20} color="#006875" />
+                          <MaterialIcons name="person-add" size={20} color={theme.Colors.primary} />
                         )}
                       </TouchableOpacity>
                     </View>
@@ -302,7 +302,7 @@ export function TenantDetailsCard({
                               setSuggestions([]);
                             }}
                           >
-                            <MaterialIcons name="phone" size={16} color="#006875" />
+                            <MaterialIcons name="phone" size={16} color={theme.Colors.primary} />
                             <View style={styles.suggestionTextContainer}>
                               <Text style={styles.suggestionName}>{userItem.fullName}</Text>
                               <Text style={styles.suggestionPhone}>{userItem.phoneNumber || 'No phone'}</Text>
@@ -331,7 +331,7 @@ export function TenantDetailsCard({
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <MaterialIcons name="person-add" size={20} color="#006875" />
+                      <MaterialIcons name="person-add" size={20} color={theme.Colors.primary} />
                       <Text style={styles.quickCreatePromptText}>
                         No tenant found. Create new tenant for &quot;{tenantPhoneSearch}&quot;?
                       </Text>
@@ -347,9 +347,9 @@ export function TenantDetailsCard({
                     <View style={styles.quickCreateField}>
                       <Text style={styles.quickCreateLabel}>PHONE NUMBER</Text>
                       <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                        <MaterialIcons name="phone" size={18} color="#7b8a8d" />
+                        <MaterialIcons name="phone" size={18} color={theme.Colors.onSurfaceVariant} />
                         <TextInput
-                          style={[styles.textInput, { color: '#7b8a8d' }]}
+                          style={[styles.textInput, { color: theme.Colors.onSurfaceVariant }]}
                           value={tenantPhoneSearch}
                           editable={false}
                         />
@@ -359,7 +359,7 @@ export function TenantDetailsCard({
                     <View style={styles.quickCreateField}>
                       <Text style={styles.quickCreateLabel}>FULL NAME</Text>
                       <View style={styles.inputWrapper}>
-                        <MaterialIcons name="person" size={18} color="#006875" />
+                        <MaterialIcons name="person" size={18} color={theme.Colors.primary} />
                         <TextInput
                           style={styles.textInput}
                           placeholder="e.g. John Doe"
@@ -490,7 +490,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   createTenantTitle: {
     fontSize: 12,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1,
     fontFamily: 'Inter',
   },
@@ -500,7 +500,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   inputLabel: {
     fontSize: 9,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     fontFamily: 'Inter',
   },
@@ -519,7 +519,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '700',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
     padding: 0,
   },
@@ -536,25 +536,25 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statusToggleText: {
     fontSize: 12,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   statusActiveOccupied: {
-    backgroundColor: '#006875',
-    borderColor: '#006875',
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   statusTextActive: {
-    color: '#fff',
+    color: theme.Colors.onPrimary,
   },
   errorText: {
-    color: '#e53935',
+    color: theme.Colors.error,
     fontSize: 13,
     paddingLeft: 4,
     marginTop: 4,
     fontFamily: 'Inter',
   },
   errorTextFlat: {
-    color: '#e53935',
+    color: theme.Colors.error,
     fontSize: 13,
     marginTop: -8,
     marginBottom: 12,
@@ -581,12 +581,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   tenantTagText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   sheetSubtitle: {
     fontSize: 11,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
     fontFamily: 'Inter',
   },
@@ -609,7 +609,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontWeight: '700',
-    color: '#c62828',
+    color: theme.Colors.error,
     lineHeight: 18,
     fontFamily: 'Inter',
   },
@@ -652,12 +652,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   suggestionName: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#151d1e',
+    color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   suggestionPhone: {
     fontSize: 11,
-    color: '#6b7a7d',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
     fontFamily: 'Inter',
   },
@@ -673,7 +673,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   quickCreatePromptText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#006875',
+    color: theme.Colors.primary,
     fontFamily: 'Inter',
     flex: 1,
   },
@@ -689,7 +689,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   quickCreateTitle: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1.5,
     fontFamily: 'Inter',
   },
@@ -699,7 +699,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   quickCreateLabel: {
     fontSize: 8,
     fontWeight: '900',
-    color: '#006875',
+    color: theme.Colors.primary,
     letterSpacing: 1,
     fontFamily: 'Inter',
   },
@@ -717,12 +717,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   tenantMatchName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1b5e20',
+    color: theme.Colors.tertiary,
     fontFamily: 'Inter',
   },
   tenantMatchEmail: {
     fontSize: 11,
-    color: '#4e7051',
+    color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
 });

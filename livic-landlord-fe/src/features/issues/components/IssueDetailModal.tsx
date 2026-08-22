@@ -477,7 +477,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   descriptionText: {
     fontSize: theme.Typography.BodyMedium.fontSize,
-    color: '#2e3a3c',
+    color: theme.Colors.onSurface,
     lineHeight: 20
   },
   metaGrid: {
@@ -628,7 +628,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   timelineBody: {
     fontSize: theme.Typography.BodyMedium.fontSize,
-    color: '#2e3a3c',
+    color: theme.Colors.onSurface,
     lineHeight: 18
   },
   emptyTimelineText: {

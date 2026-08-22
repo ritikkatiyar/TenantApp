@@ -127,7 +127,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     zIndex: 10,
   },
   ribbonText: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontSize: theme.Typography.LabelSmall.fontSize - 1,
     fontWeight: '900',
     letterSpacing: 1,
@@ -150,7 +150,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 8,
   },
   popularText: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontSize: theme.Typography.LabelSmall.fontSize - 2,
     fontWeight: '800',
   },
@@ -183,7 +183,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginLeft: 10,
   },
   bulletTextDisabled: {
-    color: '#94a3b8',
+    color: theme.Colors.onSurfaceVariant,
     textDecorationLine: 'line-through',
   },
   cardButton: {
@@ -210,6 +210,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   cardButtonTextPro: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
   },
 });

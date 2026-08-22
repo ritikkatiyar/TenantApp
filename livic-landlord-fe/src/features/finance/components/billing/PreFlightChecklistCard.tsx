@@ -46,13 +46,13 @@ export function PreFlightChecklistCard({
         </View>
       )}
 
-      <View style={[styles.statusBox, checklist && !checklist.isReady && { backgroundColor: '#fee2e2' }]}>
+      <View style={[styles.statusBox, checklist && !checklist.isReady && { backgroundColor: theme.Colors.errorContainer }]}>
         <MaterialIcons 
           name={checklist && !checklist.isReady ? "warning" : "info-outline"} 
           size={20} 
-          color={checklist && !checklist.isReady ? "#b91c1c" : theme.Colors.primary} 
+          color={checklist && !checklist.isReady ? theme.Colors.error : theme.Colors.primary} 
         />
-        <Text style={[styles.statusText, checklist && !checklist.isReady && { color: '#b91c1c' }]}>
+        <Text style={[styles.statusText, checklist && !checklist.isReady && { color: theme.Colors.error }]}>
           {checklist && !checklist.isReady ? "Please complete required readings before generating." : `Ready to compile invoices for ${billingMonth}`}
         </Text>
       </View>
@@ -78,7 +78,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   checklistItem: { backgroundColor: 'rgba(255,255,255,0.7)', padding: 16, borderRadius: 12, alignItems: 'center', flex: 1, maxWidth: 200 },
   checklistLabel: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', marginBottom: 8 },
   checklistValue: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary },
-  statusBox: { flexDirection: 'row', backgroundColor: '#e0f2fe', padding: 16, borderRadius: 12, marginBottom: 32, width: '100%', alignItems: 'center', gap: 8 },
-  statusText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: '#0369a1' },
+  statusBox: { flexDirection: 'row', backgroundColor: theme.Colors.secondaryContainer, padding: 16, borderRadius: 12, marginBottom: 32, width: '100%', alignItems: 'center', gap: 8 },
+  statusText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.secondary },
   generateBtn: { width: '100%', maxWidth: 300 },
 });

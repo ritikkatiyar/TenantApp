@@ -407,7 +407,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '900',
     letterSpacing: 1,

@@ -162,7 +162,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 8,
   },
   topUpSubmitText: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontSize: theme.Typography.buttonText.fontSize,
     fontWeight: '800',
     letterSpacing: 1,

@@ -148,7 +148,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   rowLeft: { flex: 2 },
   unitName: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onBackground },
   tenantName: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginVertical: 2 },
-  prevReading: { fontSize: theme.Typography.LabelSmall.fontSize, color: '#849495', fontWeight: '600' },
+  prevReading: { fontSize: theme.Typography.LabelSmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
   
   rowMiddle: { flex: 1.5, alignItems: 'flex-end', paddingRight: 12 },
   consumedText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary },
@@ -394,16 +394,16 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#fffbeb',
+    backgroundColor: theme.Colors.tertiaryContainer,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#fef3c7',
+    borderColor: theme.Colors.tertiaryContainer,
     marginTop: 20,
   },
   warningAlertText: {
     fontSize: theme.Typography.BodySmall.fontSize,
-    color: '#765a00',
+    color: theme.Colors.tertiary,
     fontWeight: '600',
     flex: 1,
   },
@@ -436,7 +436,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.primary,
   },
   pageButtonTextDisabled: {
-    color: '#a0aab2',
+    color: theme.Colors.onSurfaceVariant,
   },
   pageInfoText: {
     fontSize: theme.Typography.BodyMedium.fontSize,

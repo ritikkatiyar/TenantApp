@@ -142,6 +142,6 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.primary,
   },
   pageBtnTextDisabled: {
-    color: '#9ca3af',
+    color: theme.Colors.onSurfaceVariant,
   },
 });

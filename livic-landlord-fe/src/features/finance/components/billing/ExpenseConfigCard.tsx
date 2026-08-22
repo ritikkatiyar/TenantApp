@@ -34,21 +34,21 @@ export function ExpenseConfigCard({
     const c = category.toLowerCase();
     
     if (n.includes('rent') || c.includes('rent')) {
-      return { name: 'vpn-key', bg: 'rgba(74, 222, 128, 0.12)', color: '#4ade80' };
+      return { name: 'vpn-key', bg: 'rgba(74, 222, 128, 0.12)', color: theme.Colors.tertiary };
     }
     if (n.includes('electricity') || c.includes('electricity') || n.includes('power')) {
-      return { name: 'flash-on', bg: 'rgba(250, 204, 21, 0.12)', color: '#eab308' };
+      return { name: 'flash-on', bg: 'rgba(250, 204, 21, 0.12)', color: theme.Colors.tertiary };
     }
     if (n.includes('water') || n.includes('sewage') || n.includes('utility')) {
-      return { name: 'opacity', bg: 'rgba(96, 165, 250, 0.12)', color: '#60a5fa' };
+      return { name: 'opacity', bg: 'rgba(96, 165, 250, 0.12)', color: theme.Colors.secondary };
     }
     if (n.includes('internet') || n.includes('wifi') || n.includes('network')) {
-      return { name: 'router', bg: 'rgba(167, 139, 250, 0.12)', color: '#a78bfa' };
+      return { name: 'router', bg: 'rgba(167, 139, 250, 0.12)', color: theme.Colors.secondary };
     }
     if (n.includes('maintenance') || n.includes('cleaning') || c.includes('service')) {
-      return { name: 'build', bg: 'rgba(244, 63, 94, 0.12)', color: '#f43f5e' };
+      return { name: 'build', bg: 'rgba(244, 63, 94, 0.12)', color: theme.Colors.error };
     }
-    return { name: 'receipt', bg: 'rgba(148, 163, 184, 0.12)', color: '#94a3b8' };
+    return { name: 'receipt', bg: 'rgba(148, 163, 184, 0.12)', color: theme.Colors.onSurfaceVariant };
   };
 
   const formatEnum = (str: string) => {

@@ -594,7 +594,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
   },
   saveButtonText: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,

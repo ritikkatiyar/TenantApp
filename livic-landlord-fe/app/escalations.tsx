@@ -159,11 +159,11 @@ export default function EscalationsScreen() {
               </BlurView>
               <BlurView intensity={60} tint="light" style={styles.metricCard}>
                 <Text style={styles.metricLabel}>Open Issues</Text>
-                <Text style={[styles.metricValue, { color: '#0284c7' }]}>{metrics.open}</Text>
+                <Text style={[styles.metricValue, { color: theme.Colors.secondary }]}>{metrics.open}</Text>
               </BlurView>
               <BlurView intensity={60} tint="light" style={styles.metricCard}>
                 <Text style={styles.metricLabel}>In Progress</Text>
-                <Text style={[styles.metricValue, { color: '#d97706' }]}>{metrics.inProgress}</Text>
+                <Text style={[styles.metricValue, { color: theme.Colors.tertiary }]}>{metrics.inProgress}</Text>
               </BlurView>
               <BlurView intensity={60} tint="light" style={styles.metricCard}>
                 <Text style={styles.metricLabel}>Escalated</Text>

@@ -520,7 +520,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   tabActive: {},
   tabTextActive: {
-    color: '#fff',
+    color: theme.Colors.onPrimary,
     fontWeight: '800',
   },
   tabBadge: {
@@ -538,7 +538,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   tabBadgeTextActive: {
-    color: '#fff',
+    color: theme.Colors.onPrimary,
   },
   searchBar: {
     flexDirection: 'row',

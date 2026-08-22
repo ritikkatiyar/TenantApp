@@ -171,7 +171,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '700',
-    color: '#765a00',
+    color: theme.Colors.tertiary,
     lineHeight: 16,
     fontFamily: 'Inter',
   },

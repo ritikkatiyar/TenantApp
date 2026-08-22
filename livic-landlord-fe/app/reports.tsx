@@ -163,9 +163,9 @@ export default function ReportsRoute() {
         <GlassCard style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiLabel}>TOTAL BILLED</Text>
-            <MaterialIcons name="payments" size={20} color="#0284c7" />
+            <MaterialIcons name="payments" size={20} color={theme.Colors.secondary} />
           </View>
-          <Text style={[styles.kpiValue, { color: '#0284c7' }]}>
+          <Text style={[styles.kpiValue, { color: theme.Colors.secondary }]}>
             ₹{totalRevenue.toLocaleString()}
           </Text>
           <Text style={styles.kpiSub}>{publishedCount} published invoices</Text>
@@ -174,9 +174,9 @@ export default function ReportsRoute() {
         <GlassCard style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiLabel}>PAGE COLLECTED</Text>
-            <MaterialIcons name="check-circle" size={20} color="#16a34a" />
+            <MaterialIcons name="check-circle" size={20} color={theme.Colors.tertiary} />
           </View>
-          <Text style={[styles.kpiValue, { color: '#16a34a' }]}>
+          <Text style={[styles.kpiValue, { color: theme.Colors.tertiary }]}>
             ₹{totalCollected.toLocaleString()}
           </Text>
           <Text style={styles.kpiSub}>
@@ -187,9 +187,9 @@ export default function ReportsRoute() {
         <GlassCard style={styles.kpiCard}>
           <View style={styles.kpiHeader}>
             <Text style={styles.kpiLabel}>PENDING DRAFTS</Text>
-            <MaterialIcons name="pending" size={20} color="#d97706" />
+            <MaterialIcons name="pending" size={20} color={theme.Colors.tertiary} />
           </View>
-          <Text style={[styles.kpiValue, { color: '#d97706' }]}>
+          <Text style={[styles.kpiValue, { color: theme.Colors.tertiary }]}>
             {pendingDraftsCount}
           </Text>
           <Text style={styles.kpiSub}>Drafts awaiting publishing</Text>

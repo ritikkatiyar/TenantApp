@@ -330,7 +330,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.primary,
   },
   pageButtonTextDisabled: {
-    color: '#a0aab2',
+    color: theme.Colors.onSurfaceVariant,
   },
   pageInfoText: {
     fontSize: theme.Typography.BodySmall.fontSize,

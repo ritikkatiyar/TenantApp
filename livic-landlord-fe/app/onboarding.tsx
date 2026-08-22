@@ -190,13 +190,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   title: {
     fontSize: theme.Typography.headlineMd.fontSize,
     fontWeight: '700',
-    color: '#1a1d1e',
+    color: theme.Colors.onSurface,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: theme.Typography.BodyLarge.fontSize,
-    color: '#6e7781',
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
   },
   grid: {
@@ -213,7 +213,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#e1e4e8',
+    borderColor: theme.Colors.outlineVariant,
     alignItems: 'center',
     shadowColor: 'black',
     shadowOpacity: 0.05,
@@ -221,8 +221,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   cardSelected: {
-    borderColor: '#0969da',
-    backgroundColor: '#f3f8fd',
+    borderColor: theme.Colors.primary,
+    backgroundColor: theme.Colors.primaryContainer,
   },
   cardIcon: {
     fontSize: theme.Typography.headlineXl.fontSize,
@@ -231,24 +231,24 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardTitle: {
     fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '600',
-    color: '#24292f',
+    color: theme.Colors.onSurface,
     marginBottom: 8,
     textAlign: 'center',
   },
   cardTitleSelected: {
-    color: '#0969da',
+    color: theme.Colors.primary,
   },
   cardDesc: {
     fontSize: theme.Typography.BodyMedium.fontSize,
-    color: '#57606a',
+    color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 20,
   },
   cardDescSelected: {
-    color: '#0969da',
+    color: theme.Colors.primary,
   },
   continueButton: {
-    backgroundColor: '#0969da',
+    backgroundColor: theme.Colors.primary,
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 100,
@@ -257,7 +257,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   continueButtonDisabled: {
-    backgroundColor: '#8c959f',
+    backgroundColor: theme.Colors.onSurfaceVariant,
   },
   continueButtonText: {
     color: theme.Colors.surfaceContainerLowest,
@@ -277,7 +277,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 16,
     fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '600',
-    color: '#334155',
+    color: theme.Colors.onSurface,
     backgroundColor: theme.Colors.surfaceContainerLowest,
     textAlign: 'center',
     marginBottom: 24,
@@ -286,7 +286,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 12,
   },
   toggleBtnText: {
-    color: '#0969da',
+    color: theme.Colors.primary,
     fontSize: theme.Typography.BodyLarge.fontSize,
     fontWeight: '600',
   },

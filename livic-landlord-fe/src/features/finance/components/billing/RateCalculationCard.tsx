@@ -287,7 +287,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   unitText: {
     fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '600',
-    color: '#5b6b6d',
+    color: theme.Colors.onSurfaceVariant,
   },
   mobileUnitsScrollWrapper: {
     width: 100,

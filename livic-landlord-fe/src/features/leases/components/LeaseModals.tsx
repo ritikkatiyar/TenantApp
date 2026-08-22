@@ -270,5 +270,5 @@ const styles = StyleSheet.create({
   cancelBtnText: { fontSize: 14, fontWeight: '700' },
   submitBtn: { flex: 2, borderRadius: 12, overflow: 'hidden' },
   submitBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12 },
-  submitBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
+  submitBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
 });

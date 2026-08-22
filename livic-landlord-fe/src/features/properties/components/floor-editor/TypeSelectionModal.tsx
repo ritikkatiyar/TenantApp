@@ -185,7 +185,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: '#e0f7fa',
+    backgroundColor: theme.Colors.primaryContainer,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,

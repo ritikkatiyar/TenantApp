@@ -370,7 +370,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   searchInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 8,
     padding: 12,
     fontSize: theme.Typography.BodyLarge.fontSize,
@@ -392,14 +392,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   roleOption: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
   },
   roleOptionActive: {
     borderColor: theme.Colors.primary,
-    backgroundColor: '#e6f7ff',
+    backgroundColor: theme.Colors.primaryContainer,
   },
   roleOptionText: { fontWeight: '600', color: theme.Colors.onSurfaceVariant },
   roleOptionTextActive: { color: theme.Colors.primary },

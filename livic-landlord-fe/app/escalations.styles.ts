@@ -156,7 +156,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   filterText: {
     fontSize: theme.Typography.BodySmall.fontSize,
-    color: '#2e3a3c',
+    color: theme.Colors.onSurface,
     fontWeight: '600'
   },
   filterTextActive: {
