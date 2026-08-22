@@ -353,3 +353,8 @@ export const Theme = {
   Spacing,
   Rounded,
 };
+
+export const Breakpoints = {
+  tablet: 768,
+  desktop: 1024,
+};
