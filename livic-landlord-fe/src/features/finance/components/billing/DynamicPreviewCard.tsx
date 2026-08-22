@@ -38,7 +38,7 @@ export function DynamicPreviewCard({
         <Text style={styles.cardTitle}>Dynamic Preview</Text>
       </View>
       <LinearGradient
-        colors={[theme.Colors.primary, '#004d56']}
+        colors={[theme.Colors.primary, theme.Colors.secondary]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.previewCardGradient, isDesktop && { flex: 1 }]}
@@ -48,7 +48,7 @@ export function DynamicPreviewCard({
             <Text style={styles.previewCategory}>{chargeCategory} CHARGE</Text>
             <Text style={styles.previewName} numberOfLines={1}>{expenseName || 'Unnamed Charge'}</Text>
           </View>
-          <MaterialIcons name="receipt-long" size={28} color="#00f0ff" />
+          <MaterialIcons name="receipt-long" size={28} color={theme.Colors.onPrimary} />
         </View>
         
         <View style={styles.previewDivider} />
@@ -123,13 +123,13 @@ const createStyles = (theme: any) => StyleSheet.create({
   previewCategory: {
     fontSize: theme.Typography.LabelSmall.fontSize,
     fontWeight: '900',
-    color: '#00f0ff',
+    color: theme.Colors.onPrimary,
     letterSpacing: 1.5,
   },
   previewName: {
     fontSize: theme.Typography.TitleLarge.fontSize,
     fontWeight: '900',
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     marginTop: 4,
   },
   previewDivider: {
@@ -152,7 +152,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   previewValue: {
     fontSize: theme.Typography.BodySmall.fontSize,
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontWeight: '800',
   },
 });

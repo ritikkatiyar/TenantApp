@@ -111,7 +111,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
   },
   confirmBtnText: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontSize: theme.Typography.BodyMedium.fontSize,
     fontWeight: '800',
   },

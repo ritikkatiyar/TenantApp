@@ -214,14 +214,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 8,
   },
   severityText: {
-    fontSize: 8,
+    fontSize: theme.Typography.LabelSmall.fontSize - 2,
     fontWeight: '900',
     color: theme.Colors.surfaceContainerLowest,
     fontFamily: 'Inter',
   },
   historyContent: {
     fontSize: theme.Typography.BodyMedium.fontSize,
-    color: '#394648',
+    color: theme.Colors.onSurfaceVariant,
     lineHeight: 18,
     marginBottom: 12,
     fontFamily: 'Inter',
@@ -242,8 +242,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   historyTime: {
     fontSize: theme.Typography.LabelSmall.fontSize,
-    color: '#8b9ea1',
+    color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     fontFamily: 'Inter',
   },
+
 });

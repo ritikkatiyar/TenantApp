@@ -177,7 +177,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   categoryText: {
     fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '600',
-    color: '#5b6b6d',
+    color: theme.Colors.onSurfaceVariant,
   },
   segmentContainer: {
     flexDirection: 'row',
@@ -204,12 +204,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
   },
   segmentTextActive: {
-    color: '#ffffff',
+    color: theme.Colors.onPrimary,
     fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '800',
   },
   segmentText: {
-    color: '#849495',
+    color: theme.Colors.onSurfaceVariant,
     fontSize: theme.Typography.BodySmall.fontSize,
     fontWeight: '700',
   },

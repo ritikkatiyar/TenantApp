@@ -9,15 +9,15 @@ import type { InventoryCondition, InventoryItem, AssignmentItem, VerificationIte
 const getConditionConfig = (theme: any) => ({
   Excellent: { color: theme.Colors.primary, bg: 'rgba(5,150,105,0.1)'  },
   Good:      { color: theme.Colors.primary, bg: 'rgba(0,104,117,0.1)'  },
-  Fair:      { color: '#d97706', bg: 'rgba(217,119,6,0.1)'  },
+  Fair:      { color: theme.Colors.tertiary, bg: 'rgba(217,119,6,0.1)'  },
   Damaged:   { color: theme.Colors.error, bg: 'rgba(186,26,26,0.1)'  },
 });
 
 const getStatusConfig = (theme: any) => ({
-  Assigned:      { color: theme.Colors.primary, bg: 'rgba(5,150,105,0.1)',   dot: '#10b981' },
-  Available:     { color: theme.Colors.primary, bg: 'rgba(0,104,117,0.1)',   dot: '#06b6d4' },
-  Shared:        { color: theme.Colors.secondary, bg: 'rgba(79,70,229,0.1)',   dot: '#6366f1' },
-  'Service Due': { color: theme.Colors.error, bg: 'rgba(186,26,26,0.08)',  dot: '#ef4444' },
+  Assigned:      { color: theme.Colors.primary, bg: 'rgba(5,150,105,0.1)',   dot: theme.Colors.primary },
+  Available:     { color: theme.Colors.primary, bg: 'rgba(0,104,117,0.1)',   dot: theme.Colors.primary },
+  Shared:        { color: theme.Colors.secondary, bg: 'rgba(79,70,229,0.1)',   dot: theme.Colors.secondary },
+  'Service Due': { color: theme.Colors.error, bg: 'rgba(186,26,26,0.08)',  dot: theme.Colors.error },
 });
 
 const formatCurrency = (amount: number) =>
@@ -203,7 +203,7 @@ export function VerificationCard({ item }: { item: VerificationItem }) {
   const statusCfg = isDamaged
     ? { color: theme.Colors.error, bg: 'rgba(186,26,26,0.1)', label: 'Damaged' }
     : isReview
-    ? { color: '#d97706', bg: 'rgba(217,119,6,0.1)',  label: 'Under Review' }
+    ? { color: theme.Colors.tertiary, bg: 'rgba(217,119,6,0.1)',  label: 'Under Review' }
     : { color: theme.Colors.primary, bg: 'rgba(5,150,105,0.1)',  label: 'Good' };
 
   return (
@@ -319,7 +319,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   assignThumb: { width: 56, height: 56, borderRadius: 10, backgroundColor: theme.Colors.outlineVariant },
   assignName: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
   assignMeta: { fontSize: theme.Typography.LabelSmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontFamily: 'Inter' },
-  checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: '#d1d5db', alignItems: 'center', justifyContent: 'center' },
+  checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 1.5, borderColor: theme.Colors.outlineVariant, alignItems: 'center', justifyContent: 'center' },
   checkboxSelected: { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
   assignFields: { flexDirection: 'row', gap: 10 },
   assignField: { flex: 1, gap: 5 },
@@ -329,7 +329,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   photoLink: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   photoLinkText: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.primary, fontFamily: 'Inter' },
   draftBadge: { backgroundColor: 'rgba(217,119,6,0.1)', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8 },
-  draftBadgeText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: '#d97706', fontFamily: 'Inter' },
+  draftBadgeText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.tertiary, fontFamily: 'Inter' },
   assignHint: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, paddingTop: 4, fontFamily: 'Inter' },
 
   verifyCard: { borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)', backgroundColor: 'rgba(255,255,255,0.35)', overflow: 'hidden', padding: 16, gap: 14 },

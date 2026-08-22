@@ -107,7 +107,7 @@ export function AnnouncementComposer({
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
         {[
           { val: 'INFO' as const, color: theme.Colors.primary },
-          { val: 'WARNING' as const, color: '#e28743' },
+          { val: 'WARNING' as const, color: theme.Colors.tertiary },
           { val: 'CRITICAL' as const, color: theme.Colors.error },
         ].map(({ val, color }) => (
           <TouchableOpacity

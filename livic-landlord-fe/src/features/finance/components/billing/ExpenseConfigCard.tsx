@@ -110,8 +110,8 @@ export function ExpenseConfigCard({
               }} 
               style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
             >
-              <MaterialCommunityIcons name="speedometer" size={16} color="#00bcd4" />
-              <Text style={{ color: '#00bcd4', fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700' }}>Record Readings</Text>
+              <MaterialCommunityIcons name="speedometer" size={16} color={theme.Colors.secondary} />
+              <Text style={{ color: theme.Colors.secondary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700' }}>Record Readings</Text>
             </TouchableOpacity>
           ) : (
             <View />
@@ -147,7 +147,7 @@ export function ExpenseConfigCard({
               )}
             </View>
           ) : (
-            <Text style={{ color: '#849495', fontSize: theme.Typography.LabelSmall.fontSize, fontStyle: 'italic' }}>System Required</Text>
+            <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.LabelSmall.fontSize, fontStyle: 'italic' }}>System Required</Text>
           )}
         </View>
       </BlurView>

@@ -50,7 +50,7 @@ export function AddItemModal({
   const CONDITIONS = React.useMemo(() => [
     { id: 'EXCELLENT', label: 'Excellent', color: theme.Colors.primary },
     { id: 'GOOD', label: 'Good', color: theme.Colors.primary },
-    { id: 'FAIR', label: 'Fair', color: '#d97706' },
+    { id: 'FAIR', label: 'Fair', color: theme.Colors.tertiary },
     { id: 'DAMAGED', label: 'Damaged', color: theme.Colors.error },
   ], [theme]);
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
