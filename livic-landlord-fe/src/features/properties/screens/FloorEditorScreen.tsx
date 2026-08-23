@@ -40,6 +40,7 @@ import { EditorToolbar } from '@/src/features/properties/components/floor-editor
 import { TypeSelectionModal } from '@/src/features/properties/components/floor-editor/TypeSelectionModal';
 import { useFloorEditorLayoutApi } from '@/src/features/properties/hooks/useFloorEditorLayoutApi';
 import { FloorEditorDetailCard } from '@/src/features/properties/components/floor-editor/FloorEditorDetailCard';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { createStyles } from './FloorEditorScreen.styles';
 
 const GRID_SIZE_X = 10;
@@ -172,49 +173,38 @@ export default function FloorEditorScreen({
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <LinearGradient
-          colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+          colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.desktopShell}
         >
           {/* Main Workspace */}
           <View style={styles.desktopMain}>
-            <DesktopNavBar 
-              activeTab="Properties" 
-              onBack={onBack} 
-              backText="Back to Floor Overview" 
-            />
+
 
             <View style={[styles.flex, styles.desktopContent]}>
               <View style={[styles.flex, styles.desktopInner]}>
                 
                 <View style={styles.desktopHeaderRow}>
+                  <TouchableOpacity
+                    onPress={onBack}
+                    style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
+                    activeOpacity={0.75}
+                  >
+                    <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+                  </TouchableOpacity>
                   <View style={styles.largeTitleContainer}>
                     <Text style={styles.titleLineDesktop}>Edit Floor {floorNumber} Layout</Text>
                   </View>
 
-                  <TouchableOpacity 
-                    style={styles.desktopSaveButtonWrapper} 
+                  <ActionButton
+                    variant="primary"
+                    label="Save Layout"
+                    icon="check"
+                    iconPosition="right"
                     onPress={handleSave}
-                    disabled={saving}
-                    activeOpacity={0.85}
-                  >
-                    <LinearGradient
-                      colors={['#00d4ff', '#0072ff']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.desktopSaveButton}
-                    >
-                      {saving ? (
-                        <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
-                      ) : (
-                        <>
-                          <Text style={styles.desktopSaveButtonText}>Save Layout</Text>
-                          <MaterialIcons name="check" size={18} color={theme.Colors.surfaceContainerLowest} />
-                        </>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
+                    loading={saving}
+                  />
                 </View>
 
                 {/* Main Split Layout */}
@@ -264,7 +254,7 @@ export default function FloorEditorScreen({
                   <View style={styles.desktopSidebarColumn}>
                     <View style={{ flex: 1 }}>
                       {selectedBlock ? (
-                        <BlurView intensity={70} tint="light" style={[styles.desktopCard, { flex: 1 }]}>
+                        <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={[styles.desktopCard, { flex: 1, backgroundColor: theme.Colors.glassFill }]}>
                           <RNScrollView 
                             ref={sheetScrollRef}
                             scrollEnabled={parentScrollEnabled}
@@ -288,10 +278,10 @@ export default function FloorEditorScreen({
                           </RNScrollView>
                         </BlurView>
                       ) : (
-                        <BlurView intensity={60} tint="light" style={[styles.desktopCard, { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
-                          <MaterialIcons name="info-outline" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
-                          <Text style={{ fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '700', color: theme.Colors.onSurface, textAlign: 'center', marginBottom: 8 }}>No Unit Selected</Text>
-                          <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
+                        <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={[styles.desktopCard, { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.Spacing.xl, backgroundColor: theme.Colors.glassFill }]}>
+                          <MaterialIcons name="info-outline" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: theme.Spacing.md }} />
+                          <Text style={{ fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '700', color: theme.Colors.onSurface, textAlign: 'center', marginBottom: theme.Spacing.sm }}>No Unit Selected</Text>
+                          <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
                             Select any unit block in the grid layout to configure unit capacity and assign tenants.
                           </Text>
                         </BlurView>
@@ -323,7 +313,7 @@ export default function FloorEditorScreen({
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LinearGradient
-        colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+        colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -358,13 +348,13 @@ export default function FloorEditorScreen({
               colors={['#00d4ff', '#0072ff']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={{ paddingVertical: 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+              style={{ paddingVertical: theme.Spacing.sm, paddingHorizontal: theme.Spacing.md, flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.xs }}
             >
               {saving ? (
                 <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} />
               ) : (
                 <>
-                  <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
+                  <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 0.5 }}>Save</Text>
                   <MaterialIcons name="check" size={16} color={theme.Colors.surfaceContainerLowest} />
                 </>
               )}

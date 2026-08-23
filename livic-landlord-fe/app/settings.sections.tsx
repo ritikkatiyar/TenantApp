@@ -140,21 +140,6 @@ export function SettingsHubGrid({
           <Text style={styles.hubCardDesc}>Auto-invoicing cycles, WhatsApp notifications & late fees.</Text>
         </GlassCard>
       </TouchableOpacity>
-
-      <TouchableOpacity activeOpacity={0.85} onPress={onBillingPress} style={styles.hubCardTouch}>
-        <GlassCard style={styles.hubCard}>
-          <View style={styles.hubCardHeader}>
-            <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(119, 90, 0, 0.12)' }]}>
-              <MaterialIcons name="credit-card" size={24} color={theme.Colors.tertiary} />
-            </View>
-            <View style={styles.hubBadge}>
-              <Text style={[styles.hubBadgeText, { color: theme.Colors.tertiary }]}>SaaS Tier</Text>
-            </View>
-          </View>
-          <Text style={styles.hubCardTitle}>Subscription & Plan</Text>
-          <Text style={styles.hubCardDesc}>Active tier, Razorpay gateway status & AI credit wallet.</Text>
-        </GlassCard>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -408,7 +393,7 @@ export function SettingsTabContent({
                   />
                   <Text
                     style={{
-                      fontSize: theme.Typography.BodySmall.fontSize,
+                      fontSize: theme.Typography.bodySmall.fontSize,
                       fontWeight: '700',
                       textTransform: 'capitalize',
                       color: isSelected ? '#006875' : '#6b7a7d',

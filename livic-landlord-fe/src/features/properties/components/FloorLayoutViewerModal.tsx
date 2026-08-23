@@ -241,7 +241,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                   >
                     <View style={{ flexDirection: 'column', gap: 1 }}>
                       <Text style={[styles.cellText, { color: colorStyles.textColor }]}>{block.unitNumber}</Text>
-                      <Text style={{ fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700', color: colorStyles.textColor + 'cc' }}>
+                      <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: colorStyles.textColor + 'cc' }}>
                         {UNIT_TYPE_OPTIONS.find(opt => opt.value === block.type)?.label || '1 BHK'}
                       </Text>
                     </View>
@@ -255,7 +255,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                         borderRadius: 6,
                         paddingHorizontal: 5,
                         paddingVertical: 3,
-                        gap: 4,
+                        gap: theme.Spacing.xs,
                       }}>
                         <View style={{
                           width: 6,
@@ -265,7 +265,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                           borderWidth: 1,
                           borderColor: colorStyles.borderColor,
                         }} />
-                        <Text style={{ fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurface }}>
+                        <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurface }}>
                           {isVacant ? 'OPEN' : `${activeCount}/${cap}`}
                         </Text>
                       </View>
@@ -276,7 +276,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                         alignSelf: 'center',
                         backgroundColor: 'rgba(255,255,255,0.85)',
                         borderRadius: 4,
-                        paddingHorizontal: 4,
+                        paddingHorizontal: theme.Spacing.xs,
                         paddingVertical: 2,
                         gap: 3,
                       }}>
@@ -288,7 +288,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                           borderWidth: 1,
                           borderColor: colorStyles.borderColor,
                         }} />
-                        <Text style={{ fontSize: theme.Typography.LabelSmall.fontSize - 4, fontWeight: '800', color: theme.Colors.onSurface }}>
+                        <Text style={{ fontSize: theme.Typography.labelSmall.fontSize - 4, fontWeight: '800', color: theme.Colors.onSurface }}>
                           {isVacant ? '—' : `${activeCount}/${cap}`}
                         </Text>
                       </View>
@@ -370,7 +370,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
         <BlurView intensity={35} tint="dark" style={styles.modalOverlay}>
           <View style={[styles.modalContent, styles.modalContentDesktop]}>
             <LinearGradient
-              colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+              colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.desktopShell}
@@ -419,10 +419,10 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                         {selectedBlock ? (
                           renderDetailsSidebar()
                         ) : (
-                          <BlurView intensity={60} tint="light" style={[styles.desktopCard, { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
-                            <MaterialIcons name="info-outline" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
-                            <Text style={{ fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '700', color: theme.Colors.onSurface, textAlign: 'center', marginBottom: 8 }}>No Unit Selected</Text>
-                            <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
+                          <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={[styles.desktopCard, { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.Spacing.xl, backgroundColor: theme.Colors.glassFill }]}>
+                            <MaterialIcons name="info-outline" size={48} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: theme.Spacing.md }} />
+                            <Text style={{ fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '700', color: theme.Colors.onSurface, textAlign: 'center', marginBottom: theme.Spacing.sm }}>No Unit Selected</Text>
+                            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
                               Select any unit block in the grid layout to configure leases and manage tenants.
                             </Text>
                           </BlurView>
@@ -444,7 +444,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
       <BlurView intensity={35} tint="dark" style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <LinearGradient
-            colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+            colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{ flex: 1 }}
@@ -481,7 +481,7 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                 </GestureDetector>
 
                 {!selectedBlock && (
-                  <View style={{ paddingHorizontal: 24, paddingBottom: 24 }}>
+                  <View style={{ paddingHorizontal: theme.Spacing.lg, paddingBottom: theme.Spacing.lg }}>
                     <TouchableOpacity 
                       activeOpacity={0.8}
                       onPress={onClose}

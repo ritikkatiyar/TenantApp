@@ -238,7 +238,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 50,
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.Spacing.lg,
   },
   header: {
     width: '100%',
@@ -248,7 +248,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 20 : 10,
   },
   headerTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '700',
     color: theme.Colors.surfaceContainerLowest,
   },
@@ -330,7 +330,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(10, 25, 35, 0.95)',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   scannedText: {
     color: theme.Colors.surfaceContainerLowest,
@@ -339,32 +339,32 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   scannedSubtext: {
     color: theme.Colors.primary,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
   instructionText: {
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     textAlign: 'center',
-    marginTop: 24,
+    marginTop: theme.Spacing.lg,
     maxWidth: 280,
     lineHeight: 18,
   },
   retryCameraBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 16,
+    gap: theme.Spacing.sm,
+    marginTop: theme.Spacing.md,
     backgroundColor: 'rgba(0, 216, 246, 0.2)',
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(0, 216, 246, 0.4)',
   },
   retryCameraText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
   shortcutSection: {
@@ -374,7 +374,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   shortcutTitle: {
     color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -390,7 +390,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 8,
+    paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
@@ -398,7 +398,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   shortcutText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
 });

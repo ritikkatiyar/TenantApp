@@ -8,6 +8,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   containerDesktop: {
     paddingTop: 24,
+    paddingHorizontal: 32,
+    paddingBottom: 40,
+    width: '100%',
   },
   kpiRow: {
     flexDirection: 'row',
@@ -28,19 +31,19 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   kpiLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     letterSpacing: 1.2,
     color: theme.Colors.onSurfaceVariant,
   },
   kpiValue: {
-    fontSize: theme.Typography.HeadlineSmall.fontSize,
+    fontSize: theme.Typography.headlineSmall.fontSize,
     fontWeight: '900',
     color: theme.Colors.onSurface,
     marginBottom: 4,
   },
   kpiSub: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
   glassCard: {
@@ -78,12 +81,26 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 4,
   },
   monthLabel: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onBackground,
     marginHorizontal: 12,
     minWidth: 130,
     textAlign: 'center',
+  },
+  propertyTabsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 18,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.06)',
+    paddingTop: 16,
+  },
+  statusChipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   propertyTabs: {
     flexDirection: 'row',
@@ -108,7 +125,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.primary,
   },
   propTabText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
@@ -137,7 +154,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     outlineWidth: 0,
   },
@@ -158,7 +175,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.primary,
   },
   statusChipText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
   },
@@ -183,7 +200,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderBottomColor: '#e2e8f0',
   },
   headerCell: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.outline,
     textTransform: 'uppercase',
@@ -202,7 +219,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderBottomWidth: 0,
   },
   cell: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onBackground,
   },
   tenantAvatar: {
@@ -216,7 +233,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   tenantAvatarText: {
     color: theme.Colors.surfaceContainerLowest,
     fontWeight: '800',
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
   },
   downloadBtn: {
     flexDirection: 'row',
@@ -230,7 +247,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   downloadBtnText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -249,7 +266,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   mobileTenantName: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
   },
@@ -260,12 +277,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: 10,
   },
   mobileDetailLabel: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.outline,
     fontWeight: '500',
   },
   mobileDueDate: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
   },
@@ -278,7 +295,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopColor: 'rgba(0,0,0,0.04)',
   },
   mobileAmount: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onBackground,
   },
@@ -294,7 +311,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 12,
   },
   paginationInfo: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
   paginationActions: {
@@ -318,7 +335,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.surfaceContainer,
   },
   pageBtnText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.primary,
   },
@@ -332,7 +349,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   pageNumberText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -343,7 +360,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
 });

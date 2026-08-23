@@ -15,9 +15,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { useLedger } from '@/src/features/finance/hooks/useLedger';
 
 // Sub-components
@@ -48,14 +49,11 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
   // Pagination and Date Filter States
   const [page, setPage] = useState(0);
+  const [accumulatedLedger, setAccumulatedLedger] = useState<any[]>([]);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [fromDateInput, setFromDateInput] = useState('');
   const [toDateInput, setToDateInput] = useState('');
-
-  useEffect(() => {
-    setPage(0);
-  }, [debouncedSearchQuery]);
 
   // React-Query Custom Hook
   const {
@@ -64,14 +62,38 @@ export default function LedgerScreen({ token }: { token: string | null }) {
     isLoading,
   } = useLedger(propertyId, page, fromDate, toDate, debouncedSearchQuery, token);
 
+  useEffect(() => {
+    setPage(0);
+    setAccumulatedLedger([]);
+  }, [propertyId, fromDate, toDate, debouncedSearchQuery]);
+
+  useEffect(() => {
+    if (ledger && ledger.length > 0) {
+      setAccumulatedLedger(prev => {
+        if (page === 0) return ledger;
+        const existingIds = new Set(prev.map((i: any) => i.id));
+        const newItems = ledger.filter((i: any) => !existingIds.has(i.id));
+        return [...prev, ...newItems];
+      });
+    }
+  }, [ledger, page]);
+
+  const handleEndReached = () => {
+    if (page + 1 < totalPages && !isLoading) {
+      setPage(prev => prev + 1);
+    }
+  };
+
   const handleApplyFilters = () => {
     setPage(0);
+    setAccumulatedLedger([]);
     setFromDate(fromDateInput);
     setToDate(toDateInput);
   };
 
   const handleClearFilters = () => {
     setPage(0);
+    setAccumulatedLedger([]);
     setFromDateInput('');
     setToDateInput('');
     setFromDate('');
@@ -146,9 +168,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
         />
       </View>
       <View style={styles.filterButtonsRow}>
-        <TouchableOpacity onPress={handleApplyFilters} style={styles.filterButton}>
-          <Text style={styles.filterButtonText}>Apply</Text>
-        </TouchableOpacity>
+        <ActionButton label="Apply" variant="primary" size="sm" onPress={handleApplyFilters} />
         {(fromDate || toDate || fromDateInput || toDateInput) ? (
           <TouchableOpacity onPress={handleClearFilters} style={styles.clearFilterButton}>
             <MaterialIcons name="clear" size={16} color={theme.Colors.onSurfaceVariant} />
@@ -183,99 +203,84 @@ export default function LedgerScreen({ token }: { token: string | null }) {
     );
   };
 
-  const renderDesktopShell = () => (
-    <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.gradient}>
-      <View style={{ flex: 1, width: '100%' }}>
-        <DesktopNavBar 
-          onBack={() => router.push('/expenses')} 
-          backText="Back to Finance & Billing" 
-          properties={properties || []}
-          selectedPropertyId={propertyId}
-          onPropertyChange={(id) => router.replace(`/expenses/ledger?propertyId=${id}`)}
-        />
-        <ScrollView
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false, listener: handleScroll }
-          )}
-          scrollEventThrottle={16}
-          contentContainerStyle={styles.desktopScroll}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.desktopInner}>
-            <View style={styles.desktopHeaderRow}>
-              <View style={styles.largeTitleContainer}>
-                <Text style={styles.titleLineDesktop}>Property General Ledger</Text>
-                <Text style={styles.desktopSubtitle}>Reconcile billing outputs, dynamic interest logs, cash settle records & security collections</Text>
-              </View>
-            </View>
-
-            <View style={styles.desktopFilterRow}>
-              <View style={{ flex: 1.5 }}>
-                {renderSearchBox()}
-              </View>
-              <View style={{ flex: 1 }}>
-                {renderDateFilters()}
-              </View>
-            </View>
-
-            <LedgerTable
-              ledger={ledger}
-              properties={properties}
-              isLoading={isLoading}
-              isDesktop={isDesktop}
-              isDark={isDark}
-            />
-
-            {renderPaginationControls()}
+  const renderDesktopContent = () => (
+    <View style={styles.desktopInner}>
+      <View style={styles.desktopHeaderRow}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity
+            onPress={() => router.push('/expenses')}
+            style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
+            activeOpacity={0.75}
+          >
+            <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+          </TouchableOpacity>
+          <View style={styles.largeTitleContainer}>
+            <Text style={styles.titleLineDesktop}>Property General Ledger</Text>
+            <Text style={styles.desktopSubtitle}>Reconcile billing outputs, dynamic interest logs, cash settle records & security collections</Text>
           </View>
-        </ScrollView>
+        </View>
       </View>
-    </LinearGradient>
+
+      <View style={styles.desktopFilterRow}>
+        <View style={{ flex: 1.5 }}>
+          {renderSearchBox()}
+        </View>
+        <View style={{ flex: 1 }}>
+          {renderDateFilters()}
+        </View>
+      </View>
+
+      <LedgerTable
+        ledger={accumulatedLedger}
+        properties={properties}
+        isLoading={isLoading && accumulatedLedger.length === 0}
+        isDesktop={isDesktop}
+        isDark={isDark}
+      />
+
+      {page + 1 < totalPages && (
+        <View style={{ paddingVertical: 20, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, fontWeight: '700', letterSpacing: 0.5 }}>
+            Scroll down to load more ledger entries...
+          </Text>
+        </View>
+      )}
+    </View>
   );
 
-  const renderMobileShell = () => (
-    <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea} edges={[]}>
-        {renderGlassyHeader()}
-        
-        <Animated.ScrollView
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false, listener: handleScroll }
-          )}
-          scrollEventThrottle={16}
-          contentContainerStyle={[styles.mobileScroll, { paddingTop: 68 + insets.top }]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.screenTitle}>General Ledger</Text>
-            <Text style={styles.screenSubtitle}>View all dynamic billing transactions and record collections</Text>
-          </Animated.View>
+  const renderMobileContent = () => (
+    <View style={{ flex: 1 }}>
+      {renderGlassyHeader()}
+      <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
+        <Text style={styles.screenTitle}>General Ledger</Text>
+        <Text style={styles.screenSubtitle}>View all dynamic billing transactions and record collections</Text>
+      </Animated.View>
 
-          {renderSearchBox()}
-          {renderDateFilters()}
+      {renderSearchBox()}
+      {renderDateFilters()}
 
-          <LedgerTable
-            ledger={ledger}
-            properties={properties}
-            isLoading={isLoading}
-            isDesktop={isDesktop}
-            isDark={isDark}
-          />
+      <LedgerTable
+        ledger={accumulatedLedger}
+        properties={properties}
+        isLoading={isLoading && accumulatedLedger.length === 0}
+        isDesktop={isDesktop}
+        isDark={isDark}
+      />
 
-          {renderPaginationControls()}
-          <View style={{ height: 40 }} />
-        </Animated.ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+      {page + 1 < totalPages && (
+        <View style={{ paddingVertical: 20, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, fontWeight: '700', letterSpacing: 0.5 }}>
+            Scroll down to load more ledger entries...
+          </Text>
+        </View>
+      )}
+    </View>
   );
 
   return (
-    <View style={{ flex: 1 }}>
-      {isDesktop ? renderDesktopShell() : renderMobileShell()}
-    </View>
+    <PageShell scrollable edges={isDesktop ? ['top'] : []} onEndReached={handleEndReached}>
+      {isDesktop ? renderDesktopContent() : renderMobileContent()}
+    </PageShell>
   );
 }
 
@@ -297,7 +302,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
   },
   backButton: {
     width: 36,
@@ -312,14 +317,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   titleWrapper: { flex: 1, alignItems: 'center' },
   compactTitleText: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontFamily: 'Inter',
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  desktopScroll: { paddingVertical: 24, paddingHorizontal: 40, alignItems: 'center' },
+  desktopScroll: { paddingVertical: theme.Spacing.lg, paddingHorizontal: 40, alignItems: 'center' },
   mobileScroll: { paddingVertical: 10, paddingHorizontal: 20 },
-  desktopInner: { width: '100%', maxWidth: 1080, paddingTop: 24 },
+  desktopInner: { width: '100%', maxWidth: 1080, paddingTop: theme.Spacing.lg },
   titleContainer: { marginTop: 10, marginBottom: 20 },
   screenTitle: {
     fontSize: theme.Typography.headlineLg.fontSize,
@@ -328,9 +333,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   screenSubtitle: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
     fontWeight: '600',
     lineHeight: 18,
   },
@@ -341,26 +346,26 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     borderRadius: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     paddingVertical: 12,
     gap: 10,
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
-  searchInput: { flex: 1, color: theme.Colors.onSurface, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '600' },
+  searchInput: { flex: 1, color: theme.Colors.onSurface, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
   filtersContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
     borderRadius: 16,
     padding: 10,
     gap: 10,
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
   dateInputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
   filterLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
   },
@@ -373,24 +378,24 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     color: theme.Colors.onSurface,
     paddingHorizontal: 10,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     textAlign: 'center',
   },
-  filterButtonsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  filterButtonsRow: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm },
   filterButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: theme.Spacing.sm,
+    paddingHorizontal: theme.Spacing.md,
     borderRadius: 10,
     backgroundColor: theme.Colors.primary,
   },
   filterButtonText: {
     color: theme.Surface.card,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
   },
   clearFilterButton: {
-    padding: 8,
+    padding: theme.Spacing.sm,
     borderRadius: 10,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
@@ -415,7 +420,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   pageButtonDisabled: { opacity: 0.5 },
   pageText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
@@ -423,7 +428,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   largeTitleContainer: { flex: 1 },
   titleLineDesktop: {
@@ -432,16 +437,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   desktopSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
     fontWeight: '600',
   },
   desktopFilterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 20,
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
     zIndex: 10,
   },
 });

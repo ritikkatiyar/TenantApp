@@ -14,15 +14,17 @@ spring:
     default: dev
 
   jpa:
+    show-sql: false
     hibernate:
       ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
+        show_sql: false
         type:
           preferred_uuid_jdbc_type: CHAR
         dialect: org.hibernate.dialect.MySQLDialect
-        format_sql: true
+        format_sql: false
         jdbc.batch_size: 50
         order_inserts: true
         order_updates: true

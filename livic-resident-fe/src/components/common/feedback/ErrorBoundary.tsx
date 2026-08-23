@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Platform, DevSettings } from 'react-native';
 import { useAppTheme, AppTheme } from '@/src/theme/ThemeContext';
 import { logger } from '@/src/utils/logger';
 import { ActionButton } from '../inputs/ActionButton';
-import { LightColors, Typography } from '@/src/theme/Theme';
 
 interface Props {
   children: ReactNode;
@@ -44,6 +43,7 @@ class ErrorBoundaryClass extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       const { theme } = this.props;
+      const styles = createStyles(theme);
       const colors = theme.Colors;
       const typography = theme.Typography;
       const rounded = theme.Rounded;
@@ -79,20 +79,20 @@ class ErrorBoundaryClass extends Component<Props, State> {
   }
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: theme.Spacing.lg,
   },
   card: {
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderWidth: 1,
     width: '100%',
     maxWidth: 480,
     alignItems: 'center',
-    shadowColor: LightColors.onSurface,
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -109,11 +109,11 @@ const styles = StyleSheet.create({
   errorContainer: {
     width: '100%',
     padding: 12,
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   errorText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
   },
   button: {
     width: '100%',

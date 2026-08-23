@@ -39,7 +39,7 @@ export function ChargeIdentityCard({
       </View>
 
       <Text style={styles.label}>CHARGE NAME</Text>
-      <View style={[styles.inputContainer, nameError ? { borderColor: theme.Colors.error, marginBottom: 8 } : null]}>
+      <View style={[styles.inputContainer, nameError ? { borderColor: theme.Colors.error, marginBottom: theme.Spacing.sm } : null]}>
         <TextInput 
           style={styles.input} 
           placeholder="e.g. Electricity, Sanitation Service" 
@@ -112,7 +112,7 @@ export function ChargeIdentityCard({
 const createStyles = (theme: any) => StyleSheet.create({
   card: {
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
     backgroundColor: theme.Colors.glassFill,
@@ -122,20 +122,20 @@ const createStyles = (theme: any) => StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
     marginBottom: 20,
   },
   cardTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   label: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
   },
   inputContainer: {
     height: 48,
@@ -144,17 +144,17 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: theme.Colors.glassStroke,
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     marginBottom: 20,
   },
   input: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
   errorText: {
     color: theme.Colors.error,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     marginTop: -12,
     marginBottom: 18,
     fontWeight: '600',
@@ -162,12 +162,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 4,
-    marginBottom: 24,
+    gap: theme.Spacing.sm,
+    marginTop: theme.Spacing.xs,
+    marginBottom: theme.Spacing.lg,
   },
   categoryButton: {
-    paddingVertical: 8,
+    paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 16,
@@ -175,7 +175,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.9)',
   },
   categoryText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
@@ -186,7 +186,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',
-    padding: 4,
+    padding: theme.Spacing.xs,
   },
   segmentButtonWrapper: {
     flex: 1,
@@ -205,12 +205,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   segmentTextActive: {
     color: theme.Colors.onPrimary,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
   },
   segmentText: {
     color: theme.Colors.onSurfaceVariant,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
   },
 });

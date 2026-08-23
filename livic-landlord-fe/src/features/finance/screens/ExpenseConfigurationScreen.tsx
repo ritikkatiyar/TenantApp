@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   ScrollView
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -216,128 +218,115 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   };
 
   const renderDesktopShell = () => (
-    <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.desktopShell}
-    >
+    <View style={[styles.desktopShell, { flex: 1 }]}>
       <View style={styles.desktopMain}>
-        <DesktopNavBar 
-          onBack={() => router.push('/expenses')} 
-          backText="Back to Finance & Billing" 
-          properties={properties || []}
-          selectedPropertyId={propertyId}
-          onPropertyChange={(id) => router.replace({ pathname: '/expenses/configuration', params: { propertyId: id } } as any)}
-        />
+
 
         <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
           <View style={styles.desktopInner}>
             <View style={styles.desktopHeaderRow}>
-              <View style={styles.largeTitleContainer}>
-                <Text style={styles.titleLineDesktop}>Billing Configurations</Text>
-                <Text style={styles.subtitleDesktop}>Manage ledger entries, metered utilities, penalty strategies & tax groups</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity
+                  onPress={() => router.push('/expenses')}
+                  style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
+                  activeOpacity={0.75}
+                >
+                  <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+                </TouchableOpacity>
+                <View style={styles.largeTitleContainer}>
+                  <Text style={styles.titleLineDesktop}>Billing Configurations</Text>
+                  <Text style={styles.subtitleDesktop}>Manage ledger entries, metered utilities, penalty strategies & tax groups</Text>
+                </View>
               </View>
 
-              <TouchableOpacity 
-                style={styles.desktopCreateButtonWrapper} 
+              <ActionButton
+                label="CONFIGURE EXPENSE"
+                icon="add"
+                iconPosition="right"
+                variant="primary"
+                size="md"
                 onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.desktopCreateButton}
-                >
-                  <Text style={styles.desktopCreateButtonText}>CONFIGURE EXPENSE</Text>
-                  <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
-                </LinearGradient>
-              </TouchableOpacity>
+              />
             </View>
 
             {renderContent()}
           </View>
         </ScrollView>
       </View>
-    </LinearGradient>
+    </View>
   );
 
   const renderMobileShell = () => (
-    <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.safeArea} edges={[]}>
-        <Animated.View style={[styles.headerContainer, { opacity: headerOpacity, paddingTop: insets.top, height: 56 + insets.top }]}>
-          <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-            </TouchableOpacity>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.compactTitleText}>Configurations</Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.headerCreateTouch}
-              onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
-              activeOpacity={0.8}
+    <View style={[styles.gradient, { flex: 1 }]}>
+      <Animated.View style={[styles.headerContainer, { opacity: headerOpacity, paddingTop: insets.top, height: 56 + insets.top }]}>
+        <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
+          </TouchableOpacity>
+          <View style={styles.titleWrapper}>
+            <Text style={styles.compactTitleText}>Configurations</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.headerCreateTouch}
+            onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#00d4ff', '#0072ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.headerCreateInner}
             >
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.headerCreateInner}
-              >
-                <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
-                <Text style={styles.headerCreateText}>ADD</Text>
-              </LinearGradient>
+              <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
+              <Text style={styles.headerCreateText}>ADD</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+
+      <Animated.ScrollView
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true, listener: handleScroll }
+        )}
+        scrollEventThrottle={16}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: 68 + insets.top }
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.inner}>
+          <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
+            <Text style={styles.screenTitle}>Billing Elements</Text>
+            <Text style={styles.screenSubtitle}>Configure ledger charge codes, utility scales and automation thresholds</Text>
+          </Animated.View>
+
+          {renderContent()}
+
+          {!isDesktop && charges.length > 0 && !isLoading && (
+            <TouchableOpacity 
+              style={styles.dashedButton} 
+              activeOpacity={0.7}
+              onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+            >
+              <View style={styles.dashedIconCircle}>
+                 <MaterialIcons name="add" size={24} color="#00bcd4" />
+              </View>
+              <Text style={styles.dashedButtonText}>Create New Expense</Text>
             </TouchableOpacity>
-          </View>
-        </Animated.View>
-
-        <Animated.ScrollView
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: true, listener: handleScroll }
           )}
-          scrollEventThrottle={16}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingTop: 68 + insets.top }
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.inner}>
-            <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-              <Text style={styles.screenTitle}>Billing Elements</Text>
-              <Text style={styles.screenSubtitle}>Configure ledger charge codes, utility scales and automation thresholds</Text>
-            </Animated.View>
-
-            {renderContent()}
-
-            {!isDesktop && charges.length > 0 && !isLoading && (
-              <TouchableOpacity 
-                style={styles.dashedButton} 
-                activeOpacity={0.7}
-                onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
-              >
-                <View style={styles.dashedIconCircle}>
-                   <MaterialIcons name="add" size={24} color="#00bcd4" />
-                </View>
-                <Text style={styles.dashedButtonText}>Create New Expense</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </Animated.ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+        </View>
+      </Animated.ScrollView>
+    </View>
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <PageShell 
+      scrollable={false}
+      edges={isDesktop ? ['top'] : []}
+    >
       {isDesktop ? renderDesktopShell() : renderMobileShell()}
 
       <ConfirmModal
@@ -347,7 +336,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
         onCancel={() => setConfirmModal(prev => ({ ...prev, visible: false }))}
         onConfirm={confirmModal.onConfirm}
       />
-    </View>
+    </PageShell>
   );
 }
 

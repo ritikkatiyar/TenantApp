@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -84,25 +85,16 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
   };
 
   return (
-    <LinearGradient
-      colors={theme.Colors.backgroundGradient as [string, string, string]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.root}
+    <PageShell
+      scrollable={true}
+      edges={isDesktop ? ['top'] : []}
+      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 68 + insets.top }]}
     >
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop ? (
-          <DesktopNavBar title="Maintenance & Service Center" />
-        ) : (
-          <FloatingBackButton />
-        )}
-
-        <ScrollView 
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false} 
-          contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 68 + insets.top }]}
-        >
+      {isDesktop ? (
+        <DesktopNavBar title="Maintenance & Service Center" />
+      ) : (
+        <FloatingBackButton />
+      )}
           {/* New Ticket Form Glass Card */}
           <BlurView intensity={70} tint="light" style={styles.glassCard}>
             <View style={styles.formHeaderRow}>
@@ -263,13 +255,13 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
               ) : (
                 <View style={{ padding: 28, alignItems: 'center' }}>
                   <MaterialIcons name="build-circle" size={40} color={theme.Colors.primary} style={{ marginBottom: 8 }} />
-                  <Text style={{ fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onBackground }}>No Active Service Tickets</Text>
-                  <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>Submit a request above if you require maintenance support.</Text>
+                  <Text style={{ fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onBackground }}>No Active Service Tickets</Text>
+                  <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>Submit a request above if you require maintenance support.</Text>
                 </View>
               )}
             </View>
           </BlurView>
-        </ScrollView>
+
 
         {/* Success Confirmation Modal */}
         {showSuccessModal && (
@@ -317,8 +309,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
             </View>
           </Modal>
         )}
-      </SafeAreaView>
-    </LinearGradient>
+    </PageShell>
   );
 }
 

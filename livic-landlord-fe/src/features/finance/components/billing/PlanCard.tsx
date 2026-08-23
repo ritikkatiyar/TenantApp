@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import type { PlanResponse } from '@/src/features/finance/api/billing.api';
 
 interface PlanCardProps {
@@ -77,23 +78,14 @@ export function PlanCard({
         </View>
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.cardButton,
-          plan.planKey === 'PREMIUM' && styles.cardButtonPro,
-          isCurrent && styles.cardButtonDisabled,
-        ]}
+      <ActionButton
+        title={isCurrent ? 'Active Plan' : `Upgrade to ${plan.name || plan.planKey}`}
+        variant={isCurrent ? 'outline' : 'primary'}
         disabled={isCurrent || subscribingPlanKey !== null || isTopUpProcessing}
+        loading={subscribingPlanKey === plan.planKey}
         onPress={() => onSubscribe(plan.planKey, plan.priceMonthly)}
-      >
-        {subscribingPlanKey === plan.planKey ? (
-          <ActivityIndicator size="small" color={plan.planKey === 'PREMIUM' ? '#004f58' : theme.Colors.primary} />
-        ) : (
-          <Text style={[styles.cardButtonText, plan.planKey === 'PREMIUM' && styles.cardButtonTextPro]} numberOfLines={1}>
-            {isCurrent ? 'Active Plan' : `Upgrade to ${plan.name || plan.planKey}`}
-          </Text>
-        )}
-      </TouchableOpacity>
+        style={{ marginTop: 16, borderRadius: 100 }}
+      />
     </BlurView>
   );
 }
@@ -101,7 +93,7 @@ export function PlanCard({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   planCard: {
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     marginVertical: 10,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1.5,
@@ -122,13 +114,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: -30,
     backgroundColor: theme.Colors.primary,
     paddingHorizontal: 30,
-    paddingVertical: 4,
+    paddingVertical: theme.Spacing.xs,
     transform: [{ rotate: '45deg' }],
     zIndex: 10,
   },
   ribbonText: {
     color: theme.Colors.onPrimary,
-    fontSize: theme.Typography.LabelSmall.fontSize - 1,
+    fontSize: theme.Typography.labelSmall.fontSize - 1,
     fontWeight: '900',
     letterSpacing: 1,
   },
@@ -136,22 +128,22 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
   },
   planTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   popularBadge: {
     backgroundColor: theme.Colors.primary,
-    paddingHorizontal: 8,
+    paddingHorizontal: theme.Spacing.sm,
     paddingVertical: 3,
     borderRadius: 8,
   },
   popularText: {
     color: theme.Colors.onPrimary,
-    fontSize: theme.Typography.LabelSmall.fontSize - 2,
+    fontSize: theme.Typography.labelSmall.fontSize - 2,
     fontWeight: '800',
   },
   priceContainer: {
@@ -165,12 +157,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   priceMonth: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginLeft: 4,
+    marginLeft: theme.Spacing.xs,
   },
   bulletList: {
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   bulletRow: {
     flexDirection: 'row',
@@ -178,7 +170,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginVertical: 6,
   },
   bulletText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     marginLeft: 10,
   },
@@ -205,7 +197,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     opacity: 0.6,
   },
   cardButtonText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },

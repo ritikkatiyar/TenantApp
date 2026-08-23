@@ -12,7 +12,7 @@ export default function UnitDetailScreen() {
   const { handleScroll } = useScrollNav();
   return (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
@@ -46,7 +46,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 24,
+    padding: theme.Spacing.lg,
   },
   title: {
     fontSize: theme.Typography.headlineLg.fontSize,
@@ -54,10 +54,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   content: {
-    padding: 24,
+    padding: theme.Spacing.lg,
   },
   placeholderText: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     color: theme.Colors.onSurfaceVariant,
   }
 });

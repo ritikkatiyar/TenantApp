@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useRouter, usePathname } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -156,10 +157,30 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
               <TouchableOpacity style={styles.themeToggle} onPress={handleThemeToggle} activeOpacity={0.7}>
                 <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={theme.Colors.primary} />
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.themeToggle, { marginLeft: 8, borderColor: theme.Colors.errorContainer, backgroundColor: theme.Colors.error + '1A' }]} onPress={handleLogout} activeOpacity={0.7}>
-                <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
-              </TouchableOpacity>
             </View>
+
+            {/* Subscription Upgrade Plan Banner */}
+            <TouchableOpacity 
+              style={styles.upgradeBannerWrapper} 
+              activeOpacity={0.85}
+              onPress={() => handleNavigate('/billing')}
+            >
+              <LinearGradient
+                colors={['#00d4ff', '#0072ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.upgradeBannerGradient}
+              >
+                <View style={styles.upgradeBannerContent}>
+                  <MaterialIcons name="workspace-premium" size={22} color={theme.Colors.surfaceContainerLowest} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.upgradeBannerTitle}>UPGRADE SUBSCRIPTION</Text>
+                    <Text style={styles.upgradeBannerSub}>Manage plans, memberships & limits</Text>
+                  </View>
+                  <MaterialIcons name="chevron-right" size={20} color={theme.Colors.surfaceContainerLowest} />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.gridContainer}>
@@ -217,8 +238,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 12,
   },
   dragTouchZone: {
-    paddingVertical: 4,
-    paddingHorizontal: 24,
+    paddingVertical: theme.Spacing.xs,
+    paddingHorizontal: theme.Spacing.lg,
   },
   dragHandle: {
     width: 44,
@@ -227,7 +248,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.outlineVariant,
   },
   sheetHeader: {
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.Spacing.lg,
     paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: theme.Colors.surfaceVariant,
@@ -243,10 +264,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.primaryContainer,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: theme.Spacing.md,
   },
   avatarText: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
@@ -259,7 +280,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   profileRole: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
     textTransform: 'capitalize',
@@ -301,7 +322,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 2,
   },
   cardTitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,
   },
@@ -310,7 +331,33 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
   },
   cardSubtitle: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
+  },
+  upgradeBannerWrapper: {
+    marginTop: 14,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  upgradeBannerGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  upgradeBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  upgradeBannerTitle: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '900',
+    color: theme.Colors.surfaceContainerLowest,
+    letterSpacing: 1,
+  },
+  upgradeBannerSub: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: '600',
+    marginTop: 1,
   },
 });

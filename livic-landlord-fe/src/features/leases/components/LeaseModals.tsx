@@ -84,7 +84,7 @@ export function BookRoomModal({
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
           <Text style={[styles.label, { color: theme.Colors.onSurface }]}>Select Available Unit *</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flexDirection: 'row', gap: theme.Spacing.sm }}>
               {availableUnits.map((u) => {
                 const sel = bookingUnitId === u.id;
                 return (
@@ -229,10 +229,10 @@ export function EditLeaseTermsModal({ visible, onClose, editingLease, editRentAm
         <View style={styles.body}>
           {editingLease && (
             <View style={{ marginBottom: 14, padding: 12, backgroundColor: `${theme.Colors.primary}12`, borderRadius: 12, borderWidth: 1, borderColor: `${theme.Colors.primary}30` }}>
-              <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.primary }}>
+              <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.primary }}>
                 Unit {editingLease.unitNumber} • {editingLease.tenantName || 'Tenant'}
               </Text>
-              {editingLease.tenantPhone ? <Text style={{ fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>{editingLease.tenantPhone}</Text> : null}
+              {editingLease.tenantPhone ? <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>{editingLease.tenantPhone}</Text> : null}
             </View>
           )}
           <Text style={[styles.label, { color: theme.Colors.onSurface }]}>Monthly Rent Amount (₹) *</Text>
@@ -264,18 +264,18 @@ const createStyles = (theme: any) => StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   card: { width: '100%', maxWidth: 560, backgroundColor: theme.Colors.surface, borderRadius: 24, overflow: 'hidden', shadowColor: theme.Colors.onSurface, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 24, elevation: 12 },
   header: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 20, paddingBottom: 12 },
-  kicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
-  title: { fontSize: theme.Typography.TitleMedium.fontSize, fontWeight: '900' },
-  closeBtn: { padding: 4 },
-  body: { paddingHorizontal: 20, paddingBottom: 8, maxHeight: 420 },
-  label: { fontSize: theme.Typography.LabelMedium.fontSize, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: theme.Typography.BodyMedium.fontSize, marginBottom: 14, backgroundColor: 'rgba(255,255,255,0.8)' },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: theme.Colors.outlineVariant, backgroundColor: theme.Colors.surfaceContainerLowest },
-  chipText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '600' },
-  footer: { flexDirection: 'row', gap: 12, padding: 16, paddingTop: 8, borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 },
+  title: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '900' },
+  closeBtn: { padding: theme.Spacing.xs },
+  body: { paddingHorizontal: 20, paddingBottom: theme.Spacing.sm, maxHeight: 420 },
+  label: { fontSize: theme.Typography.labelMedium.fontSize, fontWeight: '700', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: theme.Typography.bodyMedium.fontSize, marginBottom: 14, backgroundColor: 'rgba(255,255,255,0.8)' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: theme.Spacing.sm, borderRadius: 20, borderWidth: 1, borderColor: theme.Colors.outlineVariant, backgroundColor: theme.Colors.surfaceContainerLowest },
+  chipText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600' },
+  footer: { flexDirection: 'row', gap: 12, padding: theme.Spacing.md, paddingTop: theme.Spacing.sm, borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant },
   cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.Colors.outlineVariant, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.Colors.surfaceContainerLow },
-  cancelBtnText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700' },
+  cancelBtnText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
   submitBtn: { flex: 2, borderRadius: 12, overflow: 'hidden' },
-  submitBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12 },
-  submitBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
+  submitBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm, paddingVertical: 12 },
+  submitBtnText: { color: theme.Colors.onPrimary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
 });

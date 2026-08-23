@@ -1,5 +1,5 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   Text,
@@ -7,8 +7,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
@@ -25,7 +24,7 @@ import { useAnnouncementAdmin } from '@/src/features/announcements/hooks/useAnno
 import { AnnouncementComposer } from '@/src/features/announcements/components/AnnouncementComposer';
 import { AnnouncementHistoryList } from '@/src/features/announcements/components/AnnouncementHistoryList';
 
-const LUMINOUS_BACKGROUND = ['#d4f5f9', '#e8f8fb', '#e2e0fb'] as const;
+// Uses dynamic theme.Colors.backgroundGradient
 
 interface AnnouncementAdminScreenProps {
   onLogout: () => void;
@@ -43,6 +42,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
   const { accessToken } = useAuth();
   const { properties, isLoading: propertiesLoading } = useProperties();
   const { handleScroll } = useScrollNav();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const {
     selectedPropertyId,
@@ -75,27 +75,10 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
 
   if (isDesktop) {
     return (
-      <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
+      <PageShell scrollable={false} edges={['top', 'left', 'right']}>
         <View style={styles.desktopShell}>
           <View style={styles.desktopMain}>
-            <DesktopNavBar 
-              activeTab="Communication"
-              hideTabs={!isWideDesktop}
-              title="Announcements"
-              rightContent={
-                <>
-                  {isWideDesktop && (
-                    <BlurView intensity={50} tint={isDark ? 'dark' : 'light'} style={styles.searchBox}>
-                      <MaterialIcons name="search" size={22} color={theme.Colors.onSurfaceVariant} />
-                      <Text style={styles.searchPlaceholder}>Search announcements...</Text>
-                    </BlurView>
-                  )}
-                  <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}>
-                    <Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} />
-                  </TouchableOpacity>
-                </>
-              }
-            />
+
 
             <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
               <View style={styles.desktopInner}>
@@ -140,13 +123,12 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
             </ScrollView>
           </View>
         </View>
-      </LinearGradient>
+      </PageShell>
     );
   }
 
   return (
-    <LinearGradient colors={LUMINOUS_BACKGROUND} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea} edges={[]}>
+    <PageShell scrollable={false} edges={['top', 'left', 'right']}>
         {/* Header with toggle for mobile */}
         <View style={styles.mobileHeader}>
           <Text style={styles.mobileHeaderTitle}>Announcements</Text>
@@ -195,8 +177,7 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
             />
           )}
         </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+    </PageShell>
   );
 }
 

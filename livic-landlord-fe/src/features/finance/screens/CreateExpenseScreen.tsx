@@ -7,12 +7,12 @@ import {
   Animated, 
   TouchableOpacity,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
   ActivityIndicator
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
@@ -262,42 +262,29 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   );
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1 }}
+    <PageShell
+      scrollable={false}
+      keyboardAvoiding={true}
+      edges={isDesktop ? ['top'] : []}
     >
-      <LinearGradient
-        colors={theme.Colors.backgroundGradient as [string, string, string]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.container}
-      >
-        <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-          {isDesktop ? (
-            <DesktopNavBar 
-              onBack={() => router.replace(`/expenses?propertyId=${propertyId}`)} 
-              backText="Back to Billing Controls" 
-            />
-          ) : (
-            <>
-              <Animated.View style={[styles.headerContainer, { opacity: headerOpacity, paddingTop: insets.top, height: 56 + insets.top }]}>
-                <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-                <View style={styles.headerContent}>
-                  <Text style={styles.headerTitle}>{isEditMode ? 'EDIT EXPENSE' : 'NEW EXPENSE'}</Text>
-                </View>
-              </Animated.View>
-              <FloatingBackButton 
-                onPress={() => router.back()}
-              />
-            </>
-          )}
 
-          <Animated.ScrollView
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: true, listener: handleScroll }
-            )}
-            scrollEventThrottle={16}
+      {!isDesktop && <FloatingBackButton />}
+
+      {/* Floating Header for Mobile */}
+      {!isDesktop && (
+        <Animated.View style={[styles.headerContainer, { opacity: headerOpacity }]}>
+          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={[styles.headerContent, { paddingTop: insets.top }]}>
+            <Text style={styles.headerTitle}>{isEditMode ? 'MODIFY CHARGE' : 'CREATE CHARGE'}</Text>
+          </BlurView>
+        </Animated.View>
+      )}
+
+      <Animated.ScrollView
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true, listener: handleScroll }
+        )}
+        scrollEventThrottle={16}
             contentContainerStyle={[
               styles.scrollContent,
               !isDesktop && { paddingTop: 60 + insets.top }
@@ -313,18 +300,25 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
               )}
 
               {isDesktop && (
-                <View style={[styles.titleContainer, { marginBottom: 24 }]}>
-                  <Text style={styles.screenTitleDesktop}>{isEditMode ? 'Modify Expense Configuration' : 'Configure New Property Charge'}</Text>
-                  <Text style={styles.screenSubtitleDesktop}>Setup standard ledger components, metered utility factors and penalty strategies</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: theme.Spacing.lg }}>
+                  <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
+                    activeOpacity={0.75}
+                  >
+                    <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+                  </TouchableOpacity>
+                  <View style={styles.titleContainer}>
+                    <Text style={styles.screenTitleDesktop}>{isEditMode ? 'Modify Expense Configuration' : 'Configure New Property Charge'}</Text>
+                    <Text style={styles.screenSubtitleDesktop}>Setup standard ledger components, metered utility factors and penalty strategies</Text>
+                  </View>
                 </View>
               )}
 
               {renderContent()}
             </View>
           </Animated.ScrollView>
-        </SafeAreaView>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+    </PageShell>
   );
 }
 
@@ -348,7 +342,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   headerTitle: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontFamily: 'Inter',
     fontWeight: '800',
     letterSpacing: 1.5,
@@ -368,9 +362,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   screenSubtitle: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
     fontWeight: '600',
     lineHeight: 18,
   },
@@ -381,9 +375,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   screenSubtitleDesktop: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
     fontWeight: '600',
   },
   contentContainer: {
@@ -404,11 +398,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 18,
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   submitButtonText: {
     color: theme.Colors.onPrimary,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '900',
     letterSpacing: 1,
   },
@@ -416,12 +410,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     maxWidth: 1080,
     width: '100%',
     alignSelf: 'center',
-    paddingTop: 24,
+    paddingTop: theme.Spacing.lg,
   },
   desktopMainRow: {
     flexDirection: 'row',
-    gap: 32,
-    marginBottom: 24,
+    gap: theme.Spacing.xl,
+    marginBottom: theme.Spacing.lg,
   },
   desktopFormCol: {
     flex: 1.6,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -77,26 +77,19 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
   };
 
   return (
-    <LinearGradient
-      colors={theme.Colors.backgroundGradient as [string, string, string]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.root}
+    <PageShell
+      scrollable={!loading}
+      edges={isDesktop ? ['top'] : []}
+      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop ? <DesktopNavBar title="Billing & Rent Payments" /> : <FloatingBackButton />}
+      {isDesktop ? <DesktopNavBar title="Billing & Rent Payments" /> : <FloatingBackButton />}
 
-        {loading ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color={theme.Colors.primary} />
-          </View>
-        ) : (
-          <ScrollView 
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-            showsVerticalScrollIndicator={false} 
-            contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
-          >
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={theme.Colors.primary} />
+        </View>
+      ) : (
+        <>
           {/* Hero Cycle Glass Card */}
           <BlurView intensity={70} tint="light" style={styles.glassCard}>
             <View style={styles.cycleTopRow}>
@@ -230,8 +223,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
               ) : (
                 <View style={{ padding: 24, alignItems: 'center' }}>
                   <MaterialIcons name="receipt-long" size={36} color={theme.Colors.primary} style={{ marginBottom: 8 }} />
-                  <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onBackground }}>No Billing Transactions Found</Text>
-                  <Text style={{ fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>Your property ledger account is up to date.</Text>
+                  <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onBackground }}>No Billing Transactions Found</Text>
+                  <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>Your property ledger account is up to date.</Text>
                 </View>
               )}
             </View>
@@ -271,8 +264,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
             </View>
             <Text style={styles.securityDesc}>All payments are processed securely through PCI-DSS Level 1 compliant payment gateways. No sensitive card data is stored on application servers.</Text>
           </BlurView>
-        </ScrollView>
-        )}
+        </>
+      )}
 
         {/* Payment Gateway Simulation Modal */}
         {showPayModal && (
@@ -307,7 +300,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                     {paying ? (
                       <View style={{ paddingVertical: 20, alignItems: 'center' }}>
                         <ActivityIndicator size="large" color={theme.Colors.primary} />
-                        <Text style={{ marginTop: 12, fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' }}>Processing secure payment...</Text>
+                        <Text style={{ marginTop: 12, fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' }}>Processing secure payment...</Text>
                       </View>
                     ) : (
                       <TouchableOpacity onPress={handlePayRent} activeOpacity={0.85}>
@@ -339,8 +332,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
             </View>
           </Modal>
         )}
-      </SafeAreaView>
-    </LinearGradient>
+    </PageShell>
   );
 }
 
@@ -365,79 +357,79 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   cycleTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   cycleBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cycleBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  cycleBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   statusPillPending: { backgroundColor: theme.Colors.secondaryContainer },
   statusPillPaid: { backgroundColor: theme.Colors.primaryContainer },
-  statusPillText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
+  statusPillText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
   statusPillTextPending: { color: theme.Colors.onSecondaryContainer },
   statusPillTextPaid: { color: theme.Colors.onPrimaryContainer },
 
   amountText: { fontSize: theme.Typography.headlineXl.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
-  dueText: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4, marginBottom: 20 },
+  dueText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4, marginBottom: 20 },
   cycleActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   payBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
   payBtnDisabled: { opacity: 0.7 },
-  payBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' },
+  payBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
   invoiceBtn: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.2)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, minWidth: 140 },
-  invoiceBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' },
+  invoiceBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
 
   statsRow: { flexDirection: 'row', gap: 14 },
   statBox: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
   statIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5, marginBottom: 2 },
-  statValue: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
+  statLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, letterSpacing: 0.5, marginBottom: 2 },
+  statValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
 
   historyCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.3)' },
   historyTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
-  historySub: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
+  historySub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   filterBox: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255, 255, 255, 0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.4)' },
-  filterText: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  filterText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
   historyList: { backgroundColor: 'rgba(255, 255, 255, 0.7)' },
   historyItem: { padding: 18, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.25)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   historyMain: { flex: 1 },
-  historyDate: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 4 },
+  historyDate: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 4 },
   historyRowData: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  historyDesc: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant },
+  historyDesc: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant },
   historyRight: { alignItems: 'flex-end' },
-  historyAmount: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 4 },
+  historyAmount: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 4 },
   statusSuccess: { backgroundColor: theme.Colors.primaryContainer, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  statusSuccessText: { color: theme.Colors.onPrimaryContainer, fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800' },
+  statusSuccessText: { color: theme.Colors.onPrimaryContainer, fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800' },
   historyFooter: { padding: 14, backgroundColor: 'rgba(255, 255, 255, 0.4)', alignItems: 'center' },
-  historyFooterText: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  historyFooterText: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
 
   promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
-  promoTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', marginBottom: 8, zIndex: 1 },
-  promoDesc: { color: 'rgba(255, 255, 255, 0.9)', fontSize: theme.Typography.BodyMedium.fontSize, lineHeight: 20, marginBottom: 18, width: '82%', zIndex: 1 },
+  promoTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', marginBottom: 8, zIndex: 1 },
+  promoDesc: { color: 'rgba(255, 255, 255, 0.9)', fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20, marginBottom: 18, width: '82%', zIndex: 1 },
   promoBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
-  promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
+  promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
   promoIcon: { position: 'absolute', right: -25, bottom: -25 },
 
   securityCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
   securityHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  securityTitle: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8 },
-  securityDesc: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
+  securityTitle: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8 },
+  securityDesc: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.6)', justifyContent: 'center', padding: 20 },
   modalContent: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
-  modalSubTitle: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginBottom: 16 },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  modalSubTitle: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginBottom: 16 },
   
   checkoutBox: { backgroundColor: 'rgba(0, 104, 117, 0.05)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.15)', marginBottom: 20 },
   checkoutRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.2)' },
-  checkoutLabel: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
-  checkoutValue: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onBackground, fontWeight: '800' },
+  checkoutLabel: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
+  checkoutValue: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onBackground, fontWeight: '800' },
 
   modalPayBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
-  modalPayBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' },
+  modalPayBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
 
   successIconBox: { marginBottom: 12 },
-  successTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
-  successDesc: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  successTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
+  successDesc: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, alignItems: 'center', width: '100%' },
-  modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700' }
+  modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
 });
 
 

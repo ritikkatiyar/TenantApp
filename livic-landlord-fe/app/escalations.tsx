@@ -13,16 +13,19 @@ import {
   Platform
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useIssues } from '@/src/features/issues/hooks/useIssues';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { StatCard } from '@/src/components/common/display/StatCard';
+import FilterPill from '@/src/components/common/inputs/FilterPill';
 import IssueDetailModal from '@/src/features/issues/components/IssueDetailModal';
+import Pagination from '@/src/components/common/navigation/Pagination';
 import { createStyles } from './escalations.styles';
 import { Theme } from '@/src/theme/Theme';
 
@@ -103,7 +106,7 @@ export default function EscalationsScreen() {
 
   const renderGlassyHeader = () => (
     <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
+      <BlurView intensity={45} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContent}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
@@ -117,17 +120,11 @@ export default function EscalationsScreen() {
   );
 
   return (
-    <LinearGradient colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop ? (
-          <DesktopNavBar
-            properties={properties || []}
-            selectedPropertyId={propertyFilter}
-            onPropertyChange={setPropertyFilter}
-          />
-        ) : (
-          renderGlassyHeader()
-        )}
+    <PageShell
+      scrollable={false}
+      edges={isDesktop ? ['top'] : []}
+    >
+        {!isDesktop && renderGlassyHeader()}
 
         <Animated.ScrollView
           contentContainerStyle={[
@@ -153,22 +150,34 @@ export default function EscalationsScreen() {
 
             {/* Metrics Dashboard Row */}
             <View style={styles.metricsRow}>
-              <BlurView intensity={60} tint="light" style={styles.metricCard}>
-                <Text style={styles.metricLabel}>Total Tickets</Text>
-                <Text style={[styles.metricValue, { color: theme.Colors.primary }]}>{metrics.total}</Text>
-              </BlurView>
-              <BlurView intensity={60} tint="light" style={styles.metricCard}>
-                <Text style={styles.metricLabel}>Open Issues</Text>
-                <Text style={[styles.metricValue, { color: theme.Colors.secondary }]}>{metrics.open}</Text>
-              </BlurView>
-              <BlurView intensity={60} tint="light" style={styles.metricCard}>
-                <Text style={styles.metricLabel}>In Progress</Text>
-                <Text style={[styles.metricValue, { color: theme.Colors.tertiary }]}>{metrics.inProgress}</Text>
-              </BlurView>
-              <BlurView intensity={60} tint="light" style={styles.metricCard}>
-                <Text style={styles.metricLabel}>Escalated</Text>
-                <Text style={[styles.metricValue, { color: theme.Colors.error }]}>{metrics.escalated}</Text>
-              </BlurView>
+              <StatCard
+                label="Total Tickets"
+                value={metrics.total}
+                iconName="confirmation-number"
+                iconColor={theme.Colors.primary}
+                style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+              />
+              <StatCard
+                label="Open Issues"
+                value={metrics.open}
+                iconName="error-outline"
+                iconColor={theme.Colors.secondary}
+                style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+              />
+              <StatCard
+                label="In Progress"
+                value={metrics.inProgress}
+                iconName="pending-actions"
+                iconColor={theme.Colors.tertiary}
+                style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+              />
+              <StatCard
+                label="Escalated"
+                value={metrics.escalated}
+                iconName="warning"
+                iconColor={theme.Colors.error}
+                style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+              />
             </View>
 
             {/* Search Box */}
@@ -192,17 +201,15 @@ export default function EscalationsScreen() {
             <View style={styles.filtersContainer}>
               <View style={styles.filterGroup}>
                 <Text style={styles.filterLabelText}>Status:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                   {['ALL', 'OPEN', 'IN_PROGRESS', 'ESCALATED', 'RESOLVED'].map(st => (
-                    <TouchableOpacity
+                    <FilterPill
                       key={st}
-                      style={[styles.filterPill, statusFilter === st && styles.filterPillActive]}
+                      label={st.replace('_', ' ')}
+                      active={statusFilter === st}
                       onPress={() => setStatusFilter(st)}
-                    >
-                      <Text style={[styles.filterText, statusFilter === st && styles.filterTextActive]}>
-                        {st.replace('_', ' ')}
-                      </Text>
-                    </TouchableOpacity>
+                      size="sm"
+                    />
                   ))}
                 </ScrollView>
               </View>
@@ -212,17 +219,15 @@ export default function EscalationsScreen() {
             <View style={styles.filtersContainer}>
               <View style={styles.filterGroup}>
                 <Text style={styles.filterLabelText}>Priority:</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                   {['ALL', 'LOW', 'STANDARD', 'HIGH', 'URGENT'].map(pr => (
-                    <TouchableOpacity
+                    <FilterPill
                       key={pr}
-                      style={[styles.filterPill, priorityFilter === pr && styles.filterPillActive]}
+                      label={pr}
+                      active={priorityFilter === pr}
                       onPress={() => setPriorityFilter(pr)}
-                    >
-                      <Text style={[styles.filterText, priorityFilter === pr && styles.filterTextActive]}>
-                        {pr}
-                      </Text>
-                    </TouchableOpacity>
+                      size="sm"
+                    />
                   ))}
                 </ScrollView>
               </View>
@@ -234,14 +239,14 @@ export default function EscalationsScreen() {
                 <ActivityIndicator size="large" color={theme.Colors.primary} />
               </View>
             ) : error ? (
-              <BlurView intensity={60} tint="light" style={styles.emptyCard}>
+              <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.emptyCard}>
                 <Text style={styles.errorText}>{error}</Text>
                 <TouchableOpacity style={styles.filterButton} onPress={refresh}>
                   <Text style={styles.filterButtonText}>Retry</Text>
                 </TouchableOpacity>
               </BlurView>
             ) : issues.length === 0 ? (
-              <BlurView intensity={60} tint="light" style={styles.emptyCard}>
+              <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.emptyCard}>
                 <MaterialIcons name="report-off" size={48} color={theme.Colors.onSurfaceVariant} />
                 <Text style={styles.emptyTitle}>No issues logged</Text>
                 <Text style={styles.emptySubtitle}>No matching reported issues or maintenance requests found for this property.</Text>
@@ -254,7 +259,7 @@ export default function EscalationsScreen() {
                     onPress={() => setSelectedIssueId(item.id)}
                     activeOpacity={0.8}
                   >
-                    <BlurView intensity={40} tint="light" style={styles.mobileCard}>
+                    <BlurView intensity={40} tint={isDark ? "dark" : "light"} style={styles.mobileCard}>
                       <View style={styles.cardHeaderRow}>
                         <Text style={styles.cardUnitText}>{item.ticketNumber}</Text>
                         <View
@@ -307,40 +312,20 @@ export default function EscalationsScreen() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <View style={styles.paginationRow}>
-                <TouchableOpacity
-                  onPress={() => setPage(p => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                  style={[styles.pageButton, page === 0 && styles.pageButtonDisabled]}
-                >
-                  <MaterialIcons name="chevron-left" size={24} color={page === 0 ? '#b0bec5' : '#006875'} />
-                </TouchableOpacity>
-                <Text style={styles.pageText}>
-                  Page {page + 1} of {totalPages}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1}
-                  style={[styles.pageButton, page >= totalPages - 1 && styles.pageButtonDisabled]}
-                >
-                  <MaterialIcons name="chevron-right" size={24} color={page >= totalPages - 1 ? '#b0bec5' : '#006875'} />
-                </TouchableOpacity>
-              </View>
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
             )}
 
           </View>
           <View style={{ height: 120 }} />
         </Animated.ScrollView>
-      </SafeAreaView>
-
-      <IssueDetailModal
-        visible={!!selectedIssueId}
-        issueId={selectedIssueId}
-        token={accessToken}
-        onClose={() => setSelectedIssueId(null)}
-        onUpdate={refresh}
-      />
-    </LinearGradient>
-  );
-}
+        <IssueDetailModal
+          visible={!!selectedIssueId}
+          issueId={selectedIssueId}
+          token={accessToken}
+          onClose={() => setSelectedIssueId(null)}
+          onUpdate={refresh}
+        />
+      </PageShell>
+    );
+  }
 

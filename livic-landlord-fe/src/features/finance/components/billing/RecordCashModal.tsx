@@ -82,7 +82,7 @@ export function RecordCashModal({
                   title="CONFIRM CASH COLLECTION"
                   onPress={onConfirm}
                   loading={isRecording}
-                  style={{ marginTop: 16 }}
+                  style={{ marginTop: theme.Spacing.md }}
                 />
               </>
             ) : (
@@ -118,7 +118,7 @@ export function RecordCashModal({
                 <ActionButton
                   title="CLOSE"
                   onPress={onClose}
-                  style={{ marginTop: 24, width: '100%' }}
+                  style={{ marginTop: theme.Spacing.lg, width: '100%' }}
                 />
               </View>
             )}
@@ -145,7 +145,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     maxWidth: 480,
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderWidth: 1.5,
     borderColor: theme.Colors.outlineVariant,
   },
@@ -156,21 +156,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   modalTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   modalSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginBottom: 20,
     lineHeight: 20,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
   inputLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
     marginBottom: 6,
@@ -183,8 +183,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     color: theme.Colors.onSurface,
-    paddingHorizontal: 16,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    paddingHorizontal: theme.Spacing.md,
+    fontSize: theme.Typography.bodyMedium.fontSize,
   },
   successContainer: {
     alignItems: 'center',
@@ -197,38 +197,38 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(22, 163, 74, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
   successTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
   },
   successSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
     lineHeight: 20,
   },
   checklistReceipt: {
     width: '100%',
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderRadius: 16,
-    padding: 16,
+    padding: theme.Spacing.md,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    gap: 8,
+    gap: theme.Spacing.sm,
     marginBottom: 20,
   },
   checkItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   checkText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
   },
@@ -242,12 +242,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   metaLabel: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
   },
   metaValue: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '800',
   },

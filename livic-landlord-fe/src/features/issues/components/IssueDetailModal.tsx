@@ -185,7 +185,7 @@ export default function IssueDetailModal({
         <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFillObject} />
         
         <LinearGradient
-          colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+          colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.modalContent, isDesktop && styles.desktopModal]}
@@ -393,7 +393,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24
+    padding: theme.Spacing.lg
   },
   modalContent: {
     width: '100%',
@@ -415,13 +415,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.Spacing.lg,
     paddingVertical: 18,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 104, 117, 0.1)'
   },
   ticketNum: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     textTransform: 'uppercase',
@@ -442,11 +442,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center'
   },
   scrollBody: {
-    padding: 24
+    padding: theme.Spacing.lg
   },
   badgesRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: theme.Spacing.sm,
     marginBottom: 20
   },
   badge: {
@@ -455,7 +455,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 10
   },
   badgeText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     textTransform: 'uppercase'
   },
@@ -464,11 +464,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.65)',
     borderRadius: 20,
-    padding: 16,
+    padding: theme.Spacing.md,
     marginBottom: 20
   },
   sectionTitle: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
     marginBottom: 10,
@@ -476,29 +476,29 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     letterSpacing: 0.5
   },
   descriptionText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     lineHeight: 20
   },
   metaGrid: {
     flexDirection: 'row',
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: theme.Spacing.md,
+    paddingTop: theme.Spacing.md,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0, 104, 117, 0.1)',
-    gap: 24
+    gap: theme.Spacing.lg
   },
   metaItem: {
     flex: 1
   },
   metaLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginBottom: 2,
     fontWeight: '600'
   },
   metaValue: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface
   },
@@ -507,13 +507,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.75)',
     borderRadius: 20,
-    padding: 16,
+    padding: theme.Spacing.md,
     marginBottom: 20
   },
   actionButtonsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8
+    gap: theme.Spacing.sm
   },
   actionBtn: {
     paddingHorizontal: 14,
@@ -532,7 +532,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.error
   },
   actionBtnText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.surfaceContainerLowest
   },
@@ -549,32 +549,32 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     marginBottom: 10
   },
   escalateActionButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 8
+    gap: theme.Spacing.sm
   },
   cancelBtn: {
     paddingHorizontal: 12,
-    paddingVertical: 8
+    paddingVertical: theme.Spacing.sm
   },
   cancelBtnText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700'
   },
   confirmEscalateBtn: {
     backgroundColor: theme.Colors.error,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: theme.Spacing.sm,
     borderRadius: 10
   },
   confirmEscalateText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.surfaceContainerLowest
   },
@@ -583,8 +583,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   timelineItem: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16
+    gap: theme.Spacing.md,
+    marginBottom: theme.Spacing.md
   },
   timelineLineWrapper: {
     alignItems: 'center'
@@ -601,7 +601,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 2,
     flex: 1,
     backgroundColor: 'rgba(0,104,117,0.1)',
-    marginTop: 4
+    marginTop: theme.Spacing.xs
   },
   timelineContent: {
     flex: 1,
@@ -614,25 +614,25 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   timelineHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4
+    marginBottom: theme.Spacing.xs
   },
   authorName: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface
   },
   timelineDate: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600'
   },
   timelineBody: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     lineHeight: 18
   },
   emptyTimelineText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontStyle: 'italic',
     textAlign: 'center',
@@ -640,7 +640,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   commentInputWrapper: {
     flexDirection: 'row',
-    padding: 16,
+    padding: theme.Spacing.md,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0, 104, 117, 0.1)',
     backgroundColor: 'rgba(255, 255, 255, 0.35)',
@@ -653,9 +653,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0, 104, 117, 0.15)',
     borderRadius: 18,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     paddingVertical: 10,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     maxHeight: 100
   },

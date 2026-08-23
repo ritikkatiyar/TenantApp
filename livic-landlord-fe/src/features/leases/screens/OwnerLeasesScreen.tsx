@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -18,7 +18,11 @@ import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { formatCurrency, formatCompactCurrency } from '@/src/utils/formatters';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { StatCard } from '@/src/components/common/display/StatCard';
+import FilterPill from '@/src/components/common/inputs/FilterPill';
+import Pagination from '@/src/components/common/navigation/Pagination';
 import { createStyles } from './OwnerLeasesScreen.styles';
 import { useOwnerLeases } from '../hooks/useOwnerLeases';
 import {
@@ -102,21 +106,20 @@ export default function OwnerLeasesScreen() {
     router.push(`/inventory?tab=${tab}&leaseId=${lease.id}`);
   };
 
+  const handleLoadMoreLeases = () => {
+    if (currentLeasesPage + 1 < totalLeasesPages && !isLoadingData) {
+      setCurrentLeasesPage(prev => prev + 1);
+    }
+  };
+
   return (
-    <LinearGradient
-      colors={theme.Colors.backgroundGradient as [string, string, string]}
-      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      style={styles.root}
+    <PageShell
+      scrollable={true}
+      edges={isDesktop ? ['top'] : []}
+      onEndReached={handleLoadMoreLeases}
+      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop && (
-          <DesktopNavBar title="Lease Operations" properties={properties || []} selectedPropertyId={selectedPropertyId} onPropertyChange={setSelectedPropertyId} />
-        )}
-        <ScrollView
-          onScroll={handleScroll} scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
-        >
+
           {/* Header */}
           <View style={styles.desktopHeader}>
             <View style={{ flex: 1 }}>
@@ -125,12 +128,13 @@ export default function OwnerLeasesScreen() {
               <Text style={styles.subtitle}>Manage active tenancies, notice periods, unit bookings, and move-in/out inventory.</Text>
             </View>
             <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.createBtnWrapper} onPress={() => setIsBookingModalVisible(true)} activeOpacity={0.82}>
-                <LinearGradient colors={[theme.Colors.primary, '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.createBtn}>
-                  <MaterialIcons name="bookmark-add" size={18} color={theme.Colors.surfaceContainerLowest} />
-                  <Text style={styles.createBtnText}>Book Room</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+              <ActionButton
+                label="Book Room"
+                icon="bookmark-add"
+                variant="primary"
+                size="md"
+                onPress={() => setIsBookingModalVisible(true)}
+              />
             </View>
           </View>
 
@@ -141,38 +145,30 @@ export default function OwnerLeasesScreen() {
           {/* Stats */}
           <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>
             {stats.map((stat, i) => (
-              <BlurView key={stat.label} intensity={55} tint={isDark ? 'dark' : 'light'} style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
-                <LinearGradient colors={STAT_GRAD[i]} style={styles.statIconCircle}>
-                  <MaterialIcons name={stat.icon as any} size={18} color={theme.Colors.surfaceContainerLowest} />
-                </LinearGradient>
-                <Text style={[styles.statValue, { color: STAT_COLORS[i] }]}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-                <Text style={styles.statHelper}>{stat.helper}</Text>
-              </BlurView>
+              <StatCard
+                key={stat.label}
+                label={stat.label}
+                value={stat.value}
+                helperText={stat.helper}
+                iconName={stat.icon as any}
+                iconColor={STAT_COLORS[i % STAT_COLORS.length]}
+                style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+              />
             ))}
           </View>
 
           {/* Tabs */}
-          <View style={styles.tabBar}>
-            {TABS.map((t) => {
-              const active = activeTab === t.id;
-              return (
-                <TouchableOpacity key={t.id} style={[styles.tab, active && styles.tabActive]} onPress={() => setActiveTab(t.id)} activeOpacity={0.8}>
-                  {active && (
-                    <LinearGradient
-                      colors={t.id === 'vacancies' ? [theme.Colors.error, '#ef4444'] : [theme.Colors.primary, '#0072ff']}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                      style={StyleSheet.absoluteFillObject}
-                    />
-                  )}
-                  <MaterialIcons name={t.icon} size={16} color={active ? '#fff' : theme.Colors.onSurfaceVariant} />
-                  <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
-                  <View style={[styles.tabBadge, active && styles.tabBadgeActive]}>
-                    <Text style={[styles.tabBadgeText, active && styles.tabBadgeTextActive]}>{t.count}</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
+          <View style={{ flexDirection: 'row', gap: 10, marginVertical: 14 }}>
+            {TABS.map((t) => (
+              <FilterPill
+                key={t.id}
+                label={t.label}
+                icon={t.icon}
+                count={t.count}
+                active={activeTab === t.id}
+                onPress={() => setActiveTab(t.id)}
+              />
+            ))}
           </View>
 
           {/* Search */}
@@ -228,23 +224,9 @@ export default function OwnerLeasesScreen() {
 
           {/* Pagination (leases tab) */}
           {activeTab === 'leases' && totalLeasesPages > 1 && (
-            <View style={styles.paginationBar}>
-              <Text style={styles.paginationInfo}>Showing {currentLeasesPage * 20 + 1}–{Math.min((currentLeasesPage + 1) * 20, totalLeasesElements)} of {totalLeasesElements} leases</Text>
-              <View style={styles.paginationControls}>
-                <TouchableOpacity disabled={currentLeasesPage === 0} onPress={() => setCurrentLeasesPage(p => Math.max(0, p - 1))} style={[styles.pageBtn, currentLeasesPage === 0 && styles.pageBtnDisabled]}>
-                  <MaterialIcons name="chevron-left" size={18} color={currentLeasesPage === 0 ? '#9ca3af' : theme.Colors.primary} />
-                  <Text style={[styles.pageBtnText, currentLeasesPage === 0 && styles.pageBtnTextDisabled]}>Previous</Text>
-                </TouchableOpacity>
-                <View style={styles.pageNumberPill}><Text style={styles.pageNumberText}>Page {currentLeasesPage + 1} of {totalLeasesPages}</Text></View>
-                <TouchableOpacity disabled={currentLeasesPage >= totalLeasesPages - 1} onPress={() => setCurrentLeasesPage(p => Math.min(totalLeasesPages - 1, p + 1))} style={[styles.pageBtn, currentLeasesPage >= totalLeasesPages - 1 && styles.pageBtnDisabled]}>
-                  <Text style={[styles.pageBtnText, currentLeasesPage >= totalLeasesPages - 1 && styles.pageBtnTextDisabled]}>Next</Text>
-                  <MaterialIcons name="chevron-right" size={18} color={currentLeasesPage >= totalLeasesPages - 1 ? '#9ca3af' : theme.Colors.primary} />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Pagination page={currentLeasesPage} totalPages={totalLeasesPages} onPageChange={setCurrentLeasesPage} />
           )}
-        </ScrollView>
-      </SafeAreaView>
+ 
 
       {/* Modals */}
       <BookRoomModal
@@ -282,7 +264,7 @@ export default function OwnerLeasesScreen() {
         editSecurityDeposit={editSecurityDeposit} setEditSecurityDeposit={setEditSecurityDeposit}
         onSubmit={handleSaveTerms} isSaving={isSavingTerms}
       />
-    </LinearGradient>
+    </PageShell>
   );
 }
 
@@ -342,22 +324,29 @@ function LeasesTab({ filteredLeases, isDark, styles, theme, currentLeasesPage, s
                   )}
                 </View>
               </View>
-              <View style={styles.leaseActionsCol}>
-                <TouchableOpacity style={styles.actionBtnOutline} onPress={() => onEditTerms(l)}>
-                  <MaterialIcons name="edit" size={14} color={theme.Colors.primary} />
-                  <Text style={styles.actionBtnText}>Edit Terms</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtnPrimary} onPress={() => onInventory(l)}>
-                  <LinearGradient colors={[theme.Colors.primary, '#0072ff']} style={styles.actionBtnInner}>
-                    <MaterialIcons name="inventory-2" size={14} color={theme.Colors.surfaceContainerLowest} />
-                    <Text style={styles.actionBtnTextPrimary}>Inventory</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+              <View style={[styles.leaseActionsCol, { gap: 8 }]}>
+                <ActionButton
+                  label="Edit Terms"
+                  icon="edit"
+                  variant="outline"
+                  size="sm"
+                  onPress={() => onEditTerms(l)}
+                />
+                <ActionButton
+                  label="Inventory"
+                  icon="inventory-2"
+                  variant="primary"
+                  size="sm"
+                  onPress={() => onInventory(l)}
+                />
                 {!l.moveOutDate && (
-                  <TouchableOpacity style={styles.actionBtnOutlineDanger} onPress={() => onServeNotice(l.id)}>
-                    <MaterialIcons name="warning" size={14} color={theme.Colors.error} />
-                    <Text style={styles.actionBtnTextDanger}>Serve Notice</Text>
-                  </TouchableOpacity>
+                  <ActionButton
+                    label="Serve Notice"
+                    icon="warning"
+                    variant="danger"
+                    size="sm"
+                    onPress={() => onServeNotice(l.id)}
+                  />
                 )}
               </View>
             </View>

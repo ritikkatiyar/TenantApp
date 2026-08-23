@@ -35,7 +35,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     maxWidth: 680,
     height: 480,
     borderRadius: 28,
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
     borderWidth: 1.5,
   },
   glassCard: {
@@ -83,7 +83,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     elevation: 3,
   },
   dialogueTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
@@ -100,7 +100,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.primary,
   },
   onlineText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.primary,
   },
@@ -127,7 +127,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 6,
   },
   suggestionTitle: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
@@ -144,14 +144,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 7,
   },
   chipText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.primary,
   },
   msgRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: theme.Spacing.sm,
     marginVertical: 2,
   },
   msgRowUser: {
@@ -187,23 +187,23 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   userText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     lineHeight: 19,
     fontWeight: '600',
   },
   assistantText: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     lineHeight: 19,
     fontWeight: '500',
   },
   loadingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   loadingText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.primary,
   },
@@ -223,15 +223,15 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 22,
     paddingHorizontal: 12,
     paddingVertical: 3,
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   textInput: {
     flex: 1,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     maxHeight: 80,
     minHeight: 36,
-    paddingVertical: 4,
+    paddingVertical: theme.Spacing.xs,
     ...Platform.select({
       web: {
         outlineStyle: 'none',

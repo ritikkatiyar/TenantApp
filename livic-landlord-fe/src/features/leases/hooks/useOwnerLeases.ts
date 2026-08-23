@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import {
   listActiveLeasesByProperty,
@@ -26,7 +27,7 @@ export function useOwnerLeases() {
   const { properties, isLoading: isPropsLoading } = useProperties();
   const { showToast } = useToast();
 
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const [activeTab, setActiveTab] = useState<'leases' | 'bookings' | 'vacancies'>('leases');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -65,21 +66,15 @@ export function useOwnerLeases() {
   const [editSecurityDeposit, setEditSecurityDeposit] = useState('');
   const [isSavingTerms, setIsSavingTerms] = useState(false);
 
-  useEffect(() => {
-    if (properties && properties.length > 0 && !selectedPropertyId) {
-      setSelectedPropertyId(properties[0].id);
-    }
-  }, [properties, selectedPropertyId]);
-
   const loadScreenData = useCallback(async () => {
-    if (!accessToken || !selectedPropertyId) return;
+    if (!accessToken) return;
     try {
       setIsLoadingData(true);
       const [leasesRes, bookingsData, vacatingData, allUnits] = await Promise.all([
         listActiveLeasesByProperty(selectedPropertyId, accessToken, currentLeasesPage, 20),
         listUnitBookings(accessToken),
-        getVacatingUnits(selectedPropertyId, accessToken),
-        getAllFloorsLayout(selectedPropertyId, accessToken).catch(() => []),
+        selectedPropertyId ? getVacatingUnits(selectedPropertyId, accessToken) : Promise.resolve([]),
+        selectedPropertyId ? getAllFloorsLayout(selectedPropertyId, accessToken).catch(() => []) : Promise.resolve([]),
       ]);
       setLeases(leasesRes.content || []);
       setTotalLeasesElements(leasesRes.totalElements || 0);

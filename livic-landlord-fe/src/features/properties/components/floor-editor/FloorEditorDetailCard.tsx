@@ -45,6 +45,7 @@ export function FloorEditorDetailCard({
 }: FloorEditorDetailCardProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.sheetHeader}>
@@ -99,13 +100,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   sheetUnitTitle: {
-    fontSize: theme.Typography.HeadlineSmall.fontSize,
+    fontSize: theme.Typography.headlineSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   sheetSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     fontFamily: 'Inter',
@@ -114,34 +115,36 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1,
+    borderColor: theme.Colors.glassStroke,
     justifyContent: 'center',
     alignItems: 'center',
   },
   statusContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
   },
   statusToggle: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.glassStroke,
   },
   statusActiveVacant: {
     backgroundColor: 'rgba(46, 125, 50, 0.1)',
     borderColor: 'rgba(46, 125, 50, 0.2)',
   },
   statusActiveOccupied: {
-    backgroundColor: 'rgba(0, 104, 117, 0.1)',
-    borderColor: 'rgba(0, 104, 117, 0.2)',
+    backgroundColor: isDark ? 'rgba(0, 212, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)',
+    borderColor: isDark ? 'rgba(0, 212, 255, 0.3)' : 'rgba(0, 104, 117, 0.2)',
   },
   statusToggleText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',

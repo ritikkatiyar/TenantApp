@@ -108,6 +108,7 @@ export function TenantDetailsCard({
 }: TenantDetailsCardProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   return (
     <>
       {isCreatingNewTenant ? (
@@ -115,14 +116,14 @@ export function TenantDetailsCard({
         <View style={styles.createTenantPanel}>
           <View style={styles.createTenantHeader}>
             <TouchableOpacity onPress={() => setIsCreatingNewTenant(false)} style={styles.createTenantBack}>
-              <MaterialIcons name="arrow-back" size={18} color="#006875" />
+              <MaterialIcons name="arrow-back" size={18} color={theme.Colors.primary} />
             </TouchableOpacity>
             <Text style={styles.createTenantTitle}>CREATE NEW TENANT</Text>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>PHONE NUMBER</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.Colors.glassFill }]}>
               <MaterialIcons name="phone" size={18} color={theme.Colors.onSurfaceVariant} />
               <TextInput style={[styles.textInput, { color: theme.Colors.onSurfaceVariant }]} value={tenantPhoneSearch} editable={false} />
             </View>
@@ -131,11 +132,11 @@ export function TenantDetailsCard({
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>FULL NAME</Text>
             <View style={styles.inputWrapper}>
-              <MaterialIcons name="person" size={18} color="#006875" />
+              <MaterialIcons name="person" size={18} color={theme.Colors.primary} />
               <TextInput 
                 style={styles.textInput} 
                 placeholder="e.g. John Doe" 
-                placeholderTextColor="#9ba9ab" 
+                placeholderTextColor={theme.Colors.onSurfaceVariant} 
                 value={newTenantName} 
                 onChangeText={setNewTenantName} 
               />
@@ -145,11 +146,11 @@ export function TenantDetailsCard({
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
             <View style={styles.inputWrapper}>
-              <MaterialIcons name="email" size={18} color="#006875" />
+              <MaterialIcons name="email" size={18} color={theme.Colors.primary} />
               <TextInput 
                 style={styles.textInput} 
                 placeholder="e.g. john@example.com" 
-                placeholderTextColor="#9ba9ab" 
+                placeholderTextColor={theme.Colors.onSurfaceVariant} 
                 value={newTenantEmail} 
                 onChangeText={setNewTenantEmail} 
                 keyboardType="email-address" 
@@ -162,7 +163,7 @@ export function TenantDetailsCard({
             <Text style={styles.errorText}>{tenantSearchError}</Text>
           )}
 
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: theme.Spacing.md }}>
             <TouchableOpacity style={[styles.statusToggle, { flex: 1 }]} onPress={() => setIsCreatingNewTenant(false)}>
               <Text style={styles.statusToggleText}>CANCEL</Text>
             </TouchableOpacity>
@@ -190,7 +191,7 @@ export function TenantDetailsCard({
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.inputLabel}>UNIT CAPACITY</Text>
                 <View style={styles.inputWrapper}>
-                  <MaterialIcons name="people" size={18} color="#006875" />
+                  <MaterialIcons name="people" size={18} color={theme.Colors.primary} />
                   <TextInput 
                     style={styles.textInput}
                     value={selectedBlock.capacity ? selectedBlock.capacity.toString() : ''}
@@ -200,7 +201,7 @@ export function TenantDetailsCard({
                     }}
                     placeholder="e.g. 2"
                     keyboardType="numeric"
-                    placeholderTextColor="#9ba9ab"
+                    placeholderTextColor={theme.Colors.onSurfaceVariant}
                     editable={!selectedBlock.activeLeases || selectedBlock.activeLeases.length === 0}
                   />
                 </View>
@@ -215,8 +216,8 @@ export function TenantDetailsCard({
               <View style={{ gap: 10, marginBottom: 12 }}>
                 {selectedBlock.activeLeases.map((l, index) => (
                   <View key={l.leaseId || index} style={styles.tenantListContainer}>
-                    <View style={{ flex: 1, gap: 4 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <View style={{ flex: 1, gap: theme.Spacing.xs }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm, flexWrap: 'wrap' }}>
                         <View style={styles.tenantTag}>
                           <Text style={styles.tenantTagText}>{l.tenantName || 'Assigned tenant'}</Text>
                         </View>
@@ -230,18 +231,18 @@ export function TenantDetailsCard({
                       onPress={() => onRemoveTenant(l.leaseId, l.tenantName)}
                       style={styles.removeTenantButton}
                     >
-                      <MaterialIcons name="close" size={16} color="#e53935" />
+                      <MaterialIcons name="close" size={16} color={theme.Colors.error} />
                     </TouchableOpacity>
                   </View>
                 ))}
               </View>
             ) : (
-              <Text style={[styles.sheetSubtitle, { marginBottom: 8, fontStyle: 'italic' }]}>No tenants assigned yet.</Text>
+              <Text style={[styles.sheetSubtitle, { marginBottom: theme.Spacing.sm, fontStyle: 'italic' }]}>No tenants assigned yet.</Text>
             )}
 
             {(!selectedBlock.capacity || selectedBlock.capacity <= 0) ? (
               <View style={styles.warningContainer}>
-                <MaterialIcons name="warning" size={18} color="#e53935" />
+                <MaterialIcons name="warning" size={18} color={theme.Colors.error} />
                 <Text style={styles.warningText}>
                   Please define a unit capacity of at least 1 before you can search for and assign tenants.
                 </Text>
@@ -262,7 +263,7 @@ export function TenantDetailsCard({
                       <TextInput
                         style={styles.textInput}
                         placeholder="Search by 10-digit phone"
-                        placeholderTextColor={theme.Colors.outlineVariant}
+                        placeholderTextColor={theme.Colors.onSurfaceVariant}
                         value={tenantPhoneSearch}
                         onChangeText={(val) => {
                           const cleaned = val.replace(/[^0-9]/g, '').slice(0, 10);
@@ -330,7 +331,7 @@ export function TenantDetailsCard({
                       setNewTenantEmail('');
                     }}
                   >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm }}>
                       <MaterialIcons name="person-add" size={20} color={theme.Colors.primary} />
                       <Text style={styles.quickCreatePromptText}>
                         No tenant found. Create new tenant for &quot;{tenantPhoneSearch}&quot;?
@@ -346,7 +347,7 @@ export function TenantDetailsCard({
                     
                     <View style={styles.quickCreateField}>
                       <Text style={styles.quickCreateLabel}>PHONE NUMBER</Text>
-                      <View style={[styles.inputWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                      <View style={[styles.inputWrapper, { backgroundColor: theme.Colors.glassFill }]}>
                         <MaterialIcons name="phone" size={18} color={theme.Colors.onSurfaceVariant} />
                         <TextInput
                           style={[styles.textInput, { color: theme.Colors.onSurfaceVariant }]}
@@ -363,7 +364,7 @@ export function TenantDetailsCard({
                         <TextInput
                           style={styles.textInput}
                           placeholder="e.g. John Doe"
-                          placeholderTextColor="#9ba9ab"
+                          placeholderTextColor={theme.Colors.onSurfaceVariant}
                           value={newTenantName}
                           onChangeText={setNewTenantName}
                         />
@@ -373,11 +374,11 @@ export function TenantDetailsCard({
                     <View style={styles.quickCreateField}>
                       <Text style={styles.quickCreateLabel}>EMAIL ADDRESS</Text>
                       <View style={styles.inputWrapper}>
-                        <MaterialIcons name="email" size={18} color="#006875" />
+                        <MaterialIcons name="email" size={18} color={theme.Colors.primary} />
                         <TextInput
                           style={styles.textInput}
                           placeholder="e.g. john@example.com"
-                          placeholderTextColor="#9ba9ab"
+                          placeholderTextColor={theme.Colors.onSurfaceVariant}
                           value={newTenantEmail}
                           onChangeText={setNewTenantEmail}
                           keyboardType="email-address"
@@ -386,7 +387,7 @@ export function TenantDetailsCard({
                       </View>
                     </View>
 
-                    <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                    <View style={{ flexDirection: 'row', gap: 12, marginTop: theme.Spacing.sm }}>
                       <TouchableOpacity
                         style={[styles.statusToggle, { flex: 1 }]}
                         onPress={() => setIsCreatingNewTenant(false)}
@@ -409,13 +410,13 @@ export function TenantDetailsCard({
                 )}
 
                 {tenantSearchResult && (
-                  <View style={{ gap: 10, marginTop: 4, marginBottom: 12 }}>
+                  <View style={{ gap: 10, marginTop: theme.Spacing.xs, marginBottom: 12 }}>
                     <View style={styles.tenantMatchBox}>
                       <View>
                         <Text style={styles.tenantMatchName}>{tenantSearchResult.fullName}</Text>
                         <Text style={styles.tenantMatchEmail}>{tenantSearchResult.email}</Text>
                       </View>
-                      <MaterialIcons name="check-circle" size={20} color="#2e7d32" />
+                      <MaterialIcons name="check-circle" size={20} color={theme.Colors.tertiary} />
                     </View>
 
                     <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -425,7 +426,7 @@ export function TenantDetailsCard({
                           <TextInput 
                             style={styles.textInput}
                             placeholder="e.g. 15000"
-                            placeholderTextColor="#9ba9ab"
+                            placeholderTextColor={theme.Colors.onSurfaceVariant}
                             value={rentAmount}
                             onChangeText={setRentAmount}
                             keyboardType="numeric"
@@ -438,7 +439,7 @@ export function TenantDetailsCard({
                           <TextInput 
                             style={styles.textInput}
                             placeholder="e.g. 30000"
-                            placeholderTextColor="#9ba9ab"
+                            placeholderTextColor={theme.Colors.onSurfaceVariant}
                             value={securityDeposit}
                             onChangeText={setSecurityDeposit}
                             keyboardType="numeric"
@@ -474,7 +475,7 @@ export function TenantDetailsCard({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   createTenantPanel: {
     gap: 12,
-    paddingTop: 8,
+    paddingTop: theme.Spacing.sm,
   },
   createTenantHeader: {
     flexDirection: 'row',
@@ -485,20 +486,24 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   createTenantBack: {
     padding: 6,
     borderRadius: 8,
-    backgroundColor: 'rgba(0,104,117,0.1)',
+    backgroundColor: isDark ? 'rgba(0, 212, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)',
   },
   createTenantTitle: {
-    fontSize: theme.Typography.LabelMedium.fontSize,
+    fontSize: theme.Typography.labelMedium.fontSize,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1,
-    fontFamily: 'Inter',
+  },
+  removeTenantButton: {
+    padding: 6,
+    borderRadius: 10,
+    backgroundColor: 'rgba(229, 57, 53, 0.1)',
   },
   inputGroup: {
     gap: 6,
   },
   inputLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize - 2,
+    fontSize: theme.Typography.labelSmall.fontSize - 2,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -507,17 +512,17 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
+    borderColor: theme.Colors.glassStroke,
     paddingHorizontal: 14,
     height: 48,
     gap: 10,
   },
   textInput: {
     flex: 1,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',
@@ -525,16 +530,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statusToggle: {
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: 'rgba(0, 104, 117, 0.12)',
+    borderColor: theme.Colors.glassStroke,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.glassFill,
   },
   statusToggleText: {
-    fontSize: theme.Typography.LabelMedium.fontSize,
+    fontSize: theme.Typography.labelMedium.fontSize,
     fontWeight: '900',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
@@ -548,52 +553,47 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   errorText: {
     color: theme.Colors.error,
-    fontSize: theme.Typography.BodyMedium.fontSize,
-    paddingLeft: 4,
-    marginTop: 4,
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    paddingLeft: theme.Spacing.xs,
+    marginTop: theme.Spacing.xs,
     fontFamily: 'Inter',
   },
   errorTextFlat: {
     color: theme.Colors.error,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     marginTop: -8,
     marginBottom: 12,
-    paddingLeft: 4,
+    paddingLeft: theme.Spacing.xs,
     fontFamily: 'Inter',
   },
   tenantListContainer: {
     paddingVertical: 10,
     paddingHorizontal: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 16,
-    borderColor: 'rgba(255, 255, 255, 0.55)',
+    borderColor: theme.Colors.glassStroke,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   tenantTag: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: theme.Spacing.xs,
+    paddingHorizontal: theme.Spacing.sm,
     borderRadius: 8,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: isDark ? 'rgba(0, 212, 255, 0.15)' : 'rgba(0, 104, 117, 0.08)',
   },
   tenantTagText: {
-    fontSize: theme.Typography.LabelMedium.fontSize,
+    fontSize: theme.Typography.labelMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
   },
   sheetSubtitle: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
     fontFamily: 'Inter',
-  },
-  removeTenantButton: {
-    padding: 6,
-    borderRadius: 10,
-    backgroundColor: 'rgba(229, 57, 53, 0.1)',
   },
   warningContainer: {
     flexDirection: 'row',
@@ -607,7 +607,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   warningText: {
     flex: 1,
-    fontSize: theme.Typography.LabelMedium.fontSize,
+    fontSize: theme.Typography.labelMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.error,
     lineHeight: 18,
@@ -621,15 +621,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(46, 125, 50, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(46, 125, 50, 0.15)',
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
     alignItems: 'flex-start',
   },
   suggestionsContainer: {
     maxHeight: 180,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: isDark ? '#141D26' : 'rgba(255,255,255,0.95)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0,104,117,0.15)',
+    borderColor: isDark ? 'rgba(0, 212, 255, 0.2)' : 'rgba(0,104,117,0.15)',
     marginTop: 6,
     shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 4 },
@@ -643,20 +643,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(0,104,117,0.08)',
+    borderBottomColor: isDark ? 'rgba(0, 212, 255, 0.1)' : 'rgba(0,104,117,0.08)',
     gap: 10,
   },
   suggestionTextContainer: {
     flex: 1,
   },
   suggestionName: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   suggestionPhone: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
     fontFamily: 'Inter',
@@ -671,7 +671,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   quickCreatePromptText: {
-    fontSize: theme.Typography.LabelMedium.fontSize,
+    fontSize: theme.Typography.labelMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
@@ -687,7 +687,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   quickCreateTitle: {
-    fontSize: theme.Typography.LabelSmall.fontSize - 1,
+    fontSize: theme.Typography.labelSmall.fontSize - 1,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -697,7 +697,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 5,
   },
   quickCreateLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize - 3,
+    fontSize: theme.Typography.labelSmall.fontSize - 3,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1,
@@ -715,13 +715,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
   },
   tenantMatchName: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.tertiary,
     fontFamily: 'Inter',
   },
   tenantMatchEmail: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },

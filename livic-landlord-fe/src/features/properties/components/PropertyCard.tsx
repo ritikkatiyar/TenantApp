@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { Theme } from '@/src/theme/Theme';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import Building3DView from '@/src/features/properties/components/Building3DView';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import type { PropertyResponse } from '@/src/types/property';
 
 interface PropertyCardProps {
@@ -46,14 +47,14 @@ export function PropertyCard({
           {/* Left Side: 3D Building Preview */}
           <View style={styles.desktopCardLeft}>
             <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerDesktop, item.isActive === false && { opacity: 0.65 }]}>
-              <View style={{ transform: [{ translateY: -30 }], width: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}>
+              <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {accessToken && (
                   <Building3DView 
                     propertyId={item.id} 
                     token={accessToken} 
                     onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
                     resetRotationTrigger={resetRotationTrigger}
-                    maxContainerHeight={380}
+                    maxContainerHeight={250}
                   />
                 )}
               </View>
@@ -130,34 +131,21 @@ export function PropertyCard({
             </View>
 
             <View style={styles.desktopCardActions}>
-              <TouchableOpacity 
-                activeOpacity={0.8} 
-                style={[styles.manageButtonWrapper, styles.manageButtonWrapperDesktop]}
+              <ActionButton
+                label="MANAGE"
+                icon="arrow-forward"
+                iconPosition="right"
+                variant="primary"
+                size="md"
                 onPress={() => router.push(`/properties/${item.id}`)}
-              >
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.manageButton}
-                >
-                  <Text style={styles.manageButtonText}>MANAGE</Text>
-                  <MaterialIcons name="arrow-forward" size={16} color={theme.Colors.surfaceContainerLowest} />
-                </LinearGradient>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.8}
-                style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperDesktop]}
-                onPress={() => {
-                  setSelectedPropertyForBroadcast(item);
-                }}
-              >
-                <View style={styles.broadcastButton}>
-                  <MaterialIcons name="campaign" size={16} color={theme.Colors.primary} />
-                  <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
-                </View>
-              </TouchableOpacity>
+              />
+              <ActionButton
+                label="Broadcast Notice"
+                icon="campaign"
+                variant="secondary"
+                size="md"
+                onPress={() => setSelectedPropertyForBroadcast(item)}
+              />
             </View>
           </View>
         </View>
@@ -167,17 +155,19 @@ export function PropertyCard({
 
   return (
     <View style={[styles.propertyCard, item.isActive === false && { opacity: 0.85 }]}>
-      <BlurView intensity={60} tint="light" style={styles.cardBlurBackground} />
+      <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.cardBlurBackground} />
       <View style={[styles.buildingPreviewContainer, styles.buildingPreviewContainerMobile, item.isActive === false && { opacity: 0.65 }]}>
-        {accessToken && (
-          <Building3DView 
-            propertyId={item.id} 
-            token={accessToken} 
-            onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
-            resetRotationTrigger={resetRotationTrigger}
-            maxContainerHeight={280}
-          />
-        )}
+        <View style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          {accessToken && (
+            <Building3DView 
+              propertyId={item.id} 
+              token={accessToken} 
+              onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
+              resetRotationTrigger={resetRotationTrigger}
+              maxContainerHeight={210}
+            />
+          )}
+        </View>
         
         <TouchableOpacity 
           style={styles.resetButtonOverlay}
@@ -210,7 +200,7 @@ export function PropertyCard({
           <MaterialIcons 
             name={item.isActive === false ? "toggle-off" : "toggle-on"} 
             size={30} 
-            color={item.isActive === false ? "#8b9ea1" : "#006875"} 
+            color={item.isActive === false ? theme.Colors.outlineVariant : theme.Colors.primary} 
           />
         </TouchableOpacity>
 
@@ -234,44 +224,35 @@ export function PropertyCard({
       </View>
 
       <View style={[styles.propertyMetrics, styles.propertyMetricsMobile]}>
-        <BlurView intensity={65} tint="light" style={styles.propertyMetric}>
+        <BlurView intensity={65} tint={isDark ? "dark" : "light"} style={styles.propertyMetric}>
           <Text style={styles.propertyMetricLabel}>FLOORS</Text>
           <Text style={styles.propertyMetricValue}>{item.totalFloors ?? '-'}</Text>
         </BlurView>
-        <BlurView intensity={65} tint="light" style={styles.propertyMetric}>
+        <BlurView intensity={65} tint={isDark ? "dark" : "light"} style={styles.propertyMetric}>
           <Text style={styles.propertyMetricLabel}>STATUS</Text>
           <Text style={[styles.propertyMetricValue, styles.propertyMetricAccent]}>READY</Text>
         </BlurView>
       </View>
       
-      <TouchableOpacity 
-        activeOpacity={0.8} 
-        style={[styles.manageButtonWrapper, styles.manageButtonWrapperMobile]}
-        onPress={() => router.push(`/properties/${item.id}`)}
-      >
-        <LinearGradient
-          colors={['#00d4ff', '#0072ff']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.manageButton}
-        >
-          <Text style={styles.manageButtonText}>Manage Property</Text>
-          <MaterialIcons name="arrow-forward" size={16} color={theme.Colors.surfaceContainerLowest} />
-        </LinearGradient>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        activeOpacity={0.8}
-        style={[styles.broadcastButtonWrapper, styles.broadcastButtonWrapperMobile]}
-        onPress={() => {
-          setSelectedPropertyForBroadcast(item);
-        }}
-      >
-        <View style={styles.broadcastButton}>
-          <MaterialIcons name="campaign" size={16} color={theme.Colors.primary} />
-          <Text style={styles.broadcastButtonText}>Broadcast Notice</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={{ gap: 10, marginTop: 14 }}>
+        <ActionButton
+          label="Manage Property"
+          icon="arrow-forward"
+          iconPosition="right"
+          variant="primary"
+          size="md"
+          fullWidth
+          onPress={() => router.push(`/properties/${item.id}`)}
+        />
+        <ActionButton
+          label="Broadcast Notice"
+          icon="campaign"
+          variant="secondary"
+          size="md"
+          fullWidth
+          onPress={() => setSelectedPropertyForBroadcast(item)}
+        />
+      </View>
     </View>
   );
 }
@@ -279,7 +260,7 @@ export function PropertyCard({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   propertyCard: {
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     overflow: 'visible',
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 8 },
@@ -295,14 +276,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1.5,
-    borderColor: theme.Surface.border,
+    borderColor: theme.Colors.glassStroke,
   },
   propertyCardDesktop: {
     minHeight: 280,
   },
   desktopCardRow: {
     flexDirection: 'row',
-    gap: 24,
+    gap: theme.Spacing.lg,
   },
   desktopCardLeft: {
     width: 280,
@@ -310,12 +291,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   desktopCardRight: {
     flex: 1,
     justifyContent: 'space-between',
-    gap: 16,
+    gap: theme.Spacing.md,
   },
   buildingPreviewContainer: {
     backgroundColor: theme.Colors.primaryContainer,
     borderRadius: 16,
-    overflow: 'visible',
+    overflow: 'hidden',
     position: 'relative',
     borderWidth: 1,
     borderColor: theme.Colors.primaryContainer,
@@ -326,19 +307,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   buildingPreviewContainerDesktop: {
     height: 232,
     width: '100%',
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   buildingPreviewContainerMobile: {
     height: 180,
     width: '100%',
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   resetButtonOverlay: {
     position: 'absolute',
     left: 12,
     bottom: 12,
     backgroundColor: theme.Surface.card,
-    padding: 8,
+    padding: theme.Spacing.sm,
     borderRadius: 10,
     zIndex: 10,
   },
@@ -353,7 +334,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     zIndex: 10,
   },
   statusPillText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     fontFamily: 'Inter',
@@ -363,15 +344,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: 12,
     bottom: 12,
     backgroundColor: theme.Surface.card,
-    padding: 8,
+    padding: theme.Spacing.sm,
     borderRadius: 10,
     zIndex: 10,
   },
   propertyInfo: {
-    gap: 4,
+    gap: theme.Spacing.xs,
   },
   propertyName: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
@@ -379,10 +360,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: theme.Spacing.xs,
   },
   propertyAddress: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
     fontFamily: 'Inter',
@@ -395,7 +376,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     borderRadius: 12,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
@@ -403,14 +384,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   propertyMetricLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
     fontFamily: 'Inter',
   },
   desktopMetricValue: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
@@ -431,7 +412,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1.2,
   },
   manageButtonWrapperMobile: {
-    marginTop: 16,
+    marginTop: theme.Spacing.md,
   },
   manageButton: {
     flexDirection: 'row',
@@ -442,7 +423,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   manageButtonText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     fontFamily: 'Inter',
   },
@@ -468,12 +449,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   broadcastButtonText: {
     color: theme.Colors.primary,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     fontFamily: 'Inter',
   },
   propertyHeaderRow: {
-    marginTop: 16,
+    marginTop: theme.Spacing.md,
   },
   propertyHeaderRowMobile: {},
   propertyMetrics: {
@@ -493,10 +474,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   propertyMetricValue: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
     fontFamily: 'Inter',
   },
 });

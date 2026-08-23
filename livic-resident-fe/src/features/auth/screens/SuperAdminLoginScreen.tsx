@@ -5,15 +5,12 @@ import {
   StyleSheet, 
   TextInput, 
   TouchableOpacity, 
-  KeyboardAvoidingView, 
   Platform,
-  ScrollView,
   ActivityIndicator
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { login } from '@/src/features/auth/api/auth.api';
@@ -61,25 +58,17 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
   };
 
   return (
-    <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
+    <PageShell
+      scrollable={true}
+      keyboardAvoiding={true}
+      contentContainerStyle={styles.scrollContent}
     >
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          
-          {/* Ambient Background Orbs */}
+      {/* Ambient Background Orbs */}
           <View style={[styles.orb, styles.orb1]} />
           <View style={[styles.orb, styles.orb2]} />
           
           {/* Main Content Area */}
-          <BlurView intensity={60} tint="light" style={styles.cardContainer}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.cardContainer}>
             {/* Branding */}
             <View style={styles.brandingContainer}>
               <View style={styles.iconWrapper}>
@@ -182,10 +171,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
               </TouchableOpacity>
             </View>
           </BlurView>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-    </LinearGradient>
+    </PageShell>
   );
 }
 
@@ -228,13 +214,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: theme.Rounded.lg,
     paddingHorizontal: theme.Spacing.stackLg,
-    paddingTop: 48,
+    paddingTop: theme.Spacing.xxl,
     paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
@@ -249,10 +235,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   iconWrapper: {
     width: 56,
     height: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderRadius: theme.Rounded.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
+    borderColor: theme.Colors.outlineVariant,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: theme.Spacing.stackSm,
@@ -260,7 +246,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   brandingText: {
     ...theme.Typography.labelCaps,
     color: theme.Colors.outline,
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
   },
   title: {
     ...theme.Typography.headlineMd,
@@ -272,13 +258,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '100%',
   },
   inputGroup: {
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   label: {
     ...theme.Typography.labelCaps,
     color: theme.Colors.onSurfaceVariant,
-    marginLeft: 4,
-    marginBottom: 8,
+    marginLeft: theme.Spacing.xs,
+    marginBottom: theme.Spacing.sm,
   },
   inputWrapper: {
     position: 'relative',
@@ -293,19 +279,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     position: 'absolute',
     right: theme.Spacing.stackMd,
     zIndex: 1,
-    padding: 4,
+    padding: theme.Spacing.xs,
   },
   clearIcon: {
     position: 'absolute',
     right: theme.Spacing.stackMd,
     zIndex: 1,
-    padding: 4,
+    padding: theme.Spacing.xs,
   },
   input: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
+    borderColor: theme.Colors.outlineVariant,
     borderRadius: theme.Rounded.default,
     paddingLeft: 44,
     paddingRight: theme.Spacing.stackMd,
@@ -314,10 +300,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   submitButton: {
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
     width: '100%',
     backgroundColor: theme.Colors.primaryContainer,
-    paddingVertical: 16,
+    paddingVertical: theme.Spacing.md,
     paddingHorizontal: theme.Spacing.stackMd,
     borderRadius: theme.Rounded.default,
     alignItems: 'center',
@@ -346,16 +332,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   errorText: {
     ...theme.Typography.bodyMd,
     color: theme.Colors.error,
-    marginLeft: 8,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    marginLeft: theme.Spacing.sm,
+    fontSize: theme.Typography.bodySmall.fontSize,
   },
   footer: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 32,
-    gap: 8,
+    marginTop: theme.Spacing.xl,
+    gap: theme.Spacing.sm,
   },
   footerText: {
     ...theme.Typography.bodyMd,

@@ -59,12 +59,13 @@ export interface PageResponse<T> {
 }
 
 export function listActiveLeasesByProperty(
-  propertyId: string,
+  propertyId: string | null | undefined,
   token: string,
   page: number = 0,
   size: number = 20
 ): Promise<PageResponse<LeaseResponse>> {
-  return apiRequest<PageResponse<LeaseResponse>>(`/api/v1/finance/leases?propertyId=${propertyId}&page=${page}&size=${size}`, {
+  const queryStr = propertyId ? `propertyId=${propertyId}&page=${page}&size=${size}` : `page=${page}&size=${size}`;
+  return apiRequest<PageResponse<LeaseResponse>>(`/api/v1/finance/leases?${queryStr}`, {
     method: 'GET',
     token,
   });

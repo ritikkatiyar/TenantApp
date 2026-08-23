@@ -226,22 +226,22 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const renderContent = () => {
     if (!properties || properties.length === 0) {
       return (
-        <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%', backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+        <View style={{ flex: 1, padding: theme.Spacing.lg, justifyContent: 'center', alignItems: 'center' }}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: theme.Spacing.xl, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%', backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke }}>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: theme.Spacing.md }}>
               <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
             </View>
-            <Text style={{ fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
-            <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+            <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: theme.Spacing.sm, textAlign: 'center' }}>No Property Created Yet</Text>
+            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: theme.Spacing.lg, lineHeight: 20 }}>
               Generating rent rolls and invoices requires an active property. Create your first property to start running rent cycles.
             </Text>
             <TouchableOpacity 
               style={{ borderRadius: 100, overflow: 'hidden' }}
               onPress={() => router.push('/properties/create')}
             >
-              <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
+              <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: theme.Spacing.lg, paddingVertical: 14, gap: theme.Spacing.sm }}>
                 <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
-                <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+                <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
               </LinearGradient>
             </TouchableOpacity>
           </BlurView>
@@ -259,26 +259,36 @@ export default function RentRollScreen({ token }: { token: string | null }) {
 
     return (
       <View style={styles.inner}>
-        <SectionHeader 
-          title="Lease & Rent Cycles" 
-          subtitle="Generate, publish, and settle rent cycles"
-          rightAction={
-            <View style={styles.selectorContainer}>
-              <TouchableOpacity onPress={handlePrevMonth} style={styles.arrowBadge}>
-                <MaterialIcons name="chevron-left" size={20} color={theme.Colors.primary} />
-              </TouchableOpacity>
-              <View style={styles.monthBadge}>
-                <MaterialIcons name="calendar-today" size={16} color={theme.Colors.primary} />
-                <Text style={styles.monthBadgeText}>
-                  {new Date(billingMonth + "-02").toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={handleNextMonth} style={styles.arrowBadge}>
-                <MaterialIcons name="chevron-right" size={20} color={theme.Colors.primary} />
-              </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 280 }}>
+            <TouchableOpacity
+              onPress={() => router.push('/expenses')}
+              style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
+              activeOpacity={0.75}
+            >
+              <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 24, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' }}>Rent Roll & Invoices</Text>
+              <Text style={{ fontSize: 13, color: theme.Colors.onSurfaceVariant, fontFamily: 'Inter' }}>Generate draft invoices, publish monthly cycles & track collection status</Text>
             </View>
-          }
-        />
+          </View>
+
+          <View style={styles.selectorContainer}>
+            <TouchableOpacity onPress={handlePrevMonth} style={styles.arrowBadge}>
+              <MaterialIcons name="chevron-left" size={20} color={theme.Colors.primary} />
+            </TouchableOpacity>
+            <View style={styles.monthBadge}>
+              <MaterialIcons name="calendar-today" size={16} color={theme.Colors.primary} />
+              <Text style={styles.monthBadgeText}>
+                {new Date(billingMonth + "-02").toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={handleNextMonth} style={styles.arrowBadge}>
+              <MaterialIcons name="chevron-right" size={20} color={theme.Colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {!hasGenerated ? (
           <PreFlightChecklistCard
@@ -367,52 +377,12 @@ export default function RentRollScreen({ token }: { token: string | null }) {
               onClearSearch={() => setSearchQuery('')}
               onPublishSingle={handlePublishSingle}
               onOpenCashModal={handleOpenCashModal}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
             />
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <View style={styles.paginationBar}>
-                <Text style={styles.paginationInfo}>
-                  Showing <Text style={{ fontWeight: '700' }}>{page * pageSize + 1}</Text> -{' '}
-                  <Text style={{ fontWeight: '700' }}>{Math.min((page + 1) * pageSize, totalElements)}</Text> of{' '}
-                  <Text style={{ fontWeight: '700' }}>{totalElements}</Text> invoices
-                </Text>
-
-                <View style={styles.paginationActions}>
-                  <TouchableOpacity
-                    onPress={() => page > 0 && setPage(page - 1)}
-                    disabled={page === 0}
-                    style={[styles.pageBtn, page === 0 && styles.pageBtnDisabled]}
-                  >
-                    <MaterialIcons
-                      name="chevron-left"
-                      size={20}
-                      color={page === 0 ? '#9ca3af' : theme.Colors.primary}
-                    />
-                    <Text style={[styles.pageBtnText, page === 0 && styles.pageBtnTextDisabled]}>Prev</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.pageIndicator}>
-                    <Text style={styles.pageIndicatorText}>
-                      Page {page + 1} of {totalPages}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => page < totalPages - 1 && setPage(page + 1)}
-                    disabled={page >= totalPages - 1}
-                    style={[styles.pageBtn, page >= totalPages - 1 && styles.pageBtnDisabled]}
-                  >
-                    <Text style={[styles.pageBtnText, page >= totalPages - 1 && styles.pageBtnTextDisabled]}>Next</Text>
-                    <MaterialIcons
-                      name="chevron-right"
-                      size={20}
-                      color={page >= totalPages - 1 ? '#9ca3af' : theme.Colors.primary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            {isLoading && <ActivityIndicator color={theme.Colors.primary} style={{ marginVertical: 14 }} />}
           </View>
         )}
 
@@ -440,13 +410,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       style={{ flex: 1 }}
     >
       <View style={{ flex: 1, width: '100%' }}>
-        <DesktopNavBar 
-          onBack={() => router.push('/expenses')} 
-          backText="Back to Finance & Billing" 
-          properties={properties || []}
-          selectedPropertyId={propertyId}
-          onPropertyChange={(id) => router.replace(`/expenses/rent-roll?propertyId=${id}`)}
-        />
+
         <ScrollView contentContainerStyle={styles.desktopScroll} showsVerticalScrollIndicator={false}>
           {renderContent()}
         </ScrollView>
@@ -478,6 +442,11 @@ export default function RentRollScreen({ token }: { token: string | null }) {
       />
       <PageShell 
         scrollable 
+        onEndReached={() => {
+          if (!isLoading && page + 1 < totalPages) {
+            setPage(page + 1);
+          }
+        }}
         edges={[]} 
         contentContainerStyle={[styles.mobileScroll, { paddingTop: 68 + insets.top }]}
       >

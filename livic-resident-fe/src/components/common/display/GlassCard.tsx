@@ -14,11 +14,11 @@ export function GlassCard({
   children,
   style,
   intensity = 70,
-  tint = 'light',
+  tint,
 }: GlassCardProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const activeTint = tint || (isDark ? 'dark' : 'light');
+  const activeTint = tint ?? (isDark ? 'dark' : 'light');
 
   return (
     <View style={[styles.outerContainer, style]}>
@@ -37,7 +37,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     boxShadow: '0px 10px 30px rgba(0, 104, 117, 0.05)',
   },
   blurView: {

@@ -71,14 +71,14 @@ export function PreFlightChecklistCard({
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  card: { padding: 24, alignItems: 'center', marginTop: 10, backgroundColor: theme.Colors.glassFill },
+  card: { padding: theme.Spacing.lg, alignItems: 'center', marginTop: 10, backgroundColor: theme.Colors.glassFill },
   cardTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 12 },
-  cardText: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 32, maxWidth: 500, lineHeight: 22 },
-  checklistGrid: { flexDirection: 'row', gap: 24, marginBottom: 24, width: '100%', justifyContent: 'center' },
-  checklistItem: { backgroundColor: 'rgba(255,255,255,0.7)', padding: 16, borderRadius: 12, alignItems: 'center', flex: 1, maxWidth: 200 },
-  checklistLabel: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', marginBottom: 8 },
-  checklistValue: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary },
-  statusBox: { flexDirection: 'row', backgroundColor: theme.Colors.secondaryContainer, padding: 16, borderRadius: 12, marginBottom: 32, width: '100%', alignItems: 'center', gap: 8 },
-  statusText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.secondary },
+  cardText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: theme.Spacing.xl, maxWidth: 500, lineHeight: 22 },
+  checklistGrid: { flexDirection: 'row', gap: theme.Spacing.lg, marginBottom: theme.Spacing.lg, width: '100%', justifyContent: 'center' },
+  checklistItem: { backgroundColor: 'rgba(255,255,255,0.7)', padding: theme.Spacing.md, borderRadius: 12, alignItems: 'center', flex: 1, maxWidth: 200 },
+  checklistLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', marginBottom: theme.Spacing.sm },
+  checklistValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  statusBox: { flexDirection: 'row', backgroundColor: theme.Colors.secondaryContainer, padding: theme.Spacing.md, borderRadius: 12, marginBottom: theme.Spacing.xl, width: '100%', alignItems: 'center', gap: theme.Spacing.sm },
+  statusText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.secondary },
   generateBtn: { width: '100%', maxWidth: 300 },
 });

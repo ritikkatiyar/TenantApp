@@ -4,6 +4,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Activi
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
+import FilterPill from '@/src/components/common/inputs/FilterPill';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import type { PropertyResponse } from '@/src/types/property';
 
@@ -53,15 +55,7 @@ export function AnnouncementComposer({
     <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.card}>
       <Text style={styles.sectionHeader}>NEW BROADCAST NOTICE</Text>
 
-      {/* Property Select Dropdown */}
-      <Text style={styles.composerLabel}>TARGET PROPERTY</Text>
-      <GlassDropdown
-        options={properties.map((p) => ({ label: p.name, value: p.id }))}
-        value={selectedPropertyId}
-        onChange={setSelectedPropertyId}
-        placeholder="Select Target Property"
-        icon="domain"
-      />
+
 
       {/* Title */}
       <Text style={styles.composerLabel}>TITLE</Text>
@@ -89,50 +83,43 @@ export function AnnouncementComposer({
 
       {/* Category Row */}
       <Text style={styles.composerLabel}>CATEGORY</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', marginVertical: 8 }} contentContainerStyle={{ gap: 8 }}>
         {(['GENERAL', 'MAINTENANCE', 'EMERGENCY', 'BILLING', 'EVENT'] as const).map(cat => (
-          <TouchableOpacity
+          <FilterPill
             key={cat}
-            style={[styles.chip, broadcastCategory === cat && styles.chipActive]}
+            label={cat}
+            active={broadcastCategory === cat}
             onPress={() => setBroadcastCategory(cat)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.chipText, broadcastCategory === cat && styles.chipTextActive]}>{cat}</Text>
-          </TouchableOpacity>
+            size="sm"
+          />
         ))}
       </ScrollView>
 
       {/* Severity Row */}
       <Text style={styles.composerLabel}>SEVERITY LEVEL</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-        {[
-          { val: 'INFO' as const, color: theme.Colors.primary },
-          { val: 'WARNING' as const, color: theme.Colors.tertiary },
-          { val: 'CRITICAL' as const, color: theme.Colors.error },
-        ].map(({ val, color }) => (
-          <TouchableOpacity
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', marginVertical: 8 }} contentContainerStyle={{ gap: 8 }}>
+        {(['INFO', 'WARNING', 'CRITICAL'] as const).map((val) => (
+          <FilterPill
             key={val}
-            style={[styles.chip, broadcastSeverity === val && { ...styles.chipActive, backgroundColor: color, borderColor: color }]}
+            label={val}
+            active={broadcastSeverity === val}
             onPress={() => setBroadcastSeverity(val)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.chipText, broadcastSeverity === val && styles.chipTextActive]}>{val}</Text>
-          </TouchableOpacity>
+            size="sm"
+          />
         ))}
       </ScrollView>
 
       {/* Target Scope Row */}
       <Text style={styles.composerLabel}>TARGET SCOPE</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', marginVertical: 8 }} contentContainerStyle={{ gap: 8 }}>
         {(['PROPERTY', 'FLOOR', 'UNIT'] as const).map(t => (
-          <TouchableOpacity
+          <FilterPill
             key={t}
-            style={[styles.chip, broadcastTargetType === t && styles.chipActive]}
+            label={t}
+            active={broadcastTargetType === t}
             onPress={() => setBroadcastTargetType(t)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.chipText, broadcastTargetType === t && styles.chipTextActive]}>{t}</Text>
-          </TouchableOpacity>
+            size="sm"
+          />
         ))}
       </ScrollView>
 
@@ -152,43 +139,32 @@ export function AnnouncementComposer({
         </>
       )}
 
-      <TouchableOpacity
-        style={styles.composerSendBtn}
-        onPress={handleSendBroadcast}
+      <ActionButton
+        label="BROADCAST NOW"
+        icon="send"
+        variant={broadcastSeverity === 'CRITICAL' ? 'danger' : 'primary'}
+        size="lg"
+        fullWidth
+        loading={sendingBroadcast}
         disabled={sendingBroadcast}
-        activeOpacity={0.85}
-      >
-        <LinearGradient
-          colors={broadcastSeverity === 'CRITICAL' ? ['#ba1a1a', '#7d0e0e'] : [theme.Colors.primary, '#00bcd4']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.composerSendGradient}
-        >
-          {sendingBroadcast ? (
-            <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
-          ) : (
-            <>
-              <MaterialIcons name="send" size={18} color={theme.Colors.surfaceContainerLowest} />
-              <Text style={styles.composerSendText}>BROADCAST NOW</Text>
-            </>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
+        onPress={handleSendBroadcast}
+        style={{ marginTop: 16 }}
+      />
     </BlurView>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   card: {
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderRadius: 24,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
   },
   sectionHeader: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -196,22 +172,22 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'Inter',
   },
   composerLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
     marginTop: 18,
     fontFamily: 'Inter',
   },
   composerInput: {
     height: 48,
     borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.85)',
     borderWidth: 1.5,
-    borderColor: 'rgba(0, 104, 117, 0.08)',
-    paddingHorizontal: 16,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    borderColor: theme.Colors.glassStroke,
+    paddingHorizontal: theme.Spacing.md,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
@@ -221,23 +197,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   chipRow: {
     flexDirection: 'row',
-    marginBottom: 4,
+    marginBottom: theme.Spacing.xs,
   },
   chip: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: theme.Spacing.sm,
     borderRadius: 20,
     backgroundColor: theme.Colors.glassStroke,
     borderWidth: 1,
     borderColor: 'rgba(0, 104, 117, 0.15)',
-    marginRight: 8,
+    marginRight: theme.Spacing.sm,
   },
   chipActive: {
     backgroundColor: theme.Colors.primary,
     borderColor: theme.Colors.primary,
   },
   chipText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
@@ -264,7 +240,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   composerSendText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     fontFamily: 'Inter',
   },

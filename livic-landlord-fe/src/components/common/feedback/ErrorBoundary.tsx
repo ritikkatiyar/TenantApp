@@ -84,10 +84,10 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: theme.Spacing.lg,
   },
   card: {
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderWidth: 1,
     width: '100%',
     maxWidth: 480,
@@ -109,11 +109,11 @@ const createStyles = (theme: any) => StyleSheet.create({
   errorContainer: {
     width: '100%',
     padding: 12,
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   errorText: {
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
   },
   button: {
     width: '100%',

@@ -13,19 +13,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, usePathname } from 'expo-router';
 import { useScrollNav } from './ScrollContext';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import { Theme } from '@/src/theme/Theme';
 
 interface BottomNavigationProps {
   onMorePress: () => void;
   onQRPress: () => void;
-  onAIPress?: () => void;
 }
 
-export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: BottomNavigationProps) {
+export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { navTranslateY } = useScrollNav();
-  const { theme } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   if (pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') {
     return null;
@@ -36,14 +35,6 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
   const handleHomePress = () => {
     if (!isHomeActive) {
       router.push('/tenant-home' as any);
-    }
-  };
-
-  const handleAIPress = () => {
-    if (onAIPress) {
-      onAIPress();
-    } else {
-      router.push('/tenant-maintenance' as any);
     }
   };
 
@@ -66,34 +57,9 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
     extrapolate: 'clamp',
   });
 
-  // When the pill fades on scroll, the AI action stays visible in a compact docked position.
-  const aiScale = navTranslateY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0.92],
-    extrapolate: 'clamp',
-  });
-
-  const aiTranslateY = navTranslateY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, -2],
-    extrapolate: 'clamp',
-  });
-
-  const aiTranslateX = navTranslateY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, 2],
-    extrapolate: 'clamp',
-  });
-
-  const aiOpacity = navTranslateY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0.95],
-    extrapolate: 'clamp',
-  });
-
   return (
     <View style={styles.outerContainer} pointerEvents="box-none">
-      {/* 1. Perfectly Centered Navigation Pill */}
+      {/* Centered Navigation Pill */}
       <Animated.View
         style={[
           styles.pillWrapper,
@@ -104,7 +70,7 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
         ]}
       >
         <View style={styles.pillContainer}>
-          <BlurView intensity={Platform.OS === 'ios' ? 85 : 95} tint="light" style={styles.pillBlurBackground} />
+          <BlurView intensity={Platform.OS === 'ios' ? 85 : 95} tint={isDark ? "dark" : "light"} style={styles.pillBlurBackground} />
           <View style={styles.pillContent}>
             {/* Home Button */}
             <TouchableOpacity style={styles.navItem} onPress={handleHomePress} activeOpacity={0.7}>
@@ -116,10 +82,15 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
 
             {/* Protruding Centerpiece Camera Button */}
             <TouchableOpacity style={styles.heroCameraWrapper} onPress={onQRPress} activeOpacity={0.88}>
-              <View style={[styles.heroCameraButton, { backgroundColor: theme.Colors.secondary }]}>
-                <MaterialIcons name="center-focus-strong" size={28} color={theme.Colors.onSecondary} />
-                <View style={[styles.cameraDotBadge, { backgroundColor: theme.Colors.inversePrimary }]} />
-              </View>
+              <LinearGradient
+                colors={['#00d4ff', '#0072ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.heroCameraButton}
+              >
+                <MaterialIcons name="center-focus-strong" size={28} color="#ffffff" />
+                <View style={[styles.cameraDotBadge, { backgroundColor: '#00d4ff' }]} />
+              </LinearGradient>
             </TouchableOpacity>
 
             {/* More Button */}
@@ -132,40 +103,11 @@ export default function BottomNavigation({ onMorePress, onQRPress, onAIPress }: 
           </View>
         </View>
       </Animated.View>
-
-      {/* 2. Option B Iridescent AI Orb (Floating Right) */}
-      <Animated.View
-        style={[
-          styles.aiWrapper,
-          {
-            transform: [
-              { translateY: aiTranslateY },
-              { translateX: aiTranslateX },
-              { scale: aiScale },
-            ],
-            opacity: aiOpacity,
-          },
-        ]}
-      >
-        <TouchableOpacity style={styles.aiButtonTouch} onPress={handleAIPress} activeOpacity={0.78}>
-          <LinearGradient
-            colors={[theme.Colors.primary, theme.Colors.inversePrimary]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.aiGradientRing}
-          >
-            <View style={styles.aiMinimalistContainer}>
-              <BlurView intensity={Platform.OS === 'ios' ? 85 : 95} tint="light" style={styles.aiBlurBackground} />
-              <MaterialIcons name="chat" size={21} color={theme.Colors.primary} />
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animated.View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   outerContainer: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 32 : 20,
@@ -184,7 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     paddingVertical: 6,
     paddingHorizontal: 20,
-    shadowColor: Theme.Surface.shadowColor,
+    shadowColor: theme.Colors.shadowColor || '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.14,
     shadowRadius: 20,
@@ -195,20 +137,20 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: 100,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    backgroundColor: isDark ? 'rgba(19, 28, 38, 0.85)' : 'rgba(255, 255, 255, 0.88)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.95)',
   },
   pillContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 24,
+    gap: theme.Spacing.lg,
   },
   navItem: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    paddingHorizontal: 4,
+    paddingHorizontal: theme.Spacing.xs,
     paddingVertical: 2,
   },
   iconCircle: {
@@ -219,14 +161,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   navText: {
-    fontSize: Theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
   },
   navTextActive: {
     fontWeight: '700',
   },
-
-  /* Protruding Hero Camera Button */
   heroCameraWrapper: {
     marginTop: -24,
     marginBottom: 2,
@@ -241,8 +181,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3.5,
-    borderColor: Theme.Colors.surfaceContainerLowest,
-    shadowColor: Theme.Surface.shadowColor,
+    borderColor: theme.Colors.surfaceContainerLowest || '#ffffff',
+    shadowColor: theme.Colors.shadowColor || '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -256,37 +196,5 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-  },
-
-  /* Option B Iridescent Floating AI Orb */
-  aiWrapper: {
-    position: 'absolute',
-    right: 20,
-    bottom: 2,
-    zIndex: 1002,
-  },
-  aiButtonTouch: {
-    borderRadius: 26,
-    elevation: 2,
-  },
-  aiGradientRing: {
-    padding: 2.5,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  aiMinimalistContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  aiBlurBackground: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 23,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
   },
 });

@@ -81,7 +81,7 @@ export function TypeSelectionModal({
       <View style={styles.modalOverlay}>
         <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFillObject} />
         <LinearGradient
-          colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+          colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.typeModalContent}
@@ -133,7 +133,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: theme.Spacing.lg,
   },
   typeModalContent: {
     width: '100%',
@@ -142,7 +142,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 32,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.75)',
-    padding: 24,
+    padding: theme.Spacing.lg,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
@@ -151,14 +151,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   typeModalTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '900',
     color: theme.Colors.onSurface,
-    marginBottom: 4,
+    marginBottom: theme.Spacing.xs,
     fontFamily: 'Inter',
   },
   typeModalSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     marginBottom: 20,
@@ -191,7 +191,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 10,
   },
   typeCardLabel: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '900',
     color: theme.Colors.primary,
     marginBottom: 2,
@@ -199,7 +199,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     textAlign: 'center',
   },
   typeCardDesc: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
@@ -213,7 +213,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
   },
   typeCancelText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '900',
     fontFamily: 'Inter',
   },

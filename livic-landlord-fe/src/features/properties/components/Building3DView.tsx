@@ -1,8 +1,6 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import React, { useEffect, useState , useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, Animated, PanResponder, TouchableOpacity, Platform } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, ActivityIndicator, Text, Animated, PanResponder, Platform } from 'react-native';
 import { getAllFloorsLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
 import { logger } from '@/src/utils/logger';
 
@@ -31,7 +29,6 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     }
   };
 
-  // Animated values for 3D rotation
   const rotateZ = useRef(new Animated.Value(-45)).current;
   const rotateX = useRef(new Animated.Value(60)).current;
   const lastRotation = useRef(-45);
@@ -44,52 +41,19 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   const handleMouseMove = (e: any) => {
     if (Platform.OS !== 'web' || !onFloorClick) return;
     if (isDragging.current) {
-      if (hoveredFloor !== null) {
-        setHoveredFloor(null);
-      }
+      if (hoveredFloor !== null) setHoveredFloor(null);
       return;
     }
-
     const rect = e.currentTarget.getBoundingClientRect();
     const state = stateRef.current;
-    
-    const innerLeftOffset = (rect.width - (state.buildingWidth + 40)) / 2;
-    const innerTopOffset = (rect.height - state.containerHeight) / 2;
-    
-    const clickX = e.clientX - rect.left - innerLeftOffset;
-    const clickY = e.clientY - rect.top - innerTopOffset;
-    
-    const buildingWidth = state.buildingWidth;
-    const isWithinX = Math.abs(clickX - (buildingWidth + 40) / 2) < (buildingWidth / 2) + 20;
+    if (!state.floorNumbers.length) return;
 
-    if (isWithinX) {
-      let closestFloor = state.minFloor;
-      let minDistance = Infinity;
-
-      state.floorNumbers.forEach(fNum => {
-        const yOffset = -(fNum - state.minFloor) * state.dynamicFloorHeight + state.stackHeightOffset - state.buildingHeight / 2 + state.visualIsoHeight / 2 - 25;
-        const floorCenterY = state.containerHeight / 2 + yOffset;
-
-        const dist = Math.abs(clickY - floorCenterY);
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestFloor = fNum;
-        }
-      });
-
-      if (minDistance < state.dynamicFloorHeight * 1.5) {
-        if (hoveredFloor !== closestFloor) {
-          setHoveredFloor(closestFloor);
-        }
-      } else {
-        if (hoveredFloor !== null) {
-          setHoveredFloor(null);
-        }
-      }
-    } else {
-      if (hoveredFloor !== null) {
-        setHoveredFloor(null);
-      }
+    const clickY = e.clientY - rect.top;
+    const itemHeight = rect.height / state.floorNumbers.length;
+    const idx = Math.floor((rect.height - clickY) / itemHeight);
+    const targetFloor = state.floorNumbers[Math.max(0, Math.min(idx, state.floorNumbers.length - 1))];
+    if (hoveredFloor !== targetFloor) {
+      setHoveredFloor(targetFloor);
     }
   };
 
@@ -112,42 +76,41 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     return acc;
   }, {} as Record<number, UnitResponse[]>);
 
-  const gridW = maxX - minX + 1;
-  const gridH = maxY - minY + 1;
+  const gridW = Math.max(maxX - minX + 1, 1);
+  const gridH = Math.max(maxY - minY + 1, 1);
 
   const floorNumbers = Object.keys(floors).map(Number).sort((a, b) => a - b);
   const numFloors = floorNumbers.length > 0 ? floorNumbers.length : 1;
 
-  // Make sure we have an Animated.Value for every floor
   floorNumbers.forEach(floorNum => {
     if (!floorElevations[floorNum]) {
       floorElevations[floorNum] = new Animated.Value(0);
     }
   });
 
-  const availableWidth = containerDimensions ? containerDimensions.width - 40 : 260;
+  const availableWidth = containerDimensions ? containerDimensions.width - 20 : 280;
   const availableHeight = containerDimensions ? containerDimensions.height : maxContainerHeight;
 
   const rawIsoWidth = (gridW + gridH) * 0.707;
-  let dynamicCellSize = Math.floor(availableWidth / rawIsoWidth);
+  let dynamicCellSize = Math.floor(availableWidth / (rawIsoWidth || 1));
 
-  // Height constraint calculation (target is 85% of available container height)
-  const targetH = availableHeight * 0.85;
-  const heightDivisor = (gridW + gridH) * 0.5 + (numFloors - 1) * 3.5;
-  const maxCellSizeHeight = Math.floor((targetH - 20) / (heightDivisor || 1));
+  const targetH = availableHeight * 0.95;
+  const heightDivisor = (gridW + gridH) * 0.5 + (numFloors - 1) * 3.2;
+  const maxCellSizeHeight = Math.floor((targetH - 10) / (heightDivisor || 1));
 
   dynamicCellSize = Math.min(dynamicCellSize, maxCellSizeHeight);
 
-  if (dynamicCellSize > 25) dynamicCellSize = 25;
-  if (dynamicCellSize < 6) dynamicCellSize = 6;
-  
+  if (dynamicCellSize > 35) dynamicCellSize = 35;
+  if (dynamicCellSize < 12) dynamicCellSize = 12;
+
   const dynamicFloorHeight = dynamicCellSize * 3.5;
   const buildingWidth = gridW * dynamicCellSize;
   const buildingHeight = gridH * dynamicCellSize;
   const minFloor = floorNumbers.length > 0 ? floorNumbers[0] : 1;
   const stackHeightOffset = (floorNumbers.length > 0 ? floorNumbers.length - 1 : 0) * dynamicFloorHeight;
+
   const visualIsoHeight = (gridW + gridH) * dynamicCellSize * 0.5;
-  const containerHeight = visualIsoHeight + stackHeightOffset + 20;
+  const containerHeight = visualIsoHeight + stackHeightOffset;
 
   const stateRef = useRef({
     floorNumbers,
@@ -178,7 +141,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   useEffect(() => {
     const animations = Object.keys(floorElevations).map((fKey) => {
       const fNum = Number(fKey);
-      const toValue = fNum === hoveredFloor ? -12 : 0;
+      const toValue = fNum === hoveredFloor ? -14 : 0;
       return Animated.spring(floorElevations[fNum], {
         toValue,
         useNativeDriver: false,
@@ -193,115 +156,39 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onStartShouldSetPanResponderCapture: () => false,
-      onMoveShouldSetPanResponder: (evt, gestureState) => true,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
-      onPanResponderGrant: (evt, gestureState) => {
+      onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3,
+      onPanResponderGrant: () => {
         isDragging.current = true;
         rotateZ.stopAnimation();
         rotateX.stopAnimation();
-
-        // Highlight on touch-down for mobile/touch devices
-        if (Platform.OS !== 'web') {
-          const state = stateRef.current;
-          if (state.onFloorClick) {
-            const { locationX, locationY } = evt.nativeEvent;
-            const buildingWidth = state.buildingWidth;
-            const isWithinX = Math.abs(locationX - (buildingWidth + 40) / 2) < (buildingWidth / 2) + 20;
-
-            if (isWithinX) {
-              let closestFloor = state.minFloor;
-              let minDistance = Infinity;
-
-              state.floorNumbers.forEach(fNum => {
-                const yOffset = -(fNum - state.minFloor) * state.dynamicFloorHeight + state.stackHeightOffset - state.buildingHeight / 2 + state.visualIsoHeight / 2 - 25;
-                const floorCenterY = state.containerHeight / 2 + yOffset;
-
-                const dist = Math.abs(locationY - floorCenterY);
-                if (dist < minDistance) {
-                  minDistance = dist;
-                  closestFloor = fNum;
-                }
-              });
-
-              if (minDistance < state.dynamicFloorHeight * 1.5) {
-                setHoveredFloor(closestFloor);
-              }
-            }
-          }
-        } else {
-          setHoveredFloor(null);
-        }
       },
       onPanResponderMove: (evt, gestureState) => {
-        // If they drag significantly, cancel highlight
-        if (Math.abs(gestureState.dx) > 4 || Math.abs(gestureState.dy) > 4) {
-          setHoveredFloor(null);
-        }
-
-        // Rotate in natural direction of drag
-        rotateZ.setValue(lastRotation.current - gestureState.dx * 0.5);
+        const newRotZ = lastRotation.current - gestureState.dx * 0.5;
         let newRotX = lastRotationX.current - gestureState.dy * 0.5;
         if (newRotX < 20) newRotX = 20;
         if (newRotX > 80) newRotX = 80;
+
+        rotateZ.setValue(newRotZ);
         rotateX.setValue(newRotX);
       },
       onPanResponderRelease: (evt, gestureState) => {
         isDragging.current = false;
         setHoveredFloor(null);
-        
+
         lastRotation.current -= gestureState.dx * 0.5;
         let newRotX = lastRotationX.current - gestureState.dy * 0.5;
         if (newRotX < 20) newRotX = 20;
         if (newRotX > 80) newRotX = 80;
         lastRotationX.current = newRotX;
-        
-        // --- Mathematical Tap Detection for Floors ---
-        if (Math.abs(gestureState.dx) < 5 && Math.abs(gestureState.dy) < 5) {
+
+        // Tap handling for floor click
+        if (Math.abs(gestureState.dx) < 6 && Math.abs(gestureState.dy) < 6) {
           const state = stateRef.current;
-          if (state.onFloorClick) {
-            const { locationX, locationY } = evt.nativeEvent;
-            
-            let clickX = locationX;
-            let clickY = locationY;
-            if (Platform.OS === 'web' && containerRef.current) {
-              const rect = (containerRef.current as any).getBoundingClientRect?.();
-              if (rect) {
-                const native = evt.nativeEvent as any;
-                const clientX = native.clientX ?? (native.changedTouches?.[0]?.clientX) ?? native.pageX;
-                const clientY = native.clientY ?? (native.changedTouches?.[0]?.clientY) ?? native.pageY;
-                if (clientX !== undefined) {
-                  clickX = clientX - rect.left;
-                }
-                if (clientY !== undefined) {
-                  clickY = clientY - rect.top;
-                }
-              }
-            }
-            
-            logger.debug('[Building3DView] clickX:', clickX, 'clickY:', clickY, 'floorNumbers:', state.floorNumbers);
-            
-            const buildingWidth = state.buildingWidth;
-            const isWithinX = Math.abs(clickX - (buildingWidth + 40) / 2) < (buildingWidth / 2) + 20;
-            
-            if (isWithinX) {
-              let closestFloor = state.minFloor;
-              let minDistance = Infinity;
-              
-              state.floorNumbers.forEach(fNum => {
-                const yOffset = -(fNum - state.minFloor) * state.dynamicFloorHeight + state.stackHeightOffset - state.buildingHeight / 2 + state.visualIsoHeight / 2 - 25;
-                const floorCenterY = state.containerHeight / 2 + yOffset;
-                
-                const dist = Math.abs(clickY - floorCenterY);
-                if (dist < minDistance) {
-                  minDistance = dist;
-                  closestFloor = fNum;
-                }
-              });
-              
-              if (minDistance < state.dynamicFloorHeight * 1.5) {
-                state.onFloorClick(closestFloor);
-              }
-            }
+          if (state.onFloorClick && state.floorNumbers.length > 0) {
+            const targetFloor = hoveredFloor ?? state.floorNumbers[0];
+            logger.debug('[Building3DView] Tap detected on floor:', targetFloor);
+            state.onFloorClick(targetFloor);
           }
         }
       },
@@ -415,13 +302,12 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
           >
             {floorNumbers.map((floorNum) => {
               const elevationAnim = floorElevations[floorNum] || new Animated.Value(0);
-              const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset - buildingHeight / 2 + visualIsoHeight / 2 - 25;
+              const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset / 2 - 10;
               const isHovered = floorNum === hoveredFloor;
               
               return (
                 <Animated.View
                   key={`floor-${floorNum}`}
-                  pointerEvents="none"
                   style={{
                     position: 'absolute',
                     zIndex: floorNum,
@@ -445,8 +331,8 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                           transform: [{ rotateX: tilt }, { rotateZ: spin }],
                           top: (idx + 1) * 1.5,
                           opacity: 0.9 - idx * 0.15,
-                          backgroundColor: isHovered ? 'rgba(0, 180, 200, 0.7)' : 'rgba(0, 60, 70, 0.4)',
-                          borderColor: isHovered ? 'rgba(0, 229, 255, 0.5)' : 'rgba(0, 229, 255, 0.15)',
+                          backgroundColor: isHovered ? (isDark ? 'rgba(0, 229, 255, 0.4)' : 'rgba(0, 104, 117, 0.35)') : (isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)'),
+                          borderColor: isHovered ? theme.Colors.primary : theme.Colors.glassStroke,
                         }
                       ]}
                     />
@@ -477,17 +363,17 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                         let unitBorderColor = '';
 
                         if (activeCount === 0) {
-                          // VACANT: Emerald Green
-                          unitBackgroundColor = isHovered ? 'rgba(16, 185, 129, 0.95)' : 'rgba(16, 185, 129, 0.65)';
-                          unitBorderColor = isHovered ? '#ffffff' : 'rgba(16, 185, 129, 0.95)';
+                          // VACANT: Primary Brand Color
+                          unitBackgroundColor = isHovered ? theme.Colors.primary : theme.Colors.primaryContainer;
+                          unitBorderColor = isHovered ? theme.Colors.surfaceContainerLowest : theme.Colors.primary;
                         } else if (activeCount < capacity) {
-                          // PARTIAL: Amber Orange
-                          unitBackgroundColor = isHovered ? 'rgba(245, 158, 11, 0.95)' : 'rgba(245, 158, 11, 0.75)';
-                          unitBorderColor = isHovered ? '#ffffff' : 'rgba(245, 158, 11, 0.95)';
+                          // PARTIAL: Tertiary Warning Color
+                          unitBackgroundColor = isHovered ? theme.Colors.tertiaryFixedDim : theme.Colors.tertiaryContainer;
+                          unitBorderColor = isHovered ? theme.Colors.surfaceContainerLowest : theme.Colors.tertiary;
                         } else {
-                          // OCCUPIED: Crimson Red
-                          unitBackgroundColor = isHovered ? 'rgba(186, 26, 26, 0.95)' : 'rgba(186, 26, 26, 0.75)';
-                          unitBorderColor = isHovered ? '#ffffff' : 'rgba(186, 26, 26, 0.95)';
+                          // OCCUPIED: Error Color
+                          unitBackgroundColor = isHovered ? theme.Colors.error : theme.Colors.errorContainer;
+                          unitBorderColor = isHovered ? theme.Colors.surfaceContainerLowest : theme.Colors.error;
                         }
 
                         return (
@@ -542,7 +428,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   emptyText: {
     color: theme.Colors.onSurfaceVariant,
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
   },
   isometricWrapper: {
     // Width and height are set dynamically inline
@@ -572,13 +458,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
     backgroundColor: 'rgba(255, 255, 255, 0.82)',
     borderColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: theme.Spacing.xs,
     zIndex: 20,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
@@ -589,7 +475,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: theme.Spacing.xs,
   },
   legendDot: {
     width: 6,
@@ -597,7 +483,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 3,
   },
   legendText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },

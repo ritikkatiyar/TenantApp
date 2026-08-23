@@ -42,7 +42,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   compactTitleText: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     letterSpacing: 1
   },
@@ -52,13 +52,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: 60
   },
   desktopScroll: {
-    paddingVertical: 24,
-    paddingHorizontal: 40,
+    paddingTop: 24,
+    paddingHorizontal: 32,
+    paddingBottom: 40,
     alignItems: 'center'
   },
   desktopInner: {
     width: '100%',
-    maxWidth: 1080
+    flex: 1,
   },
   titleContainer: {
     marginTop: 16,
@@ -72,7 +73,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     letterSpacing: -0.5
   },
   subtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
     marginTop: 4,
@@ -90,25 +91,25 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
-    backgroundColor: 'rgba(255,255,255,0.2)'
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill
   },
   metricLabel: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginBottom: 4
   },
   metricValue: {
-    fontSize: theme.Typography.HeadlineSmall.fontSize,
+    fontSize: theme.Typography.headlineSmall.fontSize,
     fontWeight: '800'
   },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderColor: theme.Colors.glassStroke,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
@@ -118,7 +119,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   searchInput: {
     flex: 1,
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     outlineWidth: 0,
   },
   filtersContainer: {
@@ -135,7 +136,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1
   },
   filterLabelText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
     width: 60
@@ -147,15 +148,15 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)'
+    borderColor: theme.Colors.glassStroke
   },
   filterPillActive: {
     backgroundColor: theme.Colors.primary
   },
   filterText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '600'
   },
@@ -168,7 +169,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center'
   },
   errorText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.error,
     textAlign: 'center',
     marginBottom: 16
@@ -178,7 +179,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.8)',
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
     marginTop: 20
   },
   emptyTitle: {
@@ -189,7 +191,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 6
   },
   emptySubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 20,
@@ -202,8 +204,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
-    backgroundColor: 'rgba(255,255,255,0.2)'
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -212,18 +214,18 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 10
   },
   cardUnitText: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface
   },
   cardTitleText: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     marginBottom: 6
   },
   cardDescText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 18,
     marginBottom: 10
@@ -235,7 +237,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: 4
   },
   cardDateText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant
   },
   pill: {
@@ -244,7 +246,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 6
   },
   pillText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800'
   },
   filterButton: {
@@ -257,7 +259,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   filterButtonText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700'
   },
   paginationRow: {
@@ -283,7 +285,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.3)'
   },
   pageText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface
   }

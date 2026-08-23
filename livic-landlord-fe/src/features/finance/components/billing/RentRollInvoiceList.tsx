@@ -4,6 +4,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { EmptyState } from '@/src/components/common/display/EmptyState';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { PaginatedContainer } from '@/src/components/common/layout/PaginatedContainer';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
 
@@ -13,6 +15,9 @@ interface RentRollInvoiceListProps {
   onClearSearch: () => void;
   onPublishSingle: (invoice: RentCycleResponse) => void;
   onOpenCashModal: (invoice: RentCycleResponse) => void;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (newPage: number) => void;
 }
 
 export function RentRollInvoiceList({
@@ -21,6 +26,9 @@ export function RentRollInvoiceList({
   onClearSearch,
   onPublishSingle,
   onOpenCashModal,
+  page = 0,
+  totalPages = 1,
+  onPageChange = () => {},
 }: RentRollInvoiceListProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
@@ -49,9 +57,14 @@ export function RentRollInvoiceList({
   });
 
   return (
-    <View style={styles.invoiceList}>
-      {sortedInvoices.map((invoice, idx) => (
-        <GlassCard key={invoice.id || idx} style={styles.invoiceCard}>
+    <PaginatedContainer
+      data={sortedInvoices}
+      page={page}
+      totalPages={totalPages}
+      onPageChange={onPageChange}
+      keyExtractor={(invoice, idx) => invoice.id || String(idx)}
+      renderItem={(invoice) => (
+        <GlassCard style={styles.invoiceCard}>
           <View style={styles.invoiceHeader}>
             <View>
               <Text style={styles.invoiceUnit}>Apt {invoice.unitNumber} - {invoice.tenantName}</Text>
@@ -71,37 +84,37 @@ export function RentRollInvoiceList({
           
           <View style={styles.actionRow}>
             <StatusPill status={invoice.status} />
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm }}>
               {invoice.status === 'PENDING' && (
-                <TouchableOpacity 
-                  style={[styles.recordCashBtn, { marginRight: 8 }]} 
+                <ActionButton
+                  label="Publish"
+                  icon="send"
+                  variant="primary"
+                  size="sm"
                   onPress={() => onPublishSingle(invoice)}
-                >
-                  <MaterialIcons name="send" size={16} color={theme.Colors.primary} />
-                  <Text style={styles.recordCashBtnText}>Publish</Text>
-                </TouchableOpacity>
+                />
               )}
               {invoice.status !== 'PAID' && (
-                <TouchableOpacity 
-                  style={styles.recordCashBtn} 
+                <ActionButton
+                  label="Record Cash"
+                  icon="payments"
+                  variant="outline"
+                  size="sm"
                   onPress={() => onOpenCashModal(invoice)}
-                >
-                  <MaterialIcons name="payments" size={16} color={theme.Colors.primary} />
-                  <Text style={styles.recordCashBtnText}>Record Cash</Text>
-                </TouchableOpacity>
+                />
               )}
             </View>
           </View>
         </GlassCard>
-      ))}
-    </View>
+      )}
+    />
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   invoiceList: {
     width: '100%',
-    gap: 16,
+    gap: theme.Spacing.md,
   },
   invoiceCard: {
     borderRadius: 24,
@@ -117,17 +130,17 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 12,
   },
   invoiceUnit: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   invoiceIdText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
   invoiceTotal: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
@@ -135,8 +148,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    paddingVertical: 8,
-    marginVertical: 8,
+    paddingVertical: theme.Spacing.sm,
+    marginVertical: theme.Spacing.sm,
     gap: 6,
   },
   chargeRow: {
@@ -145,12 +158,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   chargeDesc: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
   },
   chargeAmt: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '700',
   },
@@ -172,7 +185,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
   },
   recordCashBtnText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },

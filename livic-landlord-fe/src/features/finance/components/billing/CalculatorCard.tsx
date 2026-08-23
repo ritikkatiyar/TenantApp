@@ -108,21 +108,21 @@ export function CalculatorCard({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   calculatorCard: {
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     marginVertical: 15,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
   },
   calculatorTitle: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
-    marginBottom: 4,
+    marginBottom: theme.Spacing.xs,
   },
   calculatorSub: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginBottom: 20,
   },
@@ -133,15 +133,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
   },
   sliderLabel: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '500',
   },
   sliderValue: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.primary,
     fontWeight: '700',
   },
@@ -182,7 +182,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   estimateBox: {
     marginTop: 20,
-    padding: 16,
+    padding: theme.Spacing.md,
     borderRadius: 16,
     backgroundColor: theme.Colors.primaryContainer,
     borderWidth: 1,
@@ -190,7 +190,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   estimateLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.primary,
     fontWeight: '800',
     letterSpacing: 1,
@@ -199,15 +199,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.headlineLg.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '900',
-    marginVertical: 4,
+    marginVertical: theme.Spacing.xs,
   },
   estimateCycle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
   },
   estimateDesc: {
-    fontSize: theme.Typography.LabelSmall.fontSize - 1,
+    fontSize: theme.Typography.labelSmall.fontSize - 1,
     color: theme.Colors.onSurfaceVariant,
   },
 });

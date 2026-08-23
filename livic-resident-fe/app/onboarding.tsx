@@ -174,20 +174,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 16,
   },
   badgeText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
     letterSpacing: 0.5,
   },
   title: {
-    fontSize: theme.Typography.HeadlineMedium.fontSize,
+    fontSize: theme.Typography.headlineMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     marginBottom: 10,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 22,
@@ -232,7 +232,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   primaryButtonText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '700',
   },
   secondaryButton: {
@@ -244,7 +244,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   secondaryButtonText: {
     color: theme.Colors.primary,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '600',
   },
 });

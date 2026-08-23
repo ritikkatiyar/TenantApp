@@ -253,23 +253,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   userName: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
   },
   userEmail: {
     color: theme.Colors.onSurfaceVariant,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     marginTop: 2,
   },
   settingsSection: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: theme.Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.4)',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   sectionTitle: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: 'black',
     textTransform: 'uppercase',
@@ -282,7 +282,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   roleToggleLabel: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,
   },
@@ -290,8 +290,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   linksContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.md,
   },
   linkItem: {
     flexDirection: 'row',
@@ -313,7 +313,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     elevation: 1,
   },
   linkText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     marginLeft: 12,
@@ -337,7 +337,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 8,
   },
   logoutText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.error,
     marginLeft: 12,

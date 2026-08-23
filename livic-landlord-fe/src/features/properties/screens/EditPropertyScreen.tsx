@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
@@ -200,28 +201,18 @@ export default function EditPropertyScreen({
       </View>
 
       {showSave && (
-        <TouchableOpacity 
-          style={styles.saveButtonWrapper} 
-          onPress={handleUpdate}
+        <ActionButton
+          label="SAVE CHANGES"
+          icon="check"
+          iconPosition="right"
+          variant="primary"
+          size="lg"
+          fullWidth
+          loading={saving}
           disabled={saving}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={['#00d4ff', '#0072ff']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.saveButton}
-          >
-            {saving ? (
-              <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
-            ) : (
-              <>
-                <Text style={styles.saveButtonText}>SAVE CHANGES</Text>
-                <MaterialIcons name="check" size={20} color={theme.Colors.surfaceContainerLowest} />
-              </>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+          onPress={handleUpdate}
+          style={{ marginTop: 16 }}
+        />
       )}
     </>
   );
@@ -248,50 +239,25 @@ export default function EditPropertyScreen({
 
   const DesktopShell = () => (
     <LinearGradient 
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} 
+      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]} 
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
       <View style={styles.desktopShell}>
-        {/* Sidebar Panel */}
-        <BlurView intensity={30} tint="light" style={styles.sidebar}>
-          <View style={styles.sidebarBrand}>
-            <Text style={styles.sidebarBrandTitle}>LIVIC</Text>
-            <Text style={styles.sidebarBrandSub}>LANDLORD</Text>
-          </View>
-
-          <View style={styles.sidebarNav}>
-            {renderSidebarLink('business', 'Command Center', true, '/command-center')}
-            {renderSidebarLink('receipt-long', 'Finance & Billing', false, '/expenses')}
-            {renderSidebarLink('chat', 'AI Concierge', false, '/ai')}
-            {renderSidebarLink('settings', 'System Profiles', false, '/settings')}
-          </View>
-
-          <View style={styles.sidebarFooter}>
-            <TouchableOpacity style={styles.upgradeButton} activeOpacity={0.85}>
-              <LinearGradient
-                colors={['#ff416c', '#ff4b2b']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.upgradeGradient}
-              >
-                <Text style={styles.upgradeText}>UPGRADE PRO</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </BlurView>
-
         <View style={styles.desktopMain}>
-          <DesktopNavBar 
-            onBack={onBack} 
-            backText="Back to CommandCenter" 
-            properties={[]}
-          />
+
 
           <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
             <View style={styles.desktopInner}>
               <View style={styles.desktopHeaderRow}>
+                <TouchableOpacity
+                  onPress={onBack}
+                  style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
+                  activeOpacity={0.75}
+                >
+                  <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+                </TouchableOpacity>
                 <View style={styles.largeTitleContainerDesktop}>
                   <Text style={styles.titleLineDesktop}>Modify Property Profile</Text>
                   <Text style={styles.subtitleDesktop}>Configure location profiles and structural maps</Text>
@@ -323,7 +289,7 @@ export default function EditPropertyScreen({
 
               <View style={styles.desktopFormContainer}>
                 <View style={styles.desktopFormLeft}>
-                  <BlurView intensity={70} tint="light" style={styles.card}>
+                  <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={styles.card}>
                     {renderFormFieldsContent(false)}
                     <View style={styles.divider} />
                     {renderConfigCardContent()}
@@ -331,7 +297,7 @@ export default function EditPropertyScreen({
                 </View>
 
                 <View style={styles.desktopFormRight}>
-                  <BlurView intensity={50} tint="light" style={styles.desktop3DPreviewCard}>
+                  <BlurView intensity={50} tint={isDark ? 'dark' : 'light'} style={styles.desktop3DPreviewCard}>
                     <Text style={styles.desktopPreviewLabel}>3D ISOMETRIC PREVIEW</Text>
                     
                     <View style={styles.desktop3DContainer}>
@@ -368,7 +334,7 @@ export default function EditPropertyScreen({
   if (loading) {
     return (
       <LinearGradient 
-        colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} 
+        colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]} 
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.container}
@@ -384,7 +350,7 @@ export default function EditPropertyScreen({
 
   return (
     <LinearGradient 
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']} 
+      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]} 
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}

@@ -4,6 +4,8 @@ import { BlurView } from 'expo-blur';
 import { MaterialIcons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import type { ChargeConfigResponse } from '@/src/features/finance/api/charge.api';
 
 interface ExpenseConfigCardProps {
@@ -65,7 +67,7 @@ export function ExpenseConfigCard({
         !charge.isActive && { opacity: 0.7 }
       ]}
     >
-      <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.expenseCard}>
+      <GlassCard style={{ padding: 20 }}>
         <TouchableOpacity 
           activeOpacity={0.7}
           onPress={() => {
@@ -83,8 +85,8 @@ export function ExpenseConfigCard({
               </Text>
             </View>
             <View style={styles.cardRight}>
-              <View style={[styles.badge, { backgroundColor: charge.isActive ? '#ccfbf1' : '#fee2e2' }]}>
-                 <Text style={[styles.badgeText, { color: charge.isActive ? '#0d9488' : '#ef4444' }]}>
+              <View style={[styles.badge, { backgroundColor: charge.isActive ? 'rgba(13,148,136,0.15)' : 'rgba(239,68,68,0.15)' }]}>
+                 <Text style={[styles.badgeText, { color: charge.isActive ? theme.Colors.primary : theme.Colors.error }]}>
                    {charge.isActive ? 'ACTIVE' : 'INACTIVE'}
                  </Text>
               </View>
@@ -100,57 +102,63 @@ export function ExpenseConfigCard({
               ) : null}
             </View>
           </View>
+
         </TouchableOpacity>
-        
-        <View style={styles.actionsRow}>
-          {charge.calculationStrategy === 'METERED' ? (
-            <TouchableOpacity 
-              onPress={() => {
-                router.push(`/properties/${propertyId}/meter-readings`);
-              }} 
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-            >
-              <MaterialCommunityIcons name="speedometer" size={16} color={theme.Colors.secondary} />
-              <Text style={{ color: theme.Colors.secondary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700' }}>Record Readings</Text>
-            </TouchableOpacity>
-          ) : (
-            <View />
-          )}
+
+        <View style={styles.cardFooter}>
+          <View style={styles.footerLeft}>
+            <View style={styles.taxBadge}>
+              <MaterialIcons 
+                name={charge.applySalesTax ? 'check-circle' : 'cancel'} 
+                size={14} 
+                color={charge.applySalesTax ? theme.Colors.primary : theme.Colors.onSurfaceVariant} 
+              />
+              <Text style={styles.taxText}>
+                {charge.applySalesTax ? 'Sales Tax Included' : 'No Sales Tax'}
+              </Text>
+            </View>
+            {charge.lateFeePercentage != null && charge.lateFeePercentage > 0 ? (
+              <View style={styles.lateFeeBadge}>
+                <MaterialIcons name="warning" size={14} color={theme.Colors.tertiary} />
+                <Text style={styles.lateFeeText}>{charge.lateFeePercentage}% Late Fee</Text>
+              </View>
+            ) : null}
+          </View>
 
           {!charge.isSystemRequired ? (
-            <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', gap: theme.Spacing.sm, alignItems: 'center' }}>
               {charge.isActive ? (
-                <TouchableOpacity 
-                  onPress={() => onDeactivate(charge.id)} 
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                >
-                  <Feather name="minus-circle" size={14} color={theme.Colors.error} />
-                  <Text style={{ color: theme.Colors.error, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '600' }}>Deactivate</Text>
-                </TouchableOpacity>
+                <ActionButton
+                  label="Deactivate"
+                  icon="remove-circle-outline"
+                  variant="danger"
+                  size="sm"
+                  onPress={() => onDeactivate(charge.id)}
+                />
               ) : (
                 <>
-                  <TouchableOpacity 
-                    onPress={() => onReactivate(charge.id)} 
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                  >
-                    <MaterialIcons name="restore" size={14} color={theme.Colors.primary} />
-                    <Text style={{ color: theme.Colors.primary, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '600' }}>Reactivate</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    onPress={() => onDelete(charge.id)} 
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                  >
-                    <Feather name="trash-2" size={14} color={theme.Colors.error} />
-                    <Text style={{ color: theme.Colors.error, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '600' }}>Delete Permanently</Text>
-                  </TouchableOpacity>
+                  <ActionButton
+                    label="Reactivate"
+                    icon="restore"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => onReactivate(charge.id)}
+                  />
+                  <ActionButton
+                    label="Delete"
+                    icon="delete-outline"
+                    variant="danger"
+                    size="sm"
+                    onPress={() => onDelete(charge.id)}
+                  />
                 </>
               )}
             </View>
           ) : (
-            <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.LabelSmall.fontSize, fontStyle: 'italic' }}>System Required</Text>
+            <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.labelSmall.fontSize, fontStyle: 'italic' }}>System Required</Text>
           )}
         </View>
-      </BlurView>
+      </GlassCard>
     </View>
   );
 }
@@ -162,7 +170,7 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
   },
   listCardWrapper: {
     width: '100%',
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
   expenseCard: {
     borderRadius: 24,
@@ -182,33 +190,33 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: theme.Spacing.md,
   },
   cardTextContainer: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   cardSub: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
     fontWeight: '600',
   },
   cardRight: {
     alignItems: 'flex-end',
   },
   badge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: theme.Spacing.xs,
+    paddingHorizontal: theme.Spacing.sm,
     borderRadius: 8,
     marginBottom: 6,
   },
   badgeText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
   },
   amountContainer: {
@@ -216,23 +224,48 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
     alignItems: 'baseline',
   },
   amountBold: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   amountSuffix: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginLeft: 2,
     fontWeight: '600',
   },
-  actionsRow: {
+  cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: theme.Spacing.md,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.05)',
-    paddingTop: 16,
+    paddingTop: theme.Spacing.md,
+  },
+  footerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.Spacing.sm,
+  },
+  taxBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  taxText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  lateFeeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  lateFeeText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    color: theme.Colors.tertiary,
+    fontWeight: '700',
   },
 });

@@ -1,18 +1,20 @@
-# UX/UI Consistency Standards: Tenant Living Frontend (React Native & Expo)
+# UX/UI Consistency Standards: Livic Frontend (React Native & Expo)
 
-This workspace rule file defines the strict design architecture, styling guidelines, and UX patterns required to maintain a premium, high-fidelity user interface across the **Tenant Living** mobile and web applications. All frontend developments, refactorings, and feature additions must strictly adhere to these specifications.
+This workspace rule file defines the strict design architecture, styling guidelines, and UX patterns required to maintain a premium, high-fidelity user interface across **Livic Landlord** (`livic-landlord-fe`) and **Livic Resident** (`livic-resident-fe`), the mobile (Play Store) and web (Vercel) applications. All frontend developments, refactorings, and feature additions must strictly adhere to these specifications.
+
+> **Note:** This document predates the Livic rebrand and the addition of dark mode. Section 1's color values below describe the **light-mode** token values as historical reference — they must be consumed via `useAppTheme()` tokens from `src/theme/Theme.ts` (which now defines both `LightColors` and `DarkColors`), never hardcoded directly. A hardcoded hex value cannot adapt when the user switches theme mode and is the direct cause of dark-mode contrast bugs found in the current codebase. See Section 6 for the full enforceable rule set added after the dark-mode audit.
 
 ---
 
 ## 1. Core Design Tokens & Theme Integration
 
-The project utilizes a centralized theme structure defined in `TenantAppFE/src/theme/Theme.js`. Direct inline hex codes, arbitrary sizes, or unmapped font-families are strictly prohibited.
+The project utilizes a centralized theme structure defined in `src/theme/Theme.ts` (light + dark palettes) and consumed via `useAppTheme()` from `src/theme/ThemeContext.tsx`. Direct inline hex codes, arbitrary sizes, or unmapped font-families are strictly prohibited — reference the matching token, never the literal value below.
 
-### A. Color Palette Rules
-- **Primary Color (`#006875`)**: Used for branding, dominant UI elements, active icons, and primary category headings.
-- **Secondary Color (`#4648d4`)**: Reserved for primary action buttons, save endpoints, and focal interactive elements.
-- **Tertiary Color (`#765a00`)**: Used selectively for warning states, pending actions, and highlights.
-- **Error Colors (`#ba1a1a` / `#ffdad6`)**: Used exclusively for destructive actions, validation errors, and critical alerts.
+### A. Color Palette Rules (light-mode token values shown for reference — always consume via `theme.Colors.<token>`, which resolves correctly per mode)
+- **Primary Color (`theme.Colors.primary`, light value `#006875`)**: Used for branding, dominant UI elements, active icons, and primary category headings.
+- **Secondary Color (`theme.Colors.secondary`, light value `#4648d4`)**: Reserved for primary action buttons, save endpoints, and focal interactive elements.
+- **Tertiary Color (`theme.Colors.tertiary`, light value `#765a00`)**: Used selectively for warning states, pending actions, and highlights.
+- **Error Colors (`theme.Colors.error` / `theme.Colors.errorContainer`, light values `#ba1a1a` / `#ffdad6`)**: Used exclusively for destructive actions, validation errors, and critical alerts.
 - **Background Gradient**: All full-screen screens must render inside a standard page wrapper utilizing the `backgroundGradient`: `["#d4f5f9", "#e8f8fb", "#e2e0fb"]` (luminous cyan, ice blue, and pastel lavender). All gradient instances must be configured as diagonal (start=`{ x: 0, y: 0 }`, end=`{ x: 1, y: 1 }`) rather than vertical or default.
 - **Accent Gradients**: Key visual triggers (active segment selections, call-to-action buttons) must use `accentGradientStart` (`#00e0ff`) to `accentGradientEnd` (`#0070ea`).
 
@@ -132,12 +134,12 @@ Modal popup cards and configuration overlays must align with the premium styling
 
 ## 3. Responsive Screen & Layout Architecture
 
-The app is deployed across both mobile screens and desktop web viewers. Viewports must adapt using a hard breakpoint: `isDesktop = windowWidth >= 900`.
+The app is deployed across mobile (Play Store), and web (Vercel) for both Livic Landlord and Livic Resident. Viewports must adapt using the shared `useResponsive()` hook (`hooks/useResponsive.ts`) — never an inline breakpoint literal in a screen file. The hook exposes `isMobile` (< 768px), `isTablet` (768-1024px), and `isDesktop` (>= 1024px); breakpoint constants live once in `Theme.ts` (`Breakpoints.tablet`, `Breakpoints.desktop`).
 
 ### A. Desktop Layout Standards
 - **Width Management**: Main panels should have constrained reading boundaries or dual-column structures.
 - **Side Panels**: Multi-pane layout editors must display sidebars on the right-hand side (e.g., width set to `380px` - `420px`) rather than using screen overlays.
-- **Branding Alignment**: Branding elements (Sidebars, Logo tags, footers) must use `TenantApp` and `Management Suite` across all admin/manager screens. `TenantPortal` is reserved for tenant-facing interfaces.
+- **Branding Alignment**: Branding elements (Sidebars, Logo tags, footers) must use `Livic Landlord` across landlord admin/manager screens, and `Livic Resident` across resident-facing interfaces.
 - **Action Button Placement**: Primary actions (e.g. "Save Changes", "Broadcast Now", "Create Property") must reside in the top-right of the page header row on desktop (in a `pageHeaderRow` flex row layout), rather than inside the form container cards themselves.
 - **Grid Editors**: Canvas workspaces must configure zoom capabilities (scroll wheel bindings) and support click-and-drag grid selection logic.
 
@@ -178,9 +180,6 @@ All desktop-level screens must utilize the globally shared `<DesktopNavBar>` com
 2. **Usage**: Pass in `activeTab` to highlight the current section (e.g., `activeTab="Properties"`), `onBack` (optional) to trigger the back action with `backText` (e.g., `backText="Back to Portfolio"`), and `rightContent` to inject custom elements like search boxes or settings icons.
 3. **Consistency**: Do not wrap `DesktopNavBar` inside a scrolling container; it must be pinned to the top of the `desktopMain` layout to act as a constant component without re-rendering the page during interactions.
 
-### E. Filter Rows & Header Layouts
-- **Filter Rows (`desktopFilterRow`)**: When rendering a filter row above a grid of smaller cards (e.g., unit cards), do NOT wrap the filter row in a bordered glassmorphic card container. Render it transparently (`flexDirection: 'row'`, `alignItems: 'flex-end'`, `gap: 24`, `marginBottom: 32`, no background/border) without background colors or borders. This prevents the filter row from appearing visually unbalanced (longer or wider) compared to the individual small cards below it.
-
 ---
 
 ## 4. Native Interactions & Polish
@@ -208,13 +207,34 @@ All desktop-level screens must utilize the globally shared `<DesktopNavBar>` com
 3. **No Unused Imports**: Strip unused React Native components, icons, or router references prior to committing.
 4. **SVG and Icon Consistency**: Leverage icons exclusively from `@expo/vector-icons` (`MaterialIcons`, `Feather`, `MaterialCommunityIcons`, `Ionicons`) configured with unified sizes (typically `20` / `24` pixels) matching category headers.
 
+### F. Filter Rows & Header Layouts
+
+- **Filter Rows (`desktopFilterRow`)**: When rendering a filter row above a grid of smaller cards (e.g., unit cards), do NOT wrap the filter row in a bordered glassmorphic card container. Render it transparently (`flexDirection: 'row'`, `alignItems: 'flex-end'`, `gap: 24`, `marginBottom: 32`) without background colors or borders. This prevents the filter row from appearing visually unbalanced ("longer" or wider) compared to the individual small cards below it.
+
 ---
 
-## 6. Strict UAT Readiness & Styling Constraints
+## 6. Enforceable Rules (added after the theme/dark-mode audit — PR-review agent must check these)
 
-1. **No Hardcoded Hex Colors or Font Sizes**: No screen or component file may hardcode a hex color or numeric fontSize. All colors and typography must reference the centralized design tokens from `useAppTheme()` (e.g., `theme.Colors.onSurface`, `theme.Typography.bodyMd`). Any hardcoded `color: '#...'`, `fontSize: <number>`, or hex-literal `backgroundColor` outside `src/theme/Theme.ts` is prohibited and will trigger build/lint errors.
-2. **Light & Dark Mode Coexistence**: Every text or background color used in a screen must work in BOTH `LightColors` and `DarkColors` from `Theme.ts`. Hardcoded values that fail contrast checks in either mode are prohibited.
-3. **Breakpoint Hook Enforcement**: All desktop, mobile, and tablet viewport breakpoint checks must use the shared `useResponsive()` hook. Inline checks such as `width >= 900` are prohibited outside that hook.
-4. **React Query for Global/Shared Data**: Any component fetching shared or global data (such as properties list, tenant list, etc.) must consume it via a shared react-query hook, not a local `useState` + `useEffect` + API call implementation. Local re-fetching of global data is prohibited.
-5. **Primary Navigation Style Limits**: Primary navigation chrome (such as bottom navigation and FABs) may use at most a 2-color brand gradient from the existing teal/primary palette (e.g. `accentGradientStart`/`End` or `primary`/`inversePrimary`). Multi-hue rainbow gradients (3+ unrelated hues), glow/halo shadow effects, and playful iconography (sparkles, stars, bursts) are prohibited on primary navigation components.
-6. **Skeleton Loading States**: Loading states for any data fetch must use the shared `<Skeleton>` primitive (once added in Phase 1) rather than a bare `ActivityIndicator` on any screen displaying more than a single data point.
+These rules were added after an audit found the codebase deviates from Sections 1-5 above in ways the review agent had not been catching (partly because Section F above was corrupted/unparseable until this fix). Treat these as equally binding.
+
+### A. Theme Token Compliance
+- No screen or component file may hardcode a hex color literal (`'#...'`) or a numeric `fontSize` value outside `src/theme/Theme.ts`. All colors and typography must resolve through `useAppTheme()` tokens.
+- Every color used in a screen must work correctly against **both** `LightColors` and `DarkColors` in `Theme.ts`. A value that only reads correctly in one mode is a defect, not a style choice — flag it.
+
+### B. Single Breakpoint Source
+- All desktop/tablet/mobile checks must use the shared `useResponsive()` hook. Flag any inline `width >= <number>` (or equivalent `Dimensions.get('window').width` comparison) found outside that hook.
+
+### C. No Duplicate Data-Fetching
+- Any component fetching shared/global data (e.g. the properties list, a tenant list) must consume it via the app's shared query hook (React Query), not a local `useState` + `useEffect` + fetch reimplementation. Flag new local re-fetching of data another screen already fetches through an existing hook.
+
+### D. Primary Navigation Chrome Restraint
+- Bottom navigation bars and floating action buttons (FABs) may use at most a 2-color gradient drawn from the existing brand palette (`primary`/`secondary`/`accentGradientStart`/`accentGradientEnd`). Multi-hue "rainbow" gradients (3+ unrelated hues), glow/halo shadow effects, and playful iconography (sparkles, stars, bursts) are prohibited on primary navigation elements. This is a landlord/resident-facing product, not a consumer novelty app — reserve expressive visuals for onboarding/empty-state illustrations only.
+
+### E. Loading State Consistency
+- Any screen loading more than a single data point must use the shared `<Skeleton>` primitive rather than a bare `ActivityIndicator`, once that primitive is available in `src/components/common/feedback/`.
+
+### F. Navigation Consolidation, Search Placement & Pagination Rules
+- **DesktopNavBar Baseline Controls**: `DesktopNavBar` must unconditionally render a uniform baseline set of right-side controls (notification bell with active escalation unread badge, and profile avatar). Theme toggles must NOT be rendered in `DesktopNavBar` (they reside only in `SidebarNavigation` or `MobileMoreSheet`).
+- **Search Placement Rule**: Global / cross-cutting portfolio search belongs in `DesktopNavBar`'s global search slot. Contextual / page-scoped list search belongs inline in that page's content near the list it filters.
+- **Pagination Rule**: All index lists displaying dynamic database items (Properties, Leases, Statements, Announcements, Escalations, Inventory, Analytics cards) must implement pagination using the shared `<Pagination>` UI component and `usePaginatedQuery` helper hook, limiting pages to 20 items per page (or 4-6 items per widget card) to maintain vertical screen layout balance.
+

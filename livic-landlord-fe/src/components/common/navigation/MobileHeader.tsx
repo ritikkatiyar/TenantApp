@@ -8,16 +8,17 @@ import { BlurView } from 'expo-blur';
 interface MobileHeaderProps {
   title: string;
   onMenuPress?: () => void;
+  onNotificationPress?: () => void;
 }
 
-export default function MobileHeader({ title }: MobileHeaderProps) {
+export default function MobileHeader({ title, onMenuPress, onNotificationPress }: MobileHeaderProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.headerWrapper, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={70} tint="light" style={StyleSheet.absoluteFillObject} />
+      <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContainer}>
         <View style={{ width: 40 }} />
         
@@ -27,7 +28,12 @@ export default function MobileHeader({ title }: MobileHeaderProps) {
           </Text>
         </View>
         
-        <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
+        <TouchableOpacity 
+          style={styles.notificationButton} 
+          activeOpacity={0.7}
+          onPress={onNotificationPress}
+          disabled={!onNotificationPress}
+        >
           <Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} />
           <View style={styles.notificationBadge} />
         </TouchableOpacity>
@@ -44,8 +50,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: 0,
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(248, 249, 255, 0.4)',
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: isDark ? 'rgba(19, 28, 38, 0.4)' : 'rgba(248, 249, 255, 0.4)',
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
@@ -61,14 +67,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
   },
   menuButton: {
-    padding: 8,
+    padding: theme.Spacing.sm,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)',
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -81,16 +87,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
   },
   titleText: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   notificationButton: {
-    padding: 8,
+    padding: theme.Spacing.sm,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)',
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -100,11 +106,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   notificationBadge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
+    top: 4,
+    right: 4,
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.Colors.error,
+    backgroundColor: theme.Colors.error || '#ba1a1a',
   },
 });

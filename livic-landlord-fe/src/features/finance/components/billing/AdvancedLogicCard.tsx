@@ -60,7 +60,7 @@ export function AdvancedLogicCard({
         />
       </View>
 
-      <View style={[styles.rowBetween, { marginTop: 24, marginBottom: 24 }]}>
+      <View style={[styles.rowBetween, { marginTop: theme.Spacing.lg, marginBottom: theme.Spacing.lg }]}>
         <Text style={styles.settingText}>Late Fee Rules</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{lateFee || '0'}% / Monthly</Text>
@@ -86,7 +86,7 @@ export function AdvancedLogicCard({
 const createStyles = (theme: any) => StyleSheet.create({
   card: {
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
     backgroundColor: theme.Colors.glassFill,
@@ -96,11 +96,11 @@ const createStyles = (theme: any) => StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
     marginBottom: 20,
   },
   cardTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
@@ -110,7 +110,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
   },
   settingText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
@@ -123,16 +123,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: 'rgba(0, 240, 255, 0.24)',
   },
   badgeText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
   label: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
   },
   inputContainer: {
     height: 48,
@@ -142,19 +142,19 @@ const createStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
   },
   inputWithIcon: {
     flex: 1,
     height: '100%',
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
   percentSymbol: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '700',
-    marginLeft: 8,
+    marginLeft: theme.Spacing.sm,
   },
 });

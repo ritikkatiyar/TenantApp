@@ -32,8 +32,8 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
     const [dropdownCoords, setDropdownCoords] = useState({ top: 0, left: 0, width: 0 });
     const triggerRef = useRef<any>(null);
     const { isDesktop } = useResponsive();
-    const { theme } = useAppTheme();
-    const styles = React.useMemo(() => createStyles(theme), [theme]);
+    const { theme, isDark } = useAppTheme();
+    const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
     const selectedOption = options.find(o => o.value === value);
 
@@ -77,7 +77,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
           onPress={handleOpen}
         >
           <View style={styles.triggerContent}>
-            {icon && <MaterialIcons name={icon} size={20} color={theme.Colors.primary} style={{ marginRight: 8 }} />}
+            {icon && <MaterialIcons name={icon} size={20} color={theme.Colors.primary} style={{ marginRight: theme.Spacing.sm }} />}
             <Text 
               numberOfLines={1} 
               style={[styles.triggerText, !selectedOption && styles.placeholderText, { flex: 1 }]}
@@ -106,7 +106,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
               ]}
             >
               <Pressable style={{ width: '100%' }}>
-                <BlurView tint="light" intensity={60} style={styles.blurContainer}>
+                <BlurView tint={isDark ? "dark" : "light"} intensity={80} style={styles.blurContainer}>
                   <ScrollView 
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
@@ -148,16 +148,16 @@ GlassDropdown.displayName = 'GlassDropdown';
 
 export default GlassDropdown;
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   dropdownTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     paddingVertical: 12,
     width: '100%',
   },
@@ -167,7 +167,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
   },
   triggerText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
@@ -184,7 +184,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     maxHeight: 350,
     shadowColor: theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 8,
   },
@@ -192,33 +192,33 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
   },
   scrollView: {
     maxHeight: 350,
   },
   scrollContent: {
-    paddingVertical: 4,
+    paddingVertical: theme.Spacing.xs,
   },
   optionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
   },
   optionBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
   },
   optionText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
-    fontWeight: '600',
-    color: theme.Colors.onSurfaceVariant,
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    fontWeight: '700',
+    color: theme.Colors.onSurface,
   },
   optionTextSelected: {
     color: theme.Colors.primary,
-    fontWeight: '800',
+    fontWeight: '900',
   },
 });

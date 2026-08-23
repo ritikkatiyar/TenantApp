@@ -62,22 +62,14 @@ export function AnnouncementHistoryList({
     <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.card}>
       <Text style={styles.sectionHeader}>BROADCAST HISTORY</Text>
 
-      {/* History Property Select Dropdown */}
-      <Text style={styles.composerLabel}>FILTER BY PROPERTY</Text>
-      <GlassDropdown
-        options={properties.map((p) => ({ label: p.name, value: p.id }))}
-        value={historyPropertyId}
-        onChange={setHistoryPropertyId}
-        placeholder="Filter Property"
-        icon="domain"
-      />
+
 
       <View style={styles.listContainer}>
         {loadingAnnouncements ? (
-          <ActivityIndicator size="small" color={theme.Colors.primary} style={{ marginVertical: 32 }} />
+          <ActivityIndicator size="small" color={theme.Colors.primary} style={{ marginVertical: theme.Spacing.xl }} />
         ) : !Array.isArray(announcements) || announcements.length === 0 ? (
           <View style={styles.emptyState}>
-            <MaterialIcons name="notifications-none" size={32} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: 8 }} />
+            <MaterialIcons name="notifications-none" size={32} color={theme.Colors.onSurfaceVariant} style={{ marginBottom: theme.Spacing.sm }} />
             <Text style={styles.emptyText}>No announcement logs for this property.</Text>
           </View>
         ) : (
@@ -126,15 +118,15 @@ export function AnnouncementHistoryList({
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   card: {
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderRadius: 24,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
   },
   sectionHeader: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -142,11 +134,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'Inter',
   },
   composerLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
     marginTop: 18,
     fontFamily: 'Inter',
   },
@@ -157,21 +149,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 48,
+    paddingVertical: theme.Spacing.xxl,
   },
   emptyText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     fontFamily: 'Inter',
   },
   scrollContent: {
-    gap: 16,
+    gap: theme.Spacing.md,
   },
   historyCard: {
-    padding: 16,
+    padding: theme.Spacing.md,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
   },
@@ -196,31 +188,31 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   historyTitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
     fontFamily: 'Inter',
   },
   historyMeta: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
     fontFamily: 'Inter',
   },
   severityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: theme.Spacing.xs,
     borderRadius: 8,
   },
   severityText: {
-    fontSize: theme.Typography.LabelSmall.fontSize - 2,
+    fontSize: theme.Typography.labelSmall.fontSize - 2,
     fontWeight: '900',
     color: theme.Colors.surfaceContainerLowest,
     fontFamily: 'Inter',
   },
   historyContent: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 18,
     marginBottom: 12,
@@ -235,13 +227,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingTop: 10,
   },
   historySender: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',
   },
   historyTime: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     fontFamily: 'Inter',
