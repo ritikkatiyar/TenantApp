@@ -1,4 +1,3 @@
-import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState, useRef } from 'react';
 import { 
   View, 
@@ -6,18 +5,28 @@ import {
   StyleSheet, 
   TextInput, 
   TouchableOpacity, 
-  KeyboardAvoidingView, 
   Platform,
-  ScrollView,
   ActivityIndicator
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { signup } from '@/src/features/auth/api/auth.api';
 
+const ValidationIndicator = ({ label, isValid, theme, styles }: { label: string; isValid: boolean; theme: any; styles: any }) => (
+  <View style={styles.requirementRow}>
+    <MaterialIcons 
+      name={isValid ? "check-circle" : "radio-button-unchecked"} 
+      size={14} 
+      color={isValid ? theme.Colors.primary : theme.Colors.outlineVariant} 
+    />
+    <Text style={[styles.requirementText, isValid && styles.requirementTextValid]}>
+      {label}
+    </Text>
+  </View>
+);
 
 interface SuperAdminSignupScreenProps {
   onSignup?: (data: any) => void;
@@ -29,19 +38,6 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const emailInputRef = useRef<TextInput>(null);
-
-  const ValidationIndicator = ({ label, isValid }: { label: string; isValid: boolean }) => (
-    <View style={styles.requirementRow}>
-      <MaterialIcons 
-        name={isValid ? "check-circle" : "radio-button-unchecked"} 
-        size={14} 
-        color={isValid ? theme.Colors.primary : theme.Colors.outlineVariant} 
-      />
-      <Text style={[styles.requirementText, isValid && styles.requirementTextValid]}>
-        {label}
-      </Text>
-    </View>
-  );
   const phoneInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const [fullName, setFullName] = useState('');
@@ -84,20 +80,12 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
   };
 
   return (
-    <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
+    <PageShell
+      scrollable={true}
+      keyboardAvoiding={true}
+      contentContainerStyle={styles.scrollContent}
     >
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          
-          {/* Ambient Background Orbs */}
+      {/* Ambient Background Orbs */}
           <View style={[styles.orb, styles.orb1]} />
           <View style={[styles.orb, styles.orb2]} />
 
@@ -238,10 +226,10 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                 {/* Real-time Password Strength Requirements */}
                 {password.length > 0 && (
                   <View style={styles.requirementsContainer}>
-                    <ValidationIndicator label="At least 8 characters" isValid={password.length >= 8} />
-                    <ValidationIndicator label="Uppercase & Lowercase letters" isValid={/[a-z]/.test(password) && /[A-Z]/.test(password)} />
-                    <ValidationIndicator label="At least one number" isValid={/\d/.test(password)} />
-                    <ValidationIndicator label="At least one special character" isValid={/[@$!%*?&#.\-_^+=~()[\]{}|\\:;"'<>,/]/.test(password)} />
+                    <ValidationIndicator label="At least 8 characters" isValid={password.length >= 8} theme={theme} styles={styles} />
+                    <ValidationIndicator label="Uppercase & Lowercase letters" isValid={/[a-z]/.test(password) && /[A-Z]/.test(password)} theme={theme} styles={styles} />
+                    <ValidationIndicator label="At least one number" isValid={/\d/.test(password)} theme={theme} styles={styles} />
+                    <ValidationIndicator label="At least one special character" isValid={/[@$!%*?&#.\-_^+=~()[\]{}|\\:;"'<>,/]/.test(password)} theme={theme} styles={styles} />
                   </View>
                 )}
               </View>
@@ -269,10 +257,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
               </TouchableOpacity>
             </View>
           </BlurView>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-    </LinearGradient>
+    </PageShell>
   );
 }
 
@@ -288,13 +273,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Theme.Spacing.containerPadding,
+    padding: theme.Spacing.containerPadding,
     position: 'relative',
     paddingVertical: 40,
   },
   orb: {
     position: 'absolute',
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     opacity: 0.3,
   },
   orb1: {
@@ -316,13 +301,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: Theme.Rounded.lg,
-    paddingHorizontal: Theme.Spacing.stackLg,
+    backgroundColor: theme.Colors.glassFill,
+    borderRadius: theme.Rounded.lg,
+    paddingHorizontal: theme.Spacing.stackLg,
     paddingTop: 40,
-    paddingBottom: Theme.Spacing.stackLg,
+    paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
@@ -332,23 +317,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   brandingContainer: {
     alignItems: 'center',
-    marginBottom: Theme.Spacing.stackLg,
+    marginBottom: theme.Spacing.stackLg,
   },
   iconWrapper: {
     width: 56,
     height: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: Theme.Rounded.full,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderRadius: theme.Rounded.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
+    borderColor: theme.Colors.outlineVariant,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Theme.Spacing.stackSm,
+    marginBottom: theme.Spacing.stackSm,
   },
   brandingText: {
     ...theme.Typography.headlineMd,
     color: theme.Colors.onSurface,
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
   },
   formContainer: {
     width: '100%',
@@ -359,8 +344,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   label: {
     ...theme.Typography.labelCaps,
     color: theme.Colors.onSurfaceVariant,
-    marginLeft: 4,
-    marginBottom: 8,
+    marginLeft: theme.Spacing.xs,
+    marginBottom: theme.Spacing.sm,
   },
   inputWrapper: {
     position: 'relative',
@@ -368,28 +353,28 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   inputIcon: {
     position: 'absolute',
-    left: Theme.Spacing.stackMd,
+    left: theme.Spacing.stackMd,
     zIndex: 1,
   },
   passwordToggleIcon: {
     position: 'absolute',
-    right: Theme.Spacing.stackMd,
+    right: theme.Spacing.stackMd,
     zIndex: 1,
-    padding: 4,
+    padding: theme.Spacing.xs,
   },
   clearIcon: {
     position: 'absolute',
-    right: Theme.Spacing.stackMd,
+    right: theme.Spacing.stackMd,
     zIndex: 1,
-    padding: 4,
+    padding: theme.Spacing.xs,
   },
   requirementsContainer: {
     marginTop: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    borderRadius: Theme.Rounded.default,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderRadius: theme.Rounded.default,
     padding: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.outlineVariant,
     width: '100%',
   },
   requirementRow: {
@@ -400,8 +385,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   requirementText: {
     ...theme.Typography.bodyMd,
     color: theme.Colors.onSurfaceVariant,
-    fontSize: theme.Typography.BodySmall.fontSize,
-    marginLeft: 8,
+    fontSize: theme.Typography.bodySmall.fontSize,
+    marginLeft: theme.Spacing.sm,
   },
   requirementTextValid: {
     color: theme.Colors.primary,
@@ -409,12 +394,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   input: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
-    borderRadius: Theme.Rounded.default,
+    borderColor: theme.Colors.outlineVariant,
+    borderRadius: theme.Rounded.default,
     paddingLeft: 44,
-    paddingRight: Theme.Spacing.stackMd,
+    paddingRight: theme.Spacing.stackMd,
     paddingVertical: 14,
     ...theme.Typography.bodyMd,
     color: theme.Colors.onSurface,
@@ -423,9 +408,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: 12,
     width: '100%',
     backgroundColor: theme.Colors.primaryContainer,
-    paddingVertical: 16,
-    paddingHorizontal: Theme.Spacing.stackMd,
-    borderRadius: Theme.Rounded.default,
+    paddingVertical: theme.Spacing.md,
+    paddingHorizontal: theme.Spacing.stackMd,
+    borderRadius: theme.Rounded.default,
     alignItems: 'center',
     shadowColor: theme.Colors.primaryContainer,
     shadowOffset: { width: 0, height: 4 },
@@ -445,23 +430,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.Colors.errorContainer,
     padding: 12,
-    borderRadius: Theme.Rounded.default,
+    borderRadius: theme.Rounded.default,
     marginBottom: 20,
     width: '100%',
   },
   errorText: {
     ...theme.Typography.bodyMd,
     color: theme.Colors.error,
-    marginLeft: 8,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    marginLeft: theme.Spacing.sm,
+    fontSize: theme.Typography.bodySmall.fontSize,
   },
   footer: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 32,
-    gap: 8,
+    marginTop: theme.Spacing.xl,
+    gap: theme.Spacing.sm,
   },
   footerText: {
     ...theme.Typography.bodyMd,

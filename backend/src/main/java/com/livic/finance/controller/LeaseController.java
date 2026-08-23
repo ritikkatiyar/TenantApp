@@ -27,11 +27,13 @@ public class LeaseController {
     private final LeaseOrchestrationService leaseOrchestrationService;
 
     @GetMapping
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'LEASE_VIEW')")
     public ResponseEntity<ApiResponse<Page<LeaseDTOs.LeaseResponse>>> getActiveLeasesByProperty(
-            @RequestParam UUID propertyId,
+            @RequestParam(required = false) UUID propertyId,
             @PageableDefault(size = 20) Pageable pageable
     ) {
+        if (propertyId == null) {
+            return ResponseEntity.ok(ApiResponse.success(Page.empty(pageable)));
+        }
         return ResponseEntity.ok(ApiResponse.success(leaseOrchestrationService.getActiveLeasesByProperty(propertyId, pageable)));
     }
 

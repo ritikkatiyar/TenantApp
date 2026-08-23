@@ -152,7 +152,7 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
               <TouchableOpacity style={styles.themeToggle} onPress={handleThemeToggle} activeOpacity={0.7}>
                 <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={theme.Colors.primary} />
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.themeToggle, { marginLeft: 8, borderColor: theme.Colors.errorContainer, backgroundColor: theme.Colors.error + '1A' }]} onPress={handleLogout} activeOpacity={0.7}>
+              <TouchableOpacity style={[styles.themeToggle, { marginLeft: theme.Spacing.sm, borderColor: theme.Colors.errorContainer, backgroundColor: theme.Colors.error + '1A' }]} onPress={handleLogout} activeOpacity={0.7}>
                 <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
               </TouchableOpacity>
             </View>
@@ -213,8 +213,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 12,
   },
   dragTouchZone: {
-    paddingVertical: 4,
-    paddingHorizontal: 24,
+    paddingVertical: theme.Spacing.xs,
+    paddingHorizontal: theme.Spacing.lg,
   },
   dragHandle: {
     width: 44,
@@ -223,7 +223,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.outlineVariant,
   },
   sheetHeader: {
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.Spacing.lg,
     paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: theme.Colors.surfaceVariant,
@@ -239,10 +239,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.primaryContainer,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: theme.Spacing.md,
   },
   avatarText: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
@@ -255,7 +255,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   profileRole: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
     textTransform: 'capitalize',
@@ -297,7 +297,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 2,
   },
   cardTitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurface,
   },
@@ -306,7 +306,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
   },
   cardSubtitle: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
 });

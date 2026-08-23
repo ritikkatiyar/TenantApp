@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { saveUserPreference, SaveUserPreferenceRequest } from '@/src/features/user/api/userPreference.api';
 import { validateAndApplyJoinCode } from '@/src/features/properties/api/rolePermission.api';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 
 const MODULES = [
   {
@@ -119,17 +120,16 @@ export default function OnboardingScreen() {
             autoCapitalize="characters"
             autoCorrect={false}
           />
-          <TouchableOpacity
-            style={[styles.continueButton, (!inviteCode.trim() || joining) && styles.continueButtonDisabled]}
-            onPress={handleJoinProperty}
+          <ActionButton
+            label="Join Property"
+            icon="vpn-key"
+            variant="primary"
+            size="lg"
             disabled={!inviteCode.trim() || joining}
-          >
-            {joining ? (
-              <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
-            ) : (
-              <Text style={styles.continueButtonText}>Join Property</Text>
-            )}
-          </TouchableOpacity>
+            loading={joining}
+            onPress={handleJoinProperty}
+            style={{ minWidth: 200, marginBottom: 20 }}
+          />
           <TouchableOpacity style={styles.toggleBtn} onPress={() => setIsInviteMode(false)}>
             <Text style={styles.toggleBtnText}>Back to Property Creator</Text>
           </TouchableOpacity>
@@ -154,17 +154,15 @@ export default function OnboardingScreen() {
             })}
           </View>
 
-          <TouchableOpacity
-            style={[styles.continueButton, (!selectedModule || loading) && styles.continueButtonDisabled]}
-            onPress={handleComplete}
+          <ActionButton
+            label="Continue"
+            variant="primary"
+            size="lg"
             disabled={!selectedModule || loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
-            ) : (
-              <Text style={styles.continueButtonText}>Continue</Text>
-            )}
-          </TouchableOpacity>
+            loading={loading}
+            onPress={handleComplete}
+            style={{ minWidth: 220, marginBottom: 20 }}
+          />
 
           <TouchableOpacity style={styles.toggleBtn} onPress={() => setIsInviteMode(true)}>
             <Text style={styles.toggleBtnText}>Have an invite code? Join existing property as staff</Text>
@@ -195,7 +193,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
   },
@@ -221,31 +219,31 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   cardSelected: {
-    borderColor: theme.Colors.primary,
-    backgroundColor: theme.Colors.primaryContainer,
+    borderColor: '#0072ff',
+    backgroundColor: isDark ? 'rgba(0, 212, 255, 0.12)' : 'rgba(0, 212, 255, 0.08)',
   },
   cardIcon: {
-    fontSize: theme.Typography.headlineXl.fontSize,
-    marginBottom: 16,
+    fontSize: 32,
+    marginBottom: 12,
   },
   cardTitle: {
-    fontSize: theme.Typography.bodyLg.fontSize,
-    fontWeight: '600',
+    fontSize: theme.Typography.bodyLarge.fontSize,
+    fontWeight: '700',
     color: theme.Colors.onSurface,
-    marginBottom: 8,
+    marginBottom: 4,
     textAlign: 'center',
   },
   cardTitleSelected: {
-    color: theme.Colors.primary,
+    color: '#0072ff',
   },
   cardDesc: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     lineHeight: 20,
   },
   cardDescSelected: {
-    color: theme.Colors.primary,
+    color: '#0072ff',
   },
   continueButton: {
     backgroundColor: theme.Colors.primary,
@@ -287,7 +285,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   toggleBtnText: {
     color: theme.Colors.primary,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '600',
   },
 });

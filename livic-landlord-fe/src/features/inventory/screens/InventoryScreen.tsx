@@ -10,7 +10,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
@@ -24,7 +24,8 @@ import { InventoryMoveOutView } from '@/src/features/inventory/components/Invent
 import { AddItemModal } from '@/src/features/inventory/components/AddItemModal';
 
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
-
+import ActionButton from '@/src/components/common/inputs/ActionButton';
+import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { useRouter } from 'expo-router';
 
 export default function InventoryScreen() {
@@ -68,28 +69,13 @@ export default function InventoryScreen() {
   ];
 
   return (
-    <LinearGradient
-      colors={theme.Colors.backgroundGradient as [string, string, string]}
-      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      style={styles.root}
+    <PageShell
+      scrollable={true}
+      onEndReached={refresh}
+      edges={isDesktop ? ['top'] : []}
+      contentContainerStyle={[styles.scroll, isDesktop ? styles.scrollDesktop : { paddingTop: 88 }]}
     >
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop && (
-          <DesktopNavBar
-            title="Inventory"
-            onBack={leaseId ? () => router.push('/leases') : undefined}
-            backText={leaseId ? 'Back to Leases' : undefined}
-            properties={properties || []}
-            selectedPropertyId={propertyId}
-            onPropertyChange={setSelectedPropertyId}
-          />
-        )}
-        <ScrollView
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scroll, isDesktop ? styles.scrollDesktop : { paddingTop: 88 }]}
-        >
+
           {/* Desktop page header */}
           {isDesktop && (
             <View style={styles.pageHeader}>
@@ -101,16 +87,13 @@ export default function InventoryScreen() {
                 </Text>
                 {leaseId && <Text style={styles.contextLine}>Lease: {leaseId}</Text>}
               </View>
-              <TouchableOpacity
-                style={styles.addBtnWrapper}
-                activeOpacity={0.82}
+              <ActionButton
+                label="Add Item"
+                icon="add"
+                variant="primary"
+                size="md"
                 onPress={() => setIsAddModalOpen(true)}
-              >
-                <LinearGradient colors={[theme.Colors.primary, '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addBtn}>
-                  <MaterialIcons name="add" size={18} color={theme.Colors.surfaceContainerLowest} />
-                  <Text style={styles.addBtnText}>Add Item</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+              />
             </View>
           )}
 
@@ -161,28 +144,16 @@ export default function InventoryScreen() {
           )}
 
           {/* Tab selector */}
-          <View style={styles.tabBar}>
-            {TABS.map((t) => {
-              const active = activeTab === t.id;
-              return (
-                <TouchableOpacity
-                  key={t.id}
-                  style={[styles.tab, active && styles.tabActive]}
-                  onPress={() => setActiveTab(t.id)}
-                  activeOpacity={0.8}
-                >
-                  {active && (
-                    <LinearGradient
-                      colors={t.id === 'moveOut' ? [theme.Colors.error, '#ef4444'] : [theme.Colors.primary, '#0072ff']}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                      style={StyleSheet.absoluteFillObject}
-                    />
-                  )}
-                  <MaterialIcons name={t.icon} size={16} color={active ? '#fff' : '#6b7280'} />
-                  <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
+          <View style={{ flexDirection: 'row', gap: 10, marginVertical: 12 }}>
+            {TABS.map((t) => (
+              <FilterPill
+                key={t.id}
+                label={t.label}
+                icon={t.icon}
+                active={activeTab === t.id}
+                onPress={() => setActiveTab(t.id)}
+              />
+            ))}
           </View>
 
           {/* Desktop search for registry */}
@@ -233,9 +204,6 @@ export default function InventoryScreen() {
               onRefresh={refresh}
             />
           )}
-        </ScrollView>
-      </SafeAreaView>
-
       {propertyId && accessToken && (
         <AddItemModal
           visible={isAddModalOpen}
@@ -245,19 +213,19 @@ export default function InventoryScreen() {
           onSuccess={refresh}
         />
       )}
-    </LinearGradient>
+    </PageShell>
   );
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
-  scroll: { padding: 16, paddingBottom: 120, gap: 16 },
-  scrollDesktop: { padding: 32, maxWidth: 1280, width: '100%', alignSelf: 'center' },
+  scroll: { padding: theme.Spacing.md, paddingBottom: 120, gap: theme.Spacing.md },
+  scrollDesktop: { paddingTop: 24, paddingHorizontal: 32, paddingBottom: 40, width: '100%' },
 
-  pageHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 8 },
+  pageHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.sm },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  kicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
+  kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
   propertyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -267,13 +235,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 8,
   },
-  propertyBadgeText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
-  title: { fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, lineHeight: 38, marginTop: 4 },
-  subtitle: { fontSize: theme.Typography.BodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 8, lineHeight: 22, maxWidth: 600 },
-  contextLine: { color: theme.Colors.primary, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '800', marginTop: 6 },
+  propertyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  title: { fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, lineHeight: 38, marginTop: theme.Spacing.xs },
+  subtitle: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm, lineHeight: 22, maxWidth: 600 },
+  contextLine: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', marginTop: 6 },
   addBtnWrapper: { borderRadius: 14, overflow: 'hidden' },
-  addBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: 8 },
-  addBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
+  addBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 13, gap: theme.Spacing.sm },
+  addBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
 
   mobileTopBar: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   mobileBackBtn: {
@@ -291,25 +259,25 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   searchBox: {
     flex: 1, height: 46, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 14,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)', paddingHorizontal: 12, gap: 8,
+    backgroundColor: theme.Colors.glassFill, borderRadius: 100,
+    borderWidth: 1.5, borderColor: theme.Colors.glassStroke, paddingHorizontal: 14, gap: theme.Spacing.sm,
   },
   searchInput: {
     flex: 1,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
   },
-  desktopSearchRow: { marginBottom: 4 },
+  desktopSearchRow: { marginBottom: theme.Spacing.xs },
 
-  tabBar: { flexDirection: 'row', gap: 8 },
+  tabBar: { flexDirection: 'row', gap: theme.Spacing.sm },
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
-    height: 40, paddingHorizontal: 16, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', overflow: 'hidden',
+    height: 40, paddingHorizontal: theme.Spacing.md, borderRadius: 100,
+    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1.5, borderColor: theme.Colors.glassStroke, overflow: 'hidden',
   },
   tabActive: { borderWidth: 0 },
-  tabText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
+  tabText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
   tabTextActive: { color: theme.Colors.surfaceContainerLowest, fontWeight: '800' },
 });

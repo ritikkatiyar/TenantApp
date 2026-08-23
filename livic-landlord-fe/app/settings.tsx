@@ -41,15 +41,7 @@ export default function SystemPreferencesRoute() {
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.container, isDesktop && styles.containerDesktop]}
     >
-      {/* Top Desktop Navigation */}
-      {isDesktop && (
-        <DesktopNavBar
-          title="Settings & System Hub"
-          properties={settings.properties || []}
-          selectedPropertyId={settings.propertyId}
-          onPropertyChange={handlePropertyChange}
-        />
-      )}
+
 
       {/* Hero Section */}
       <SettingsHero

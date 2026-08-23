@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, usePathname } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, Platform, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import BottomNavigation from '@/src/components/common/navigation/BottomNavigatio
 import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigation';
 import MobileHeader from '@/src/components/common/navigation/MobileHeader';
 import MobileMoreSheet from '@/src/components/common/navigation/MobileMoreSheet';
+import FloatingAIAssistant from '@/src/components/common/navigation/FloatingAIAssistant';
 import { ScrollProvider } from '@/src/components/common/navigation/ScrollContext';
 import { ScreenWrapper } from '@/src/components/common/layout/ScreenWrapper';
 import { OnboardingGate } from '@/src/components/common/layout/OnboardingGate';
@@ -69,6 +70,7 @@ export default function RootLayout() {
   const [moreSheetVisible, setMoreSheetVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -105,6 +107,7 @@ export default function RootLayout() {
                           <MobileHeader 
                             title={getHeaderTitle(pathname)} 
                             onMenuPress={() => setMoreSheetVisible(true)} 
+                            onNotificationPress={() => router.push('/tenant-home')}
                           />
                         )}
                         <ScreenWrapper isAuth={hideNavigation}>
@@ -138,6 +141,7 @@ export default function RootLayout() {
                               onMorePress={() => setMoreSheetVisible(true)} 
                               onQRPress={() => setQrModalVisible(true)} 
                             />
+                            <FloatingAIAssistant />
                             <MobileMoreSheet 
                               visible={moreSheetVisible} 
                               onClose={() => setMoreSheetVisible(false)} 

@@ -14,7 +14,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     maxWidth: 1080,
     alignSelf: 'center',
   },
-  titleContainer: { marginBottom: 32 },
+  titleContainer: { marginBottom: theme.Spacing.xl },
   titleLineDesktop: {
     fontSize: theme.Typography.headlineLg.fontSize,
     fontWeight: '800',
@@ -47,13 +47,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   compactTitleText: {
-    fontSize: theme.Typography.TitleMedium.fontSize,
+    fontSize: theme.Typography.titleMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   mobileLargeTitle: {
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   titleLine: {
     fontSize: theme.Typography.headlineXl.fontSize,
@@ -64,9 +64,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontFamily: 'Inter',
   },
   mobileSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
     fontWeight: '500',
     lineHeight: 20,
   },
@@ -77,7 +77,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.75)',
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
@@ -91,11 +91,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
   },
   statItem: {
     alignItems: 'center',
-    gap: 4,
+    gap: theme.Spacing.xs,
   },
   statValue: {
     fontSize: theme.Typography.headlineMd.fontSize,
@@ -107,7 +107,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.tertiary,
   },
   statLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
@@ -126,7 +126,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   statsSubtitle: {
     textAlign: 'center',
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     letterSpacing: 0.3,
@@ -137,7 +137,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
   workflowLine: {
     flex: 1,
@@ -145,7 +145,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.15)',
   },
   workflowLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1.2,
@@ -186,7 +186,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 18,
     paddingLeft: 20,
-    paddingRight: 16,
+    paddingRight: theme.Spacing.md,
     gap: 14,
   },
   stepBadgeWrapper: {
@@ -206,7 +206,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     elevation: 2,
   },
   stepNumber: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '900',
     color: theme.Colors.surfaceContainerLowest,
   },
@@ -221,14 +221,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   menuTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
     marginBottom: 3,
     fontFamily: 'Inter',
   },
   menuDesc: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 18,
   },
@@ -257,12 +257,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.7)',
     overflow: 'hidden',
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginTop: 8,
+    paddingHorizontal: theme.Spacing.md,
+    marginTop: theme.Spacing.sm,
   },
   tipText: {
     flex: 1,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 18,
     fontWeight: '500',
@@ -272,7 +272,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 24,
+    gap: theme.Spacing.lg,
   },
   gridItem: {
     width: '48%',

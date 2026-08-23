@@ -14,6 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { type AssignmentItem, type InventoryItem } from '@/src/features/inventory/mockInventoryData';
 import { AssignmentCard, SummaryLine } from './InventoryCardComponents';
 import { createLeaseAssignments } from '../api/inventory.api';
+import { StatCard } from '@/src/components/common/display/StatCard';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { formatCurrency } from '@/src/utils/formatters';
 
 interface InventoryMoveInViewProps {
@@ -153,12 +155,14 @@ export function InventoryMoveInView({
                 Add appliances, furniture, or fixtures in the Registry tab before assigning them to leases.
               </Text>
               {onAddItem && (
-                <TouchableOpacity style={styles.emptyAddBtn} onPress={onAddItem}>
-                  <LinearGradient colors={[theme.Colors.primary, '#0072ff']} style={styles.emptyAddBtnInner}>
-                    <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
-                    <Text style={styles.emptyAddBtnText}>Add Item to Registry</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+                <ActionButton
+                  label="Add Item to Registry"
+                  icon="add"
+                  variant="primary"
+                  size="md"
+                  onPress={onAddItem}
+                  style={{ marginTop: 12 }}
+                />
               )}
             </View>
           ) : (
@@ -250,29 +254,29 @@ export function InventoryMoveInView({
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  sectionStack: { gap: 16 },
+  sectionStack: { gap: theme.Spacing.md },
   moveBanner: {
     borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', overflow: 'hidden', minHeight: 90, gap: 16,
+    justifyContent: 'space-between', overflow: 'hidden', minHeight: 90, gap: theme.Spacing.md,
   },
   moveBannerContent: { flex: 1, gap: 2 },
-  moveBannerKicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', fontFamily: 'Inter' },
-  moveBannerTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, fontFamily: 'Inter' },
-  moveBannerMeta: { fontSize: theme.Typography.BodySmall.fontSize, color: 'rgba(255,255,255,0.75)', marginTop: 2, fontFamily: 'Inter' },
-  progressBox: { alignItems: 'flex-end', gap: 4, minWidth: 100 },
-  progressFraction: { fontSize: theme.Typography.HeadlineSmall.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, fontFamily: 'Inter' },
-  progressSublabel: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'Inter' },
+  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 1.2, color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase', fontFamily: 'Inter' },
+  moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, fontFamily: 'Inter' },
+  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: 'rgba(255,255,255,0.75)', marginTop: 2, fontFamily: 'Inter' },
+  progressBox: { alignItems: 'flex-end', gap: theme.Spacing.xs, minWidth: 100 },
+  progressFraction: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, fontFamily: 'Inter' },
+  progressSublabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 0.5, fontFamily: 'Inter' },
   progressTrack: { width: 100, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
   progressFill: { height: 6, borderRadius: 3 },
 
-  workflowGrid: { flexDirection: 'column', gap: 16 },
+  workflowGrid: { flexDirection: 'column', gap: theme.Spacing.md },
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   workflowMain: { flex: 1, gap: 12 },
-  workflowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  workflowHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.Spacing.xs },
   panelTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  panelActions: { flexDirection: 'row', gap: 8 },
+  panelActions: { flexDirection: 'row', gap: theme.Spacing.sm },
   ghostBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: 'rgba(0,0,0,0.07)' },
-  ghostBtnText: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.primary, fontFamily: 'Inter' },
+  ghostBtnText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.primary, fontFamily: 'Inter' },
 
   itemCard: {
     borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)',
@@ -289,23 +293,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', backgroundColor: theme.Colors.surfaceContainerLowest,
   },
   checkboxActive: { borderColor: theme.Colors.primary, backgroundColor: theme.Colors.primary },
-  itemName: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  itemMeta: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontFamily: 'Inter' },
-  itemCardRight: { alignItems: 'flex-end', gap: 4 },
-  conditionChip: { backgroundColor: 'rgba(5,150,105,0.1)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  conditionText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, fontFamily: 'Inter' },
-  itemValue: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  itemName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  itemMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontFamily: 'Inter' },
+  itemCardRight: { alignItems: 'flex-end', gap: theme.Spacing.xs },
+  conditionChip: { backgroundColor: 'rgba(5,150,105,0.1)', paddingHorizontal: theme.Spacing.sm, paddingVertical: 3, borderRadius: 6 },
+  conditionText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, fontFamily: 'Inter' },
+  itemValue: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
 
   emptyCard: {
     borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
     backgroundColor: 'rgba(255,255,255,0.35)', padding: 40, alignItems: 'center', justifyContent: 'center', gap: 10,
   },
-  emptyIconCircle: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
-  emptyTitle: { fontSize: theme.Typography.TitleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  emptySubtitle: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
-  emptyAddBtn: { marginTop: 8, borderRadius: 12, overflow: 'hidden' },
-  emptyAddBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10 },
-  emptyAddBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
+  emptyIconCircle: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: theme.Spacing.xs },
+  emptyTitle: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  emptySubtitle: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
+  emptyAddBtn: { marginTop: theme.Spacing.sm, borderRadius: 12, overflow: 'hidden' },
+  emptyAddBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: theme.Spacing.md, paddingVertical: 10 },
+  emptyAddBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
 
   rail: {
     width: '100%', maxWidth: 320, borderRadius: 20, borderWidth: 1,
@@ -317,6 +321,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   railBody: { gap: 10 },
   railFooter: { marginTop: 6 },
   confirmBtn: { borderRadius: 14, overflow: 'hidden' },
-  confirmBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 16 },
-  confirmBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
+  confirmBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm, paddingVertical: 14, paddingHorizontal: theme.Spacing.md },
+  confirmBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
 });

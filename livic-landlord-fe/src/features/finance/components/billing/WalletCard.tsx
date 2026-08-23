@@ -65,14 +65,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   walletLabel: {
     color: theme.Colors.onSurfaceVariant,
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: theme.Spacing.xs,
   },
   walletValue: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
   },
   badgeContainer: {
@@ -85,7 +85,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   activeBadge: {
     color: theme.Colors.primary,
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
   },
   divider: {
@@ -100,11 +100,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   creditValue: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
   },
   creditUnit: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.primary,
     fontWeight: '500',
   },

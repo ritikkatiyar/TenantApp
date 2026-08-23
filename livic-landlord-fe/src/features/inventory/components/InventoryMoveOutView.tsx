@@ -2,6 +2,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type VerificationItem } from '@/src/features/inventory/mockInventoryData';
@@ -87,16 +88,14 @@ export function InventoryMoveOutView({
             <Text style={styles.refundLabel}>NET REFUND</Text>
             <Text style={styles.refundAmount}>{formatCurrency(netRefund)}</Text>
           </View>
-          <TouchableOpacity style={styles.primaryWideBtn} activeOpacity={0.82}>
-            <LinearGradient
-              colors={[theme.Colors.primary, '#10b981']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={styles.primaryWideBtnInner}
-            >
-              <Text style={styles.primaryWideBtnText}>Confirm & Settle</Text>
-              <MaterialIcons name="send" size={16} color={theme.Colors.surfaceContainerLowest} />
-            </LinearGradient>
-          </TouchableOpacity>
+          <ActionButton
+            label="Confirm & Settle"
+            icon="send"
+            variant="primary"
+            size="md"
+            onPress={() => {}}
+            style={{ width: '100%' }}
+          />
         </BlurView>
       </View>
     </View>
@@ -104,14 +103,14 @@ export function InventoryMoveOutView({
 }
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
-  sectionStack: { gap: 16 },
-  moveBanner: { borderRadius: 22, overflow: 'hidden', minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: 16 },
+  sectionStack: { gap: theme.Spacing.md },
+  moveBanner: { borderRadius: 22, overflow: 'hidden', minHeight: 110, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 22, gap: theme.Spacing.md },
   moveBannerContent: { flex: 1 },
-  moveBannerKicker: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: 'rgba(255,255,255,0.7)', letterSpacing: 1, fontFamily: 'Inter' },
-  moveBannerTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, marginTop: 4, fontFamily: 'Inter' },
-  moveBannerMeta: { fontSize: theme.Typography.BodySmall.fontSize, color: 'rgba(255,255,255,0.8)', marginTop: 4, fontFamily: 'Inter' },
-  moveOutDatePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
-  moveOutDateText: { color: theme.Colors.surfaceContainerLowest, fontWeight: '800', fontSize: theme.Typography.BodyMedium.fontSize, fontFamily: 'Inter' },
+  moveBannerKicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: 'rgba(255,255,255,0.7)', letterSpacing: 1, fontFamily: 'Inter' },
+  moveBannerTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '900', color: theme.Colors.surfaceContainerLowest, marginTop: theme.Spacing.xs, fontFamily: 'Inter' },
+  moveBannerMeta: { fontSize: theme.Typography.bodySmall.fontSize, color: 'rgba(255,255,255,0.8)', marginTop: theme.Spacing.xs, fontFamily: 'Inter' },
+  moveOutDatePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: theme.Spacing.sm, borderRadius: 12 },
+  moveOutDateText: { color: theme.Colors.surfaceContainerLowest, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize, fontFamily: 'Inter' },
   workflowGrid: { gap: 14 },
   workflowGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   workflowMain: { flex: 1.9, gap: 12 },
@@ -121,19 +120,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
     backgroundColor: 'rgba(255,255,255,0.35)', padding: 40, alignItems: 'center', justifyContent: 'center', gap: 10,
   },
-  emptyIconCircle: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
-  emptyTitle: { fontSize: theme.Typography.TitleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
-  emptySubtitle: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
+  emptyIconCircle: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: theme.Spacing.xs },
+  emptyTitle: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' },
+  emptySubtitle: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 360, lineHeight: 18, fontFamily: 'Inter' },
 
-  rail: { flex: 1, minWidth: 260, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.35)', padding: 16, gap: 14, overflow: 'hidden' },
+  rail: { flex: 1, minWidth: 260, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.35)', padding: theme.Spacing.md, gap: 14, overflow: 'hidden' },
   railHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   railIconCircle: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   railBody: { gap: 10 },
   railDivider: { height: 1, backgroundColor: 'rgba(0,0,0,0.07)', marginVertical: 2 },
   refundBlock: { backgroundColor: 'rgba(5,150,105,0.08)', borderRadius: 14, padding: 14, gap: 2, borderWidth: 1, borderColor: 'rgba(5,150,105,0.15)' },
-  refundLabel: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: 'Inter' },
-  refundAmount: { fontSize: theme.Typography.HeadlineMedium.fontSize, fontWeight: '900', color: theme.Colors.primary, fontFamily: 'Inter' },
+  refundLabel: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: 'Inter' },
+  refundAmount: { fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '900', color: theme.Colors.primary, fontFamily: 'Inter' },
   primaryWideBtn: { borderRadius: 14, overflow: 'hidden' },
-  primaryWideBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14 },
-  primaryWideBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
+  primaryWideBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: theme.Spacing.sm, paddingVertical: 14 },
+  primaryWideBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', fontFamily: 'Inter' },
 });

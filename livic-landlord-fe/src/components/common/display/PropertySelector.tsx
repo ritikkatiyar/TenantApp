@@ -61,7 +61,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 10,
   },
   label: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     textTransform: 'uppercase',

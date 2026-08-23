@@ -149,98 +149,98 @@ export interface TypographyStyle extends Omit<TextStyle, 'fontWeight'> {
 }
 
 export const Typography = {
-  DisplayLarge: {
+  displayLarge: {
     fontFamily: 'Inter',
     fontSize: 57,
     fontWeight: 'normal' as const,
     lineHeight: 64,
   },
-  DisplayMedium: {
+  displayMedium: {
     fontFamily: 'Inter',
     fontSize: 45,
     fontWeight: 'normal' as const,
     lineHeight: 52,
   },
-  DisplaySmall: {
+  displaySmall: {
     fontFamily: 'Inter',
     fontSize: 36,
     fontWeight: 'normal' as const,
     lineHeight: 44,
   },
-  HeadlineLarge: {
+  headlineLarge: {
     fontFamily: 'Inter',
     fontSize: 32,
-    fontWeight: 'normal' as const,
+    fontWeight: '800' as const,
     lineHeight: 40,
   },
-  HeadlineMedium: {
+  headlineMedium: {
     fontFamily: 'Inter',
     fontSize: 28,
-    fontWeight: 'normal' as const,
+    fontWeight: '700' as const,
     lineHeight: 36,
   },
-  HeadlineSmall: {
+  headlineSmall: {
     fontFamily: 'Inter',
     fontSize: 24,
-    fontWeight: 'normal' as const,
+    fontWeight: '700' as const,
     lineHeight: 32,
   },
-  TitleLarge: {
+  titleLarge: {
     fontFamily: 'Inter',
     fontSize: 22,
-    fontWeight: 'normal' as const,
+    fontWeight: '700' as const,
     lineHeight: 28,
   },
-  TitleMedium: {
+  titleMedium: {
     fontFamily: 'Inter',
     fontSize: 16,
     fontWeight: '500' as const,
     lineHeight: 24,
     letterSpacing: 0.15,
   },
-  TitleSmall: {
+  titleSmall: {
     fontFamily: 'Inter',
     fontSize: 14,
     fontWeight: '500' as const,
     lineHeight: 20,
     letterSpacing: 0.1,
   },
-  LabelLarge: {
+  labelLarge: {
     fontFamily: 'Inter',
     fontSize: 14,
     fontWeight: '500' as const,
     lineHeight: 20,
     letterSpacing: 0.1,
   },
-  LabelMedium: {
+  labelMedium: {
     fontFamily: 'Inter',
     fontSize: 12,
     fontWeight: '500' as const,
     lineHeight: 16,
     letterSpacing: 0.5,
   },
-  LabelSmall: {
+  labelSmall: {
     fontFamily: 'Inter',
     fontSize: 11,
     fontWeight: '500' as const,
     lineHeight: 16,
     letterSpacing: 0.5,
   },
-  BodyLarge: {
+  bodyLarge: {
     fontFamily: 'Inter',
     fontSize: 16,
     fontWeight: 'normal' as const,
     lineHeight: 24,
     letterSpacing: 0.15,
   },
-  BodyMedium: {
+  bodyMedium: {
     fontFamily: 'Inter',
     fontSize: 14,
     fontWeight: 'normal' as const,
     lineHeight: 20,
     letterSpacing: 0.25,
   },
-  BodySmall: {
+  bodySmall: {
     fontFamily: 'Inter',
     fontSize: 12,
     fontWeight: 'normal' as const,

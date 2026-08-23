@@ -60,7 +60,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   modalPopup: {
     width: 400,
     maxWidth: '90%',
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderRadius: 24,
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.8)',
@@ -73,10 +73,10 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 12,
   },
   message: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 20,
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
     fontWeight: '500',
   },
   actionsRow: {
@@ -86,12 +86,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   cancelBtn: {
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     borderRadius: 100,
     backgroundColor: 'rgba(0, 0, 0, 0.04)',
   },
   cancelBtnText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
   },
@@ -112,7 +112,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   confirmBtnText: {
     color: theme.Colors.onPrimary,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
   },
 });

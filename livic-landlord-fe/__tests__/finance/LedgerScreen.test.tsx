@@ -43,7 +43,7 @@ jest.mock('@/src/features/finance/hooks/useLedger', () => ({
         date: '2023-10-01T10:00:00.000Z',
         description: 'Rent Payment - Unit 101',
         amount: 15000,
-        type: 'CREDIT',
+        transactionType: 'CREDIT',
         referenceId: 'ref-1',
       }
     ],

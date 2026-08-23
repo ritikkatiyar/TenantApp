@@ -276,7 +276,7 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
               {/* Quick Command Suggestions */}
               <View style={styles.suggestionBlock}>
                 <Text style={styles.suggestionTitle}>QUICK COMMANDS</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: theme.Spacing.sm }}>
                   {EXAMPLES.map((example) => (
                     <TouchableOpacity
                       key={example}

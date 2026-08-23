@@ -171,7 +171,11 @@ function getFileType(filepath) {
   }
   
   // Check frontend
-  if (filepath.startsWith('TenantAppFE/') || filepath.startsWith('TenantAppTenantFE/')) {
+  if (
+    filepath.startsWith('livic-landlord-fe/') ||
+    filepath.startsWith('livic-resident-fe/') ||
+    filepath.startsWith('packages/')
+  ) {
     if (['ts', 'tsx', 'js', 'jsx'].includes(ext)) {
       return 'frontend';
     }

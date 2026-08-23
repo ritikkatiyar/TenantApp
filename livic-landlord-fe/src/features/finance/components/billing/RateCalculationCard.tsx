@@ -161,7 +161,7 @@ export function RateCalculationCard({
                       >
                         <Text style={[
                           styles.scrollText,
-                          isActive && { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700', color: theme.Colors.primary },
+                          isActive && { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.primary },
                         ]}>{unit}</Text>
                       </TouchableOpacity>
                     );
@@ -179,7 +179,7 @@ export function RateCalculationCard({
 const createStyles = (theme: any) => StyleSheet.create({
   card: {
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
     backgroundColor: theme.Colors.glassFill,
@@ -189,24 +189,24 @@ const createStyles = (theme: any) => StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
     marginBottom: 20,
   },
   cardTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   label: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
   },
   radioGroup: {
-    marginBottom: 24,
-    gap: 16,
+    marginBottom: theme.Spacing.lg,
+    gap: theme.Spacing.md,
   },
   radioRow: {
     flexDirection: 'row',
@@ -229,12 +229,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     backgroundColor: theme.Colors.primary,
   },
   radioTitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
   radioSub: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
@@ -246,7 +246,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     marginBottom: 20,
   },
   rateInputContainer: {
@@ -257,27 +257,27 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRightWidth: 0,
   },
   currencySymbol: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '700',
-    marginRight: 8,
+    marginRight: theme.Spacing.sm,
   },
   inputWithIcon: {
     flex: 1,
     height: '100%',
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
   desktopUnits: {
     flex: 1.5,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginLeft: 16,
+    gap: theme.Spacing.sm,
+    marginLeft: theme.Spacing.md,
   },
   unitBtn: {
-    paddingVertical: 8,
+    paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 16,
@@ -285,7 +285,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.9)',
   },
   unitText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
@@ -306,7 +306,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: '100%',
   },
   scrollText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '500',
     color: 'rgba(132, 148, 149, 0.4)',
   },

@@ -24,7 +24,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 4,
     maxWidth: 600,
@@ -51,7 +51,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   actionPillText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -69,8 +69,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     padding: 20,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
   },
   hubCardActive: {
     borderColor: theme.Colors.primary,
@@ -98,17 +98,17 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
   },
   hubBadgeText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
   },
   hubCardTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     marginBottom: 4,
   },
   hubCardDesc: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 17,
   },
@@ -122,12 +122,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 18,
   },
   sectionTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   sectionSub: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
@@ -150,7 +150,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 10,
   },
   roleName: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
@@ -163,7 +163,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   customRolePillText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
   },
@@ -176,12 +176,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(107, 122, 125, 0.2)',
   },
   systemRolePillText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
   },
   roleDesc: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     lineHeight: 19,
   },
@@ -204,7 +204,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 8,
   },
   permCountText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -220,7 +220,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLow,
   },
   configureBtnText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -252,7 +252,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   inviteCode: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '900',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -271,14 +271,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
   },
   inviteMetaLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     marginBottom: 4,
     letterSpacing: 0.8,
   },
   inviteMetaVal: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
@@ -294,7 +294,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.3)',
   },
   copyKeyBtnText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -312,7 +312,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 16,
   },
   prefCardTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
@@ -325,12 +325,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopColor: 'rgba(0, 0, 0, 0.05)',
   },
   prefItemName: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
   prefItemDesc: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
@@ -343,7 +343,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0, 104, 117, 0.2)',
   },
   prefBadgeText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -382,7 +382,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   modalSub: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
@@ -398,7 +398,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   categoryHeading: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1.1,
@@ -420,7 +420,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingRight: 12,
   },
   permCheckName: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
@@ -428,12 +428,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   permCheckDesc: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
   inputLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     letterSpacing: 1.1,
     color: theme.Colors.onSurfaceVariant,
@@ -445,7 +445,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     backgroundColor: theme.Colors.surfaceContainerLow,
     marginBottom: 16,
@@ -470,7 +470,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   roleSelectChipText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
   },
@@ -493,7 +493,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   modalBtnText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -504,7 +504,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   loadingSub: {
     marginTop: 12,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
 });

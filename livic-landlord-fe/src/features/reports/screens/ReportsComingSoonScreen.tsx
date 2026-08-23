@@ -19,11 +19,7 @@ export default function ReportsComingSoonScreen() {
 
   return (
     <PageShell contentContainerStyle={styles.container}>
-      {isDesktop && (
-        <DesktopNavBar 
-          title="Reports" 
-        />
-      )}
+
       <View style={styles.centerContainer}>
         <GlassCard style={styles.glassCard}>
           <View style={styles.iconCircle}>

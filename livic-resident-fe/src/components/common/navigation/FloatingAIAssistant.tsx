@@ -8,11 +8,11 @@ import {
   ScrollView,
   ActivityIndicator,
   Animated,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
   Pressable,
+  useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -20,7 +20,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import { Theme } from '@/src/theme/Theme';
 import { usePathname } from 'expo-router';
 import { runAICommand, getJobStatus } from '@/src/features/ai/api/ai.api';
 
@@ -39,8 +38,8 @@ const EXAMPLES = [
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
   const { accessToken } = useAuth();
-  const { theme } = useAppTheme();
-  const brandGradient = [theme.Colors.primary, theme.Colors.inversePrimary] as const;
+  const { theme, isDark } = useAppTheme();
+  const brandGradient = ['#00d4ff', '#0072ff'] as const;
 
   const [isOpen, setIsOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -55,10 +54,13 @@ export default function FloatingAIAssistant() {
   const [isSending, setIsSending] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   
   // Animations
   const animValue = useRef(new Animated.Value(0)).current; // 0: closed, 1: open
   const bubbleScale = useRef(new Animated.Value(1)).current; // For bounce effect
+
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   useEffect(() => {
     Animated.spring(animValue, {
@@ -98,104 +100,80 @@ export default function FloatingAIAssistant() {
     Animated.sequence([
       Animated.timing(bubbleScale, { toValue: 0.95, duration: 100, useNativeDriver: true }),
       Animated.spring(bubbleScale, { toValue: 1, friction: 8, useNativeDriver: true }),
-    ]).start(() => {
-      setIsOpen(true);
-    });
+    ]).start();
+    setIsOpen(true);
   };
 
   const handleClose = () => {
-    Keyboard.dismiss();
     setIsOpen(false);
   };
 
   const sendMessage = async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed || isSending) return;
+    if (!text.trim() || isSending || !accessToken) return;
 
-    const userMsg: Message = {
-      id: `${Date.now()}-user`,
-      role: 'user',
-      text: trimmed,
-    };
-
-    setMessages((current) => [...current, userMsg]);
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', text };
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsSending(true);
 
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-
     try {
-      const response = await runAICommand({ message: trimmed }, accessToken);
-      
-      if (response.jobId && response.status === 'PENDING') {
-        const jobId = response.jobId;
-        let pollCount = 0;
-        const maxPolls = 40;
+      const response = await runAICommand({ message: text }, accessToken);
+      let assistantMsgText = '';
 
-        const poll = (): Promise<string> => {
-          return new Promise((resolve, reject) => {
-            const interval = setInterval(async () => {
-              pollCount++;
-              if (pollCount > maxPolls) {
-                clearInterval(interval);
-                reject(new Error('AI command execution timed out. Please try again.'));
-                return;
-              }
-
-              try {
-                const jobStatus = await getJobStatus(jobId, accessToken);
-                if (jobStatus.status === 'COMPLETED') {
-                  clearInterval(interval);
-                  resolve(jobStatus.response || 'Command completed successfully.');
-                } else if (jobStatus.status === 'FAILED') {
-                  clearInterval(interval);
-                  reject(new Error(jobStatus.errorMessage || 'AI command execution failed.'));
-                }
-              } catch (err) {
-                clearInterval(interval);
-                reject(err);
-              }
-            }, 1500);
-          });
-        };
-
-        const resultText = await poll();
-        setMessages((current) => [
-          ...current,
-          {
-            id: `${Date.now()}-assistant`,
-            role: 'assistant',
-            text: resultText,
-          },
-        ]);
+      if (response.status === 'COMPLETED') {
+        assistantMsgText = response.message || 'Task completed successfully.';
+      } else if (response.status === 'RUNNING' || response.status === 'QUEUED' || response.jobId) {
+        assistantMsgText = response.message || 'Your request is processing in the background. I will update you soon.';
+        if (response.jobId) {
+          pollJobStatus(response.jobId);
+        }
       } else {
-        setMessages((current) => [
-          ...current,
-          {
-            id: `${Date.now()}-assistant`,
-            role: 'assistant',
-            text: response.message || 'Success!',
-          },
-        ]);
+        assistantMsgText = response.message || 'An error occurred during execution.';
       }
+
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        text: assistantMsgText
+      }]);
     } catch (err: any) {
-      setMessages((current) => [
-        ...current,
-        {
-          id: `${Date.now()}-assistant`,
-          role: 'assistant',
-          text: err.message || 'Sorry, I hit an error executing that request.',
-        },
-      ]);
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        text: err.message || 'Failed to connect to AI Service.'
+      }]);
     } finally {
       setIsSending(false);
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
   };
 
-  const windowWidth = Dimensions.get('window').width;
-  const windowHeight = Dimensions.get('window').height;
+  const pollJobStatus = async (jobId: string) => {
+    if (!accessToken) return;
+    const interval = setInterval(async () => {
+      try {
+        const job = await getJobStatus(jobId, accessToken);
+        if (job.status === 'COMPLETED') {
+          clearInterval(interval);
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'assistant',
+            text: `Background Task Completed: ${job.response || 'Execution successful.'}`
+          }]);
+        } else if (job.status === 'FAILED') {
+          clearInterval(interval);
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            role: 'assistant',
+            text: `Background Task Failed: ${job.errorMessage || 'Failed to execute.'}`
+          }]);
+        }
+      } catch (e) {
+        console.error('AI job status check failed', e);
+      }
+    }, 3000);
+  };
 
+  // Interpolations for open sheet layout
   const cardWidth = animValue.interpolate({
     inputRange: [0, 1],
     outputRange: [56, windowWidth * 0.92],
@@ -220,7 +198,14 @@ export default function FloatingAIAssistant() {
     outputRange: [20, (windowWidth * 0.08) / 2],
   });
 
-  const cardBottom = keyboardHeight > 0 ? keyboardHeight + 10 : 20;
+  // Calculate bottom offset to float AI trigger cleanly above bottom navigation bar
+  const defaultClosedBottom = Platform.OS === 'ios' ? 112 : 92;
+  const cardBottom = keyboardHeight > 0 
+    ? keyboardHeight + 10 
+    : animValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [defaultClosedBottom, 20],
+      });
 
   const contentOpacity = animValue.interpolate({
     inputRange: [0, 0.8, 1],
@@ -254,7 +239,7 @@ export default function FloatingAIAssistant() {
           },
         ]}
       >
-        <BlurView intensity={95} tint="light" style={StyleSheet.absoluteFillObject} />
+        <BlurView intensity={95} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
 
         {/* 1. Closed State Floating Bubble Trigger */}
         <Animated.View
@@ -350,9 +335,7 @@ export default function FloatingAIAssistant() {
                     msg.role === 'user' ? styles.msgUser : styles.msgAssistant,
                   ]}
                 >
-                  <BlurView
-                    intensity={95}
-                    tint="light"
+                  <View
                     style={[
                       styles.msgBubble,
                       msg.role === 'user'
@@ -370,16 +353,16 @@ export default function FloatingAIAssistant() {
                     >
                       {msg.text}
                     </Text>
-                  </BlurView>
+                  </View>
                 </View>
               ))}
 
               {isSending && (
                 <View style={[styles.msgWrapper, styles.msgAssistant]}>
-                  <BlurView intensity={90} tint="light" style={[styles.msgBubble, styles.bubbleAssistant, styles.loadingBubble]}>
+                  <View style={[styles.msgBubble, styles.bubbleAssistant, styles.loadingBubble]}>
                     <ActivityIndicator size="small" color={theme.Colors.primary} />
                     <Text style={[styles.loadingText, { color: theme.Colors.onSurfaceVariant }]}>Thinking...</Text>
-                  </BlurView>
+                  </View>
                 </View>
               )}
             </ScrollView>
@@ -422,7 +405,7 @@ export default function FloatingAIAssistant() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(11, 28, 48, 0.35)',
@@ -431,10 +414,10 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.85)',
-    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: isDark ? 'rgba(19, 28, 38, 0.85)' : 'rgba(255, 255, 255, 0.88)',
     overflow: 'hidden',
-    shadowColor: Theme.Surface.shadowColor,
+    shadowColor: theme.Colors.shadowColor || '#000000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -458,11 +441,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: 8,
-    paddingHorizontal: 16,
+    paddingTop: theme.Spacing.sm,
+    paddingHorizontal: theme.Spacing.md,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
   },
   dragBarWrapper: {
     alignSelf: 'center',
@@ -481,7 +464,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
   },
   headerIconWrapper: {
     width: 28,
@@ -492,8 +475,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: Theme.Typography.TitleSmall.fontSize,
+    fontSize: theme.Typography.titleSmall.fontSize,
     fontWeight: '800',
+    color: theme.Colors.onSurface,
   },
   closeBtn: {
     padding: 6,
@@ -502,33 +486,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messagesContainer: {
-    padding: 16,
+    padding: theme.Spacing.md,
     gap: 12,
   },
   examplesWrapper: {
-    gap: 8,
-    marginBottom: 8,
+    gap: theme.Spacing.sm,
+    marginBottom: theme.Spacing.sm,
   },
   examplesHeader: {
-    fontSize: Theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
+    color: theme.Colors.onSurfaceVariant,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   examplePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.75)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.95)',
     borderRadius: 14,
-    paddingVertical: 8,
+    paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 12,
     gap: 6,
   },
   exampleText: {
-    fontSize: Theme.Typography.BodySmall.fontSize,
-    color: Theme.Colors.primary,
+    fontSize: theme.Typography.bodySmall.fontSize,
+    color: theme.Colors.primary,
     fontWeight: '600',
     flex: 1,
   },
@@ -548,18 +533,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderWidth: 1,
-    overflow: 'hidden',
   },
   bubbleUser: {
     borderBottomRightRadius: 4,
   },
   bubbleAssistant: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.9)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.95)',
     borderBottomLeftRadius: 4,
   },
   msgText: {
-    fontSize: Theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     lineHeight: 19,
   },
   textUser: {
@@ -571,10 +555,10 @@ const styles = StyleSheet.create({
   loadingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   loadingText: {
-    fontSize: Theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
   },
   inputBar: {
@@ -582,18 +566,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+    borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
     gap: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    backgroundColor: isDark ? 'rgba(19, 28, 38, 0.9)' : 'rgba(255, 255, 255, 0.75)',
   },
   input: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)',
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    fontSize: Theme.Typography.BodyMedium.fontSize,
+    paddingVertical: theme.Spacing.sm,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     maxHeight: 80,
   },
   sendBtn: {

@@ -15,7 +15,10 @@ import * as WebBrowser from 'expo-web-browser';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import FilterPill from '@/src/components/common/inputs/FilterPill';
+import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { listRentCycles, RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
 import { fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -23,8 +26,11 @@ import { createStyles } from './reports.styles';
 
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { StatCard } from '@/src/components/common/display/StatCard';
+import { SkeletonRow } from '@/src/components/common/feedback/Skeleton';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { EmptyState } from '@/src/components/common/display/EmptyState';
+import Pagination from '@/src/components/common/navigation/Pagination';
 
 const STATUS_OPTIONS = [
   { label: 'All Status', value: 'ALL' },
@@ -41,8 +47,8 @@ export default function ReportsRoute() {
   const { accessToken } = useAuth();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
+  const { selectedPropertyId } = useGlobalPropertySelection();
 
-  const [selectedProperty, setSelectedProperty] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [billingMonth, setBillingMonth] = useState<string>(() => {
@@ -60,16 +66,22 @@ export default function ReportsRoute() {
   const [totalRevenue, setTotalRevenue] = useState<number>(0);
   const [publishedCount, setPublishedCount] = useState<number>(0);
   const [pendingDraftsCount, setPendingDraftsCount] = useState<number>(0);
+  const [accumulatedStatements, setAccumulatedStatements] = useState<RentCycleResponse[]>([]);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const loadStatements = useCallback(
     async (targetPage: number = 0) => {
       if (!accessToken) return;
       try {
-        setIsLoading(true);
+        if (targetPage === 0) {
+          setIsLoading(true);
+        } else {
+          setIsFetchingMore(true);
+        }
         const data = await listRentCycles(
           billingMonth,
           accessToken,
-          selectedProperty !== 'ALL' ? selectedProperty : undefined,
+          selectedPropertyId || undefined,
           targetPage,
           pageSize,
           statusFilter !== 'ALL' ? statusFilter : undefined,
@@ -84,10 +96,17 @@ export default function ReportsRoute() {
           })
         );
 
+        setAccumulatedStatements((prev) => {
+          if (targetPage === 0) return sortedContent;
+          const existingIds = new Set(prev.map((i) => i.id));
+          const newItems = sortedContent.filter((i) => !existingIds.has(i.id));
+          return [...prev, ...newItems];
+        });
+
         setStatements(sortedContent);
         setTotalElements(data.totalElements || 0);
         setTotalPages(data.totalPages || 0);
-        setPage(data.number || targetPage);
+        setPage(targetPage);
         setTotalRevenue(data.totalExpectedRevenue || 0);
         setPublishedCount(data.publishedCount || 0);
         setPendingDraftsCount(data.pendingDraftsCount || 0);
@@ -95,10 +114,17 @@ export default function ReportsRoute() {
         console.warn('[Reports] Error loading statements:', err.message);
       } finally {
         setIsLoading(false);
+        setIsFetchingMore(false);
       }
     },
-    [accessToken, billingMonth, selectedProperty, statusFilter, pageSize, searchQuery]
+    [accessToken, billingMonth, selectedPropertyId, pageSize, statusFilter, searchQuery]
   );
+
+  const handleLoadMore = useCallback(() => {
+    if (!isLoading && !isFetchingMore && page + 1 < totalPages) {
+      loadStatements(page + 1);
+    }
+  }, [isLoading, isFetchingMore, page, totalPages, loadStatements]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -144,56 +170,44 @@ export default function ReportsRoute() {
   return (
     <PageShell
       scrollable
-      edges={isDesktop ? ['top'] : []}
+      onEndReached={handleLoadMore}
       contentContainerStyle={[styles.container, isDesktop && styles.containerDesktop]}
     >
-      {isDesktop && <DesktopNavBar title="Reports & Statements" />}
+
 
       {/* KPI Stats Overview */}
       <View style={styles.kpiRow}>
-        <GlassCard style={styles.kpiCard}>
-          <View style={styles.kpiHeader}>
-            <Text style={styles.kpiLabel}>TOTAL STATEMENTS</Text>
-            <MaterialIcons name="receipt-long" size={20} color={theme.Colors.primary} />
-          </View>
-          <Text style={styles.kpiValue}>{totalElements}</Text>
-          <Text style={styles.kpiSub}>Records for {billingMonth}</Text>
-        </GlassCard>
-
-        <GlassCard style={styles.kpiCard}>
-          <View style={styles.kpiHeader}>
-            <Text style={styles.kpiLabel}>TOTAL BILLED</Text>
-            <MaterialIcons name="payments" size={20} color={theme.Colors.secondary} />
-          </View>
-          <Text style={[styles.kpiValue, { color: theme.Colors.secondary }]}>
-            ₹{totalRevenue.toLocaleString()}
-          </Text>
-          <Text style={styles.kpiSub}>{publishedCount} published invoices</Text>
-        </GlassCard>
-
-        <GlassCard style={styles.kpiCard}>
-          <View style={styles.kpiHeader}>
-            <Text style={styles.kpiLabel}>PAGE COLLECTED</Text>
-            <MaterialIcons name="check-circle" size={20} color={theme.Colors.tertiary} />
-          </View>
-          <Text style={[styles.kpiValue, { color: theme.Colors.tertiary }]}>
-            ₹{totalCollected.toLocaleString()}
-          </Text>
-          <Text style={styles.kpiSub}>
-            {statements.filter((s) => s.status === 'PAID').length} paid on this page
-          </Text>
-        </GlassCard>
-
-        <GlassCard style={styles.kpiCard}>
-          <View style={styles.kpiHeader}>
-            <Text style={styles.kpiLabel}>PENDING DRAFTS</Text>
-            <MaterialIcons name="pending" size={20} color={theme.Colors.tertiary} />
-          </View>
-          <Text style={[styles.kpiValue, { color: theme.Colors.tertiary }]}>
-            {pendingDraftsCount}
-          </Text>
-          <Text style={styles.kpiSub}>Drafts awaiting publishing</Text>
-        </GlassCard>
+        <StatCard
+          label="TOTAL STATEMENTS"
+          value={totalElements}
+          helperText={`Records for ${billingMonth}`}
+          iconName="receipt-long"
+          iconColor={theme.Colors.primary}
+        />
+        <StatCard
+          label="TOTAL BILLED"
+          value={`₹${totalRevenue.toLocaleString()}`}
+          helperText={`${publishedCount} published invoices`}
+          iconName="payments"
+          iconColor={theme.Colors.secondary}
+          valueStyle={{ color: theme.Colors.secondary }}
+        />
+        <StatCard
+          label="PAGE COLLECTED"
+          value={`₹${totalCollected.toLocaleString()}`}
+          helperText={`${statements.filter((s) => s.status === 'PAID').length} paid on this page`}
+          iconName="check-circle"
+          iconColor={theme.Colors.tertiary}
+          valueStyle={{ color: theme.Colors.tertiary }}
+        />
+        <StatCard
+          label="PENDING DRAFTS"
+          value={pendingDraftsCount}
+          helperText="Drafts awaiting publishing"
+          iconName="pending"
+          iconColor={theme.Colors.tertiary}
+          valueStyle={{ color: theme.Colors.tertiary }}
+        />
       </View>
 
       {/* Header & Filter Controls Card */}
@@ -223,41 +237,7 @@ export default function ReportsRoute() {
           </View>
         </View>
 
-        {/* Property Select Tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.propertyTabs}
-          contentContainerStyle={styles.propertyTabsContent}
-        >
-          <TouchableOpacity
-            onPress={() => setSelectedProperty('ALL')}
-            style={[styles.propTab, selectedProperty === 'ALL' && styles.propTabActive]}
-          >
-            <Text
-              style={[styles.propTabText, selectedProperty === 'ALL' && styles.propTabTextActive]}
-            >
-              All Properties
-            </Text>
-          </TouchableOpacity>
-          {properties &&
-            properties.map((prop) => (
-              <TouchableOpacity
-                key={prop.id}
-                onPress={() => setSelectedProperty(prop.id)}
-                style={[styles.propTab, selectedProperty === prop.id && styles.propTabActive]}
-              >
-                <Text
-                  style={[
-                    styles.propTabText,
-                    selectedProperty === prop.id && styles.propTabTextActive,
-                  ]}
-                >
-                  {prop.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-        </ScrollView>
+
 
         {/* Search & Status Filters */}
         <View style={styles.filterControlsRow}>
@@ -278,42 +258,29 @@ export default function ReportsRoute() {
           </View>
 
           {/* Status Filter Chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.statusChipsContainer}
-          >
+          <View style={styles.statusChipsWrap}>
             {STATUS_OPTIONS.map((opt) => (
-              <TouchableOpacity
+              <FilterPill
                 key={opt.value}
+                label={opt.label}
+                active={statusFilter === opt.value}
                 onPress={() => setStatusFilter(opt.value)}
-                style={[
-                  styles.statusChip,
-                  statusFilter === opt.value && styles.statusChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.statusChipText,
-                    statusFilter === opt.value && styles.statusChipTextActive,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
+              />
             ))}
-          </ScrollView>
+          </View>
         </View>
       </GlassCard>
 
       {/* Statements List Table / Cards */}
       <GlassCard style={[styles.listCard, isDesktop && styles.listCardDesktop]}>
         {isLoading ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color={theme.Colors.primary} />
-            <Text style={styles.loadingText}>Fetching statements...</Text>
+          <View style={{ gap: 12, paddingVertical: 12 }}>
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
           </View>
-        ) : statements.length > 0 ? (
+        ) : accumulatedStatements.length > 0 ? (
           <View style={styles.table}>
             {/* Desktop Table Header */}
             {isDesktop && (
@@ -338,7 +305,7 @@ export default function ReportsRoute() {
               </View>
             )}
 
-            {statements.map((stmt) => (
+            {accumulatedStatements.map((stmt) => (
               <View key={stmt.id} style={[styles.row, !isDesktop && styles.rowMobile]}>
                 {isDesktop ? (
                   // Desktop Layout
@@ -427,54 +394,7 @@ export default function ReportsRoute() {
               </View>
             ))}
 
-            {/* Pagination Controls */}
-            <View style={styles.paginationBar}>
-              <Text style={styles.paginationInfo}>
-                Showing <Text style={{ fontWeight: '700' }}>{startIdx}</Text> -{' '}
-                <Text style={{ fontWeight: '700' }}>{endIdx}</Text> of{' '}
-                <Text style={{ fontWeight: '700' }}>{totalElements}</Text> statements
-              </Text>
-
-              <View style={styles.paginationActions}>
-                <TouchableOpacity
-                  onPress={() => page > 0 && loadStatements(page - 1)}
-                  disabled={page === 0}
-                  style={[styles.pageBtn, page === 0 && styles.pageBtnDisabled]}
-                >
-                  <MaterialIcons
-                    name="chevron-left"
-                    size={22}
-                    color={page === 0 ? '#9ca3af' : theme.Colors.primary}
-                  />
-                  <Text style={[styles.pageBtnText, page === 0 && styles.pageBtnTextDisabled]}>
-                    Prev
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={styles.pageNumberBadge}>
-                  <Text style={styles.pageNumberText}>
-                    Page {page + 1} of {Math.max(totalPages, 1)}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  onPress={() => page + 1 < totalPages && loadStatements(page + 1)}
-                  disabled={page + 1 >= totalPages}
-                  style={[styles.pageBtn, page + 1 >= totalPages && styles.pageBtnDisabled]}
-                >
-                  <Text
-                    style={[styles.pageBtnText, page + 1 >= totalPages && styles.pageBtnTextDisabled]}
-                  >
-                    Next
-                  </Text>
-                  <MaterialIcons
-                    name="chevron-right"
-                    size={22}
-                    color={page + 1 >= totalPages ? '#9ca3af' : theme.Colors.primary}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
+            {isFetchingMore && <ActivityIndicator color={theme.Colors.primary} style={{ marginVertical: 14 }} />}
           </View>
         ) : (
           <EmptyState

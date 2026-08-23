@@ -53,7 +53,7 @@ export function DynamicPreviewCard({
         
         <View style={styles.previewDivider} />
         
-        <View style={[styles.previewBody, isDesktop && { flex: 1, justifyContent: 'space-evenly', marginTop: 8 }]}>
+        <View style={[styles.previewBody, isDesktop && { flex: 1, justifyContent: 'space-evenly', marginTop: theme.Spacing.sm }]}>
           <View style={styles.previewRow}>
             <Text style={styles.previewLabel}>Billing Cycle</Text>
             <Text style={styles.previewValue}>{billingFrequency}</Text>
@@ -86,7 +86,7 @@ export function DynamicPreviewCard({
 const createStyles = (theme: any) => StyleSheet.create({
   card: {
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
     backgroundColor: theme.Colors.glassFill,
@@ -96,11 +96,11 @@ const createStyles = (theme: any) => StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
     marginBottom: 20,
   },
   cardTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
@@ -121,16 +121,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
   },
   previewCategory: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '900',
     color: theme.Colors.onPrimary,
     letterSpacing: 1.5,
   },
   previewName: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '900',
     color: theme.Colors.onPrimary,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
   },
   previewDivider: {
     height: 1.5,
@@ -146,12 +146,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
   },
   previewLabel: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '600',
   },
   previewValue: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onPrimary,
     fontWeight: '800',
   },

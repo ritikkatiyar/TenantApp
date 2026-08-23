@@ -155,7 +155,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   gridDesktop: {
     maxWidth: 600,
-    gap: 24,
+    gap: theme.Spacing.lg,
   },
   cardContainer: {
     width: '45%',
@@ -206,11 +206,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: Theme.Spacing.stackSm,
     backgroundColor: theme.Colors.surfaceContainer,
     paddingHorizontal: Theme.Spacing.stackSm,
-    paddingVertical: 4,
+    paddingVertical: theme.Spacing.xs,
     borderRadius: Theme.Rounded.md,
   },
   badgeText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: 'bold',
     color: theme.Colors.outline,
   },

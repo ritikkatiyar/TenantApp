@@ -71,7 +71,7 @@ export function StatusPill({ status, style }: StatusPillProps) {
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   pill: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: theme.Spacing.xs,
     borderRadius: theme.Rounded.full,
     borderWidth: 1,
     alignSelf: 'flex-start',
@@ -79,7 +79,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     fontFamily: 'Inter',
     letterSpacing: 0.5,

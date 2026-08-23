@@ -50,14 +50,10 @@ export function WorksheetFloorList({
   }, {} as Record<number, typeof entries>);
 
   const sortedFloors = Object.keys(groupedWorksheet).map(Number).sort((a, b) => a - b);
-  const floorsPerPage = 4;
-  const totalFloorPages = Math.ceil(sortedFloors.length / floorsPerPage);
-  const startFloorIndex = (floorPage - 1) * floorsPerPage;
-  const paginatedFloors = sortedFloors.slice(startFloorIndex, startFloorIndex + floorsPerPage);
 
   return (
     <View style={{ flex: 1 }}>
-      {paginatedFloors.map(floor => {
+      {sortedFloors.map(floor => {
         const isExpanded = expandedFloors[floor];
         return (
           <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} key={`floor-${floor}`} style={styles.floorCard}>
@@ -116,7 +112,7 @@ export function WorksheetFloorList({
                                   <Text style={styles.currencySymbol}>₹</Text>
                                 )}
                                 <TextInput
-                                  style={[styles.input, selectedCharge?.calculationStrategy !== 'METERED' && { paddingLeft: 24 }]}
+                                  style={[styles.input, selectedCharge?.calculationStrategy !== 'METERED' && { paddingLeft: theme.Spacing.lg }]}
                                   value={editValues[entry.unitId] || ''}
                                   onChangeText={(val) => setEditValues(prev => ({ ...prev, [entry.unitId]: val }))}
                                   keyboardType="numeric"
@@ -162,32 +158,6 @@ export function WorksheetFloorList({
           </BlurView>
         );
       })}
-
-      {totalFloorPages > 1 && (
-        <View style={styles.mainPaginationRow}>
-          <TouchableOpacity 
-            style={[styles.pageButton, floorPage === 1 && styles.pageButtonDisabled]}
-            disabled={floorPage === 1}
-            onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
-          >
-            <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : theme.Colors.primary} />
-            <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
-          </TouchableOpacity>
-          
-          <Text style={styles.pageInfoText}>
-            Floors Page {floorPage} of {totalFloorPages}
-          </Text>
-          
-          <TouchableOpacity 
-            style={[styles.pageButton, floorPage === totalFloorPages && styles.pageButtonDisabled]}
-            disabled={floorPage === totalFloorPages}
-            onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
-          >
-            <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
-            <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : theme.Colors.primary} />
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 }
@@ -211,7 +181,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderBottomColor: theme.Colors.glassFill,
   },
   floorHeaderText: {
-    fontSize: theme.Typography.TitleMedium.fontSize,
+    fontSize: theme.Typography.titleMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
@@ -229,12 +199,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingRight: 10,
   },
   unitName: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
   tenantName: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
@@ -252,7 +222,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   billedBadgeText: {
     color: theme.Colors.primary,
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
   },
   meteredButton: {
@@ -268,7 +238,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   meteredButtonText: {
     color: theme.Colors.primary,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
   },
   inputWrapper: {
@@ -280,7 +250,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     position: 'absolute',
     left: 10,
     zIndex: 10,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
   },
@@ -293,7 +263,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     color: theme.Colors.onSurface,
     paddingHorizontal: 12,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
   paginationRow: {
@@ -309,7 +279,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginVertical: 16,
+    marginVertical: theme.Spacing.md,
   },
   pageButton: {
     flexDirection: 'row',
@@ -325,7 +295,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     opacity: 0.5,
   },
   pageButtonText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -333,7 +303,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurfaceVariant,
   },
   pageInfoText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
   },

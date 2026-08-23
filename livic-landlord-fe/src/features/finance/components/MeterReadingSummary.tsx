@@ -66,14 +66,14 @@ export function MeterReadingSummary({
 
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Total Consumption</Text>
-        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: theme.Typography.BodyLarge.fontSize }]}>
+        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: theme.Typography.bodyLarge.fontSize }]}>
           {totalConsumption.toFixed(2)} {unitType || 'Units'}
         </Text>
       </View>
 
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Estimated Billing</Text>
-        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800' }]}>
+        <Text style={[styles.summaryValue, { color: theme.Colors.primary, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800' }]}>
           ₹{totalEstimatedCost.toFixed(2)}
         </Text>
       </View>
@@ -92,7 +92,7 @@ export function MeterReadingSummary({
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   summaryCard: {
-    padding: 24,
+    padding: theme.Spacing.lg,
     borderRadius: 20,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
@@ -100,7 +100,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   summaryCardTitle: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
@@ -109,25 +109,25 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   summaryMetricsGrid: {
     flexDirection: 'row',
-    gap: 16,
+    gap: theme.Spacing.md,
   },
   summaryMetricItem: {
     flex: 1,
-    padding: 16,
+    padding: theme.Spacing.md,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   summaryMetricLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
     fontFamily: 'Inter',
   },
   summaryMetricValue: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '900',
     color: theme.Colors.onSurface,
     marginTop: 6,
@@ -145,13 +145,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 6,
   },
   summaryLabel: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '500',
     fontFamily: 'Inter',
   },
   summaryValue: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',
@@ -169,7 +169,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   warningAlertText: {
     flex: 1,
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '700',
     color: theme.Colors.tertiary,
     lineHeight: 16,

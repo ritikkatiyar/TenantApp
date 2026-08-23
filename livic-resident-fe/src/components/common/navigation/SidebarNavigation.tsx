@@ -53,7 +53,7 @@ export default function SidebarNavigation() {
 
   return (
     <Animated.View style={[styles.sidebar, animatedStyles]}>
-      <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { backgroundColor: theme.Colors.glassFill }]} />
+      <BlurView intensity={75} tint={isDark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(11, 17, 24, 0.92)' : theme.Colors.glassFill }]} />
       
       <View style={[styles.sidebarHeader, isCollapsed && styles.sidebarHeaderCollapsed]}>
         {!isCollapsed ? (
@@ -89,7 +89,7 @@ export default function SidebarNavigation() {
           <MaterialIcons 
             name={isDark ? "wb-sunny" : "dark-mode"} 
             size={22} 
-            color={isDark ? "#f59e0b" : theme.Colors.onSurfaceVariant} 
+            color={isDark ? theme.Colors.tertiary : theme.Colors.onSurfaceVariant} 
           />
           {!isCollapsed && (
             <Text style={styles.sidebarLinkText}>
@@ -113,8 +113,8 @@ export default function SidebarNavigation() {
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   sidebar: {
     height: '100%',
-    paddingTop: 32,
-    paddingBottom: 24,
+    paddingTop: theme.Spacing.xl,
+    paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
     borderRightColor: theme.Surface.border,
     overflow: 'hidden',
@@ -132,21 +132,33 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   sidebarBrand: { flex: 1 },
   sidebarBrandCollapsed: { alignItems: 'center' },
-  sidebarBrandTitleCollapsed: { fontSize: theme.Typography.HeadlineSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
+  sidebarBrandTitleCollapsed: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
   collapseButton: {
-    padding: 4,
+    padding: theme.Spacing.xs,
     borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
   },
   sidebarBrandTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', lineHeight: 34, color: theme.Colors.primary },
-  sidebarBrandSub: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700', letterSpacing: 2, color: theme.Colors.onSurfaceVariant, marginTop: 4 },
-  sidebarNavScroll: { flex: 1, marginBottom: 16 },
-  sidebarNav: { gap: 14, paddingBottom: 16 },
-  sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 18, borderRadius: theme.Rounded.lg },
+  sidebarBrandSub: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', letterSpacing: 2, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
+  sidebarNavScroll: { flex: 1, marginBottom: theme.Spacing.md },
+  sidebarNav: { gap: 14, paddingBottom: theme.Spacing.md },
+  sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md, paddingHorizontal: 18, borderRadius: theme.Rounded.lg },
   sidebarLinkCollapsed: { justifyContent: 'center', paddingHorizontal: 0 },
-  sidebarLinkActive: { backgroundColor: 'rgba(0, 224, 255, 0.10)', borderRightWidth: 4, borderRightColor: theme.Colors.primaryContainer },
-  sidebarLinkText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', letterSpacing: 1.6, color: theme.Colors.onSurface },
-  sidebarLinkTextActive: { color: theme.Colors.primary },
+  sidebarLinkActive: {
+    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.16)' : 'rgba(0, 104, 117, 0.10)',
+    borderRightWidth: 4,
+    borderRightColor: theme.Colors.primary,
+  },
+  sidebarLinkText: {
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    color: theme.Colors.onSurfaceVariant,
+  },
+  sidebarLinkTextActive: {
+    color: theme.Colors.primary,
+    fontWeight: '800',
+  },
   sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
   sidebarFooterCollapsed: { alignItems: 'center' },
 });

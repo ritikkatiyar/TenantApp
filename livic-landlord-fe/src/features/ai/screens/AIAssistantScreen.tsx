@@ -173,7 +173,6 @@ export default function AIAssistantScreen({ token }: AIAssistantScreenProps) {
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.container, isDesktop && styles.containerDesktop]}
     >
-      {isDesktop && <DesktopNavBar title="AI Command Desk" />}
 
       {/* Main AI Workspace Card */}
       <GlassCard style={[styles.chatWorkspace, isDesktop && styles.chatWorkspaceDesktop]}>

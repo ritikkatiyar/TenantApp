@@ -156,13 +156,25 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     @Override
     @Transactional(readOnly = true)
     public List<UnitBookingDTOs.UnitBookingResponse> listBookings() {
-        return unitBookingCrudService.findAll().stream()
-                .map(booking -> {
-                    String unitNumber = unitFacade.getUnitById(booking.getUnitId())
-                            .map(UnitSummaryDTO::unitNumber)
-                            .orElse("N/A");
-                    return UnitBookingMapper.toResponse(booking, unitNumber);
-                })
-                .collect(Collectors.toList());
+        try {
+            return unitBookingCrudService.findAll().stream()
+                    .map(booking -> {
+                        String unitNumber = "N/A";
+                        if (booking.getUnitId() != null) {
+                            try {
+                                unitNumber = unitFacade.getUnitById(booking.getUnitId())
+                                        .map(UnitSummaryDTO::unitNumber)
+                                        .orElse("N/A");
+                            } catch (Exception e) {
+                                log.warn("Failed to fetch unit details for unitId: {}", booking.getUnitId(), e);
+                            }
+                        }
+                        return UnitBookingMapper.toResponse(booking, unitNumber);
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to list unit bookings", e);
+            return List.of();
+        }
     }
 }

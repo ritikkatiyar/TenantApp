@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
-const CELL_SIZE = 60;
+const CELL_SIZE = 70;
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK' },
@@ -127,17 +127,17 @@ export function EditorGrid({
                       width: '100%',
                       height: '100%',
                       backgroundColor: colorStyles.backgroundColor,
-                      borderColor: isSelected ? '#00e5ff' : colorStyles.borderColor,
+                      borderColor: isSelected ? theme.Colors.onSurface : colorStyles.borderColor,
                       borderWidth: isSelected ? 3 : 2,
                       justifyContent: 'space-between',
-                      paddingVertical: block.gridHeight >= 2 ? 6 : 2,
-                      paddingHorizontal: block.gridWidth >= 2 ? 6 : 2,
+                      paddingVertical: block.gridHeight >= 2 ? 6 : 4,
+                      paddingHorizontal: block.gridWidth >= 2 ? 6 : 4,
                     }
                   ]}
                 >
-                  <View style={{ flexDirection: 'column', gap: 1 }}>
+                  <View style={{ flexDirection: 'column', gap: 2 }}>
                     <Text style={[styles.cellText, { color: colorStyles.textColor }]}>{block.unitNumber}</Text>
-                    <Text style={{ fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '700', color: colorStyles.textColor + 'cc' }}>
+                    <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: colorStyles.textColor + 'ee' }}>
                       {UNIT_TYPE_OPTIONS.find(opt => opt.value === block.type)?.label || '1 BHK'}
                     </Text>
                   </View>
@@ -196,10 +196,10 @@ export function EditorGrid({
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   grid: {
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
-    borderRadius: 8,
+    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.45)' : 'rgba(255, 255, 255, 0.45)',
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 104, 117, 0.15)',
     overflow: 'hidden',
   },
   gridRow: {
@@ -209,13 +209,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: CELL_SIZE,
     height: CELL_SIZE,
     borderWidth: 0.5,
-    borderColor: 'rgba(0, 104, 117, 0.08)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.08)',
   },
   cellEmpty: {
     backgroundColor: 'transparent',
   },
   cellActive: {
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1.5,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
@@ -224,32 +224,32 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     elevation: 3,
   },
   cellText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelMedium.fontSize,
     fontWeight: '900',
     fontFamily: 'Inter',
   },
   cellDrawingStart: {
-    backgroundColor: 'rgba(0, 229, 255, 0.25)',
+    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.25)',
     borderColor: theme.Colors.primary,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderRadius: 6,
+    borderRadius: 8,
   },
   badgeLarge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'stretch',
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : 'rgba(255,255,255,0.85)',
     borderRadius: 6,
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
     paddingVertical: 3,
-    gap: 4,
+    gap: theme.Spacing.xs,
   },
   badgeSmall: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : 'rgba(255,255,255,0.85)',
     borderRadius: 4,
     paddingHorizontal: 4,
     paddingVertical: 2,
@@ -268,13 +268,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
   },
   badgeText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',
   },
   badgeTextSmall: {
-    fontSize: theme.Typography.LabelSmall.fontSize - 4,
+    fontSize: theme.Typography.labelSmall.fontSize - 3,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     fontFamily: 'Inter',

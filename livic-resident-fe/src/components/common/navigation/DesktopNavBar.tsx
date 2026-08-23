@@ -43,19 +43,6 @@ export default function DesktopNavBar({
       <View style={styles.topbarRight}>
         {rightContent}
 
-        <TouchableOpacity 
-          onPress={toggleTheme} 
-          style={styles.themeToggleBtn}
-          activeOpacity={0.75}
-          accessibilityLabel="Toggle Theme Mode"
-        >
-          <MaterialIcons 
-            name={isDark ? "wb-sunny" : "dark-mode"} 
-            size={20} 
-            color={isDark ? "#f59e0b" : theme.Colors.primary} 
-          />
-        </TouchableOpacity>
-
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
@@ -70,7 +57,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: theme.Spacing.xl,
     borderBottomWidth: 1,
     borderColor: theme.Surface.border,
     backgroundColor: theme.Colors.glassFill,
@@ -80,14 +67,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   pageTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onBackground,
   },
   topbarRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: theme.Spacing.md,
   },
   themeToggleBtn: {
     width: 40,
@@ -103,8 +90,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   backButtonDesktop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
+    gap: theme.Spacing.sm,
+    paddingHorizontal: theme.Spacing.md,
     paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: theme.Surface.card,
@@ -112,7 +99,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Surface.border,
   },
   backButtonTextDesktop: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onBackground,
   },
@@ -127,6 +114,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   avatarText: {
     color: theme.Colors.surfaceContainerLowest,
     fontWeight: '700',
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
   },
 });

@@ -112,7 +112,7 @@ export function LedgerTable({
           const isPayment = item.amount < 0;
           return (
             <View key={item.id} style={styles.tableRow}>
-              <Text style={[styles.td, { flex: 1.5, fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant }]}>{formatDate(item.createdAt)}</Text>
+              <Text style={[styles.td, { flex: 1.5, fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant }]}>{formatDate(item.createdAt)}</Text>
               <Text style={[styles.td, { flex: 1, fontWeight: '700' }]}>{item.unitName}</Text>
               <Text style={[styles.td, { flex: 1.5 }]}>{item.tenantName}</Text>
               <View style={{ flex: 2, flexDirection: 'row' }}>
@@ -122,7 +122,7 @@ export function LedgerTable({
                   </Text>
                 </View>
               </View>
-              <Text style={[styles.td, { flex: 2.5, fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant }]} numberOfLines={2}>
+              <Text style={[styles.td, { flex: 2.5, fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant }]} numberOfLines={2}>
                 {item.description}
               </Text>
               <Text style={[
@@ -170,7 +170,7 @@ export function LedgerTable({
                 ]}>
                   {isPayment ? '+' : '-'} ₹{Math.abs(item.amount).toFixed(2)}
                 </Text>
-                <Text style={{ fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>
+                <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 }}>
                   Bal: ₹{(item.balance ?? 0).toFixed(2)}
                 </Text>
               </View>
@@ -181,8 +181,8 @@ export function LedgerTable({
               <Text style={styles.cardDateText}>{formatDate(item.createdAt)}</Text>
             </View>
 
-            <View style={[styles.pill, { backgroundColor: colors.bg, alignSelf: 'flex-start', marginTop: 8 }]}>
-              <Text style={[styles.pillText, { color: colors.text, fontSize: theme.Typography.LabelSmall.fontSize }]}>
+            <View style={[styles.pill, { backgroundColor: colors.bg, alignSelf: 'flex-start', marginTop: theme.Spacing.sm }]}>
+              <Text style={[styles.pillText, { color: colors.text, fontSize: theme.Typography.labelSmall.fontSize }]}>
                 {formatTransactionType(item.transactionType)}
               </Text>
             </View>
@@ -197,7 +197,7 @@ export function LedgerTable({
 
 const createStyles = (theme: any) => StyleSheet.create({
   emptyCardCentered: {
-    padding: 32,
+    padding: theme.Spacing.xl,
     borderRadius: 24,
     alignItems: 'center',
     maxWidth: 500,
@@ -215,32 +215,32 @@ const createStyles = (theme: any) => StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
   emptyTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
     lineHeight: 20,
   },
   createBtnGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.Spacing.lg,
     paddingVertical: 14,
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   createBtnText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 1,
   },
@@ -255,13 +255,13 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginTop: 20,
   },
   emptyCardTitle: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
     marginBottom: 6,
   },
   emptyCardSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
     textAlign: 'center',
     paddingHorizontal: 30,
@@ -273,18 +273,18 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
     backgroundColor: theme.Colors.glassFill,
-    marginTop: 24,
+    marginTop: theme.Spacing.lg,
   },
   tableHeader: {
     flexDirection: 'row',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.Spacing.lg,
     paddingVertical: 18,
     borderBottomWidth: 1.5,
     borderBottomColor: 'rgba(0, 104, 117, 0.1)',
     backgroundColor: 'rgba(0, 104, 117, 0.03)',
   },
   th: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1,
@@ -292,13 +292,13 @@ const createStyles = (theme: any) => StyleSheet.create({
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: theme.Spacing.lg,
+    paddingVertical: theme.Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 104, 117, 0.05)',
   },
   td: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '600',
   },
@@ -308,17 +308,17 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 10,
   },
   pillText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   listContainer: {
-    gap: 16,
-    marginTop: 16,
+    gap: theme.Spacing.md,
+    marginTop: theme.Spacing.md,
   },
   mobileCard: {
     borderRadius: 20,
-    padding: 16,
+    padding: theme.Spacing.md,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
     backgroundColor: theme.Colors.glassFill,
@@ -330,30 +330,30 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'flex-start',
   },
   cardUnitText: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
   cardAmountText: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '900',
   },
   cardDetailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
   },
   cardTenantText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '600',
   },
   cardDateText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
   },
   cardDescText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 12,
     lineHeight: 18,

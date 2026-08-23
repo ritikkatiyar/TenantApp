@@ -16,15 +16,42 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   desktopInner: {
-    maxWidth: 1220,
+    maxWidth: 1280,
     width: '100%',
     alignSelf: 'center',
-    paddingTop: 24,
+    paddingTop: theme.Spacing.md,
+    flex: 1,
+  },
+  desktopHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.Spacing.xl,
+    gap: 16,
+  },
+  largeTitleContainer: {
+    flex: 1,
+  },
+  titleLineDesktop: {
+    fontSize: theme.Typography.headlineMd.fontSize,
+    fontWeight: '900',
+    color: theme.Colors.onSurface,
+    fontFamily: 'Inter',
+  },
+  desktopMainContent: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 24,
+  },
+  desktopCanvasColumn: {
+    flex: 1.6,
+  },
+  desktopSidebarColumn: {
     flex: 1,
   },
   header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: theme.Spacing.lg,
+    paddingVertical: theme.Spacing.md,
   },
   backButton: {
     width: 40,
@@ -33,10 +60,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
   titleContainer: {
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
   },
   titleLine: {
     fontSize: theme.Typography.headlineXl.fontSize,
@@ -47,14 +74,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.Spacing.lg,
   },
   gridWrapper: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
     marginBottom: 20,
     position: 'relative',
@@ -72,13 +99,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '600',
     color: theme.Colors.primary,
     letterSpacing: 0.5,
   },
   isometricContainer: {
-    padding: 100,
+    padding: 40,
   },
   detailSheetWrapper: {
     position: 'absolute',
@@ -101,7 +128,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
   },
   sheetContent: {
-    padding: 24,
+    padding: theme.Spacing.lg,
   },
 
   // Desktop Shell Styles
@@ -113,8 +140,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 260,
     height: '100%',
     paddingHorizontal: 20,
-    paddingTop: 32,
-    paddingBottom: 24,
+    paddingTop: theme.Spacing.xl,
+    paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
     borderRightColor: theme.Surface.border,
     backgroundColor: theme.Colors.glassFill,
@@ -124,23 +151,23 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 54,
   },
   sidebarBrandTitle: {
-    fontSize: theme.Typography.DisplaySmall.fontSize,
+    fontSize: theme.Typography.displaySmall.fontSize,
     fontWeight: '800',
     lineHeight: 40,
     color: theme.Colors.primary,
   },
   sidebarBrandSub: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     letterSpacing: 2,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
   },
   sidebarNav: {
     gap: 14,
   },
   sidebarLinkTextDesktop: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     letterSpacing: 1.6,
     color: theme.Colors.onSurface,
@@ -165,12 +192,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
   },
   upgradeGradient: {
-    paddingVertical: 16,
+    paddingVertical: theme.Spacing.md,
     alignItems: 'center',
   },
   upgradeText: {
     color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
   },
   desktopMain: {
@@ -178,22 +205,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   desktopMainContainer: {
     flex: 1,
-    padding: 32,
+    padding: theme.Spacing.xl,
     gap: 20,
-  },
-  desktopHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  largeTitleContainer: {
-    flex: 1,
-  },
-  titleLineDesktop: {
-    fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '900',
-    color: theme.Colors.onSurface,
-    fontFamily: 'Inter',
   },
   desktopSaveButtonWrapper: {
     borderRadius: 100,
@@ -204,46 +217,21 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
   },
-  desktopSaveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 46,
-    paddingHorizontal: 24,
-  },
-  desktopSaveButtonText: {
-    color: theme.Colors.surfaceContainerLowest,
-    fontSize: theme.Typography.BodyMedium.fontSize,
-    fontWeight: '800',
-    fontFamily: 'Inter',
-  },
-  desktopMainContent: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 32,
-  },
-  desktopCanvasColumn: {
-    flex: 1.6,
-  },
-  desktopSidebarColumn: {
-    flex: 0.9,
-  },
   desktopGridWrapper: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
     position: 'relative',
   },
   desktopCard: {
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    padding: 24,
+    backgroundColor: theme.Colors.glassFill,
+    padding: theme.Spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 8 },
@@ -255,7 +243,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     borderRadius: 16,
     gap: 12,
   },
@@ -263,7 +251,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
   },
   sidebarLinkText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
     fontFamily: 'Inter',

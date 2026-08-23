@@ -13,9 +13,11 @@ spring:
     validate-on-migrate: true
     out-of-order: true
   jpa:
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        show_sql: false
+        format_sql: false
 logging:
   level:
     com.livic: DEBUG

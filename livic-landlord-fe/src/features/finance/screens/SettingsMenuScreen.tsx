@@ -13,7 +13,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { PageShell } from '@/src/components/common/layout/PageShell';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useProperties } from '@/src/hooks/useProperties';
 import { listRentCycles } from '@/src/features/finance/api/rentCycle.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -255,121 +256,42 @@ export default function SettingsMenuScreen() {
   );
 
   return (
-    <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop && (
-          <DesktopNavBar 
-            properties={properties || []}
-            selectedPropertyId={propertyId}
-            onPropertyChange={(id) => router.replace(`/expenses?propertyId=${id}`)}
-          />
-        )}
-
-        {/* Mobile Compact Header */}
-        {!isDesktop && (
-          <View style={styles.headerContainer}>
-            <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-            <Animated.View style={[styles.headerContent, { opacity: headerOpacity }]}>
-              <View style={styles.titleWrapper}>
-                <Text style={styles.compactTitleText}>Finance & Billing</Text>
-              </View>
-            </Animated.View>
-          </View>
-        )}
-
-        <Animated.ScrollView
-          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
-          showsVerticalScrollIndicator={false}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false, listener: handleScroll }
-          )}
-          scrollEventThrottle={16}
-        >
-          <View style={isDesktop ? styles.desktopInner : null}>
-            {isDesktop ? (
-              <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-                <Text style={styles.titleLineDesktop}>Finance & Billing</Text>
-                <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4, fontWeight: '500', lineHeight: 20 }}>
-                  Configure rents, utilities, billing worksheets, monthly rent rolls & financial ledgers
-                </Text>
-              </Animated.View>
-            ) : (
-              <Animated.View style={[styles.mobileLargeTitle, { opacity: largeTitleOpacity }]}>
-                <Text style={styles.titleLine}>Finance &</Text>
-                <Text style={styles.titleLine}>Billing</Text>
-                <Text style={styles.mobileSubtitle}>
-                  Configure rents, utilities & billing pipelines
-                </Text>
-              </Animated.View>
-            )}
-
-            {!isLoading && properties.length === 0 && (
-              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 24, borderRadius: 20, marginBottom: 24, borderWidth: 1.5, borderColor: theme.Colors.glassStroke, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                  <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center' }}>
-                    <MaterialIcons name="business" size={26} color={theme.Colors.primary} />
+    <PageShell scrollable edges={isDesktop ? ['top'] : []}>
+      {isDesktop ? (
+        <View style={styles.gridContainer}>
+          {menuItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              activeOpacity={0.75}
+              onPress={() => {
+                if (properties.length === 0) {
+                  showToast('Please create a property first to access finance features.', 'error');
+                  router.push('/properties/create');
+                  return;
+                }
+                router.push(item.route as any);
+              }}
+              style={[styles.gridItem, properties.length === 0 && { opacity: 0.6 }]}
+            >
+              <GlassCard style={{ padding: 20 }}>
+                <View style={styles.cardContent}>
+                  <View style={[styles.iconWrapper, { backgroundColor: theme.Colors.glassFill }]}>
+                    <MaterialIcons name={item.icon as any} size={28} color={theme.Colors.primary} />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 2 }}>No Property Created Yet</Text>
-                    <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 18 }}>Finance & billing setup requires an active property. Create your first property to start configuring charges and rent cycles.</Text>
+                  <View style={styles.textContainer}>
+                    <Text style={styles.menuTitle}>{item.title}</Text>
+                    <Text style={styles.menuDesc}>{item.description}</Text>
                   </View>
+                  <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
                 </View>
-                <TouchableOpacity 
-                  style={{ borderRadius: 100, overflow: 'hidden' }}
-                  onPress={() => router.push('/properties/create')}
-                >
-                  <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 20, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <MaterialIcons name="add" size={18} color={theme.Colors.surfaceContainerLowest} />
-                    <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '800', letterSpacing: 0.5 }}>CREATE PROPERTY</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </BlurView>
-            )}
-
-            {isDesktop ? (
-              <View style={styles.gridContainer}>
-                {menuItems.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    activeOpacity={0.75}
-                    onPress={() => {
-                      if (properties.length === 0) {
-                        showToast('Please create a property first to access finance features.', 'error');
-                        router.push('/properties/create');
-                        return;
-                      }
-                      router.push(item.route as any);
-                    }}
-                    style={[styles.gridItem, properties.length === 0 && { opacity: 0.6 }]}
-                  >
-                    <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.menuCard}>
-                      <View style={styles.cardContent}>
-                        <View style={[styles.iconWrapper, { backgroundColor: item.bg }]}>
-                          <MaterialIcons name={item.icon as any} size={28} color={item.accentColor} />
-                        </View>
-                        <View style={styles.textContainer}>
-                          <Text style={styles.menuTitle}>{item.title}</Text>
-                          <Text style={styles.menuDesc}>{item.description}</Text>
-                        </View>
-                        <MaterialIcons name="chevron-right" size={24} color="#849495" />
-                      </View>
-                    </BlurView>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ) : (
-              renderMobileContent()
-            )}
-          </View>
-        </Animated.ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+              </GlassCard>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : (
+        renderMobileContent()
+      )}
+    </PageShell>
   );
 }
 

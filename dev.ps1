@@ -341,28 +341,22 @@ $isJarValid = $false
 $needBuild = $false
 
 if (Test-Path $jarPath) {
-    try {
-        $manifestCheck = & jar tf $jarPath 2>$null | Select-String "BOOT-INF/classes" -List
-        if ($manifestCheck) { 
-            $isJarValid = $true 
-            
-            # Smart check: Rebuild if any source files are newer than the JAR
-            $srcDir = Join-Path $BackendDir "src"
-            if (Test-Path $srcDir) {
-                $latestSrcFile = Get-ChildItem -Path $srcDir -Recurse -File | 
-                    Sort-Object LastWriteTime -Descending | 
-                    Select-Object -First 1
-                
-                if ($latestSrcFile) {
-                    $jarWriteTime = (Get-Item $jarPath).LastWriteTime
-                    if ($latestSrcFile.LastWriteTime -gt $jarWriteTime) {
-                        Write-Step "Backend source code has changed since last build."
-                        $needBuild = $true
-                    }
-                }
+    $isJarValid = $true
+    # Smart check: Rebuild if any source files are newer than the JAR
+    $srcDir = Join-Path $BackendDir "src"
+    if (Test-Path $srcDir) {
+        $latestSrcFile = Get-ChildItem -Path $srcDir -Recurse -File | 
+            Sort-Object LastWriteTime -Descending | 
+            Select-Object -First 1
+        
+        if ($latestSrcFile) {
+            $jarWriteTime = (Get-Item $jarPath).LastWriteTime
+            if ($latestSrcFile.LastWriteTime -gt $jarWriteTime) {
+                Write-Step "Backend source code has changed since last build."
+                $needBuild = $true
             }
         }
-    } catch {}
+    }
 } else {
     $needBuild = $true
 }
@@ -371,7 +365,7 @@ if ($needBuild -or -not $isJarValid) {
     Write-Step "Building backend executable JAR..."
     Push-Location $BackendDir
     try {
-        mvn package "-Dmaven.test.skip=true"
+        mvn package -DskipTests
     } finally {
         Pop-Location
     }

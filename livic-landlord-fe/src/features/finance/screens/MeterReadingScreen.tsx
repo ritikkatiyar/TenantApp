@@ -10,7 +10,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useProperties } from '@/src/hooks/useProperties';
@@ -108,20 +108,22 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
       style={styles.desktopShell}
     >
       <View style={styles.desktopMain}>
-        <DesktopNavBar 
-          onBack={() => router.push('/expenses')} 
-          backText="Back to Finance & Billing" 
-          properties={properties || []}
-          selectedPropertyId={propertyId}
-          onPropertyChange={(id) => router.replace(`/expenses/meter-readings?propertyId=${id}` as any)}
-        />
 
         <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
           <View style={styles.desktopInner}>
             {/* Header Row */}
             <View style={styles.desktopHeaderRow}>
-              <View style={styles.largeTitleContainer}>
-                <Text style={styles.titleLineDesktop}>Meter Readings</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity
+                  onPress={() => router.push('/expenses')}
+                  style={{ marginRight: 14, padding: 8, borderRadius: 12, backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke }}
+                  activeOpacity={0.75}
+                >
+                  <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+                </TouchableOpacity>
+                <View style={styles.largeTitleContainer}>
+                  <Text style={styles.titleLineDesktop}>Meter Readings</Text>
+                </View>
               </View>
 
               {/* Action Save Button */}
@@ -327,8 +329,8 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
                 <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
               </View>
-              <Text style={{ fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
-              <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
+              <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>No Property Created Yet</Text>
+              <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24, lineHeight: 20 }}>
                 Logging meter readings requires an active property. Create your first property to start inputting meter logs.
               </Text>
               <TouchableOpacity 
@@ -337,7 +339,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               >
                 <LinearGradient colors={['#00d4ff', '#0072ff']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 14, gap: 8 }}>
                   <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
-                  <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
+                  <Text style={{ color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 1 }}>CREATE FIRST PROPERTY</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </BlurView>
@@ -373,7 +375,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                 </TouchableOpacity>
               </View>
 
-              {paginatedFloors.map(floor => {
+              {sortedFloors.map(floor => {
                 const isExpanded = expandedFloors[floor];
                 return (
                   <MeterReadingFloorCard
@@ -394,32 +396,6 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
                   />
                 );
               })}
-
-              {totalFloorPages > 1 && (
-                <View style={styles.paginationRow}>
-                  <TouchableOpacity 
-                    style={[styles.pageButton, floorPage === 1 && styles.pageButtonDisabled]}
-                    disabled={floorPage === 1}
-                    onPress={() => setFloorPage(prev => Math.max(1, prev - 1))}
-                  >
-                    <MaterialIcons name="chevron-left" size={20} color={floorPage === 1 ? '#a0aab2' : theme.Colors.primary} />
-                    <Text style={[styles.pageButtonText, floorPage === 1 && styles.pageButtonTextDisabled]}>Prev Floors</Text>
-                  </TouchableOpacity>
-                  
-                  <Text style={styles.pageInfoText}>
-                    Page {floorPage} of {totalFloorPages}
-                  </Text>
-                  
-                  <TouchableOpacity 
-                    style={[styles.pageButton, floorPage === totalFloorPages && styles.pageButtonDisabled]}
-                    disabled={floorPage === totalFloorPages}
-                    onPress={() => setFloorPage(prev => Math.min(totalFloorPages, prev + 1))}
-                  >
-                    <Text style={[styles.pageButtonText, floorPage === totalFloorPages && styles.pageButtonTextDisabled]}>Next Floors</Text>
-                    <MaterialIcons name="chevron-right" size={20} color={floorPage === totalFloorPages ? '#a0aab2' : theme.Colors.primary} />
-                  </TouchableOpacity>
-                </View>
-              )}
             </>
           )}
           <View style={{ height: 120 }} />
@@ -456,11 +432,8 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   );
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
+    <PageShell scrollable keyboardAvoiding edges={isDesktop ? ['top'] : []}>
       {isDesktop ? renderDesktopShell() : renderMobileShell()}
-    </KeyboardAvoidingView>
+    </PageShell>
   );
 }

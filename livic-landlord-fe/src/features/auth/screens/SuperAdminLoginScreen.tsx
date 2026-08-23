@@ -1,4 +1,3 @@
-import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState, useRef } from 'react';
 import { 
   View, 
@@ -6,17 +5,14 @@ import {
   StyleSheet, 
   TextInput, 
   TouchableOpacity, 
-  KeyboardAvoidingView, 
   Platform,
-  ScrollView,
   ActivityIndicator
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Theme } from '@/src/theme/Theme';
+import { useAppTheme } from '@/src/theme/ThemeContext';
 import { login } from '@/src/features/auth/api/auth.api';
 
 interface SuperAdminLoginScreenProps {
@@ -62,20 +58,12 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
   };
 
   return (
-    <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
+    <PageShell
+      scrollable={true}
+      keyboardAvoiding={true}
+      contentContainerStyle={styles.scrollContent}
     >
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
-        style={styles.container} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          
-          {/* Ambient Background Orbs */}
+      {/* Ambient Background Orbs */}
           <View style={[styles.orb, styles.orb1]} />
           <View style={[styles.orb, styles.orb2]} />
           
@@ -84,9 +72,9 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
             {/* Branding */}
             <View style={styles.brandingContainer}>
               <View style={styles.iconWrapper}>
-                <MaterialIcons name="shield" size={28} color={theme.Colors.primary} />
+                <MaterialIcons name="home" size={28} color={theme.Colors.primary} />
               </View>
-              <Text style={styles.brandingText}>COMMAND CENTER</Text>
+              <Text style={styles.brandingText}>RESIDENT PORTAL</Text>
             </View>
 
             {/* Title */}
@@ -102,14 +90,14 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
 
             {/* Login Form */}
             <View style={styles.formContainer}>
-              {/* Admin Email Input */}
+              {/* Resident Email Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>ADMIN EMAIL</Text>
+                <Text style={styles.label}>EMAIL ADDRESS</Text>
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="mail-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="super@admin.system"
+                    placeholder="resident@tenantliving.com"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}
@@ -183,10 +171,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
               </TouchableOpacity>
             </View>
           </BlurView>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-    </LinearGradient>
+    </PageShell>
   );
 }
 
@@ -202,12 +187,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Theme.Spacing.containerPadding,
+    padding: theme.Spacing.containerPadding,
     position: 'relative',
   },
   orb: {
     position: 'absolute',
-    borderRadius: Theme.Rounded.full,
+    borderRadius: theme.Rounded.full,
     opacity: 0.3,
   },
   orb1: {
@@ -229,13 +214,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardContainer: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: Theme.Rounded.lg,
-    paddingHorizontal: Theme.Spacing.stackLg,
-    paddingTop: 48,
-    paddingBottom: Theme.Spacing.stackLg,
+    backgroundColor: theme.Colors.glassFill,
+    borderRadius: theme.Rounded.lg,
+    paddingHorizontal: theme.Spacing.stackLg,
+    paddingTop: theme.Spacing.xxl,
+    paddingBottom: theme.Spacing.stackLg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
@@ -245,23 +230,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   brandingContainer: {
     alignItems: 'center',
-    marginBottom: Theme.Spacing.stackMd,
+    marginBottom: theme.Spacing.stackMd,
   },
   iconWrapper: {
     width: 56,
     height: 56,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: Theme.Rounded.full,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderRadius: theme.Rounded.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
+    borderColor: theme.Colors.outlineVariant,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Theme.Spacing.stackSm,
+    marginBottom: theme.Spacing.stackSm,
   },
   brandingText: {
     ...theme.Typography.labelCaps,
     color: theme.Colors.outline,
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
   },
   title: {
     ...theme.Typography.headlineMd,
@@ -273,13 +258,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: '100%',
   },
   inputGroup: {
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   label: {
     ...theme.Typography.labelCaps,
     color: theme.Colors.onSurfaceVariant,
-    marginLeft: 4,
-    marginBottom: 8,
+    marginLeft: theme.Spacing.xs,
+    marginBottom: theme.Spacing.sm,
   },
   inputWrapper: {
     position: 'relative',
@@ -287,40 +272,40 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   inputIcon: {
     position: 'absolute',
-    left: Theme.Spacing.stackMd,
+    left: theme.Spacing.stackMd,
     zIndex: 1,
   },
   passwordToggleIcon: {
     position: 'absolute',
-    right: Theme.Spacing.stackMd,
+    right: theme.Spacing.stackMd,
     zIndex: 1,
-    padding: 4,
+    padding: theme.Spacing.xs,
   },
   clearIcon: {
     position: 'absolute',
-    right: Theme.Spacing.stackMd,
+    right: theme.Spacing.stackMd,
     zIndex: 1,
-    padding: 4,
+    padding: theme.Spacing.xs,
   },
   input: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 1)',
-    borderRadius: Theme.Rounded.default,
+    borderColor: theme.Colors.outlineVariant,
+    borderRadius: theme.Rounded.default,
     paddingLeft: 44,
-    paddingRight: Theme.Spacing.stackMd,
+    paddingRight: theme.Spacing.stackMd,
     paddingVertical: 14,
     ...theme.Typography.bodyMd,
     color: theme.Colors.onSurface,
   },
   submitButton: {
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
     width: '100%',
     backgroundColor: theme.Colors.primaryContainer,
-    paddingVertical: 16,
-    paddingHorizontal: Theme.Spacing.stackMd,
-    borderRadius: Theme.Rounded.default,
+    paddingVertical: theme.Spacing.md,
+    paddingHorizontal: theme.Spacing.stackMd,
+    borderRadius: theme.Rounded.default,
     alignItems: 'center',
     shadowColor: theme.Colors.primaryContainer,
     shadowOffset: { width: 0, height: 4 },
@@ -340,23 +325,23 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.Colors.errorContainer,
     padding: 12,
-    borderRadius: Theme.Rounded.default,
+    borderRadius: theme.Rounded.default,
     marginBottom: 20,
     width: '100%',
   },
   errorText: {
     ...theme.Typography.bodyMd,
     color: theme.Colors.error,
-    marginLeft: 8,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    marginLeft: theme.Spacing.sm,
+    fontSize: theme.Typography.bodySmall.fontSize,
   },
   footer: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 32,
-    gap: 8,
+    marginTop: theme.Spacing.xl,
+    gap: theme.Spacing.sm,
   },
   footerText: {
     ...theme.Typography.bodyMd,

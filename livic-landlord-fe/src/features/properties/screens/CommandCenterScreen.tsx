@@ -16,13 +16,21 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { PropertyResponse } from '@/src/types/property';
 import FloorLayoutViewerModal from '@/src/features/properties/components/FloorLayoutViewerModal';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
+import { SkeletonCardGrid } from '@/src/components/common/feedback/Skeleton';
+import { StatCard } from '@/src/components/common/display/StatCard';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
+import Pagination from '@/src/components/common/navigation/Pagination';
+
+import { getAnalyticsSummary, getPortfolioOccupancy } from '@/src/features/analytics/api/analytics.api';
+import { useIssues } from '@/src/features/issues/hooks/useIssues';
 
 // Phase 4 modular hook & component imports
 import { useAppTheme } from '@/src/theme/ThemeContext';
@@ -45,8 +53,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const { accessToken } = useAuth();
-  
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery, setSearchQuery } = useGlobalPropertySelection();
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   useEffect(() => {
@@ -59,9 +66,70 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   }, [searchQuery]);
 
   const { properties, isLoading, refreshProperties, deleteProperty, togglePropertyActive } = useProperties(debouncedSearchQuery);
+  const [visibleCount, setVisibleCount] = useState(6);
+
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [debouncedSearchQuery]);
+
+  const handleEndReached = () => {
+    if (visibleCount < properties.length) {
+      setVisibleCount(prev => Math.min(properties.length, prev + 6));
+    }
+  };
+
+  const visibleProperties = properties.slice(0, visibleCount);
+  const hasMore = visibleCount < properties.length;
+
   const { showToast } = useToast();
   const { handleScroll: handleNavScroll } = useScrollNav();
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Real analytics states
+  const [occupancyRate, setOccupancyRate] = useState<string>('0.0%');
+  const [revenueText, setRevenueText] = useState<string>('₹ 0');
+  const [metricsLoading, setMetricsLoading] = useState(true);
+
+  // Issues hook for alerts count
+  const { metrics: issueMetrics } = useIssues(accessToken);
+
+  useEffect(() => {
+    async function loadMetrics() {
+      if (!accessToken) return;
+      try {
+        setMetricsLoading(true);
+        const [occData, sumData] = await Promise.all([
+          getPortfolioOccupancy(accessToken),
+          getAnalyticsSummary(accessToken),
+        ]);
+
+        // Calculate aggregate occupancy
+        let totalUnits = 0;
+        let totalOccupied = 0;
+        occData.forEach(p => {
+          totalUnits += p.totalUnits || 0;
+          totalOccupied += p.occupiedUnits || 0;
+        });
+        const aggregateRate = totalUnits > 0 ? (totalOccupied / totalUnits) * 100 : 0;
+        setOccupancyRate(`${aggregateRate.toFixed(1)}%`);
+
+        // Format collected revenue
+        const collected = sumData.collectedRevenue || 0;
+        if (collected >= 10000000) {
+          setRevenueText(`₹ ${(collected / 10000000).toFixed(2)}Cr`);
+        } else if (collected >= 100000) {
+          setRevenueText(`₹ ${(collected / 100000).toFixed(2)}L`);
+        } else {
+          setRevenueText(`₹ ${collected.toLocaleString()}`);
+        }
+      } catch (err) {
+        console.error('Failed to load CommandCenter stats', err);
+      } finally {
+        setMetricsLoading(false);
+      }
+    }
+    loadMetrics();
+  }, [accessToken]);
 
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
@@ -106,15 +174,13 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
 
   const renderStatCard = (label: string, value: string, icon: keyof typeof MaterialIcons.glyphMap, color = theme.Colors.primary) => (
-    <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={[styles.statCard, isDesktop && styles.statCardDesktop]}>
-      <View style={[styles.statIcon, { backgroundColor: `${color}18` }]}>
-        <MaterialIcons name={icon} size={20} color={color} />
-      </View>
-      <View>
-        <Text style={styles.statLabel}>{label}</Text>
-        <Text style={styles.statValue}>{value}</Text>
-      </View>
-    </BlurView>
+    <StatCard
+      label={label}
+      value={value}
+      iconName={icon}
+      iconColor={color}
+      style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+    />
   );
 
 
@@ -137,35 +203,28 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const renderPropertyItem = ({ item }: { item: PropertyResponse }) => renderPropertyCard(item);
 
   const ListHeader = () => (
-    <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
+    <Animated.View style={[styles.titleContainer, !isDesktop && { opacity: largeTitleOpacity }]}>
       {isDesktop && (
         <View style={styles.desktopTitleRow}>
           <Text style={styles.mainTitle}>My Properties</Text>
           {properties.length > 0 && (
-            <TouchableOpacity 
-              style={styles.headerAddButtonWrapper}
-              activeOpacity={0.85}
+            <ActionButton
+              label="ADD PROPERTY"
+              icon="add"
+              iconPosition="right"
+              variant="primary"
+              size="md"
               onPress={onNavigateToCreateProperty}
-            >
-              <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.headerAddButton}
-              >
-                <Text style={styles.headerAddButtonText}>ADD PROPERTY</Text>
-                <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
-              </LinearGradient>
-            </TouchableOpacity>
+            />
           )}
         </View>
       )}
       {isDesktop ? (
         <View style={styles.statsGrid}>
           {renderStatCard('TOTAL ASSETS', String(properties.length), 'real-estate-agent')}
-          {renderStatCard('OCCUPANCY', properties.length > 0 ? 'LIVE' : 'NONE', 'trending-up', theme.Colors.primaryContainer)}
-          {renderStatCard('REVENUE', 'READY', 'payments', theme.Colors.secondary)}
-          {renderStatCard('ALERTS', '00', 'warning', theme.Colors.error)}
+          {renderStatCard('OCCUPANCY', properties.length > 0 ? occupancyRate : '0.0%', 'trending-up', theme.Colors.primaryContainer)}
+          {renderStatCard('REVENUE', revenueText, 'payments', theme.Colors.secondary)}
+          {renderStatCard('ALERTS', String(issueMetrics.open + issueMetrics.escalated), 'warning', theme.Colors.error)}
         </View>
       ) : (
         <View style={styles.mobileSearchRow}>
@@ -213,95 +272,34 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     ) : null
   );
 
-  const DesktopShell = () => (
-    <LinearGradient colors={theme.Colors.backgroundGradient as [string, string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradient}>
-      <View style={styles.desktopShell}>
-        <View style={styles.desktopMain}>
-          <DesktopNavBar 
-            activeTab="Properties" 
-            rightContent={
-              <>
-                <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={styles.searchBox}>
-                  <MaterialIcons name="search" size={22} color={theme.Colors.onSurfaceVariant} />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search portfolio..."
-                    placeholderTextColor={theme.Colors.onSurfaceVariant}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                  />
-                </BlurView>
-                <TouchableOpacity style={styles.topIcon} onPress={() => router.push('/escalations')}><Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} /></TouchableOpacity>
-              </>
-            }
-          />
-
-          <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.desktopInner}>
-              <ListHeader />
-              {isLoading ? (
-                <View style={styles.loaderContainer}>
-                  <ActivityIndicator size="large" color={theme.Colors.primaryContainer} />
-                </View>
-              ) : properties.length === 0 ? (
-                <ListEmptyComponent />
-              ) : (
-                <View style={styles.propertyGrid}>
-                  {properties.map((property) => (
-                    <View key={property.id} style={styles.propertyGridItem}>
-                      {renderPropertyCard(property)}
-                    </View>
-                  ))}
-                </View>
-              )}
-
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    </LinearGradient>
-  );
-
   return (
     <>
-      {isDesktop ? DesktopShell() : (
-        <LinearGradient
-        colors={theme.Colors.backgroundGradient as [string, string, string]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        <SafeAreaView style={styles.safeArea} edges={[]}>
-
-          {isLoading ? (
-            <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#00e5ff" />
+      <PageShell scrollable edges={isDesktop ? ['top'] : []} onEndReached={handleEndReached}>
+        <ListHeader />
+        {isLoading ? (
+          <SkeletonCardGrid count={4} />
+        ) : properties.length === 0 ? (
+          <ListEmptyComponent />
+        ) : (
+          <>
+            <View style={styles.propertyGrid}>
+              {visibleProperties.map((property) => (
+                <View key={property.id} style={styles.propertyGridItem}>
+                  {renderPropertyCard(property)}
+                </View>
+              ))}
             </View>
-          ) : (
-            <Animated.FlatList
-              data={properties}
-              renderItem={renderPropertyItem}
-              keyExtractor={(item: PropertyResponse) => item.id}
-              contentContainerStyle={[styles.listContent, { paddingTop: 88 }]}
-              ListHeaderComponent={ListHeader}
-              ListEmptyComponent={ListEmptyComponent}
-              ListFooterComponent={ListFooter}
-              showsVerticalScrollIndicator={false}
-              refreshing={isLoading}
-              onRefresh={refreshProperties}
-              onScroll={(e) => {
-                handleNavScroll(e);
-                Animated.event(
-                  [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                  { useNativeDriver: false }
-                )(e);
-              }}
-              scrollEventThrottle={16}
-            />
-          )}
-        </SafeAreaView>
-      </LinearGradient>
-      )}
+            {hasMore && (
+              <View style={{ paddingVertical: 24, alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator size="small" color={theme.Colors.primary} />
+                <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 6, fontWeight: '700', letterSpacing: 0.5 }}>
+                  Loading more properties...
+                </Text>
+              </View>
+            )}
+          </>
+        )}
+      </PageShell>
 
       {/* Broadcast Notice Composer Modal */}
       <BroadcastComposerModal

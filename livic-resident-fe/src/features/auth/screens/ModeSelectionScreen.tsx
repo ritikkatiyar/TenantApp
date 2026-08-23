@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
 interface ModeSelectionScreenProps {
@@ -104,18 +103,19 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
   };
 
   return (
-    <LinearGradient colors={theme.Colors.backgroundGradient as [string, string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <Text style={styles.title}>What do you want to manage?</Text>
-          <Text style={styles.subtitle}>Select a property type to get started</Text>
-          
-          <View style={[styles.grid, isDesktop && styles.gridDesktop]}>
-            {MODES.map(renderCard)}
-          </View>
+    <PageShell
+      scrollable={false}
+      edges={['top', 'bottom']}
+    >
+      <View style={styles.content}>
+        <Text style={styles.title}>What do you want to manage?</Text>
+        <Text style={styles.subtitle}>Select a property type to get started</Text>
+        
+        <View style={[styles.grid, isDesktop && styles.gridDesktop]}>
+          {MODES.map(renderCard)}
         </View>
-      </SafeAreaView>
-    </LinearGradient>
+      </View>
+    </PageShell>
   );
 }
 
@@ -154,7 +154,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   gridDesktop: {
     maxWidth: 600,
-    gap: 24,
+    gap: theme.Spacing.lg,
   },
   cardContainer: {
     width: '45%',
@@ -205,11 +205,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: theme.Spacing.stackSm,
     backgroundColor: theme.Colors.surfaceContainer,
     paddingHorizontal: theme.Spacing.stackSm,
-    paddingVertical: 4,
+    paddingVertical: theme.Spacing.xs,
     borderRadius: theme.Rounded.md,
   },
   badgeText: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: 'bold',
     color: theme.Colors.outline,
   },

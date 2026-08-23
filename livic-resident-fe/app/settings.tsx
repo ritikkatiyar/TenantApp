@@ -123,7 +123,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 4,
   },
   heroSubtitle: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
   },
   grid: {
     gap: 16,
@@ -138,7 +138,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 16,
   },
   cardTitle: {
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '700',
   },
   item: {
@@ -148,11 +148,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   itemName: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
   itemDesc: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     marginTop: 2,
   },
   themeOptionsRow: {
@@ -172,7 +172,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: 6,
   },
   themeOptionText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
     textTransform: 'capitalize',
   },

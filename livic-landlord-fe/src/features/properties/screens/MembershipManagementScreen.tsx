@@ -286,7 +286,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
                   <Text style={styles.userPhone}>{selectedUser.phoneNumber}</Text>
                 </View>
 
-                <Text style={[styles.label, { marginTop: 16 }]}>Select Role</Text>
+                <Text style={[styles.label, { marginTop: theme.Spacing.md }]}>Select Role</Text>
                 <View style={styles.roleOptions}>
                   <TouchableOpacity 
                     style={[styles.roleOption, selectedRole === 'PROPERTY_MANAGER' && styles.roleOptionActive]}
@@ -321,7 +321,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
     paddingHorizontal: 0,
   },
-  addBtn: { padding: 4 },
+  addBtn: { padding: theme.Spacing.xs },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -335,16 +335,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: theme.Spacing.md,
   },
   cardInfo: { flex: 1 },
-  name: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onSurface },
-  email: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
+  name: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onSurface },
+  email: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   pillOverride: {
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
   },
   cardActions: { flexDirection: 'row', gap: 12 },
-  actionBtn: { padding: 8, backgroundColor: theme.Colors.surfaceContainer, borderRadius: 8 },
+  actionBtn: { padding: theme.Spacing.sm, backgroundColor: theme.Colors.surfaceContainer, borderRadius: 8 },
   emptyText: { textAlign: 'center', color: theme.Colors.onSurfaceVariant, marginTop: 40 },
   modalOverlay: {
     flex: 1,
@@ -355,7 +355,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 24,
+    padding: theme.Spacing.lg,
     minHeight: '50%',
   },
   modalHeader: {
@@ -364,8 +364,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  modalTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '700' },
-  label: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '600', marginBottom: 8, color: theme.Colors.onSurfaceVariant },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '700' },
+  label: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', marginBottom: theme.Spacing.sm, color: theme.Colors.onSurfaceVariant },
   searchRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   searchInput: {
     flex: 1,
@@ -373,7 +373,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     borderRadius: 8,
     padding: 12,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     height: 48,
   },
   searchBtn: {
@@ -381,20 +381,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     height: 48,
   },
   userResult: {
-    padding: 16,
+    padding: theme.Spacing.md,
     backgroundColor: theme.Colors.surfaceContainer,
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
   },
-  userName: { fontSize: theme.Typography.BodyLarge.fontSize, fontWeight: '600' },
-  userPhone: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 },
+  userName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600' },
+  userPhone: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
   roleOptions: { flexDirection: 'row', gap: 12 },
   roleOption: {
     flex: 1,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     borderRadius: 8,
-    padding: 16,
+    padding: theme.Spacing.md,
     alignItems: 'center',
   },
   roleOptionActive: {
@@ -404,7 +404,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   roleOptionText: { fontWeight: '600', color: theme.Colors.onSurfaceVariant },
   roleOptionTextActive: { color: theme.Colors.primary },
   assignBtn: {
-    marginTop: 24,
+    marginTop: theme.Spacing.lg,
   },
 });
 

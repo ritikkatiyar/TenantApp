@@ -66,7 +66,7 @@ export function TopUpCard({
             style={styles.topUpSubmitGradient}
           >
             <Ionicons name="shield-checkmark" size={18} color={theme.Colors.surfaceContainerLowest} />
-            <Text style={styles.topUpSubmitText}>RAZORPAY TEST CHECKOUT</Text>
+            <Text style={styles.topUpSubmitText}>PROCEED TO PAYMENT</Text>
           </LinearGradient>
         )}
       </TouchableOpacity>
@@ -77,21 +77,21 @@ export function TopUpCard({
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   topUpCard: {
     borderRadius: 24,
-    padding: 24,
+    padding: theme.Spacing.lg,
     marginVertical: 15,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
   },
   calculatorTitle: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 1.5,
-    marginBottom: 4,
+    marginBottom: theme.Spacing.xs,
   },
   calculatorSub: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginBottom: 20,
   },
@@ -102,35 +102,35 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 16,
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.sm,
+    marginBottom: theme.Spacing.md,
   },
   dollarPrefix: {
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '700',
   },
   topUpInput: {
     flex: 1,
-    fontSize: theme.Typography.TitleLarge.fontSize,
+    fontSize: theme.Typography.titleLarge.fontSize,
     color: theme.Colors.onSurface,
     fontWeight: '700',
-    paddingHorizontal: 8,
+    paddingHorizontal: theme.Spacing.sm,
   },
   creditsConversion: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.primary,
     fontWeight: '600',
   },
   topUpPresets: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: theme.Spacing.lg,
   },
   presetBtn: {
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: theme.Spacing.xs,
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1.5,
@@ -143,7 +143,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.primaryContainer,
   },
   presetText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
   },
@@ -159,7 +159,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   topUpSubmitText: {
     color: theme.Colors.onPrimary,

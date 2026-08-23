@@ -5,12 +5,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Alert,
   Dimensions,
   Platform,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,11 +42,11 @@ declare global {
 
 export default function BillingScreen({ token }: BillingScreenProps) {
   const { theme, isDark } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const { isDesktop } = useResponsive();
+  const styles = React.useMemo(() => createStyles(theme, isDark, isDesktop), [theme, isDark, isDesktop]);
 
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
 
   // Custom React-Query Hook
@@ -220,7 +220,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
   if (isLoading) {
     return (
       <LinearGradient colors={LUMINOUS_BACKGROUND} style={styles.loaderContainer}>
-        <View style={{ width: '80%', gap: 16 }}>
+        <View style={{ width: '80%', gap: theme.Spacing.md }}>
           <SkeletonRow />
           <SkeletonRow />
           <SkeletonRow />
@@ -233,39 +233,25 @@ export default function BillingScreen({ token }: BillingScreenProps) {
   const remainingCredits = billingData?.wallet?.creditBalance || 0;
 
   return (
-    <LinearGradient
-      colors={LUMINOUS_BACKGROUND}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
+    <PageShell
+      scrollable={true}
+      edges={isDesktop ? ['top'] : []}
+      contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
     >
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-        {isDesktop ? (
-          <DesktopNavBar 
-            onBack={() => router.push('/settings')} 
-            backText="Back to Settings" 
-          />
-        ) : (
-          <View style={[styles.headerContainer, !isDesktop && { paddingTop: insets.top, height: 56 + insets.top }]}>
-            <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-            <View style={styles.headerContent}>
-              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-              </TouchableOpacity>
-              <View style={styles.titleWrapper}>
-                <Text style={styles.headerTitle}>SUBSCRIPTION & BILLING</Text>
-              </View>
-              <View style={{ width: 36 }} />
+      {!isDesktop && (
+        <View style={[styles.headerContainer, !isDesktop && { paddingTop: insets.top, height: 56 + insets.top }]}>
+          <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
+            </TouchableOpacity>
+            <View style={styles.titleWrapper}>
+              <Text style={styles.headerTitle}>SUBSCRIPTION & BILLING</Text>
             </View>
+            <View style={{ width: 36 }} />
           </View>
-        )}
-
-        <ScrollView
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
-          showsVerticalScrollIndicator={false}
-        >
+        </View>
+      )}
           <View style={isDesktop ? styles.desktopInner : null}>
             {isDesktop && (
               <View style={styles.titleContainer}>
@@ -294,21 +280,22 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             </View>
 
             {/* 3. Subscription Packages */}
-            <View style={styles.cardsWrapper}>
+            <View style={[styles.cardsWrapper, isDesktop && styles.cardsWrapperDesktop]}>
               {plans.length === 0 ? (
-                <View style={{ padding: 24, alignItems: 'center', width: '100%' }}>
-                  <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.BodyMedium.fontSize }}>No plans available. Please try again later.</Text>
+                <View style={{ padding: theme.Spacing.lg, alignItems: 'center', width: '100%' }}>
+                  <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodyMedium.fontSize }}>No plans available. Please try again later.</Text>
                 </View>
               ) : plans.map((plan) => (
-                <PlanCard
-                  key={plan.id || plan.planKey}
-                  plan={plan}
-                  isAnnual={isAnnual}
-                  currentPlan={currentPlan}
-                  subscribingPlanKey={subscribingPlanKey}
-                  isTopUpProcessing={isTopUpProcessing}
-                  onSubscribe={handleSubscribe}
-                />
+                <View key={plan.id || plan.planKey} style={[styles.planCardContainer, isDesktop && styles.planCardContainerDesktop]}>
+                  <PlanCard
+                    plan={plan}
+                    isAnnual={isAnnual}
+                    currentPlan={currentPlan}
+                    subscribingPlanKey={subscribingPlanKey}
+                    isTopUpProcessing={isTopUpProcessing}
+                    onSubscribe={handleSubscribe}
+                  />
+                </View>
               ))}
             </View>
 
@@ -333,13 +320,11 @@ export default function BillingScreen({ token }: BillingScreenProps) {
 
           </View>
           <View style={{ height: 120 }} />
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+    </PageShell>
   );
 }
 
-const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean, isDesktop: boolean = false) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -367,7 +352,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
   },
   titleWrapper: {
     flex: 1,
@@ -385,16 +370,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   headerTitle: {
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyLarge.fontSize,
+    fontSize: theme.Typography.bodyLarge.fontSize,
     fontFamily: 'Inter',
     fontWeight: '800',
     letterSpacing: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 32,
+    paddingTop: 24,
+    paddingBottom: 40,
   },
   titleContainer: {
-    marginVertical: 24,
+    marginTop: isDesktop ? 20 : theme.Spacing.lg,
+    marginBottom: theme.Spacing.lg,
   },
   titleLineDesktop: {
     fontSize: theme.Typography.headlineLg.fontSize,
@@ -402,9 +390,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
   },
   subtitleDesktop: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurfaceVariant,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
   },
   toggleContainer: {
     flexDirection: 'row',
@@ -428,7 +416,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     elevation: 2,
   },
   toggleText: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
   },
@@ -439,9 +427,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'column',
     width: '100%',
   },
-  desktopInner: {
-    maxWidth: 720,
+  cardsWrapperDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  planCardContainer: {
     width: '100%',
-    alignSelf: 'center',
+  },
+  planCardContainerDesktop: {
+    width: '31%',
+    minWidth: 280,
+  },
+  desktopInner: {
+    width: '100%',
+    flex: 1,
   },
 });

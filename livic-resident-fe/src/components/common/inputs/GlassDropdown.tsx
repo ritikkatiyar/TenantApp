@@ -77,7 +77,7 @@ const GlassDropdown = forwardRef<GlassDropdownRef, GlassDropdownProps>(
           onPress={handleOpen}
         >
           <View style={styles.triggerContent}>
-            {icon && <MaterialIcons name={icon} size={20} color={theme.Colors.primary} style={{ marginRight: 8 }} />}
+            {icon && <MaterialIcons name={icon} size={20} color={theme.Colors.primary} style={{ marginRight: theme.Spacing.sm }} />}
             <Text 
               numberOfLines={1} 
               style={[styles.triggerText, !selectedOption && styles.placeholderText, { flex: 1 }]}
@@ -156,7 +156,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
     paddingVertical: 12,
     width: '100%',
   },
@@ -166,7 +166,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
   },
   triggerText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
@@ -198,21 +198,21 @@ const createStyles = (theme: any) => StyleSheet.create({
     maxHeight: 350,
   },
   scrollContent: {
-    paddingVertical: 4,
+    paddingVertical: theme.Spacing.xs,
   },
   optionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.Spacing.md,
   },
   optionBorder: {
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.06)',
   },
   optionText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },

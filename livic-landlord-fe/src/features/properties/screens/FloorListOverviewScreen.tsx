@@ -25,6 +25,7 @@ import { getFloorSummaries, FloorSummaryResponse, generateBatchUnits } from '@/s
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { createStyles } from './FloorListOverviewScreen.styles';
 
@@ -162,7 +163,7 @@ export default function FloorListOverviewScreen({
     <BlurView 
       key={floor.floorNumber} 
       intensity={60} 
-      tint="light" 
+      tint={isDark ? "dark" : "light"} 
       style={[
         styles.floorCard, 
         isDesktop && styles.floorCardDesktop
@@ -192,28 +193,13 @@ export default function FloorListOverviewScreen({
         </View>
       </View>
 
-      <TouchableOpacity 
-        activeOpacity={0.8}
-        style={styles.actionButtonWrapper}
+      <ActionButton
+        variant="primary"
+        label={floor.configured ? "Edit Layout" : "Draw Layout (Visual Editor)"}
+        icon={floor.configured ? "edit" : "gesture"}
         onPress={() => onEditFloor(floor.floorNumber)}
-      >
-        {floor.configured ? (
-          <View style={styles.editButton}>
-            <MaterialIcons name="edit" size={18} color={theme.Colors.primary} />
-            <Text style={styles.editButtonText}>Edit Layout</Text>
-          </View>
-        ) : (
-          <LinearGradient
-            colors={['#00d4ff', '#0072ff']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.configureButton}
-          >
-            <MaterialIcons name="gesture" size={20} color={theme.Colors.surfaceContainerLowest} />
-            <Text style={styles.configureButtonText}>Draw Layout (Visual Editor)</Text>
-          </LinearGradient>
-        )}
-      </TouchableOpacity>
+        fullWidth
+      />
 
       {!floor.configured && (
         <View style={styles.quickCreateSection}>
@@ -274,31 +260,38 @@ export default function FloorListOverviewScreen({
 
   const DesktopShell = () => (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
         {/* Main Workspace */}
         <View style={styles.desktopMain}>
-          <DesktopNavBar 
-            activeTab="Properties" 
-            onBack={onBack} 
-            backText="Back to Portfolio" 
-          />
+
 
           <ScrollView contentContainerStyle={styles.desktopContent} showsVerticalScrollIndicator={false}>
             <View style={styles.desktopInner}>
               {/* Full Width Header Row */}
               <View style={styles.desktopHeaderRow}>
-                <View style={styles.largeTitleContainer}>
-                  <Text style={styles.titleLineDesktop}>Floor Overview</Text>
-                  <View style={styles.propertyBadge}>
-                    <View style={styles.propertyIconWrapper}>
-                      <MaterialIcons name="business" size={14} color={theme.Colors.surfaceContainerLowest} />
+                <TouchableOpacity
+                  onPress={onBack}
+                  style={styles.backButtonBadge}
+                  activeOpacity={0.75}
+                >
+                  <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+                </TouchableOpacity>
+
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <Text style={styles.titleLineDesktop}>Floor Overview</Text>
+                    <View style={styles.propertyBadge}>
+                      <View style={styles.propertyIconWrapper}>
+                        <MaterialIcons name="business" size={14} color={theme.Colors.surfaceContainerLowest} />
+                      </View>
+                      <Text style={styles.propertyNameLabel}>{propertyName}</Text>
                     </View>
-                    <Text style={styles.propertyNameLabel}>{propertyName}</Text>
                   </View>
+                  <Text style={styles.subtitleDesktop}>Manage structural floor plans and unit layouts</Text>
                 </View>
               </View>
 
@@ -321,7 +314,7 @@ export default function FloorListOverviewScreen({
 
   return (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}

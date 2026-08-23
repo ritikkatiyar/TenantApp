@@ -101,19 +101,19 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'rgba(0, 224, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: theme.Spacing.md,
   },
   title: {
     color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyLg.fontSize,
     fontWeight: '900',
     letterSpacing: 1.5,
-    marginBottom: 8,
+    marginBottom: theme.Spacing.sm,
     textAlign: 'center',
   },
   subtitle: {
     color: theme.Colors.onSurfaceVariant,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     lineHeight: 20,
     textAlign: 'center',
     marginBottom: 18,
@@ -131,7 +131,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   planBadgeText: {
     color: theme.Colors.outlineVariant,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '700',
   },
   upgradeBtn: {
@@ -139,7 +139,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: theme.Spacing.sm,
     paddingVertical: 14,
     borderRadius: 14,
     backgroundColor: theme.Colors.primary,
@@ -147,7 +147,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   upgradeBtnText: {
     color: theme.Colors.onPrimary,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
@@ -156,7 +156,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   closeBtnText: {
     color: theme.Colors.onSurfaceVariant,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
 });

@@ -139,10 +139,10 @@ export function TenantDetailsSidebar({
             </View>
 
             {tenantSearchError && (
-              <Text style={{ color: theme.Colors.error, fontSize: theme.Typography.BodyMedium.fontSize, paddingLeft: 4, marginTop: 4 }}>{tenantSearchError}</Text>
+              <Text style={{ color: theme.Colors.error, fontSize: theme.Typography.bodyMedium.fontSize, paddingLeft: theme.Spacing.xs, marginTop: theme.Spacing.xs }}>{tenantSearchError}</Text>
             )}
 
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: theme.Spacing.md }}>
               <TouchableOpacity style={[styles.statusToggle, { flex: 1 }]} onPress={() => setIsCreatingNewTenant(false)}>
                 <Text style={styles.statusToggleText}>CANCEL</Text>
               </TouchableOpacity>
@@ -180,8 +180,8 @@ export function TenantDetailsSidebar({
                 <View style={{ gap: 10, marginBottom: 12 }}>
                   {selectedBlock.activeLeases.map((l, index) => (
                     <View key={l.leaseId || index} style={[styles.tenantListContainer]}>
-                      <View style={{ flex: 1, gap: 4 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <View style={{ flex: 1, gap: theme.Spacing.xs }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm, flexWrap: 'wrap' }}>
                           <View style={styles.tenantTag}>
                             <Text style={styles.tenantTagText}>{l.tenantName || 'Assigned tenant'}</Text>
                           </View>
@@ -201,7 +201,7 @@ export function TenantDetailsSidebar({
                   ))}
                 </View>
               ) : (
-                <Text style={[styles.sheetSubtitle, { marginBottom: 8, fontStyle: 'italic' }]}>No tenants assigned yet.</Text>
+                <Text style={[styles.sheetSubtitle, { marginBottom: theme.Spacing.sm, fontStyle: 'italic' }]}>No tenants assigned yet.</Text>
               )}
 
               {(!selectedBlock.capacity || selectedBlock.capacity <= 0) ? (
@@ -212,7 +212,7 @@ export function TenantDetailsSidebar({
                   </Text>
                 </View>
               ) : selectedBlock.activeLeases && selectedBlock.activeLeases.length >= selectedBlock.capacity ? (
-                <View style={[styles.warningContainer, { backgroundColor: 'rgba(46, 125, 50, 0.08)', borderColor: 'rgba(46, 125, 50, 0.15)', marginTop: 8 }]}>
+                <View style={[styles.warningContainer, { backgroundColor: 'rgba(46, 125, 50, 0.08)', borderColor: 'rgba(46, 125, 50, 0.15)', marginTop: theme.Spacing.sm }]}>
                   <MaterialIcons name="check-circle" size={18} color={theme.Colors.primary} />
                   <Text style={[styles.warningText, { color: theme.Colors.primary }]}>
                     Unit is fully occupied (Capacity: {selectedBlock.capacity}/{selectedBlock.capacity} reached).
@@ -276,7 +276,7 @@ export function TenantDetailsSidebar({
                   </View>
 
                   {tenantSearchError && (
-                    <Text style={{ color: theme.Colors.error, fontSize: theme.Typography.BodyMedium.fontSize, marginTop: -8, marginBottom: 12, paddingLeft: 4 }}>
+                    <Text style={{ color: theme.Colors.error, fontSize: theme.Typography.bodyMedium.fontSize, marginTop: -8, marginBottom: 12, paddingLeft: theme.Spacing.xs }}>
                       {tenantSearchError}
                     </Text>
                   )}
@@ -290,7 +290,7 @@ export function TenantDetailsSidebar({
                         setNewTenantEmail('');
                       }}
                     >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.sm }}>
                         <MaterialIcons name="person-add" size={20} color={theme.Colors.primary} />
                         <Text style={styles.quickCreatePromptText}>
                           {'No tenant found. Create new tenant for "'}{tenantPhoneSearch}{'"?'}
@@ -300,11 +300,11 @@ export function TenantDetailsSidebar({
                   )}
 
                   {tenantSearchResult && (
-                    <View style={{ gap: 10, marginTop: 4, marginBottom: 12 }}>
+                    <View style={{ gap: 10, marginTop: theme.Spacing.xs, marginBottom: 12 }}>
                       <View style={styles.searchResultContainer}>
                         <View>
-                          <Text style={{ fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary }}>{tenantSearchResult.fullName}</Text>
-                          <Text style={{ fontSize: theme.Typography.LabelSmall.fontSize, color: theme.Colors.onSurfaceVariant }}>{tenantSearchResult.email}</Text>
+                          <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary }}>{tenantSearchResult.fullName}</Text>
+                          <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant }}>{tenantSearchResult.email}</Text>
                         </View>
                         <MaterialIcons name="check-circle" size={20} color={theme.Colors.primary} />
                       </View>
@@ -399,17 +399,17 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: theme.Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   sheetUnitTitle: {
-    fontSize: theme.Typography.HeadlineSmall.fontSize,
+    fontSize: theme.Typography.headlineSmall.fontSize,
     fontWeight: '900',
     color: theme.Colors.onSurface,
   },
   sheetSubtitle: {
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
     marginTop: 2,
@@ -431,14 +431,14 @@ const createStyles = (theme: any) => StyleSheet.create({
   createTenantHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: theme.Spacing.sm,
+    marginBottom: theme.Spacing.sm,
   },
   createTenantBack: {
-    padding: 4,
+    padding: theme.Spacing.xs,
   },
   createTenantTitle: {
-    fontSize: theme.Typography.LabelLarge?.fontSize || 14,
+    fontSize: theme.Typography.labelLarge?.fontSize || 14,
     fontWeight: '800',
     color: theme.Colors.primary,
     letterSpacing: 0.5,
@@ -447,7 +447,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     gap: 6,
   },
   inputLabel: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.5,
@@ -461,12 +461,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 48,
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   textInput: {
     flex: 1,
     color: theme.Colors.onSurface,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
   },
   statusToggle: {
@@ -479,7 +479,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: 'transparent',
   },
   statusToggleText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurfaceVariant,
   },
@@ -499,12 +499,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   tenantTag: {
     backgroundColor: 'rgba(0, 104, 117, 0.08)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: theme.Spacing.sm,
+    paddingVertical: theme.Spacing.xs,
     borderRadius: 6,
   },
   tenantTagText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
   },
@@ -523,11 +523,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: 'rgba(239, 68, 68, 0.12)',
     padding: 12,
     borderRadius: 12,
-    gap: 8,
+    gap: theme.Spacing.sm,
   },
   warningText: {
     flex: 1,
-    fontSize: theme.Typography.BodySmall.fontSize,
+    fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.error,
     fontWeight: '600',
     lineHeight: 16,
@@ -538,13 +538,13 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     borderRadius: 12,
     backgroundColor: theme.Colors.surfaceContainerLowest,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    gap: 8,
+    gap: theme.Spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.03)',
   },
@@ -552,12 +552,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     flex: 1,
   },
   suggestionName: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.onSurface,
   },
   suggestionPhone: {
-    fontSize: theme.Typography.LabelSmall.fontSize,
+    fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
   },
@@ -567,10 +567,10 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0, 104, 117, 0.1)',
     borderRadius: 12,
-    marginTop: 4,
+    marginTop: theme.Spacing.xs,
   },
   quickCreatePromptText: {
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     color: theme.Colors.primary,
     flex: 1,
@@ -586,7 +586,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   saveButton: {
     borderRadius: 12,
     overflow: 'hidden',
-    marginTop: 8,
+    marginTop: theme.Spacing.sm,
   },
   saveButtonGradient: {
     height: 48,
@@ -595,14 +595,14 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   saveButtonText: {
     color: theme.Colors.onPrimary,
-    fontSize: theme.Typography.BodyMedium.fontSize,
+    fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   statusContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 16,
+    marginTop: theme.Spacing.md,
   },
   statusActiveVacant: {
     backgroundColor: 'rgba(46, 125, 50, 0.1)',

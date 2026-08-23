@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import {
   getPropertyInventory,
   getInventoryStats,
@@ -25,16 +26,8 @@ export function useInventory() {
   const { accessToken } = useAuth();
   const { properties, isLoading: propertiesLoading } = useProperties();
 
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | undefined>(params.propertyId);
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (params.propertyId) {
-      setSelectedPropertyId(params.propertyId);
-    } else if (!selectedPropertyId && properties.length > 0) {
-      setSelectedPropertyId(properties[0].id);
-    }
-  }, [params.propertyId, properties, selectedPropertyId]);
 
   const activeLeaseId = params.leaseId;
   const initialTab: InventoryTab =
@@ -56,17 +49,14 @@ export function useInventory() {
   ]);
 
   const loadData = useCallback(async () => {
-    if (!accessToken || !selectedPropertyId) return;
+    if (!accessToken) return;
     setLoading(true);
 
     try {
-      const [itemsRes, statsRes] = await Promise.allSettled([
-        getPropertyInventory(selectedPropertyId, accessToken),
-        getInventoryStats(selectedPropertyId, accessToken),
-      ]);
-
-      if (itemsRes.status === 'fulfilled' && itemsRes.value) {
-        const mapped: InventoryItem[] = itemsRes.value.map((dto: InventoryItemDTO) => ({
+      let mapped: InventoryItem[] = [];
+      if (selectedPropertyId) {
+        const itemsRes = await getPropertyInventory(selectedPropertyId, accessToken).catch(() => []);
+        mapped = (itemsRes || []).map((dto: InventoryItemDTO) => ({
           id: dto.id,
           name: dto.name,
           category: dto.category,
@@ -75,26 +65,44 @@ export function useInventory() {
           condition: dto.condition,
           status: dto.status,
           nextService: dto.nextService || '',
-          value: formatCurrency(dto.value),
+          value: formatCurrency(Number(dto.value) || 0),
           shared: dto.shared,
           icon: dto.icon || 'inventory-2',
           image: dto.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=80',
           notes: dto.notes || '',
         }));
-        setRawItems(mapped);
-      } else {
-        setRawItems([]);
+      } else if (properties.length > 0) {
+        const allItemPromises = properties.map((p) => getPropertyInventory(p.id, accessToken).catch(() => []));
+        const results = await Promise.all(allItemPromises);
+        const combined = results.flat();
+        mapped = combined.map((dto: InventoryItemDTO) => ({
+          id: dto.id,
+          name: dto.name,
+          category: dto.category,
+          location: dto.location || 'Shared',
+          serial: dto.serial || '',
+          condition: dto.condition,
+          status: dto.status,
+          nextService: dto.nextService || '',
+          value: formatCurrency(Number(dto.value) || 0),
+          shared: dto.shared,
+          icon: dto.icon || 'inventory-2',
+          image: dto.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=80',
+          notes: dto.notes || '',
+        }));
       }
 
-      if (statsRes.status === 'fulfilled' && statsRes.value) {
-        const s = statsRes.value;
-        setStats([
-          { label: 'Total Assets', value: String(s.totalAssets), helper: 'Total tracked assets', icon: 'trending-up' as const },
-          { label: 'Maintenance Due', value: String(s.maintenanceDue).padStart(2, '0'), helper: 'Requires inspection', icon: 'warning' as const },
-          { label: 'Unassigned', value: String(s.unassigned), helper: 'Ready for move-in', icon: 'inventory-2' as const },
-          { label: 'Valuation', value: formatCompactCurrency(s.totalValuation), helper: 'Replacement cost', icon: 'calculate' as const },
-        ]);
-      }
+      setRawItems(mapped);
+      const totalVal = mapped.reduce((acc, curr) => {
+        const valNum = parseFloat(String(curr.value).replace(/[^0-9.]/g, '')) || 0;
+        return acc + valNum;
+      }, 0);
+      setStats([
+        { label: 'Total Assets', value: String(mapped.length), helper: 'Total tracked assets', icon: 'trending-up' as const },
+        { label: 'Maintenance Due', value: String(mapped.filter((i) => i.status === 'Service Due' || i.condition === 'Damaged').length).padStart(2, '0'), helper: 'Requires inspection', icon: 'warning' as const },
+        { label: 'Unassigned', value: String(mapped.filter((i) => i.shared).length), helper: 'Ready for move-in', icon: 'inventory-2' as const },
+        { label: 'Valuation', value: formatCompactCurrency(totalVal), helper: 'Replacement cost', icon: 'calculate' as const },
+      ]);
 
       if (activeLeaseId) {
         const [assignmentsRes, checklistRes] = await Promise.allSettled([

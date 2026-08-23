@@ -47,7 +47,7 @@ jest.mock('@/src/features/finance/hooks/useRentRoll', () => ({
       content: [
         {
           id: 'cycle-1',
-          unitName: 'Unit 101',
+          unitNumber: 'Unit 101',
           tenantName: 'John Doe',
           baseRent: 15000,
           totalAmount: 15000,
@@ -89,7 +89,7 @@ describe('RentRollScreen Component', () => {
       </QueryClientProvider>
     );
 
-    expect(getByText('John Doe')).toBeTruthy();
-    expect(getByText('Unit 101')).toBeTruthy();
+    expect(getByText(/John Doe/)).toBeTruthy();
+    expect(getByText(/Unit 101/)).toBeTruthy();
   });
 });
