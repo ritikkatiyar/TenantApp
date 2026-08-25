@@ -34,29 +34,11 @@ public class UnitBookingCrudServiceImpl extends AbstractCrudService<UnitBookingT
 
     @Override
     @Transactional(readOnly = true)
-    public List<UnitBookingTbl> findByUnitIdIn(Collection<UUID> unitIds) {
-        if (unitIds == null || unitIds.isEmpty()) {
-            return List.of();
-        }
-        return repository.findByUnitIdIn(unitIds);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<UnitBookingTbl> findByUnitIdIn(Collection<UUID> unitIds, Pageable pageable) {
         if (unitIds == null || unitIds.isEmpty()) {
             return Page.empty(pageable);
         }
         return repository.findByUnitIdIn(unitIds, pageable);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UnitBookingTbl> findByProspectiveTenantUserId(UUID prospectiveTenantUserId) {
-        if (prospectiveTenantUserId == null) {
-            return List.of();
-        }
-        return repository.findByProspectiveTenantUserId(prospectiveTenantUserId);
     }
 
     @Override

@@ -1,8 +1,9 @@
 package com.livic.finance.mapper;
 
-import com.livic.finance.domain.UnitBookingTbl;
-import com.livic.finance.dto.UnitBookingDTOs;
 import com.livic.common.domain.UnitBookingStatus;
+import com.livic.finance.domain.UnitBookingTbl;
+import com.livic.finance.dto.UnitBookingDTOs.CreateBookingRequest;
+import com.livic.finance.dto.UnitBookingDTOs.UnitBookingResponse;
 
 import java.util.UUID;
 
@@ -11,7 +12,7 @@ public final class UnitBookingMapper {
     private UnitBookingMapper() {
     }
 
-    public static UnitBookingTbl toEntity(UnitBookingDTOs.CreateBookingRequest request, UUID unitId) {
+    public static UnitBookingTbl toEntity(CreateBookingRequest request, UUID unitId) {
         return UnitBookingTbl.builder()
                 .unitId(unitId)
                 .prospectiveTenantUserId(request.prospectiveTenantUserId())
@@ -24,7 +25,7 @@ public final class UnitBookingMapper {
                 .build();
     }
 
-    public static UnitBookingDTOs.UnitBookingResponse toResponse(UnitBookingTbl booking, String unitNumber) {
+    public static UnitBookingResponse toResponse(UnitBookingTbl booking, String unitNumber) {
         if (booking == null) {
             return null;
         }
@@ -33,7 +34,7 @@ public final class UnitBookingMapper {
         String tenantName = booking.getProspectiveTenantName() != null ? booking.getProspectiveTenantName() : "Prospective Tenant";
         String tenantPhone = booking.getProspectiveTenantPhone() != null ? booking.getProspectiveTenantPhone() : "";
 
-        return new UnitBookingDTOs.UnitBookingResponse(
+        return new UnitBookingResponse(
                 booking.getId(),
                 booking.getUnitId(),
                 resolvedUnitNumber,

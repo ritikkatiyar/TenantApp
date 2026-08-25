@@ -5,6 +5,7 @@ import com.livic.common.domain.UnitBookingStatus;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.UnitBookingTbl;
 import com.livic.finance.dto.UnitBookingDTOs;
+import com.livic.finance.dto.UnitBookingDTOs.UnitBookingResponse;
 import com.livic.finance.mapper.UnitBookingMapper;
 import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
@@ -141,87 +142,9 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         );
     }
 
-    private UnitBookingTbl getBookingOrThrow(UUID id) {
-        return unitBookingCrudService.findById(id)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit booking not found"));
-    }
-
-    private UUID resolvePayerUserId(UnitBookingTbl booking, UUID fallbackUserId) {
-        UUID payerUserId = booking.getProspectiveTenantUserId();
-        if (payerUserId == null) {
-            if (booking.getProspectiveTenantEmail() != null) {
-                UserSummaryDTO u = userFacade.getUserByEmail(booking.getProspectiveTenantEmail()).orElse(null);
-                if (u != null) {
-                    payerUserId = u.id();
-                }
-            }
-        }
-        return payerUserId != null ? payerUserId : fallbackUserId;
-    }
-
     @Override
     @Transactional(readOnly = true)
-    public List<UnitBookingDTOs.UnitBookingResponse> listBookings() {
-        return listBookings(null, null);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UnitBookingDTOs.UnitBookingResponse> listBookings(UUID currentUserId, UUID propertyId) {
-        try {
-            List<UnitBookingTbl> bookings;
-
-            if (propertyId != null) {
-                List<UnitSummaryDTO> propertyUnits = unitFacade.getUnitsByPropertyId(propertyId);
-                List<UUID> unitIds = propertyUnits.stream().map(UnitSummaryDTO::id).toList();
-                if (unitIds.isEmpty()) {
-                    return List.of();
-                }
-                bookings = unitBookingCrudService.findByUnitIdIn(unitIds);
-            } else if (currentUserId != null) {
-                List<PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
-                List<UUID> propertyIds = userProperties.stream().map(PropertySummaryDTO::id).toList();
-                if (propertyIds.isEmpty()) {
-                    bookings = unitBookingCrudService.findByProspectiveTenantUserId(currentUserId);
-                } else {
-                    List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyIds(propertyIds);
-                    List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
-                    if (unitIds.isEmpty()) {
-                        return List.of();
-                    }
-                    bookings = unitBookingCrudService.findByUnitIdIn(unitIds);
-                }
-            } else {
-                bookings = unitBookingCrudService.findAll();
-            }
-
-            if (bookings == null || bookings.isEmpty()) {
-                return List.of();
-            }
-
-            Set<UUID> unitIds = bookings.stream()
-                    .filter(b -> b.getUnitId() != null)
-                    .map(UnitBookingTbl::getUnitId)
-                    .collect(Collectors.toSet());
-
-            Map<UUID, UnitSummaryDTO> unitsMap = unitIds.isEmpty() ? Map.of() : unitFacade.getUnitsByIds(unitIds);
-
-            return bookings.stream()
-                    .map(booking -> {
-                        UnitSummaryDTO u = booking.getUnitId() != null ? unitsMap.get(booking.getUnitId()) : null;
-                        String unitNumber = u != null ? u.unitNumber() : "N/A";
-                        return UnitBookingMapper.toResponse(booking, unitNumber);
-                    })
-                    .toList();
-        } catch (Exception e) {
-            log.error("Failed to list unit bookings for user: {} property: {}", currentUserId, propertyId, e);
-            return List.of();
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<UnitBookingDTOs.UnitBookingResponse> listBookings(UUID currentUserId, UUID propertyId, Pageable pageable) {
+    public Page<UnitBookingResponse> listBookings(UUID currentUserId, UUID propertyId, Pageable pageable) {
         try {
             Page<UnitBookingTbl> bookingsPage;
 
@@ -269,5 +192,23 @@ public class UnitBookingServiceImpl implements UnitBookingService {
             log.error("Failed to list unit bookings for user: {} property: {}", currentUserId, propertyId, e);
             return Page.empty(pageable);
         }
+    }
+
+    private UnitBookingTbl getBookingOrThrow(UUID id) {
+        return unitBookingCrudService.findById(id)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit booking not found"));
+    }
+
+    private UUID resolvePayerUserId(UnitBookingTbl booking, UUID fallbackUserId) {
+        UUID payerUserId = booking.getProspectiveTenantUserId();
+        if (payerUserId == null) {
+            if (booking.getProspectiveTenantEmail() != null) {
+                UserSummaryDTO u = userFacade.getUserByEmail(booking.getProspectiveTenantEmail()).orElse(null);
+                if (u != null) {
+                    payerUserId = u.id();
+                }
+            }
+        }
+        return payerUserId != null ? payerUserId : fallbackUserId;
     }
 }
