@@ -355,6 +355,7 @@ export const Theme = {
 };
 
 export const Breakpoints = {
-  tablet: 768,
-  desktop: 1024,
+  mobile: 0,
+  tablet: 600,
+  desktop: 900,
 };

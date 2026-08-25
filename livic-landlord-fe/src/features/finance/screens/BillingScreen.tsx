@@ -16,7 +16,6 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/src/hooks/useResponsive';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useBilling } from '@/src/features/finance/hooks/useBilling';
 import { SkeletonRow } from '@/src/components/common/feedback/Skeleton';
@@ -266,7 +265,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
     return (
       <PageShell
         scrollable={false}
-        header={isDesktop ? <DesktopNavBar title="SaaS Subscription & Billing" /> : null}
+        header={null}
         edges={isDesktop ? ['top'] : []}
       >
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 }}>
@@ -284,7 +283,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
   return (
     <PageShell
       scrollable={true}
-      header={isDesktop ? <DesktopNavBar title="SaaS Subscription & Billing" /> : null}
+      header={null}
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
     >
