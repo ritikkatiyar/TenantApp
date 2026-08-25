@@ -22,6 +22,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { useCreateProperty } from '@/src/features/properties/hooks/useCreateProperty';
 import { createStyles } from './CreatePropertyScreen.styles';
 
@@ -44,8 +45,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
   const router = useRouter();
 
   const { handleScroll } = useScrollNav();
@@ -251,7 +251,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
         {/* Property Amenities Selector */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>PROPERTY AMENITIES</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+          <View style={styles.amenitiesContainer}>
             {[
               'High-speed Fiber Wi-Fi',
               'Covered Parking',
@@ -270,30 +270,14 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
                   key={amenity}
                   onPress={() => toggleAmenity(amenity)}
                   activeOpacity={0.75}
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    backgroundColor: isSelected ? theme.Colors.primaryContainer : theme.Colors.surfaceContainerLow,
-                    borderWidth: 1,
-                    borderColor: isSelected ? theme.Colors.primary : theme.Colors.outlineVariant,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
+                  style={[styles.amenityChip, isSelected && styles.amenityChipSelected]}
                 >
                   <MaterialIcons
                     name={isSelected ? 'check-circle' : 'add-circle-outline'}
-                    size={16}
+                    size={20}
                     color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
                   />
-                  <Text
-                    style={{
-                      fontSize: theme.Typography.bodySmall.fontSize,
-                      fontWeight: '700',
-                      color: isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant,
-                    }}
-                  >
+                  <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected]}>
                     {amenity}
                   </Text>
                 </TouchableOpacity>
