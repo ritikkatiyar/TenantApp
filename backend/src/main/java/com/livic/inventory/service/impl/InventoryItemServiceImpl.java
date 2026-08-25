@@ -180,14 +180,19 @@ public class InventoryItemServiceImpl implements InventoryItemService {
     @Transactional(readOnly = true)
     public TenantVisibleInventoryResponse getTenantVisibleItems(UUID userId, UUID propertyId) {
         Optional<LeaseSummaryDTO> activeLeaseOpt = financeFacade.getActiveLeaseForUser(userId);
-        if (activeLeaseOpt.isEmpty() || !propertyId.equals(activeLeaseOpt.get().propertyId())) {
+        if (activeLeaseOpt.isEmpty()) {
             return new TenantVisibleInventoryResponse(List.of(), List.of());
         }
 
         LeaseSummaryDTO lease = activeLeaseOpt.get();
-        List<InventoryItemTbl> sharedItems = inventoryItemRepository.findAllByPropertyIdAndScope(propertyId, InventoryScope.PROPERTY_SHARED);
+        UUID targetPropertyId = propertyId != null ? propertyId : lease.propertyId();
+        if (targetPropertyId == null || !targetPropertyId.equals(lease.propertyId())) {
+            return new TenantVisibleInventoryResponse(List.of(), List.of());
+        }
+
+        List<InventoryItemTbl> sharedItems = inventoryItemRepository.findAllByPropertyIdAndScope(targetPropertyId, InventoryScope.PROPERTY_SHARED);
         List<InventoryItemTbl> unitItems = lease.unitId() != null
-                ? inventoryItemRepository.findAllByPropertyIdAndUnitId(propertyId, lease.unitId())
+                ? inventoryItemRepository.findAllByPropertyIdAndUnitId(targetPropertyId, lease.unitId())
                 : List.of();
 
         Set<UUID> allIds = sharedItems.stream().map(InventoryItemTbl::getId).collect(Collectors.toSet());

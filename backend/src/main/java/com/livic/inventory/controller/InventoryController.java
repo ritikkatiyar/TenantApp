@@ -104,9 +104,9 @@ public class InventoryController {
     }
 
     @GetMapping("/my-visible-items")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW_OWN_LEASE')")
+    @PreAuthorize("hasAnyRole('TENANT', 'LANDLORD', 'ADMIN', 'SUPERADMIN')")
     public ResponseEntity<ApiResponse<TenantVisibleInventoryResponse>> getTenantVisibleItems(
-            @RequestParam UUID propertyId,
+            @RequestParam(required = false) UUID propertyId,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         UUID userId = UUID.fromString(currentUser.getId());
         TenantVisibleInventoryResponse response = inventoryItemService.getTenantVisibleItems(userId, propertyId);
