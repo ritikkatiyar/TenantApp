@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 
+import { Platform } from 'react-native';
+
 interface MobileHeaderProps {
   title: string;
   onMenuPress?: () => void;
@@ -12,6 +14,10 @@ interface MobileHeaderProps {
 }
 
 export default function MobileHeader({ title, onMenuPress, onNotificationPress }: MobileHeaderProps) {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.innerWidth >= 900) {
+    return null;
+  }
+
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const insets = useSafeAreaInsets();
