@@ -36,6 +36,7 @@ spring:
     baseline-on-migrate: false
     validate-on-migrate: true
     out-of-order: true
+    repair-on-migrate: true
 
 
 server:
