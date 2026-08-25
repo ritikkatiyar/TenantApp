@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import { SkeletonCardGrid } from '@/src/components/common/feedback/Skeleton';
 
 import { ActiveLeaseSummary, getMyContext } from '@/src/features/auth/api/me.api';
 import { getAnnouncements, markAnnouncementRead, Announcement } from '@/src/features/announcements/api/announcement.api';
@@ -77,21 +78,21 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
   return (
     <PageShell
       scrollable={!loading}
-      header={isDesktop ? <DesktopNavBar title="Tenant Hub Overview" /> : null}
+      header={isDesktop ? <DesktopNavBar title="Resident Dashboard" activeTab="Home" /> : null}
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.Colors.primary} />
+        <View style={{ paddingVertical: theme.Spacing.xl, paddingHorizontal: theme.Spacing.md }}>
+          <SkeletonCardGrid count={2} />
         </View>
       ) : (
         <>
             {/* Greeting Header */}
             <View style={styles.greetingHeader}>
               <View>
-                <Text style={styles.kicker}>TENANT HUB</Text>
+                {!isDesktop && <Text style={styles.kicker}>TENANT HUB</Text>}
                 <Text style={styles.greetingText}>{getGreeting()}</Text>
                 <Text style={styles.greetingSub}>Welcome back to your resident workspace</Text>
               </View>
@@ -272,9 +273,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 40, gap: 20 },
-  scrollContentDesktop: { paddingTop: 20 },
-
+  scrollContent: { flexGrow: 1, paddingBottom: 100 },
+  scrollContentDesktop: { paddingTop: theme.Spacing.xl, paddingHorizontal: theme.Spacing.xl },
+  mobileScrollPadding: { paddingTop: theme.Spacing.xl * 2.2 },
   greetingHeader: { marginBottom: theme.Spacing.xs },
   kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, marginBottom: theme.Spacing.xs },
   greetingText: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', color: theme.Colors.onBackground },

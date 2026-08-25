@@ -22,6 +22,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { useCreateProperty } from '@/src/features/properties/hooks/useCreateProperty';
 import { createStyles } from './CreatePropertyScreen.styles';
 
@@ -44,8 +45,7 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
   const router = useRouter();
 
   const { handleScroll } = useScrollNav();
@@ -65,6 +65,8 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     setGlobalUnitsPerFloor,
     globalUnitType,
     setGlobalUnitType,
+    selectedAmenities,
+    toggleAmenity,
     loading,
     errorMsg,
     showErrors,
@@ -245,6 +247,44 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
             />
           </View>
         ) : null}
+
+        {/* Property Amenities Selector */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>PROPERTY AMENITIES</Text>
+          <View style={styles.amenitiesContainer}>
+            {[
+              'High-speed Fiber Wi-Fi',
+              'Covered Parking',
+              '24/7 Security',
+              'Power Backup',
+              'Rooftop Pool',
+              '24/7 Fitness Center',
+              'In-Building Laundry',
+              'EV Charger',
+              'Elevator',
+              'Clubhouse & Lounge'
+            ].map((amenity) => {
+              const isSelected = selectedAmenities.includes(amenity);
+              return (
+                <TouchableOpacity
+                  key={amenity}
+                  onPress={() => toggleAmenity(amenity)}
+                  activeOpacity={0.75}
+                  style={[styles.amenityChip, isSelected && styles.amenityChipSelected]}
+                >
+                  <MaterialIcons
+                    name={isSelected ? 'check-circle' : 'add-circle-outline'}
+                    size={20}
+                    color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
+                  />
+                  <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected]}>
+                    {amenity}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
         {showSubmit ? (
           <ActionButton

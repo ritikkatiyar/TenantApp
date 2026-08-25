@@ -76,6 +76,8 @@ export default function EditPropertyScreen({
     setGlobalUnitsPerFloor,
     globalUnitType,
     setGlobalUnitType,
+    selectedAmenities,
+    toggleAmenity,
     loading,
     saving,
     hasConfiguredFloor,
@@ -198,6 +200,44 @@ export default function EditPropertyScreen({
             />
           </View>
         )}
+      </View>
+
+      {/* Property Amenities Selector */}
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>PROPERTY AMENITIES</Text>
+        <View style={styles.amenitiesContainer}>
+          {[
+            'High-speed Fiber Wi-Fi',
+            'Covered Parking',
+            '24/7 Security',
+            'Power Backup',
+            'Rooftop Pool',
+            '24/7 Fitness Center',
+            'In-Building Laundry',
+            'EV Charger',
+            'Elevator',
+            'Clubhouse & Lounge'
+          ].map((amenity) => {
+            const isSelected = selectedAmenities.includes(amenity);
+            return (
+              <TouchableOpacity
+                key={amenity}
+                onPress={() => toggleAmenity(amenity)}
+                activeOpacity={0.75}
+                style={[styles.amenityChip, isSelected && styles.amenityChipSelected]}
+              >
+                <MaterialIcons
+                  name={isSelected ? 'check-circle' : 'add-circle-outline'}
+                  size={20}
+                  color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
+                />
+                <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected]}>
+                  {amenity}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       {showSave && (
