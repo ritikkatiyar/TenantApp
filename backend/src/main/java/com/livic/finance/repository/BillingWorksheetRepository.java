@@ -23,11 +23,15 @@ public interface BillingWorksheetRepository extends JpaRepository<BillingWorkshe
     Optional<BillingWorksheetEntryTbl> findTopByUnitIdAndChargeConfigIdOrderByBillingMonthDesc(
             UUID unitId, UUID chargeConfigId);
 
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM BillingWorksheetEntryTbl e LEFT JOIN FETCH e.chargeConfig WHERE e.unitId = :unitId AND e.billingMonth = :billingMonth")
     List<BillingWorksheetEntryTbl> findAllByUnitIdAndBillingMonth(
-            UUID unitId, String billingMonth);
+            @org.springframework.data.repository.query.Param("unitId") UUID unitId, 
+            @org.springframework.data.repository.query.Param("billingMonth") String billingMonth);
 
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM BillingWorksheetEntryTbl e LEFT JOIN FETCH e.chargeConfig WHERE e.propertyId = :propertyId AND e.billingMonth = :billingMonth")
     List<BillingWorksheetEntryTbl> findAllByPropertyIdAndBillingMonth(
-            UUID propertyId, String billingMonth);
+            @org.springframework.data.repository.query.Param("propertyId") UUID propertyId, 
+            @org.springframework.data.repository.query.Param("billingMonth") String billingMonth);
 
     boolean existsByChargeConfigId(UUID chargeConfigId);
 
