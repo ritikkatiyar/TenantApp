@@ -68,13 +68,13 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
           <View style={[styles.orb, styles.orb2]} />
           
           {/* Main Content Area */}
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.cardContainer}>
+          <BlurView intensity={40} tint="light" style={styles.cardContainer}>
             {/* Branding */}
             <View style={styles.brandingContainer}>
               <View style={styles.iconWrapper}>
                 <MaterialIcons name="home" size={28} color={theme.Colors.primary} />
               </View>
-              <Text style={styles.brandingText}>RESIDENT PORTAL</Text>
+              <Text style={styles.brandingText}>LANDLORD PORTAL</Text>
             </View>
 
             {/* Title */}
@@ -198,18 +198,18 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   orb1: {
     top: '10%',
     left: '5%',
-    width: 300,
-    height: 300,
+    width: 320,
+    height: 320,
     backgroundColor: theme.Colors.primaryFixed,
-    filter: 'blur(100px)' as any,
+    ...(Platform.OS === 'web' ? { filter: 'blur(100px)' } : {}),
   },
   orb2: {
     bottom: '15%',
     right: '-10%',
-    width: 350,
-    height: 350,
+    width: 360,
+    height: 360,
     backgroundColor: theme.Colors.secondaryFixed,
-    filter: 'blur(120px)' as any,
+    ...(Platform.OS === 'web' ? { filter: 'blur(120px)' } : {}),
   },
   cardContainer: {
     width: '100%',
