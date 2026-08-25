@@ -77,7 +77,7 @@ function MainAppLayout() {
   const hideNavigation = pathname === '/login' || pathname === '/signup';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
-  const showDesktop = mounted && isDesktop;
+  const showDesktop = isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
   return (

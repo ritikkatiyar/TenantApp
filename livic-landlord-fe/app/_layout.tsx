@@ -203,12 +203,8 @@ export default function RootLayout() {
   const hideNavigation = pathname === '/login' || pathname === '/signup';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
-  const showDesktop = mounted && isDesktop;
+  const showDesktop = isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
-
-  if (!mounted && Platform.OS === 'web') {
-    return <View style={{ flex: 1, backgroundColor: LightColors.background }} />;
-  }
 
   return (
     <SafeAreaProvider>
