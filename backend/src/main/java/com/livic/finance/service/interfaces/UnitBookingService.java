@@ -3,6 +3,9 @@ package com.livic.finance.service.interfaces;
 import com.livic.finance.dto.UnitBookingDTOs;
 import com.livic.payment.dto.PaymentTransactionResponse;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -15,4 +18,5 @@ public interface UnitBookingService {
     PaymentTransactionResponse recordTokenCashPayment(UUID bookingId, BigDecimal amount, String note, UUID userDetailsId);
     List<UnitBookingDTOs.UnitBookingResponse> listBookings();
     List<UnitBookingDTOs.UnitBookingResponse> listBookings(UUID currentUserId, UUID propertyId);
+    Page<UnitBookingDTOs.UnitBookingResponse> listBookings(UUID currentUserId, UUID propertyId, Pageable pageable);
 }

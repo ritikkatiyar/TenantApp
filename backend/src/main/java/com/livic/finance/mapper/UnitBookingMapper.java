@@ -2,8 +2,6 @@ package com.livic.finance.mapper;
 
 import com.livic.finance.domain.UnitBookingTbl;
 import com.livic.finance.dto.UnitBookingDTOs;
-import com.livic.property.domain.UnitTbl;
-
 import com.livic.common.domain.UnitBookingStatus;
 
 import java.util.UUID;

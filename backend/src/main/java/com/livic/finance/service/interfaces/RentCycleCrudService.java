@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.livic.finance.domain.RentCycleStatus;
 import com.livic.finance.dto.RentCycleDTOs;
+import com.livic.finance.dto.RentCycleDTOs.RentRollMetricsDTO;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +27,7 @@ public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
 
     RevenueMetricsDTO getRevenueMetrics(Collection<UUID> propertyIds, String billingMonth);
     Page<DefaulterRecordDTO> getDefaulters(Collection<UUID> propertyIds, Pageable pageable);
-    RentCycleDTOs.RentRollMetricsDTO getRentRollMetrics(
+    RentRollMetricsDTO getRentRollMetrics(
             UUID propertyId,
             String billingMonth,
             RentCycleStatus statusPending,
@@ -35,7 +36,7 @@ public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
             RentCycleStatus statusOverdue,
             RentCycleStatus statusPartiallyPaid
     );
-    RentCycleDTOs.RentRollMetricsDTO getRentRollMetricsForProperties(
+    RentRollMetricsDTO getRentRollMetricsForProperties(
             Collection<UUID> propertyIds,
             String billingMonth,
             RentCycleStatus statusPending,

@@ -8,6 +8,8 @@ import com.livic.payment.dto.PaymentTransactionResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,13 +30,14 @@ public class UnitBookingController {
     private final UnitBookingService unitBookingService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UnitBookingDTOs.UnitBookingResponse>>> listBookings(
+    public ResponseEntity<ApiResponse<Page<UnitBookingDTOs.UnitBookingResponse>>> listBookings(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
-            @RequestParam(required = false) UUID propertyId
+            @RequestParam(required = false) UUID propertyId,
+            Pageable pageable
     ) {
         log.info("API request: List unit bookings for propertyId: {}", propertyId);
-        UUID currentUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
-        return ResponseEntity.ok(ApiResponse.success(unitBookingService.listBookings(currentUserId, propertyId)));
+        UUID currentUserId = getCallerUserId(currentUser);
+        return ResponseEntity.ok(ApiResponse.success(unitBookingService.listBookings(currentUserId, propertyId, pageable)));
     }
 
     @PostMapping
@@ -53,7 +56,7 @@ public class UnitBookingController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         log.info("API request: Forfeit unit booking ID: {}", id);
-        UUID callerUserId = UUID.fromString(userDetails.getId());
+        UUID callerUserId = getCallerUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.success(unitBookingService.forfeitBooking(id, callerUserId)));
     }
 
@@ -63,7 +66,7 @@ public class UnitBookingController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         log.info("API request: Refund unit booking ID: {}", id);
-        UUID callerUserId = UUID.fromString(userDetails.getId());
+        UUID callerUserId = getCallerUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.success(unitBookingService.refundBooking(id, callerUserId)));
     }
 
@@ -73,7 +76,7 @@ public class UnitBookingController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         log.info("API request: Initiate online token payment for booking ID: {}", id);
-        UUID callerUserId = UUID.fromString(userDetails.getId());
+        UUID callerUserId = getCallerUserId(userDetails);
         return ResponseEntity.ok(ApiResponse.success(unitBookingService.initiateTokenOnlinePayment(id, callerUserId)));
     }
 
@@ -84,12 +87,16 @@ public class UnitBookingController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         log.info("API request: Record cash token payment for booking ID: {}", id);
-        UUID callerUserId = UUID.fromString(userDetails.getId());
+        UUID callerUserId = getCallerUserId(userDetails);
 
         Object amountObj = request.get("amount");
         BigDecimal amount = amountObj != null ? new BigDecimal(amountObj.toString()) : BigDecimal.ZERO;
         String note = (String) request.get("note");
 
         return ResponseEntity.ok(ApiResponse.success(unitBookingService.recordTokenCashPayment(id, amount, note, callerUserId)));
+    }
+
+    private UUID getCallerUserId(UserDetailsImpl userDetails) {
+        return userDetails != null ? UUID.fromString(userDetails.getId()) : null;
     }
 }

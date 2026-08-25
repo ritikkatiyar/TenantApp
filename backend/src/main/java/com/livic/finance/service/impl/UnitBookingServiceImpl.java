@@ -19,6 +19,8 @@ import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -214,6 +216,58 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         } catch (Exception e) {
             log.error("Failed to list unit bookings for user: {} property: {}", currentUserId, propertyId, e);
             return List.of();
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UnitBookingDTOs.UnitBookingResponse> listBookings(UUID currentUserId, UUID propertyId, Pageable pageable) {
+        try {
+            Page<UnitBookingTbl> bookingsPage;
+
+            if (propertyId != null) {
+                List<UnitSummaryDTO> propertyUnits = unitFacade.getUnitsByPropertyId(propertyId);
+                List<UUID> unitIds = propertyUnits.stream().map(UnitSummaryDTO::id).toList();
+                if (unitIds.isEmpty()) {
+                    return Page.empty(pageable);
+                }
+                bookingsPage = unitBookingCrudService.findByUnitIdIn(unitIds, pageable);
+            } else if (currentUserId != null) {
+                List<PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
+                List<UUID> propertyIds = userProperties.stream().map(PropertySummaryDTO::id).toList();
+                if (propertyIds.isEmpty()) {
+                    bookingsPage = unitBookingCrudService.findByProspectiveTenantUserId(currentUserId, pageable);
+                } else {
+                    List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyIds(propertyIds);
+                    List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
+                    if (unitIds.isEmpty()) {
+                        return Page.empty(pageable);
+                    }
+                    bookingsPage = unitBookingCrudService.findByUnitIdIn(unitIds, pageable);
+                }
+            } else {
+                bookingsPage = unitBookingCrudService.findAll(pageable);
+            }
+
+            if (bookingsPage == null || bookingsPage.isEmpty()) {
+                return Page.empty(pageable);
+            }
+
+            Set<UUID> unitIds = bookingsPage.getContent().stream()
+                    .filter(b -> b.getUnitId() != null)
+                    .map(UnitBookingTbl::getUnitId)
+                    .collect(Collectors.toSet());
+
+            Map<UUID, UnitSummaryDTO> unitsMap = unitIds.isEmpty() ? Map.of() : unitFacade.getUnitsByIds(unitIds);
+
+            return bookingsPage.map(booking -> {
+                UnitSummaryDTO u = booking.getUnitId() != null ? unitsMap.get(booking.getUnitId()) : null;
+                String unitNumber = u != null ? u.unitNumber() : "N/A";
+                return UnitBookingMapper.toResponse(booking, unitNumber);
+            });
+        } catch (Exception e) {
+            log.error("Failed to list unit bookings for user: {} property: {}", currentUserId, propertyId, e);
+            return Page.empty(pageable);
         }
     }
 }
