@@ -410,7 +410,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                 List<BillingWorksheetEntryTbl> unitWorksheets = worksheets.stream()
                         .filter(w -> w.getUnitId() != null && w.getUnitId().equals(unitId))
                         .peek(w -> w.setIsBilled(false))
-                        .toList();
+                        .collect(Collectors.toList());
                 if (!unitWorksheets.isEmpty()) {
                     billingWorksheetCrudService.saveAll(unitWorksheets);
                 }
@@ -424,7 +424,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                     List<MeterReadingTbl> unitReadings = readings.stream()
                             .filter(r -> r.getUnitId() != null && r.getUnitId().equals(unitId))
                             .peek(r -> r.setIsBilled(false))
-                            .toList();
+                            .collect(Collectors.toList());
                     if (!unitReadings.isEmpty()) {
                         meterReadingCrudService.saveAll(unitReadings);
                     }
@@ -434,7 +434,7 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
 
             log.info("rent_cycle_unpublished rentCycleId={} leaseId={} billingMonth={}",
-                    cycle.getId(), cycle.getLease().getId(), cycle.getBillingMonth());
+                    cycle.getId(), cycle.getLease() != null ? cycle.getLease().getId() : null, cycle.getBillingMonth());
         }
 
         return buildSingleResponse(cycle);
@@ -456,7 +456,7 @@ public class RentCycleServiceImpl implements RentCycleService {
             List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
             List<BillingWorksheetEntryTbl> worksheetsToUpdate = worksheets.stream()
                     .peek(w -> w.setIsBilled(true))
-                    .toList();
+                    .collect(Collectors.toList());
             if (!worksheetsToUpdate.isEmpty()) {
                 billingWorksheetCrudService.saveAll(worksheetsToUpdate);
             }
@@ -468,7 +468,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                 List<MeterReadingTbl> readings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
                 List<MeterReadingTbl> readingsToUpdate = readings.stream()
                         .peek(r -> r.setIsBilled(true))
-                        .toList();
+                        .collect(Collectors.toList());
                 if (!readingsToUpdate.isEmpty()) {
                     meterReadingCrudService.saveAll(readingsToUpdate);
                 }
@@ -491,8 +491,14 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
-        succeeded.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
-                .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
+        Comparator<RentCycleDTOs.RentCycleResponse> publishComp = Comparator.comparing(
+                (RentCycleDTOs.RentCycleResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
+                String.CASE_INSENSITIVE_ORDER
+        ).thenComparing(
+                (RentCycleDTOs.RentCycleResponse r) -> r.tenantName() != null ? r.tenantName() : "",
+                String.CASE_INSENSITIVE_ORDER
+        );
+        succeeded.sort(publishComp);
         return new RentCycleDTOs.BatchPublishResult(succeeded, failed);
     }
 
@@ -512,7 +518,7 @@ public class RentCycleServiceImpl implements RentCycleService {
             List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
             List<BillingWorksheetEntryTbl> worksheetsToUpdate = worksheets.stream()
                     .peek(w -> w.setIsBilled(false))
-                    .toList();
+                    .collect(Collectors.toList());
             if (!worksheetsToUpdate.isEmpty()) {
                 billingWorksheetCrudService.saveAll(worksheetsToUpdate);
             }
@@ -524,7 +530,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                 List<MeterReadingTbl> readings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
                 List<MeterReadingTbl> readingsToUpdate = readings.stream()
                         .peek(r -> r.setIsBilled(false))
-                        .toList();
+                        .collect(Collectors.toList());
                 if (!readingsToUpdate.isEmpty()) {
                     meterReadingCrudService.saveAll(readingsToUpdate);
                 }
@@ -547,8 +553,14 @@ public class RentCycleServiceImpl implements RentCycleService {
             }
         }
 
-        succeeded.sort(Comparator.comparing(RentCycleDTOs.RentCycleResponse::unitNumber)
-                .thenComparing(RentCycleDTOs.RentCycleResponse::tenantName));
+        Comparator<RentCycleDTOs.RentCycleResponse> unpublishComp = Comparator.comparing(
+                (RentCycleDTOs.RentCycleResponse r) -> r.unitNumber() != null ? r.unitNumber() : "",
+                String.CASE_INSENSITIVE_ORDER
+        ).thenComparing(
+                (RentCycleDTOs.RentCycleResponse r) -> r.tenantName() != null ? r.tenantName() : "",
+                String.CASE_INSENSITIVE_ORDER
+        );
+        succeeded.sort(unpublishComp);
         return new RentCycleDTOs.BatchUnpublishResult(succeeded, failed);
     }
 
