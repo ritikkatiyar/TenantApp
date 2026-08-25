@@ -87,7 +87,7 @@ function MainAppLayout() {
           <ScrollProvider>
             <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: theme.Colors.background }}>
               {showDesktop && !hideNavigation && <SidebarNavigation />}
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, backgroundColor: theme.Colors.background }}>
                 {!showDesktop && !hideHeader && (
                   <MobileHeader 
                     title={getHeaderTitle(pathname)} 
@@ -97,7 +97,7 @@ function MainAppLayout() {
                 )}
                 <ScreenWrapper isAuth={hideNavigation}>
                   <OnboardingGate>
-                    <Stack screenOptions={{ headerShown: false }}>
+                    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.Colors.background } }}>
                       <Stack.Screen name="index" />
                       <Stack.Screen name="login" />
                       <Stack.Screen name="signup" />

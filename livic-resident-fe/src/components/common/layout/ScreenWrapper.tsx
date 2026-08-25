@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, useWindowDimensions, ViewStyle, Animated } from 'react-native';
 
+import { useAppTheme } from '@/src/theme/ThemeContext';
+
 interface ScreenWrapperProps {
   children: React.ReactNode;
   contentContainerStyle?: ViewStyle;
@@ -8,6 +10,7 @@ interface ScreenWrapperProps {
 }
 
 export function ScreenWrapper({ children, contentContainerStyle, isAuth = false }: ScreenWrapperProps) {
+  const { theme } = useAppTheme();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const fadeAnim = useRef(new Animated.Value(0.85)).current;
@@ -22,7 +25,7 @@ export function ScreenWrapper({ children, contentContainerStyle, isAuth = false 
   }, [children]);
 
   return (
-    <Animated.View style={[styles.container, isDesktop && !isAuth && styles.desktopContainer, { opacity: fadeAnim }, contentContainerStyle]}>
+    <Animated.View style={[styles.container, { backgroundColor: theme.Colors.background }, isDesktop && !isAuth && styles.desktopContainer, { opacity: fadeAnim }, contentContainerStyle]}>
       {children}
     </Animated.View>
   );

@@ -53,7 +53,7 @@ export default function SidebarNavigation() {
 
   return (
     <Animated.View style={[styles.sidebar, animatedStyles]}>
-      <BlurView intensity={75} tint={isDark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(11, 17, 24, 0.92)' : theme.Colors.glassFill }]} />
+      <BlurView intensity={75} tint={isDark ? "dark" : "light"} style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(11, 17, 24, 0.92)' : 'rgba(255, 255, 255, 0.95)' }]} />
       
       <View style={[styles.sidebarHeader, isCollapsed && styles.sidebarHeaderCollapsed]}>
         {!isCollapsed ? (
@@ -117,7 +117,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
     borderRightColor: theme.Surface.border,
-    backgroundColor: isDark ? 'rgba(11, 17, 24, 0.96)' : theme.Colors.glassFill,
+    backgroundColor: isDark ? 'rgba(11, 17, 24, 0.96)' : '#ffffff',
     overflow: 'hidden',
   },
   sidebarHeader: {
