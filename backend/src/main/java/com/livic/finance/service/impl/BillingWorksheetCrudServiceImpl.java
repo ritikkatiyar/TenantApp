@@ -4,6 +4,8 @@ import com.livic.common.service.impl.AbstractCrudService;
 import com.livic.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.finance.repository.BillingWorksheetRepository;
 import com.livic.finance.service.interfaces.BillingWorksheetCrudService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -42,8 +44,18 @@ public class BillingWorksheetCrudServiceImpl extends AbstractCrudService<Billing
     }
 
     @Override
+    public Page<BillingWorksheetEntryTbl> findAllByUnitIdAndBillingMonth(UUID unitId, String billingMonth, Pageable pageable) {
+        return repository.findAllByUnitIdAndBillingMonth(unitId, billingMonth, pageable);
+    }
+
+    @Override
     public List<BillingWorksheetEntryTbl> findAllByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth) {
         return repository.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+    }
+
+    @Override
+    public Page<BillingWorksheetEntryTbl> findAllByPropertyIdAndBillingMonth(UUID propertyId, String billingMonth, Pageable pageable) {
+        return repository.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth, pageable);
     }
 
     @Override
@@ -59,5 +71,10 @@ public class BillingWorksheetCrudServiceImpl extends AbstractCrudService<Billing
     @Override
     public List<BillingWorksheetEntryTbl> findByUnitIdInAndChargeConfigIdAndBillingMonth(Collection<UUID> unitIds, UUID chargeConfigId, String billingMonth) {
         return repository.findByUnitIdInAndChargeConfigIdAndBillingMonth(unitIds, chargeConfigId, billingMonth);
+    }
+
+    @Override
+    public Page<BillingWorksheetEntryTbl> findByUnitIdInAndChargeConfigIdAndBillingMonth(Collection<UUID> unitIds, UUID chargeConfigId, String billingMonth, Pageable pageable) {
+        return repository.findByUnitIdInAndChargeConfigIdAndBillingMonth(unitIds, chargeConfigId, billingMonth, pageable);
     }
 }
