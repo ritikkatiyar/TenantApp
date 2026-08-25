@@ -132,7 +132,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Monthly Rent</Text>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                    <Text style={styles.statValue}>₹{activeRent.toLocaleString()}</Text>
+                    <Text style={styles.statValue}>{activeRent}</Text>
                     <Text style={styles.statSubLabel}>/month</Text>
                   </View>
                 </View>
