@@ -305,4 +305,33 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   desktopFormRight: {
     flex: 1,
   },
+  amenitiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.Spacing.sm,
+    marginTop: theme.Spacing.sm,
+  },
+  amenityChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: theme.Colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: theme.Colors.outlineVariant,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.Spacing.sm,
+  },
+  amenityChipSelected: {
+    backgroundColor: theme.Colors.primaryContainer,
+    borderColor: theme.Colors.primary,
+  },
+  amenityChipText: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '700',
+    color: theme.Colors.onSurfaceVariant,
+  },
+  amenityChipTextSelected: {
+    color: theme.Colors.onPrimaryContainer,
+  },
 });

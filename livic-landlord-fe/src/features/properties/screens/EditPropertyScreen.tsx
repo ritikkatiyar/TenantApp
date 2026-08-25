@@ -205,7 +205,7 @@ export default function EditPropertyScreen({
       {/* Property Amenities Selector */}
       <View style={styles.inputGroup}>
         <Text style={styles.label}>PROPERTY AMENITIES</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+        <View style={styles.amenitiesContainer}>
           {[
             'High-speed Fiber Wi-Fi',
             'Covered Parking',
@@ -224,30 +224,14 @@ export default function EditPropertyScreen({
                 key={amenity}
                 onPress={() => toggleAmenity(amenity)}
                 activeOpacity={0.75}
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: 20,
-                  backgroundColor: isSelected ? theme.Colors.primaryContainer : theme.Colors.surfaceContainerLow,
-                  borderWidth: 1,
-                  borderColor: isSelected ? theme.Colors.primary : theme.Colors.outlineVariant,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
+                style={[styles.amenityChip, isSelected && styles.amenityChipSelected]}
               >
                 <MaterialIcons
                   name={isSelected ? 'check-circle' : 'add-circle-outline'}
-                  size={16}
+                  size={20}
                   color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
                 />
-                <Text
-                  style={{
-                    fontSize: theme.Typography.bodySmall.fontSize,
-                    fontWeight: '700',
-                    color: isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant,
-                  }}
-                >
+                <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected]}>
                   {amenity}
                 </Text>
               </TouchableOpacity>
