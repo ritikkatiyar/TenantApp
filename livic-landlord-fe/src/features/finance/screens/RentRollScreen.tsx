@@ -43,7 +43,7 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
-  const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
+  const propertyId = paramPropertyId || null;
   const { showToast } = useToast();
 
   const [billingMonth, setBillingMonth] = useState<string>(() => {
@@ -290,7 +290,15 @@ export default function RentRollScreen({ token }: { token: string | null }) {
           </View>
         </View>
 
-        {!hasGenerated ? (
+        {!propertyId ? (
+          <GlassCard style={{ padding: 40, alignItems: 'center', justifyContent: 'center', marginVertical: 20 }}>
+            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 12 }} />
+            <Text style={{ fontSize: 18, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 6 }}>Select Property to Generate Draft</Text>
+            <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 420 }}>
+              Please select a property from the top navbar selector to view or generate a draft billing worksheet.
+            </Text>
+          </GlassCard>
+        ) : !hasGenerated ? (
           <PreFlightChecklistCard
             checklist={checklist}
             billingMonth={billingMonth}
