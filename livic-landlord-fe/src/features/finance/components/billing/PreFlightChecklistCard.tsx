@@ -75,7 +75,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '700', color: theme.Colors.onSurface, marginBottom: 12 },
   cardText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', marginBottom: theme.Spacing.xl, maxWidth: 500, lineHeight: 22 },
   checklistGrid: { flexDirection: 'row', gap: theme.Spacing.lg, marginBottom: theme.Spacing.lg, width: '100%', justifyContent: 'center' },
-  checklistItem: { backgroundColor: 'rgba(255,255,255,0.7)', padding: theme.Spacing.md, borderRadius: 12, alignItems: 'center', flex: 1, maxWidth: 200 },
+  checklistItem: { 
+    backgroundColor: isDark ? 'rgba(27, 38, 51, 0.85)' : 'rgba(255, 255, 255, 0.7)', 
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 104, 117, 0.15)',
+    padding: theme.Spacing.md, 
+    borderRadius: 12, 
+    alignItems: 'center', 
+    flex: 1, 
+    maxWidth: 200 
+  },
   checklistLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', marginBottom: theme.Spacing.sm },
   checklistValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.primary },
   statusBox: { flexDirection: 'row', backgroundColor: theme.Colors.secondaryContainer, padding: theme.Spacing.md, borderRadius: 12, marginBottom: theme.Spacing.xl, width: '100%', alignItems: 'center', gap: theme.Spacing.sm },
