@@ -74,7 +74,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
               <View style={styles.iconWrapper}>
                 <MaterialIcons name="home" size={28} color={theme.Colors.primary} />
               </View>
-              <Text style={styles.brandingText}>RESIDENT PORTAL</Text>
+              <Text style={styles.brandingText}>LANDLORD PORTAL</Text>
             </View>
 
             {/* Title */}
