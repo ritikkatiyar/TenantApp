@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
@@ -41,9 +42,10 @@ export default function RentRollScreen({ token }: { token: string | null }) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
+  const { selectedPropertyId } = useGlobalPropertySelection();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
-  const propertyId = paramPropertyId || null;
+  const propertyId = paramPropertyId || selectedPropertyId || null;
   const { showToast } = useToast();
 
   const [billingMonth, setBillingMonth] = useState<string>(() => {
