@@ -27,6 +27,7 @@ import { SectionHeader } from '@/src/components/common/display/SectionHeader';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { useRentRoll } from '@/src/features/finance/hooks/useRentRoll';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { createStyles } from './RentRollScreen.styles';
 
 // Sub-components
@@ -35,7 +36,9 @@ import { RecordCashModal } from '../components/billing/RecordCashModal';
 import { RentRollInvoiceList } from '../components/billing/RentRollInvoiceList';
 import { RentRollHeader } from '../components/billing/RentRollHeader';
 
-export default function RentRollScreen({ token }: { token: string | null }) {
+export default function RentRollScreen({ token: propToken }: { token?: string | null } = {}) {
+  const { accessToken } = useAuth();
+  const token = propToken || accessToken;
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 

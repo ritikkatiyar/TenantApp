@@ -14,6 +14,7 @@ export function useProperties(search?: string) {
     queryKey: ['properties', user?.id, search],
     queryFn: () => getMyProperties(accessToken!, search),
     enabled: !!user?.id && !!accessToken,
+    staleTime: 1000 * 60 * 5,
   });
 
   const deleteMutation = useMutation({
