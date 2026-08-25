@@ -3,6 +3,9 @@ package com.livic.finance.service.interfaces;
 import com.livic.finance.domain.BillingWorksheetEntryTbl;
 import com.livic.common.service.interfaces.CrudService;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -21,8 +24,14 @@ public interface BillingWorksheetCrudService extends CrudService<BillingWorkshee
     List<BillingWorksheetEntryTbl> findAllByUnitIdAndBillingMonth(
             UUID unitId, String billingMonth);
 
+    Page<BillingWorksheetEntryTbl> findAllByUnitIdAndBillingMonth(
+            UUID unitId, String billingMonth, Pageable pageable);
+
     List<BillingWorksheetEntryTbl> findAllByPropertyIdAndBillingMonth(
             UUID propertyId, String billingMonth);
+
+    Page<BillingWorksheetEntryTbl> findAllByPropertyIdAndBillingMonth(
+            UUID propertyId, String billingMonth, Pageable pageable);
 
     boolean existsByChargeConfigId(UUID chargeConfigId);
 
@@ -31,4 +40,7 @@ public interface BillingWorksheetCrudService extends CrudService<BillingWorkshee
 
     List<BillingWorksheetEntryTbl> findByUnitIdInAndChargeConfigIdAndBillingMonth(
             Collection<UUID> unitIds, UUID chargeConfigId, String billingMonth);
+
+    Page<BillingWorksheetEntryTbl> findByUnitIdInAndChargeConfigIdAndBillingMonth(
+            Collection<UUID> unitIds, UUID chargeConfigId, String billingMonth, Pageable pageable);
 }
