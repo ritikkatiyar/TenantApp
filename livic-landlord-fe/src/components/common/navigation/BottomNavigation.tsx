@@ -20,6 +20,10 @@ interface BottomNavigationProps {
 }
 
 export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavigationProps) {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.innerWidth >= 900) {
+    return null;
+  }
+
   const router = useRouter();
   const pathname = usePathname();
   const { navTranslateY } = useScrollNav();
