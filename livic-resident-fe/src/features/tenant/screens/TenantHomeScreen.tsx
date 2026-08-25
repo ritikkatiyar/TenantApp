@@ -77,7 +77,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
   return (
     <PageShell
       scrollable={!loading}
-      header={isDesktop ? <DesktopNavBar title="Tenant Hub Overview" /> : null}
+      header={isDesktop ? <DesktopNavBar title="Resident Dashboard" /> : null}
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >
@@ -91,7 +91,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
             {/* Greeting Header */}
             <View style={styles.greetingHeader}>
               <View>
-                <Text style={styles.kicker}>TENANT HUB</Text>
+                {!isDesktop && <Text style={styles.kicker}>TENANT HUB</Text>}
                 <Text style={styles.greetingText}>{getGreeting()}</Text>
                 <Text style={styles.greetingSub}>Welcome back to your resident workspace</Text>
               </View>
