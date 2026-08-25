@@ -1,17 +1,18 @@
 package com.livic.finance.mapper;
 
-import com.livic.finance.domain.UnitBookingTbl;
-import com.livic.finance.dto.UnitBookingDTOs;
-import com.livic.property.domain.UnitTbl;
-
 import com.livic.common.domain.UnitBookingStatus;
+import com.livic.finance.domain.UnitBookingTbl;
+import com.livic.finance.dto.UnitBookingDTOs.CreateBookingRequest;
+import com.livic.finance.dto.UnitBookingDTOs.UnitBookingResponse;
+
+import java.util.UUID;
 
 public final class UnitBookingMapper {
 
     private UnitBookingMapper() {
     }
 
-    public static UnitBookingTbl toEntity(UnitBookingDTOs.CreateBookingRequest request, java.util.UUID unitId) {
+    public static UnitBookingTbl toEntity(CreateBookingRequest request, UUID unitId) {
         return UnitBookingTbl.builder()
                 .unitId(unitId)
                 .prospectiveTenantUserId(request.prospectiveTenantUserId())
@@ -24,18 +25,26 @@ public final class UnitBookingMapper {
                 .build();
     }
 
-    public static UnitBookingDTOs.UnitBookingResponse toResponse(UnitBookingTbl booking, String unitNumber) {
-        return new UnitBookingDTOs.UnitBookingResponse(
+    public static UnitBookingResponse toResponse(UnitBookingTbl booking, String unitNumber) {
+        if (booking == null) {
+            return null;
+        }
+        String resolvedUnitNumber = (unitNumber != null && !unitNumber.trim().isEmpty()) ? unitNumber : "N/A";
+        String status = booking.getStatus() != null ? booking.getStatus() : UnitBookingStatus.BOOKED.name();
+        String tenantName = booking.getProspectiveTenantName() != null ? booking.getProspectiveTenantName() : "Prospective Tenant";
+        String tenantPhone = booking.getProspectiveTenantPhone() != null ? booking.getProspectiveTenantPhone() : "";
+
+        return new UnitBookingResponse(
                 booking.getId(),
                 booking.getUnitId(),
-                unitNumber,
+                resolvedUnitNumber,
                 booking.getProspectiveTenantUserId(),
-                booking.getProspectiveTenantName(),
-                booking.getProspectiveTenantPhone(),
+                tenantName,
+                tenantPhone,
                 booking.getProspectiveTenantEmail(),
                 booking.getTokenAmount(),
                 booking.getExpectedMoveInDate(),
-                booking.getStatus(),
+                status,
                 booking.getPaymentTransactionId(),
                 booking.getConvertedLeaseId(),
                 booking.getCreatedAt(),

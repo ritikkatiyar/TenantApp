@@ -157,6 +157,13 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
               <TouchableOpacity style={styles.themeToggle} onPress={handleThemeToggle} activeOpacity={0.7}>
                 <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={theme.Colors.primary} />
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.themeToggle, { marginLeft: 8, borderColor: theme.Colors.error + '40', backgroundColor: theme.Colors.error + '1A' }]}
+                onPress={handleLogout}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
+              </TouchableOpacity>
             </View>
 
             {/* Subscription Upgrade Plan Banner */}
@@ -203,6 +210,34 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
                 </TouchableOpacity>
               );
             })}
+
+            {/* Explicit Logout Card for Mobile Sheet */}
+            <TouchableOpacity
+              style={[
+                styles.gridCard,
+                {
+                  width: '100%',
+                  backgroundColor: theme.Colors.error + '12',
+                  borderColor: theme.Colors.error + '35',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 14,
+                  paddingHorizontal: 16,
+                  marginTop: 4,
+                },
+              ]}
+              onPress={handleLogout}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.iconBox, { backgroundColor: theme.Colors.error + '25' }]}>
+                <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
+              </View>
+              <View style={[styles.cardContent, { flex: 1 }]}>
+                <Text style={[styles.cardTitle, { color: theme.Colors.error, fontWeight: '800', fontSize: theme.Typography.bodyLg.fontSize }]}>Log Out</Text>
+                <Text style={styles.cardSubtitle}>Sign out securely from Livic Landlord</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={22} color={theme.Colors.error} />
+            </TouchableOpacity>
           </ScrollView>
         </Animated.View>
       </View>

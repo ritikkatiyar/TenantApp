@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -89,7 +90,20 @@ public class RentCycleTransactionHelper {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RentCycleTbl generateSingleInTransaction(LeaseTbl lease, String billingMonthStr, LocalDate dueDate, Map<UUID, Integer> roommateCounts) {
-        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts);
+        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, null, null, null);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public RentCycleTbl generateSingleInTransaction(
+            LeaseTbl lease,
+            String billingMonthStr,
+            LocalDate dueDate,
+            Map<UUID, Integer> roommateCounts,
+            List<BillingWorksheetEntryTbl> propertyWorksheets,
+            List<ChargeConfigTbl> propertyActiveConfigs,
+            Map<UUID, String> unitNumbers
+    ) {
+        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, propertyWorksheets, propertyActiveConfigs, unitNumbers);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -103,6 +117,18 @@ public class RentCycleTransactionHelper {
     }
 
     public RentCycleTbl processLeaseGeneration(LeaseTbl lease, String billingMonthStr, LocalDate dueDate, Map<UUID, Integer> roommateCounts) {
+        return processLeaseGeneration(lease, billingMonthStr, dueDate, roommateCounts, null, null, null);
+    }
+
+    public RentCycleTbl processLeaseGeneration(
+            LeaseTbl lease,
+            String billingMonthStr,
+            LocalDate dueDate,
+            Map<UUID, Integer> roommateCounts,
+            List<BillingWorksheetEntryTbl> propertyWorksheets,
+            List<ChargeConfigTbl> propertyActiveConfigs,
+            Map<UUID, String> unitNumbers
+    ) {
         Optional<RentCycleTbl> existingCycleOpt = rentCycleCrudService.findByLease_IdAndBillingMonth(lease.getId(), billingMonthStr);
         RentCycleTbl cycle;
         BigDecimal previousTotal = BigDecimal.ZERO;
@@ -110,8 +136,9 @@ public class RentCycleTransactionHelper {
         if (existingCycleOpt.isPresent()) {
             cycle = existingCycleOpt.get();
             if (cycle.getStatus() == RentCycleStatus.PAID) {
-                UnitSummaryDTO u = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
-                String unitNum = u != null ? u.unitNumber() : "N/A";
+                String unitNum = (unitNumbers != null && unitNumbers.containsKey(lease.getUnitId()))
+                        ? unitNumbers.get(lease.getUnitId())
+                        : unitFacade.getUnitById(lease.getUnitId()).map(UnitSummaryDTO::unitNumber).orElse("N/A");
                 throw new BusinessException(HttpStatus.CONFLICT, "Cannot regenerate a paid rent cycle for unit " + unitNum);
             }
             previousTotal = cycle.getTotalAmount();
@@ -129,13 +156,18 @@ public class RentCycleTransactionHelper {
         }
 
         BigDecimal totalAmount = BigDecimal.ZERO;
+        List<RentCycleChargeTbl> chargesToSave = new ArrayList<>();
 
         BigDecimal baseRentAmount = lease.getMonthlyRentAmount() != null ? lease.getMonthlyRentAmount() : BigDecimal.ZERO;
-        UnitSummaryDTO unitSummary = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
-        UUID propertyId = unitSummary != null ? unitSummary.propertyId() : null;
 
-        List<BillingWorksheetEntryTbl> worksheetEntries = propertyId == null ? List.of() :
-                billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonthStr);
+        List<BillingWorksheetEntryTbl> worksheetEntries = propertyWorksheets;
+        if (worksheetEntries == null) {
+            UnitSummaryDTO unitSummary = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+            UUID propertyId = unitSummary != null ? unitSummary.propertyId() : null;
+            worksheetEntries = propertyId == null ? List.of() :
+                    billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonthStr);
+        }
+
         Optional<BillingWorksheetEntryTbl> rentWorksheetOpt = worksheetEntries.stream()
                 .filter(w -> w.getUnitId() != null && w.getUnitId().equals(lease.getUnitId()))
                 .filter(w -> w.getChargeConfig() != null && w.getChargeConfig().getChargeCategory() == ChargeCategory.RENT)
@@ -152,7 +184,7 @@ public class RentCycleTransactionHelper {
                     .amount(baseRentAmount)
                     .description("Base Rent")
                     .build();
-            rentCycleChargeCrudService.save(rentCharge);
+            chargesToSave.add(rentCharge);
             totalAmount = totalAmount.add(baseRentAmount);
         }
 
@@ -163,8 +195,14 @@ public class RentCycleTransactionHelper {
             roommateCount = Math.max(1, (int) leaseCrudService.countByUnitIdAndStatus(lease.getUnitId(), LeaseStatus.ACTIVE));
         }
 
-        List<ChargeConfigTbl> activeConfigs = propertyId == null ? List.of() :
-                chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId);
+        List<ChargeConfigTbl> activeConfigs = propertyActiveConfigs;
+        if (activeConfigs == null) {
+            UnitSummaryDTO unitSummary = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+            UUID propertyId = unitSummary != null ? unitSummary.propertyId() : null;
+            activeConfigs = propertyId == null ? List.of() :
+                    chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(propertyId);
+        }
+
         for (ChargeConfigTbl config : activeConfigs) {
             if (config.getChargeCategory() == ChargeCategory.RENT) {
                 continue;
@@ -193,7 +231,7 @@ public class RentCycleTransactionHelper {
                     .amount(chargeAmount)
                     .description(desc)
                     .build();
-            rentCycleChargeCrudService.save(charge);
+            chargesToSave.add(charge);
 
             if (chargeType == RentChargeType.DISCOUNT) {
                 totalAmount = totalAmount.subtract(chargeAmount);
@@ -219,9 +257,13 @@ public class RentCycleTransactionHelper {
                         .amount(booking.getTokenAmount())
                         .description("Token amount adjustment from unit booking")
                         .build();
-                rentCycleChargeCrudService.save(discountCharge);
+                chargesToSave.add(discountCharge);
                 totalAmount = totalAmount.subtract(booking.getTokenAmount());
             }
+        }
+
+        if (!chargesToSave.isEmpty()) {
+            rentCycleChargeCrudService.saveAll(chargesToSave);
         }
 
         cycle.setTotalAmount(totalAmount);

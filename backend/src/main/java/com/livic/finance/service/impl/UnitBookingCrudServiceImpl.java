@@ -7,6 +7,11 @@ import com.livic.finance.service.interfaces.UnitBookingCrudService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,5 +30,29 @@ public class UnitBookingCrudServiceImpl extends AbstractCrudService<UnitBookingT
     @Transactional(readOnly = true)
     public Optional<UnitBookingTbl> findByStatusAndConvertedLeaseId(String status, UUID convertedLeaseId) {
         return repository.findByStatusAndConvertedLeaseId(status, convertedLeaseId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UnitBookingTbl> findByUnitIdIn(Collection<UUID> unitIds, Pageable pageable) {
+        if (unitIds == null || unitIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        return repository.findByUnitIdIn(unitIds, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UnitBookingTbl> findByProspectiveTenantUserId(UUID prospectiveTenantUserId, Pageable pageable) {
+        if (prospectiveTenantUserId == null) {
+            return Page.empty(pageable);
+        }
+        return repository.findByProspectiveTenantUserId(prospectiveTenantUserId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UnitBookingTbl> findAll(Pageable pageable) {
+        return repository.findAll(pageable);
     }
 }

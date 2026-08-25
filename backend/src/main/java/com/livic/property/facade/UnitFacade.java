@@ -14,6 +14,8 @@ public interface UnitFacade {
 
     List<UnitSummaryDTO> getUnitsByPropertyId(UUID propertyId);
 
+    List<UnitSummaryDTO> getUnitsByPropertyIds(Collection<UUID> propertyIds);
+
     List<UnitSummaryDTO> getUnitsByFloor(UUID propertyId, int floorNumber);
 
     boolean existsUnitById(UUID unitId);

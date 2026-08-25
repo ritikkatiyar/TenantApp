@@ -180,12 +180,17 @@ public class BillingWorksheetServiceImpl implements BillingWorksheetService {
         Map<UUID, BillingWorksheetEntryTbl> entryMap = existing.stream()
                 .collect(Collectors.toMap(BillingWorksheetEntryTbl::getUnitId, e -> e));
 
+        List<BillingWorksheetEntryTbl> toUpdate = new ArrayList<>();
         for (UnitEntry item : request.getEntries()) {
             BillingWorksheetEntryTbl entry = entryMap.get(item.getUnitId());
             if (entry != null) {
                 entry.setEnteredValue(item.getEnteredValue());
-                billingWorksheetCrudService.save(entry);
+                toUpdate.add(entry);
             }
+        }
+
+        if (!toUpdate.isEmpty()) {
+            billingWorksheetCrudService.saveAll(toUpdate);
         }
     }
 }
