@@ -77,7 +77,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
   return (
     <PageShell
       scrollable={!loading}
-      header={isDesktop ? <DesktopNavBar title="Resident Dashboard" /> : null}
+      header={isDesktop ? <DesktopNavBar title="Resident Dashboard" activeTab="Home" /> : null}
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >

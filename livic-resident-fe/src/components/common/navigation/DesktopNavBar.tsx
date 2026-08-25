@@ -12,16 +12,18 @@ interface DesktopNavBarProps {
   title?: string;
   activeTab?: string;
   hideTabs?: boolean;
+  onNotificationPress?: () => void;
 }
 
 export default function DesktopNavBar({ 
   onBack, 
   backText = 'Back',
   rightContent,
-  title
+  title,
+  onNotificationPress
 }: DesktopNavBarProps) {
   const { user } = useAuth();
-  const { theme, isDark, toggleTheme } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const initial = user?.fullName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
@@ -39,9 +41,18 @@ export default function DesktopNavBar({
         ) : null}
       </View>
 
-      {/* Right Area: Right Content + Avatar */}
+      {/* Right Area: Baseline Notification Bell + Avatar */}
       <View style={styles.topbarRight}>
         {rightContent}
+
+        <TouchableOpacity 
+          onPress={onNotificationPress} 
+          style={styles.iconBtn} 
+          activeOpacity={0.75}
+        >
+          <MaterialIcons name="notifications-none" size={20} color={theme.Colors.onSurface} />
+          <View style={styles.unreadDot} />
+        </TouchableOpacity>
 
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
@@ -76,16 +87,25 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     gap: theme.Spacing.md,
   },
-  themeToggleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: theme.Surface.card,
     borderWidth: 1,
     borderColor: theme.Surface.border,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
+    position: 'relative',
+  },
+  unreadDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: theme.Colors.primary,
   },
   backButtonDesktop: {
     flexDirection: 'row',
