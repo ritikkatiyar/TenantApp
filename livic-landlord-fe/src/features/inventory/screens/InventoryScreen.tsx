@@ -23,6 +23,8 @@ import { InventoryMoveInView } from '@/src/features/inventory/components/Invento
 import { InventoryMoveOutView } from '@/src/features/inventory/components/InventoryMoveOutView';
 import { AddItemModal } from '@/src/features/inventory/components/AddItemModal';
 
+import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
@@ -36,6 +38,7 @@ export default function InventoryScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 900;
   const { handleScroll } = useScrollNav();
+  const { showToast } = useToast();
 
   const {
     activeTab,
@@ -61,6 +64,14 @@ export default function InventoryScreen() {
     setIsAddModalOpen,
     accessToken,
   } = useInventory();
+
+  const handleOpenAddModal = () => {
+    if (!propertyId) {
+      showToast("Please select a property from the top navbar selector first.", "info");
+      return;
+    }
+    setIsAddModalOpen(true);
+  };
 
   const TABS: { id: InventoryTab; label: string; icon: React.ComponentProps<typeof MaterialIcons>['name'] }[] = [
     { id: 'registry', label: 'Registry',   icon: 'inventory-2'  },
@@ -92,7 +103,7 @@ export default function InventoryScreen() {
                 icon="add"
                 variant="primary"
                 size="md"
-                onPress={() => setIsAddModalOpen(true)}
+                onPress={handleOpenAddModal}
               />
             </View>
           )}
@@ -133,7 +144,7 @@ export default function InventoryScreen() {
                 <TouchableOpacity
                   style={styles.addIconBtn}
                   activeOpacity={0.82}
-                  onPress={() => setIsAddModalOpen(true)}
+                  onPress={handleOpenAddModal}
                 >
                   <LinearGradient colors={[theme.Colors.primary, '#0072ff']} style={styles.addIconBtnInner}>
                     <MaterialIcons name="add" size={20} color={theme.Colors.surfaceContainerLowest} />
@@ -156,53 +167,65 @@ export default function InventoryScreen() {
             ))}
           </View>
 
-          {/* Desktop search for registry */}
-          {isDesktop && activeTab === 'registry' && (
-            <View style={styles.desktopSearchRow}>
-              <View style={[styles.searchBox, { maxWidth: 420 }]}>
-                <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
-                <TextInput
-                  value={query} onChangeText={setQuery}
-                  placeholder="Search inventory..."
-                  placeholderTextColor={theme.Colors.onSurfaceVariant}
-                  style={styles.searchInput}
-                />
-              </View>
-            </View>
-          )}
+          {!propertyId ? (
+            <GlassCard style={{ padding: 40, alignItems: 'center', justifyContent: 'center', marginVertical: 20 }}>
+              <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 12 }} />
+              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 6 }}>Select Property to View & Add Inventory</Text>
+              <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 420 }}>
+                Please select a property from the top navbar selector to view assets, assign items, or add new inventory.
+              </Text>
+            </GlassCard>
+          ) : (
+            <>
+              {/* Desktop search for registry */}
+              {isDesktop && activeTab === 'registry' && (
+                <View style={styles.desktopSearchRow}>
+                  <View style={[styles.searchBox, { maxWidth: 420 }]}>
+                    <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
+                    <TextInput
+                      value={query} onChangeText={setQuery}
+                      placeholder="Search inventory..."
+                      placeholderTextColor={theme.Colors.onSurfaceVariant}
+                      style={styles.searchInput}
+                    />
+                  </View>
+                </View>
+              )}
 
-          {activeTab === 'registry' && (
-            <InventoryRegistryView
-              items={filteredItems}
-              totalCount={rawItems.length}
-              stats={stats}
-              isDesktop={isDesktop}
-              serviceOnly={serviceOnly}
-              onToggleService={() => setServiceOnly(v => !v)}
-              onAddItem={() => setIsAddModalOpen(true)}
-            />
-          )}
-          {activeTab === 'moveIn' && (
-            <InventoryMoveInView
-              assignedItems={assignmentItems}
-              availableItems={rawItems}
-              leaseId={leaseId}
-              token={accessToken}
-              isDesktop={isDesktop}
-              onRefresh={refresh}
-              onAddItem={() => setIsAddModalOpen(true)}
-            />
-          )}
-          {activeTab === 'moveOut' && (
-            <InventoryMoveOutView
-              items={verificationItems}
-              leaseId={leaseId}
-              isDesktop={isDesktop}
-              securityDeposit={securityDeposit}
-              totalDeductions={totalDeductions}
-              netRefund={netRefund}
-              onRefresh={refresh}
-            />
+              {activeTab === 'registry' && (
+                <InventoryRegistryView
+                  items={filteredItems}
+                  totalCount={rawItems.length}
+                  stats={stats}
+                  isDesktop={isDesktop}
+                  serviceOnly={serviceOnly}
+                  onToggleService={() => setServiceOnly(v => !v)}
+                  onAddItem={handleOpenAddModal}
+                />
+              )}
+              {activeTab === 'moveIn' && (
+                <InventoryMoveInView
+                  assignedItems={assignmentItems}
+                  availableItems={rawItems}
+                  leaseId={leaseId}
+                  token={accessToken}
+                  isDesktop={isDesktop}
+                  onRefresh={refresh}
+                  onAddItem={handleOpenAddModal}
+                />
+              )}
+              {activeTab === 'moveOut' && (
+                <InventoryMoveOutView
+                  items={verificationItems}
+                  leaseId={leaseId}
+                  isDesktop={isDesktop}
+                  securityDeposit={securityDeposit}
+                  totalDeductions={totalDeductions}
+                  netRefund={netRefund}
+                  onRefresh={refresh}
+                />
+              )}
+            </>
           )}
       {propertyId && accessToken && (
         <AddItemModal
