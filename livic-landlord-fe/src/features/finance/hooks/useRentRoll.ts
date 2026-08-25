@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { 
   listRentCycles, 
   batchGenerateRentCycle, 
@@ -15,8 +16,10 @@ export function useRentRoll(
   debouncedSearchQuery: string,
   page: number,
   pageSize: number,
-  token: string | null
+  explicitToken?: string | null
 ) {
+  const { accessToken } = useAuth();
+  const token = explicitToken ?? accessToken;
   const queryClient = useQueryClient();
 
   const queryKey = ['rentCycles', propertyId, billingMonth, debouncedSearchQuery, page, pageSize];

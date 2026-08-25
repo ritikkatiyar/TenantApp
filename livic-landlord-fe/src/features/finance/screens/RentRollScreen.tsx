@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
@@ -26,6 +27,7 @@ import { SectionHeader } from '@/src/components/common/display/SectionHeader';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { useRentRoll } from '@/src/features/finance/hooks/useRentRoll';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { createStyles } from './RentRollScreen.styles';
 
 // Sub-components
@@ -34,16 +36,19 @@ import { RecordCashModal } from '../components/billing/RecordCashModal';
 import { RentRollInvoiceList } from '../components/billing/RentRollInvoiceList';
 import { RentRollHeader } from '../components/billing/RentRollHeader';
 
-export default function RentRollScreen({ token }: { token: string | null }) {
+export default function RentRollScreen({ token: propToken }: { token?: string | null } = {}) {
+  const { accessToken } = useAuth();
+  const token = propToken || accessToken;
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
+  const { selectedPropertyId } = useGlobalPropertySelection();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
-  const propertyId = paramPropertyId || null;
+  const propertyId = paramPropertyId || selectedPropertyId || null;
   const { showToast } = useToast();
 
   const [billingMonth, setBillingMonth] = useState<string>(() => {
