@@ -138,17 +138,11 @@ export default function TenantInventoryScreen() {
   const excellentCount = allItems.filter(i => (i.condition || '').toUpperCase() === 'EXCELLENT').length;
   const goodOrMinorCount = allItems.filter(i => (i.condition || '').toUpperCase() === 'GOOD' || (i.condition || '').toUpperCase() === 'FAIR').length;
 
-  const amenitiesToRender = propertyAmenities.length > 0
-    ? propertyAmenities.map((name, idx) => ({
-        id: `amenity-${idx}`,
-        name,
-        ...getAmenityMeta(name),
-      }))
-    : [
-        { name: 'Wi-Fi & Internet', ...getAmenityMeta('wifi'), id: 'default-1' },
-        { name: '24/7 Power Backup', ...getAmenityMeta('power'), id: 'default-2' },
-        { name: 'CCTV Security', ...getAmenityMeta('security'), id: 'default-3' },
-      ];
+  const amenitiesToRender = propertyAmenities.map((name, idx) => ({
+    id: `amenity-${idx}`,
+    name,
+    ...getAmenityMeta(name),
+  }));
 
   return (
     <LinearGradient
@@ -266,21 +260,31 @@ export default function TenantInventoryScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.amenityGrid, isDesktop && styles.amenityGridDesktop]}>
-              {amenitiesToRender.map((amenity) => (
-                <View key={amenity.id} style={styles.amenityCard}>
-                  <Image source={{ uri: amenity.image }} style={styles.amenityImage} />
-                  <View style={styles.amenityOverlay} />
-                  <View style={styles.amenityContent}>
-                    <View style={styles.amenityTitleRow}>
-                      <MaterialIcons name={amenity.icon} size={22} color={theme.Colors.surfaceContainerLowest} />
-                      <Text style={styles.amenityTitle}>{amenity.name}</Text>
+            {amenitiesToRender.length > 0 ? (
+              <View style={[styles.amenityGrid, isDesktop && styles.amenityGridDesktop]}>
+                {amenitiesToRender.map((amenity) => (
+                  <View key={amenity.id} style={styles.amenityCard}>
+                    <Image source={{ uri: amenity.image }} style={styles.amenityImage} />
+                    <View style={styles.amenityOverlay} />
+                    <View style={styles.amenityContent}>
+                      <View style={styles.amenityTitleRow}>
+                        <MaterialIcons name={amenity.icon} size={22} color={theme.Colors.surfaceContainerLowest} />
+                        <Text style={styles.amenityTitle}>{amenity.name}</Text>
+                      </View>
+                      <Text style={styles.amenityMeta}>{amenity.meta}</Text>
                     </View>
-                    <Text style={styles.amenityMeta}>{amenity.meta}</Text>
                   </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            ) : (
+              <BlurView intensity={45} tint={isDark ? "dark" : "light"} style={styles.emptyBox}>
+                <MaterialIcons name="pool" size={44} color={theme.Colors.primary} style={{ marginBottom: 12 }} />
+                <Text style={styles.emptyTitle}>No Property Amenities Logged</Text>
+                <Text style={styles.emptySub}>
+                  Your landlord has not registered property-wide amenities for this property yet.
+                </Text>
+              </BlurView>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>

@@ -7,6 +7,7 @@ import { BlurView } from 'expo-blur';
 
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { getTenantRentCycles, markRentCyclePaid, RentCycle, fetchStatementHtml } from '@/src/features/tenant/api/payments.api';
+import { getActiveLease, LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
@@ -26,6 +27,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
   const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
   const [cycles, setCycles] = useState<RentCycle[]>([]);
+  const [lease, setLease] = useState<LeaseResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPayModal, setShowPayModal] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -34,17 +36,28 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
 
   useEffect(() => {
     let isMounted = true;
-    getTenantRentCycles(token)
-      .then((data) => {
-        if (isMounted) setCycles(data);
-      })
-      .finally(() => {
+    async function loadData() {
+      try {
+        const [cyclesData, leaseData] = await Promise.all([
+          getTenantRentCycles(token).catch(() => []),
+          getActiveLease(token).catch(() => null),
+        ]);
+        if (isMounted) {
+          setCycles(cyclesData || []);
+          setLease(leaseData || null);
+        }
+      } catch (err) {
+        console.warn('[TenantPaymentsScreen] Error loading payment data:', err);
+      } finally {
         if (isMounted) setLoading(false);
-      });
+      }
+    }
+    loadData();
     return () => { isMounted = false; };
   }, [token]);
 
   const activeCycle = cycles.length > 0 ? cycles[0] : null;
+  const isPaidOrNoDue = !activeCycle || activeCycle.status === 'PAID' || paySuccess;
 
   const handlePayRent = () => {
     setPaying(true);
@@ -66,7 +79,6 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
         window.open(url, '_blank');
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       } else {
-        // Native: open in-app browser (future: WebView modal)
         await WebBrowser.openBrowserAsync(
           `data:text/html,${encodeURIComponent(html)}`
         );
@@ -75,6 +87,11 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
       console.warn('[Statement] Error opening statement:', err.message);
     }
   };
+
+  const currentMonthName = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const displayAmount = activeCycle?.totalAmount !== undefined 
+    ? activeCycle.totalAmount 
+    : (isPaidOrNoDue ? 0 : (lease?.monthlyRentAmount || 0));
 
   return (
     <PageShell
@@ -97,19 +114,21 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
               <View style={styles.cycleBadge}>
                 <MaterialIcons name="calendar-month" size={18} color={theme.Colors.primary} />
                 <Text style={styles.cycleBadgeText}>
-                  Current Cycle: {activeCycle?.billingMonth || 'October 2023'}
+                  Current Cycle: {activeCycle?.billingMonth || currentMonthName}
                 </Text>
               </View>
-              <View style={[styles.statusPill, activeCycle?.status === 'PAID' || paySuccess ? styles.statusPillPaid : styles.statusPillPending]}>
-                <Text style={[styles.statusPillText, activeCycle?.status === 'PAID' || paySuccess ? styles.statusPillTextPaid : styles.statusPillTextPending]}>
-                  {activeCycle?.status === 'PAID' || paySuccess ? 'PAID' : 'DUE SOON'}
+              <View style={[styles.statusPill, isPaidOrNoDue ? styles.statusPillPaid : styles.statusPillPending]}>
+                <Text style={[styles.statusPillText, isPaidOrNoDue ? styles.statusPillTextPaid : styles.statusPillTextPending]}>
+                  {isPaidOrNoDue ? (cycles.length === 0 ? 'UP TO DATE' : 'PAID') : 'DUE SOON'}
                 </Text>
               </View>
             </View>
             
-            <Text style={styles.amountText}>₹{activeCycle?.totalAmount?.toLocaleString() || '10,000.00'}</Text>
+            <Text style={styles.amountText}>₹{displayAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</Text>
             <Text style={styles.dueText}>
-              Due Date: {activeCycle?.dueDate ? new Date(activeCycle.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 5, 2023'} (In 3 days)
+              {activeCycle?.dueDate 
+                ? `Due Date: ${new Date(activeCycle.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` 
+                : (isPaidOrNoDue ? 'No pending rent due' : 'Due on 5th of current month')}
             </Text>
             
             <View style={styles.cycleActions}>
