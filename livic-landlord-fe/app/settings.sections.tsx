@@ -162,6 +162,7 @@ type SettingsTabContentProps = {
   setEnableWhatsappAlerts: (value: boolean) => void;
   setMode: (mode: 'system' | 'light' | 'dark') => void;
   showToast: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
+  onLogout?: () => void;
   styles: StylesLike;
   theme: ThemeLike;
 };
@@ -184,6 +185,7 @@ export function SettingsTabContent({
   setEnableWhatsappAlerts,
   setMode,
   showToast,
+  onLogout,
   styles,
   theme,
 }: SettingsTabContentProps) {
@@ -472,6 +474,37 @@ export function SettingsTabContent({
               trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
               thumbColor={enableEmailAlerts ? '#00d4ff' : '#9ca3af'}
             />
+          </View>
+        </GlassCard>
+
+        <GlassCard style={styles.prefCard}>
+          <View style={styles.prefCardHeader}>
+            <MaterialIcons name="security" size={22} color={theme.Colors.error} />
+            <Text style={[styles.prefCardTitle, { color: theme.Colors.error }]}>Account & Session</Text>
+          </View>
+          <View style={styles.prefItem}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.prefItemName}>Sign Out</Text>
+              <Text style={styles.prefItemDesc}>Log out securely from your current session on this device</Text>
+            </View>
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.Colors.error + '1F',
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                borderRadius: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                borderWidth: 1,
+                borderColor: theme.Colors.error + '40',
+              }}
+              onPress={() => onLogout?.()}
+              activeOpacity={0.75}
+            >
+              <MaterialIcons name="logout" size={18} color={theme.Colors.error} />
+              <Text style={{ color: theme.Colors.error, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize }}>Log Out</Text>
+            </TouchableOpacity>
           </View>
         </GlassCard>
       </View>

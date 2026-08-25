@@ -7,6 +7,7 @@ import com.livic.property.service.interfaces.UnitCrudService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,14 @@ public class UnitCrudServiceImpl extends AbstractCrudService<UnitTbl, UUID, Unit
     @Override
     public List<UnitTbl> findByPropertyId(UUID propertyId) {
         return repository.findByPropertyId(propertyId);
+    }
+
+    @Override
+    public List<UnitTbl> findByPropertyIdIn(Collection<UUID> propertyIds) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return List.of();
+        }
+        return repository.findByPropertyIdIn(propertyIds);
     }
 
     @Override

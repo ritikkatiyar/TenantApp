@@ -15,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -27,9 +28,13 @@ public class UnitBookingController {
     private final UnitBookingService unitBookingService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<java.util.List<UnitBookingDTOs.UnitBookingResponse>>> listBookings() {
-        log.info("API request: List unit bookings");
-        return ResponseEntity.ok(ApiResponse.success(unitBookingService.listBookings()));
+    public ResponseEntity<ApiResponse<List<UnitBookingDTOs.UnitBookingResponse>>> listBookings(
+            @AuthenticationPrincipal UserDetailsImpl currentUser,
+            @RequestParam(required = false) UUID propertyId
+    ) {
+        log.info("API request: List unit bookings for propertyId: {}", propertyId);
+        UUID currentUserId = currentUser != null ? UUID.fromString(currentUser.getId()) : null;
+        return ResponseEntity.ok(ApiResponse.success(unitBookingService.listBookings(currentUserId, propertyId)));
     }
 
     @PostMapping

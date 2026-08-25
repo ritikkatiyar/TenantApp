@@ -6,12 +6,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface UnitRepository extends JpaRepository<UnitTbl, UUID> {
     List<UnitTbl> findByPropertyId(UUID propertyId);
+
+    List<UnitTbl> findByPropertyIdIn(Collection<UUID> propertyIds);
 
     boolean existsByPropertyIdAndUnitNumber(UUID propertyId, String unitNumber);
 

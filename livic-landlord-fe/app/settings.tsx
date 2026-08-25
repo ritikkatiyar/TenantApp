@@ -4,6 +4,7 @@ import { PageShell } from '@/src/components/common/layout/PageShell';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { createStyles } from './settings.styles';
 import { useSettings } from './useSettings';
 import { SettingsHero, SettingsHubGrid, SettingsTabContent } from './settings.sections';
@@ -13,10 +14,16 @@ export default function SystemPreferencesRoute() {
   const { theme, isDark, mode, setMode } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
+  const { signOut } = useAuth();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
 
   const settings = useSettings(paramPropertyId || null);
+
+  const handleLogout = async () => {
+    await signOut();
+    router.replace('/login');
+  };
 
   const handlePropertyChange = (id: string) => {
     router.replace(`/settings?propertyId=${id}`);
@@ -83,6 +90,7 @@ export default function SystemPreferencesRoute() {
         setEnableWhatsappAlerts={settings.setEnableWhatsappAlerts}
         setMode={setMode}
         showToast={settings.handleToggleRoleActive as any} // Actually we want to pass showToast but it's handled inside the hook's actions, let's pass a dummy or adapt
+        onLogout={handleLogout}
         styles={styles}
         theme={theme}
       />

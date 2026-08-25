@@ -35,4 +35,13 @@ public interface RentCycleCrudService extends CrudService<RentCycleTbl, UUID> {
             RentCycleStatus statusOverdue,
             RentCycleStatus statusPartiallyPaid
     );
+    RentCycleDTOs.RentRollMetricsDTO getRentRollMetricsForProperties(
+            Collection<UUID> propertyIds,
+            String billingMonth,
+            RentCycleStatus statusPending,
+            RentCycleStatus statusPublished,
+            RentCycleStatus statusPaid,
+            RentCycleStatus statusOverdue,
+            RentCycleStatus statusPartiallyPaid
+    );
 }

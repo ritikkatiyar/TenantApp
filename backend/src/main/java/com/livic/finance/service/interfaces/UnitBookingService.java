@@ -14,4 +14,5 @@ public interface UnitBookingService {
     PaymentTransactionResponse initiateTokenOnlinePayment(UUID bookingId, UUID userDetailsId);
     PaymentTransactionResponse recordTokenCashPayment(UUID bookingId, BigDecimal amount, String note, UUID userDetailsId);
     List<UnitBookingDTOs.UnitBookingResponse> listBookings();
+    List<UnitBookingDTOs.UnitBookingResponse> listBookings(UUID currentUserId, UUID propertyId);
 }

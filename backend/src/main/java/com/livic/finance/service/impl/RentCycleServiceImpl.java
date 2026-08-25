@@ -92,13 +92,24 @@ public class RentCycleServiceImpl implements RentCycleService {
         Map<UUID, Integer> roommateCounts = activeLeases.stream()
                 .collect(Collectors.groupingBy(LeaseTbl::getUnitId, Collectors.collectingAndThen(Collectors.toList(), List::size)));
 
+        List<BillingWorksheetEntryTbl> propertyWorksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(request.propertyId(), request.billingMonth());
+        List<ChargeConfigTbl> propertyActiveConfigs = chargeConfigCrudService.findAllByPropertyIdAndIsActiveTrue(request.propertyId());
+
         List<RentCycleTbl> successes = new ArrayList<>();
         List<RentCycleDTOs.BatchGenerateFailure> failures = new ArrayList<>();
 
         for (LeaseTbl lease : activeLeases) {
             String unitNum = unitNumbers.get(lease.getUnitId());
             try {
-                RentCycleTbl cycle = transactionHelper.generateSingleInTransaction(lease, request.billingMonth(), request.dueDate(), roommateCounts);
+                RentCycleTbl cycle = transactionHelper.generateSingleInTransaction(
+                        lease,
+                        request.billingMonth(),
+                        request.dueDate(),
+                        roommateCounts,
+                        propertyWorksheets,
+                        propertyActiveConfigs,
+                        unitNumbers
+                );
                 successes.add(cycle);
             } catch (Exception e) {
                 log.error("[RentCycleServiceImpl] Failed to generate rent cycle for lease ID: {}, unit: {}", lease.getId(), unitNum, e);
@@ -250,11 +261,8 @@ public class RentCycleServiceImpl implements RentCycleService {
         if (leaseId != null) {
             spec = Specification.where(RentCycleSpecifications.hasLeaseId(leaseId));
         } else {
-            List<UUID> targetUnitIds = new ArrayList<>();
-            for (UUID pid : targetPropertyIds) {
-                List<UnitSummaryDTO> propertyUnits = unitFacade.getUnitsByPropertyId(pid);
-                targetUnitIds.addAll(propertyUnits.stream().map(UnitSummaryDTO::id).toList());
-            }
+            List<UUID> targetUnitIds = targetPropertyIds.isEmpty() ? List.of() :
+                    unitFacade.getUnitsByPropertyIds(targetPropertyIds).stream().map(UnitSummaryDTO::id).toList();
             spec = Specification.where(RentCycleSpecifications.hasUnitIdIn(targetUnitIds));
         }
 
@@ -270,28 +278,16 @@ public class RentCycleServiceImpl implements RentCycleService {
         Page<RentCycleTbl> page = rentCycleCrudService.findAll(spec, pageable);
         List<RentCycleDTOs.RentCycleResponse> content = toResponses(page.getContent());
 
-        BigDecimal totalExpectedRevenue = BigDecimal.ZERO;
-        long pendingDraftsCount = 0;
-        long publishedCount = 0;
-
-        if (!targetPropertyIds.isEmpty()) {
-            for (UUID pid : targetPropertyIds) {
-                RentCycleDTOs.RentRollMetricsDTO metrics = rentCycleCrudService.getRentRollMetrics(
-                        pid,
+        RentCycleDTOs.RentRollMetricsDTO rentRollMetrics = !targetPropertyIds.isEmpty() ?
+                rentCycleCrudService.getRentRollMetricsForProperties(
+                        targetPropertyIds,
                         billingMonth,
                         RentCycleStatus.PENDING,
                         RentCycleStatus.PUBLISHED,
                         RentCycleStatus.PAID,
                         RentCycleStatus.OVERDUE,
                         RentCycleStatus.PARTIALLY_PAID
-                );
-                if (metrics != null) {
-                    totalExpectedRevenue = totalExpectedRevenue.add(metrics.totalExpectedRevenue());
-                    pendingDraftsCount += metrics.pendingDraftsCount();
-                    publishedCount += metrics.publishedCount();
-                }
-            }
-        }
+                ) : new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
 
         return new RentCycleDTOs.RentCycleListResponse(
                 content,
@@ -299,11 +295,7 @@ public class RentCycleServiceImpl implements RentCycleService {
                 page.getTotalPages(),
                 page.getSize(),
                 page.getNumber(),
-                new RentCycleDTOs.RentRollMetricsDTO(
-                        totalExpectedRevenue,
-                        pendingDraftsCount,
-                        publishedCount
-                )
+                rentRollMetrics
         );
     }
 
@@ -459,6 +451,31 @@ public class RentCycleServiceImpl implements RentCycleService {
         List<RentCycleTbl> propertyCycles = activeLeaseIds.isEmpty() ? List.of() :
                 rentCycleCrudService.findByLease_IdInAndBillingMonth(activeLeaseIds, billingMonth);
 
+        if (propertyId != null) {
+            List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+            List<BillingWorksheetEntryTbl> worksheetsToUpdate = worksheets.stream()
+                    .peek(w -> w.setIsBilled(true))
+                    .toList();
+            if (!worksheetsToUpdate.isEmpty()) {
+                billingWorksheetCrudService.saveAll(worksheetsToUpdate);
+            }
+
+            try {
+                String[] parts = billingMonth.split("-");
+                int year = Integer.parseInt(parts[0]);
+                int month = Integer.parseInt(parts[1]);
+                List<MeterReadingTbl> readings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
+                List<MeterReadingTbl> readingsToUpdate = readings.stream()
+                        .peek(r -> r.setIsBilled(true))
+                        .toList();
+                if (!readingsToUpdate.isEmpty()) {
+                    meterReadingCrudService.saveAll(readingsToUpdate);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to update meter readings for property {}", propertyId, e);
+            }
+        }
+
         List<RentCycleDTOs.RentCycleResponse> succeeded = new ArrayList<>();
         List<RentCycleDTOs.BatchPublishFailure> failed = new ArrayList<>();
 
@@ -489,6 +506,31 @@ public class RentCycleServiceImpl implements RentCycleService {
 
         List<RentCycleTbl> propertyCycles = activeLeaseIds.isEmpty() ? List.of() :
                 rentCycleCrudService.findByLease_IdInAndBillingMonth(activeLeaseIds, billingMonth);
+
+        if (propertyId != null) {
+            List<BillingWorksheetEntryTbl> worksheets = billingWorksheetCrudService.findAllByPropertyIdAndBillingMonth(propertyId, billingMonth);
+            List<BillingWorksheetEntryTbl> worksheetsToUpdate = worksheets.stream()
+                    .peek(w -> w.setIsBilled(false))
+                    .toList();
+            if (!worksheetsToUpdate.isEmpty()) {
+                billingWorksheetCrudService.saveAll(worksheetsToUpdate);
+            }
+
+            try {
+                String[] parts = billingMonth.split("-");
+                int year = Integer.parseInt(parts[0]);
+                int month = Integer.parseInt(parts[1]);
+                List<MeterReadingTbl> readings = meterReadingCrudService.findByPropertyIdAndBillingMonthAndBillingYear(propertyId, month, year);
+                List<MeterReadingTbl> readingsToUpdate = readings.stream()
+                        .peek(r -> r.setIsBilled(false))
+                        .toList();
+                if (!readingsToUpdate.isEmpty()) {
+                    meterReadingCrudService.saveAll(readingsToUpdate);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to update meter readings for property {}", propertyId, e);
+            }
+        }
 
         List<RentCycleDTOs.RentCycleResponse> succeeded = new ArrayList<>();
         List<RentCycleDTOs.BatchUnpublishFailure> failed = new ArrayList<>();

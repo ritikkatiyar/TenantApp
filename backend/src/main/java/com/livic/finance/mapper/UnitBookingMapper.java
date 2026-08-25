@@ -6,12 +6,14 @@ import com.livic.property.domain.UnitTbl;
 
 import com.livic.common.domain.UnitBookingStatus;
 
+import java.util.UUID;
+
 public final class UnitBookingMapper {
 
     private UnitBookingMapper() {
     }
 
-    public static UnitBookingTbl toEntity(UnitBookingDTOs.CreateBookingRequest request, java.util.UUID unitId) {
+    public static UnitBookingTbl toEntity(UnitBookingDTOs.CreateBookingRequest request, UUID unitId) {
         return UnitBookingTbl.builder()
                 .unitId(unitId)
                 .prospectiveTenantUserId(request.prospectiveTenantUserId())
@@ -25,17 +27,25 @@ public final class UnitBookingMapper {
     }
 
     public static UnitBookingDTOs.UnitBookingResponse toResponse(UnitBookingTbl booking, String unitNumber) {
+        if (booking == null) {
+            return null;
+        }
+        String resolvedUnitNumber = (unitNumber != null && !unitNumber.trim().isEmpty()) ? unitNumber : "N/A";
+        String status = booking.getStatus() != null ? booking.getStatus() : UnitBookingStatus.BOOKED.name();
+        String tenantName = booking.getProspectiveTenantName() != null ? booking.getProspectiveTenantName() : "Prospective Tenant";
+        String tenantPhone = booking.getProspectiveTenantPhone() != null ? booking.getProspectiveTenantPhone() : "";
+
         return new UnitBookingDTOs.UnitBookingResponse(
                 booking.getId(),
                 booking.getUnitId(),
-                unitNumber,
+                resolvedUnitNumber,
                 booking.getProspectiveTenantUserId(),
-                booking.getProspectiveTenantName(),
-                booking.getProspectiveTenantPhone(),
+                tenantName,
+                tenantPhone,
                 booking.getProspectiveTenantEmail(),
                 booking.getTokenAmount(),
                 booking.getExpectedMoveInDate(),
-                booking.getStatus(),
+                status,
                 booking.getPaymentTransactionId(),
                 booking.getConvertedLeaseId(),
                 booking.getCreatedAt(),

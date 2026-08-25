@@ -1,31 +1,34 @@
+package com.livic.finance.service.impl;
+
 import com.livic.auth.service.interfaces.AuthorizationService;
+import com.livic.common.domain.UnitBookingStatus;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.UnitBookingTbl;
 import com.livic.finance.dto.UnitBookingDTOs;
+import com.livic.finance.mapper.UnitBookingMapper;
+import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
 import com.livic.finance.service.interfaces.UnitBookingService;
 import com.livic.payment.dto.PaymentTransactionResponse;
 import com.livic.payment.facade.PaymentFacade;
-import com.livic.property.domain.UnitTbl;
+import com.livic.property.dto.PropertySummaryDTO;
+import com.livic.property.dto.UnitSummaryDTO;
+import com.livic.property.facade.PropertyFacade;
 import com.livic.property.facade.UnitFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
-import com.livic.finance.mapper.UnitBookingMapper;
-import com.livic.finance.service.interfaces.LeaseQueryService;
 import lombok.RequiredArgsConstructor;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import com.livic.property.dto.UnitSummaryDTO;
-
-import com.livic.common.domain.UnitBookingStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     private final UnitBookingCrudService unitBookingCrudService;
     private final LeaseQueryService leaseQueryService;
     private final UnitFacade unitFacade;
+    private final PropertyFacade propertyFacade;
     private final PaymentFacade paymentFacade;
     private final AuthorizationService authorizationService;
     private final UserFacade userFacade;
@@ -156,24 +160,59 @@ public class UnitBookingServiceImpl implements UnitBookingService {
     @Override
     @Transactional(readOnly = true)
     public List<UnitBookingDTOs.UnitBookingResponse> listBookings() {
+        return listBookings(null, null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UnitBookingDTOs.UnitBookingResponse> listBookings(UUID currentUserId, UUID propertyId) {
         try {
-            return unitBookingCrudService.findAll().stream()
+            List<UnitBookingTbl> bookings;
+
+            if (propertyId != null) {
+                List<UnitSummaryDTO> propertyUnits = unitFacade.getUnitsByPropertyId(propertyId);
+                List<UUID> unitIds = propertyUnits.stream().map(UnitSummaryDTO::id).toList();
+                if (unitIds.isEmpty()) {
+                    return List.of();
+                }
+                bookings = unitBookingCrudService.findByUnitIdIn(unitIds);
+            } else if (currentUserId != null) {
+                List<PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
+                List<UUID> propertyIds = userProperties.stream().map(PropertySummaryDTO::id).toList();
+                if (propertyIds.isEmpty()) {
+                    bookings = unitBookingCrudService.findByProspectiveTenantUserId(currentUserId);
+                } else {
+                    List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyIds(propertyIds);
+                    List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
+                    if (unitIds.isEmpty()) {
+                        return List.of();
+                    }
+                    bookings = unitBookingCrudService.findByUnitIdIn(unitIds);
+                }
+            } else {
+                bookings = unitBookingCrudService.findAll();
+            }
+
+            if (bookings == null || bookings.isEmpty()) {
+                return List.of();
+            }
+
+            Set<UUID> unitIds = bookings.stream()
+                    .filter(b -> b.getUnitId() != null)
+                    .map(UnitBookingTbl::getUnitId)
+                    .collect(Collectors.toSet());
+
+            Map<UUID, UnitSummaryDTO> unitsMap = unitIds.isEmpty() ? Map.of() : unitFacade.getUnitsByIds(unitIds);
+
+            return bookings.stream()
                     .map(booking -> {
-                        String unitNumber = "N/A";
-                        if (booking.getUnitId() != null) {
-                            try {
-                                unitNumber = unitFacade.getUnitById(booking.getUnitId())
-                                        .map(UnitSummaryDTO::unitNumber)
-                                        .orElse("N/A");
-                            } catch (Exception e) {
-                                log.warn("Failed to fetch unit details for unitId: {}", booking.getUnitId(), e);
-                            }
-                        }
+                        UnitSummaryDTO u = booking.getUnitId() != null ? unitsMap.get(booking.getUnitId()) : null;
+                        String unitNumber = u != null ? u.unitNumber() : "N/A";
                         return UnitBookingMapper.toResponse(booking, unitNumber);
                     })
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (Exception e) {
-            log.error("Failed to list unit bookings", e);
+            log.error("Failed to list unit bookings for user: {} property: {}", currentUserId, propertyId, e);
             return List.of();
         }
     }

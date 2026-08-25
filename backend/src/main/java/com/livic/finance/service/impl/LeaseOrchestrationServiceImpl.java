@@ -7,6 +7,11 @@ import com.livic.finance.mapper.LeaseMapper;
 import com.livic.finance.service.interfaces.LeaseOrchestrationService;
 import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.LeaseService;
+import com.livic.finance.service.interfaces.LeaseCrudService;
+import com.livic.property.dto.PropertySummaryDTO;
+import com.livic.property.dto.UnitSummaryDTO;
+import com.livic.property.facade.PropertyFacade;
+import com.livic.property.facade.UnitFacade;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +37,10 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
     private final LeaseQueryService leaseQueryService;
     private final UserFacade userFacade;
 
+    private final PropertyFacade propertyFacade;
+    private final UnitFacade unitFacade;
+    private final LeaseCrudService leaseCrudService;
+
     @Override
     public List<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId) {
         List<LeaseTbl> leases = leaseQueryService.findActiveLeasesByProperty(propertyId);
@@ -41,6 +50,38 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
     @Override
     public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId, Pageable pageable) {
         Page<LeaseTbl> page = leaseQueryService.findActiveLeasesByProperty(propertyId, pageable);
+        List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
+        return new PageImpl<>(content, pageable, page.getTotalElements());
+    }
+
+    @Override
+    public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID currentUserId, UUID propertyId, Pageable pageable) {
+        if (propertyId != null) {
+            return getActiveLeasesByProperty(propertyId, pageable);
+        }
+        if (currentUserId == null) {
+            return Page.empty(pageable);
+        }
+
+        Optional<LeaseTbl> tenantLeaseOpt = leaseQueryService.findByUserIdAndStatus(currentUserId, LeaseStatus.ACTIVE);
+        if (tenantLeaseOpt.isPresent()) {
+            List<LeaseDTOs.LeaseResponse> content = enrichLeases(List.of(tenantLeaseOpt.get()));
+            return new PageImpl<>(content, pageable, 1);
+        }
+
+        List<PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
+        List<UUID> ownedPropertyIds = userProperties.stream().map(PropertySummaryDTO::id).toList();
+        if (ownedPropertyIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyIds(ownedPropertyIds);
+        List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
+        if (unitIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        Page<LeaseTbl> page = leaseCrudService.findByUnitIdInAndStatus(unitIds, LeaseStatus.ACTIVE, pageable);
         List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
         return new PageImpl<>(content, pageable, page.getTotalElements());
     }

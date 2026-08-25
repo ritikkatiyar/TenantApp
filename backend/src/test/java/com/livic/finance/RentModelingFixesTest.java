@@ -210,10 +210,11 @@ public class RentModelingFixesTest {
         RentCycleDTOs.GenerateRentCycleRequest request = new RentCycleDTOs.GenerateRentCycleRequest(leaseId, "2026-08", LocalDate.now().plusDays(10));
         rentCycleService.generate(request);
 
-        ArgumentCaptor<RentCycleChargeTbl> chargeCaptor = ArgumentCaptor.forClass(RentCycleChargeTbl.class);
-        verify(rentCycleChargeCrudService, times(1)).save(chargeCaptor.capture());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<RentCycleChargeTbl>> chargeCaptor = ArgumentCaptor.forClass(List.class);
+        verify(rentCycleChargeCrudService, times(1)).saveAll(chargeCaptor.capture());
 
-        RentCycleChargeTbl savedCharge = chargeCaptor.getValue();
+        RentCycleChargeTbl savedCharge = chargeCaptor.getValue().get(0);
         assertEquals(RentChargeType.BASE_RENT, savedCharge.getChargeType());
         assertEquals(BigDecimal.valueOf(1500.00), savedCharge.getAmount()); // Matches lease, NOT charge_config baseRate (9999.00)
     }
@@ -352,6 +353,45 @@ public class RentModelingFixesTest {
 
         assertNotNull(result);
         verify(propertyFacade, never()).getPropertiesByUserId(any());
+    }
+
+    @Test
+    @DisplayName("Landlord querying rent cycles uses bulk unit resolution and single-query metrics aggregation")
+    void testList_LandlordScope_UsesBulkUnitResolutionAndMetrics() {
+        UUID landlordId = UUID.randomUUID();
+        UUID propertyId1 = UUID.randomUUID();
+        UUID propertyId2 = UUID.randomUUID();
+
+        when(leaseQueryService.findByUserIdAndStatus(landlordId, LeaseStatus.ACTIVE)).thenReturn(Optional.empty());
+        when(propertyFacade.getPropertiesByUserId(landlordId)).thenReturn(List.of(
+                new PropertySummaryDTO(propertyId1, "Property 1", "Addr 1", "City", "Landmark", 5, true),
+                new PropertySummaryDTO(propertyId2, "Property 2", "Addr 2", "City", "Landmark", 5, true)
+        ));
+
+        when(unitFacade.getUnitsByPropertyIds(any())).thenReturn(List.of(
+                new UnitSummaryDTO(UUID.randomUUID(), propertyId1, "Property 1", "101", 1, 2, 0, 0, 1, 1, null, null),
+                new UnitSummaryDTO(UUID.randomUUID(), propertyId2, "Property 2", "201", 2, 2, 0, 0, 1, 1, null, null)
+        ));
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        org.springframework.data.domain.Page<RentCycleTbl> mockPage = new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0);
+        when(rentCycleCrudService.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+                .thenReturn(mockPage);
+
+        when(rentCycleCrudService.getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any()))
+                .thenReturn(new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.valueOf(50000), 2L, 8L));
+
+        RentCycleDTOs.RentCycleListResponse result = rentCycleService.list(landlordId, null, null, "2026-08", null, null, pageable);
+
+        assertNotNull(result);
+        assertEquals(BigDecimal.valueOf(50000), result.metrics().totalExpectedRevenue());
+        assertEquals(2L, result.metrics().pendingDraftsCount());
+        assertEquals(8L, result.metrics().publishedCount());
+
+        // Verify bulk calls executed exactly ONCE across all properties
+        verify(unitFacade, times(1)).getUnitsByPropertyIds(any());
+        verify(rentCycleCrudService, times(1)).getRentRollMetricsForProperties(any(), eq("2026-08"), any(), any(), any(), any(), any());
+        verify(unitFacade, never()).getUnitsByPropertyId(any());
     }
 }
 

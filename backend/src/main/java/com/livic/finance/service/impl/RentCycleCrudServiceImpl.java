@@ -134,7 +134,31 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
             RentCycleStatus statusOverdue,
             RentCycleStatus statusPartiallyPaid
     ) {
-        List<UUID> leaseIds = getLeaseIdsForProperty(propertyId);
+        return getRentRollMetricsForProperties(
+                propertyId != null ? List.of(propertyId) : Collections.emptyList(),
+                billingMonth,
+                statusPending,
+                statusPublished,
+                statusPaid,
+                statusOverdue,
+                statusPartiallyPaid
+        );
+    }
+
+    @Override
+    public RentCycleDTOs.RentRollMetricsDTO getRentRollMetricsForProperties(
+            Collection<UUID> propertyIds,
+            String billingMonth,
+            RentCycleStatus statusPending,
+            RentCycleStatus statusPublished,
+            RentCycleStatus statusPaid,
+            RentCycleStatus statusOverdue,
+            RentCycleStatus statusPartiallyPaid
+    ) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
+        }
+        List<UUID> leaseIds = getLeaseIdsForProperties(propertyIds);
         if (leaseIds.isEmpty()) {
             return new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L);
         }
@@ -167,27 +191,21 @@ public class RentCycleCrudServiceImpl extends AbstractCrudService<RentCycleTbl, 
     }
 
     private List<UUID> getLeaseIdsForProperty(UUID propertyId) {
-        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
+        if (propertyId == null) {
+            return Collections.emptyList();
+        }
+        return getLeaseIdsForProperties(List.of(propertyId));
+    }
+
+    private List<UUID> getLeaseIdsForProperties(Collection<UUID> propertyIds) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<com.livic.property.dto.UnitSummaryDTO> units = unitFacade.getUnitsByPropertyIds(propertyIds);
         if (units.isEmpty()) {
             return Collections.emptyList();
         }
         List<UUID> unitIds = units.stream().map(com.livic.property.dto.UnitSummaryDTO::id).toList();
-        return leaseRepository.findByUnitIdInAndStatus(unitIds, com.livic.common.domain.LeaseStatus.ACTIVE).stream()
-                .map(LeaseTbl::getId)
-                .toList();
-    }
-
-    private List<UUID> getLeaseIdsForProperties(Collection<UUID> propertyIds) {
-        if (propertyIds.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<UUID> unitIds = propertyIds.stream()
-                .flatMap(pid -> unitFacade.getUnitsByPropertyId(pid).stream())
-                .map(com.livic.property.dto.UnitSummaryDTO::id)
-                .toList();
-        if (unitIds.isEmpty()) {
-            return Collections.emptyList();
-        }
         return leaseRepository.findByUnitIdInAndStatus(unitIds, com.livic.common.domain.LeaseStatus.ACTIVE).stream()
                 .map(LeaseTbl::getId)
                 .toList();
