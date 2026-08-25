@@ -4,14 +4,86 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import { tenantAmenities } from '@/src/features/inventory/mockInventoryData';
 import { getTenantVisibleInventory, BackendInventoryItem } from '@/src/features/inventory/api/inventory.api';
 import { getActiveLease, LeaseResponse } from '@/src/features/tenant/api/lease.api';
+import { getPropertyDetails } from '@/src/features/property/api/property.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { BlurView } from 'expo-blur';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useRouter } from 'expo-router';
+
+function getAmenityMeta(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes('wifi') || lower.includes('internet')) {
+    return {
+      icon: 'wifi' as const,
+      meta: 'High-speed mesh network',
+      image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  if (lower.includes('pool') || lower.includes('swim')) {
+    return {
+      icon: 'pool' as const,
+      meta: 'Open 6:00 AM - 10:00 PM',
+      image: 'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  if (lower.includes('gym') || lower.includes('fitness')) {
+    return {
+      icon: 'fitness-center' as const,
+      meta: 'Level 2 • 24/7 Access',
+      image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  if (lower.includes('park') || lower.includes('car')) {
+    return {
+      icon: 'local-parking' as const,
+      meta: 'Covered & Reserved Bay',
+      image: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  if (lower.includes('security') || lower.includes('cctv') || lower.includes('guard')) {
+    return {
+      icon: 'security' as const,
+      meta: 'CCTV & Keycard Entry',
+      image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  if (lower.includes('backup') || lower.includes('power') || lower.includes('generator')) {
+    return {
+      icon: 'power' as const,
+      meta: '24/7 Power Backup',
+      image: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  if (lower.includes('laundry') || lower.includes('wash')) {
+    return {
+      icon: 'local-laundry-service' as const,
+      meta: 'In-building Laundromat',
+      image: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  if (lower.includes('lift') || lower.includes('elevator')) {
+    return {
+      icon: 'elevator' as const,
+      meta: 'High-speed Elevators',
+      image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  if (lower.includes('ev') || lower.includes('charge')) {
+    return {
+      icon: 'ev-station' as const,
+      meta: 'Fast EV Charging Stations',
+      image: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800&auto=format&fit=crop&q=80',
+    };
+  }
+  return {
+    icon: 'star' as const,
+    meta: 'Property Common Facility',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&auto=format&fit=crop&q=80',
+  };
+}
 
 export default function TenantInventoryScreen() {
   const { theme, isDark } = useAppTheme();
@@ -26,6 +98,7 @@ export default function TenantInventoryScreen() {
   const [lease, setLease] = useState<LeaseResponse | null>(null);
   const [unitItems, setUnitItems] = useState<BackendInventoryItem[]>([]);
   const [sharedItems, setSharedItems] = useState<BackendInventoryItem[]>([]);
+  const [propertyAmenities, setPropertyAmenities] = useState<string[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -38,6 +111,12 @@ export default function TenantInventoryScreen() {
         const leaseData = await getActiveLease(accessToken);
         if (mounted && leaseData) {
           setLease(leaseData);
+          if (leaseData.propertyId) {
+            const propDetails = await getPropertyDetails(accessToken, leaseData.propertyId);
+            if (mounted && propDetails && propDetails.amenities) {
+              setPropertyAmenities(propDetails.amenities);
+            }
+          }
         }
         const invData = await getTenantVisibleInventory(accessToken);
         if (mounted) {
@@ -58,6 +137,18 @@ export default function TenantInventoryScreen() {
   const totalCount = allItems.length;
   const excellentCount = allItems.filter(i => (i.condition || '').toUpperCase() === 'EXCELLENT').length;
   const goodOrMinorCount = allItems.filter(i => (i.condition || '').toUpperCase() === 'GOOD' || (i.condition || '').toUpperCase() === 'FAIR').length;
+
+  const amenitiesToRender = propertyAmenities.length > 0
+    ? propertyAmenities.map((name, idx) => ({
+        id: `amenity-${idx}`,
+        name,
+        ...getAmenityMeta(name),
+      }))
+    : [
+        { name: 'Wi-Fi & Internet', ...getAmenityMeta('wifi'), id: 'default-1' },
+        { name: '24/7 Power Backup', ...getAmenityMeta('power'), id: 'default-2' },
+        { name: 'CCTV Security', ...getAmenityMeta('security'), id: 'default-3' },
+      ];
 
   return (
     <LinearGradient
@@ -95,58 +186,69 @@ export default function TenantInventoryScreen() {
                 end={{ x: 1, y: 0 }}
                 style={styles.reportButton}
               >
-                <MaterialIcons name="support-agent" size={18} color={theme.Colors.onPrimary} />
-                <Text style={styles.reportButtonText}>Raise Issue</Text>
+                <MaterialIcons name="report-problem" size={20} color={theme.Colors.surfaceContainerLowest} />
+                <Text style={styles.reportButtonText}>Report Item Issue</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
 
-          {loading ? (
-            <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color={theme.Colors.primary} />
-            </View>
-          ) : (
-            <View style={[styles.bentoGrid, isDesktop && styles.bentoGridDesktop]}>
-              <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.snapshotCard}>
-                <Text style={styles.cardTitle}>Unit Condition Snapshot</Text>
-                <MetricRow label="Total Registered Items" value={String(totalCount)} styles={styles} />
-                <MetricRow label="Excellent Condition" value={String(excellentCount)} styles={styles} />
-                <MetricRow label="Good / Minor Wear" value={String(goodOrMinorCount)} styles={styles} />
-                <View style={styles.dashedDivider} />
-                <View style={styles.verifiedRow}>
-                  <MaterialIcons name="verified" size={22} color={theme.Colors.primary} />
-                  <Text style={styles.verifiedText}>
-                    Verified on digital record for {lease?.propertyName || 'your property'}.
-                  </Text>
-                </View>
-              </BlurView>
+          <View style={[styles.bentoGrid, isDesktop && styles.bentoGridDesktop]}>
+            <View style={styles.snapshotCard}>
+              <Text style={styles.cardTitle}>Inventory Summary</Text>
+              
+              <MetricRow label="Total Registered Items" value={totalCount.toString()} styles={styles} />
+              <MetricRow label="Excellent Condition" value={excellentCount.toString()} styles={styles} />
+              <MetricRow label="Good / Minor Wear" value={goodOrMinorCount.toString()} styles={styles} />
 
-              <View style={styles.inventoryColumn}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Assigned & Shared Items</Text>
-                  <View style={styles.readOnlyPill}>
-                    <Text style={styles.readOnlyText}>READ ONLY</Text>
-                  </View>
-                </View>
+              <View style={styles.dashedDivider} />
 
-                {allItems.length > 0 ? (
-                  allItems.map((item) => (
-                    <TenantItemCard key={item.id} item={item} theme={theme} styles={styles} isDark={isDark} />
-                  ))
-                ) : (
-                  <BlurView intensity={50} tint={isDark ? "dark" : "light"} style={styles.emptyBox}>
-                    <MaterialIcons name="inventory" size={40} color={theme.Colors.primary} style={{ marginBottom: 10 }} />
-                    <Text style={styles.emptyTitle}>No Inventory Items On File</Text>
-                    <Text style={styles.emptySub}>
-                      Your property manager has not logged specific appliance or furniture assets for {lease?.unitNumber ? `Unit ${lease.unitNumber}` : 'this unit'} yet.
-                    </Text>
-                  </BlurView>
-                )}
+              <View style={styles.verifiedRow}>
+                <MaterialIcons name="verified" size={18} color={theme.Colors.primary} />
+                <Text style={styles.verifiedText}>Verified on digital record for your property.</Text>
               </View>
             </View>
-          )}
 
-          <View style={styles.amenitySection}>
+            <View style={styles.inventoryColumn}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Assigned Unit Items</Text>
+                <View style={styles.readOnlyPill}>
+                  <Text style={styles.readOnlyText}>VERIFIED RECORD</Text>
+                </View>
+              </View>
+
+              {loading ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color={theme.Colors.primary} />
+                </View>
+              ) : unitItems.length > 0 ? (
+                unitItems.map(item => (
+                  <TenantItemCard key={item.id} item={item} theme={theme} styles={styles} isDark={isDark} />
+                ))
+              ) : (
+                <BlurView intensity={30} tint={isDark ? "dark" : "light"} style={{ padding: 32, borderRadius: theme.Rounded.lg, alignItems: 'center', borderWidth: 1, borderColor: theme.Colors.glassStroke }}>
+                  <MaterialIcons name="inventory" size={40} color={theme.Colors.primary} style={{ marginBottom: 12 }} />
+                  <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface }}>No Inventory Items On File</Text>
+                  <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodyMedium.fontSize, marginTop: 4, textAlign: 'center' }}>
+                    Your property manager has not logged specific appliance or furniture assets for this unit yet.
+                  </Text>
+                </BlurView>
+              )}
+
+              {sharedItems.length > 0 && (
+                <>
+                  <View style={[styles.sectionHeader, { marginTop: theme.Spacing.md }]}>
+                    <Text style={styles.sectionTitle}>Shared Building Facilities</Text>
+                  </View>
+
+                  {sharedItems.map(item => (
+                    <TenantItemCard key={item.id} item={item} theme={theme} styles={styles} isDark={isDark} />
+                  ))}
+                </>
+              )}
+            </View>
+          </View>
+
+          <View style={{ marginTop: theme.Spacing.md }}>
             <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionTitle}>Property-wide Amenities</Text>
@@ -165,7 +267,7 @@ export default function TenantInventoryScreen() {
             </View>
 
             <View style={[styles.amenityGrid, isDesktop && styles.amenityGridDesktop]}>
-              {tenantAmenities.map((amenity) => (
+              {amenitiesToRender.map((amenity) => (
                 <View key={amenity.id} style={styles.amenityCard}>
                   <Image source={{ uri: amenity.image }} style={styles.amenityImage} />
                   <View style={styles.amenityOverlay} />
