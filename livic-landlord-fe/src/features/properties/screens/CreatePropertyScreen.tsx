@@ -65,6 +65,8 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     setGlobalUnitsPerFloor,
     globalUnitType,
     setGlobalUnitType,
+    selectedAmenities,
+    toggleAmenity,
     loading,
     errorMsg,
     showErrors,
@@ -245,6 +247,60 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
             />
           </View>
         ) : null}
+
+        {/* Property Amenities Selector */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>PROPERTY AMENITIES</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+            {[
+              'High-speed Fiber Wi-Fi',
+              'Covered Parking',
+              '24/7 Security',
+              'Power Backup',
+              'Rooftop Pool',
+              '24/7 Fitness Center',
+              'In-Building Laundry',
+              'EV Charger',
+              'Elevator',
+              'Clubhouse & Lounge'
+            ].map((amenity) => {
+              const isSelected = selectedAmenities.includes(amenity);
+              return (
+                <TouchableOpacity
+                  key={amenity}
+                  onPress={() => toggleAmenity(amenity)}
+                  activeOpacity={0.75}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    backgroundColor: isSelected ? theme.Colors.primaryContainer : theme.Colors.surfaceContainerLow,
+                    borderWidth: 1,
+                    borderColor: isSelected ? theme.Colors.primary : theme.Colors.outlineVariant,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <MaterialIcons
+                    name={isSelected ? 'check-circle' : 'add-circle-outline'}
+                    size={16}
+                    color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
+                  />
+                  <Text
+                    style={{
+                      fontSize: theme.Typography.bodySmall.fontSize,
+                      fontWeight: '700',
+                      color: isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant,
+                    }}
+                  >
+                    {amenity}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
         {showSubmit ? (
           <ActionButton
