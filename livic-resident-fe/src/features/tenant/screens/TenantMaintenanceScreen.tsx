@@ -96,7 +96,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
         <FloatingBackButton />
       )}
           {/* New Ticket Form Glass Card */}
-          <BlurView intensity={70} tint="light" style={styles.glassCard}>
+          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
             <View style={styles.formHeaderRow}>
               <View style={styles.iconBox}>
                 <MaterialIcons name="build" size={24} color={theme.Colors.primary} />
@@ -201,7 +201,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
           </LinearGradient>
 
           {/* Service Health Metrics */}
-          <BlurView intensity={70} tint="light" style={styles.glassCard}>
+          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
             <Text style={styles.healthTitle}>Service Health Overview</Text>
             
             <View style={styles.healthRow}>
@@ -228,7 +228,7 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
           </BlurView>
 
           {/* Ticket History Glass Tracker */}
-          <BlurView intensity={70} tint="light" style={styles.historyCard}>
+          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.historyCard}>
             <View style={styles.historyHeader}>
               <Text style={styles.historyTitle}>Recent Service Tickets</Text>
               <Text style={styles.historySub}>Live dispatch tracker</Text>
@@ -321,7 +321,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   mobileHeaderContainer: {
     height: 56,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.45)',
     overflow: 'hidden',
     justifyContent: 'center',
   },
@@ -339,35 +339,35 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)',
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)',
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
+    shadowOpacity: isDark ? 0.2 : 0.06,
     shadowRadius: 20,
     elevation: 4,
     overflow: 'hidden'
   },
   formHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
-  iconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
+  iconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
   cardTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
   cardSubtitle: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   
   label: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, marginTop: 14 },
-  input: { backgroundColor: 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.4)', borderRadius: 14, padding: 14, fontSize: theme.Typography.BodyLarge.fontSize, color: theme.Colors.onBackground },
+  input: { backgroundColor: isDark ? '#131C26' : 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: isDark ? '#202D3D' : 'rgba(186, 201, 204, 0.4)', borderRadius: 14, padding: 14, fontSize: theme.Typography.BodyLarge.fontSize, color: theme.Colors.onBackground },
   textArea: { minHeight: 90, textAlignVertical: 'top' },
   
   pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pickerChip: { backgroundColor: 'rgba(255, 255, 255, 0.8)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.4)' },
+  pickerChip: { backgroundColor: isDark ? '#131C26' : 'rgba(255, 255, 255, 0.8)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: isDark ? '#202D3D' : 'rgba(186, 201, 204, 0.4)' },
   pickerChipActive: { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
   pickerChipActivePrio: { backgroundColor: theme.Colors.error, borderColor: theme.Colors.error },
   pickerChipText: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
   pickerChipTextActive: { color: theme.Colors.surfaceContainerLowest },
 
-  uploadBox: { borderWidth: 2, borderColor: 'rgba(0, 104, 117, 0.25)', borderStyle: 'dashed', borderRadius: 16, padding: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.4)', marginTop: 18, marginBottom: 18 },
+  uploadBox: { borderWidth: 2, borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 104, 117, 0.25)', borderStyle: 'dashed', borderRadius: 16, padding: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.4)', marginTop: 18, marginBottom: 18 },
   uploadText: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary, marginTop: 6 },
   
   submitBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
@@ -383,20 +383,20 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800' },
   promoBgIcon: { position: 'absolute', right: -25, bottom: -25 },
 
-  healthCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, padding: 22, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
+  healthCard: { backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)', borderRadius: 24, padding: 22, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
   healthTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 16 },
-  healthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.8)', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1, borderColor: 'rgba(186, 201, 204, 0.25)' },
+  healthRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isDark ? 'rgba(27, 38, 51, 0.85)' : 'rgba(255, 255, 255, 0.8)', padding: 14, borderRadius: 14, marginBottom: 10, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(186, 201, 204, 0.25)' },
   healthRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   healthPill: { width: 6, height: 32, borderRadius: 3 },
   healthLabel: { fontSize: theme.Typography.BodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
   healthValue: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800' },
 
-  historyCard: { backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
-  historyHeader: { padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.3)' },
+  historyCard: { backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: isDark ? 0.2 : 0.06, shadowRadius: 20, elevation: 4 },
+  historyHeader: { padding: 20, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(186, 201, 204, 0.3)' },
   historyTitle: { fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
   historySub: { fontSize: theme.Typography.BodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
-  historyList: { backgroundColor: 'rgba(255, 255, 255, 0.7)' },
-  historyItem: { padding: 18, borderBottomWidth: 1, borderBottomColor: 'rgba(186, 201, 204, 0.25)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  historyList: { backgroundColor: isDark ? 'rgba(19, 28, 38, 0.85)' : 'rgba(255, 255, 255, 0.7)' },
+  historyItem: { padding: 18, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(186, 201, 204, 0.25)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   historyItemMain: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   historyItemId: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '800', color: theme.Colors.primary },
   historyItemTitle: { fontSize: theme.Typography.BodyMedium.fontSize, fontWeight: '700', color: theme.Colors.onBackground },
@@ -405,8 +405,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   statusBadgeText: { fontSize: theme.Typography.LabelSmall.fontSize, fontWeight: '800' },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.6)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.75)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: isDark ? '#131C26' : theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   modalTitle: { fontSize: theme.Typography.TitleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
   modalSubTitle: { fontSize: theme.Typography.BodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },

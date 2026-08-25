@@ -6,7 +6,7 @@ import { View, Platform, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 import { AuthProvider } from '@/src/features/auth/context/AuthProvider';
-import { ThemeContextProvider } from '@/src/theme/ThemeContext';
+import { ThemeContextProvider, useAppTheme } from '@/src/theme/ThemeContext';
 import BottomNavigation from '@/src/components/common/navigation/BottomNavigation';
 import SidebarNavigation from '@/src/components/common/navigation/SidebarNavigation';
 import MobileHeader from '@/src/components/common/navigation/MobileHeader';
@@ -31,8 +31,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Lazily load QRScannerModal only on native — expo-camera is not SSR/web-export safe
-// and will crash Expo's static export (`npx expo export --platform web`) if imported statically.
 const QRScannerModal = Platform.OS !== 'web'
   ? lazy(() => import('@/src/components/common/navigation/QRScannerModal'))
   : () => null;
@@ -62,8 +60,8 @@ const PRIMARY_ROUTES = [
   '/settings'
 ];
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+function MainAppLayout() {
+  const { theme, isDark } = useAppTheme();
   const { isDesktop } = useResponsive();
   const pathname = usePathname();
 
@@ -74,6 +72,85 @@ export default function RootLayout() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  const hideNavigation = pathname === '/login' || pathname === '/signup';
+  const cleanPathname = pathname.split('?')[0];
+  const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
+  const showDesktop = mounted && isDesktop;
+  const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
+
+  return (
+    <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+      <ToastProvider>
+        <AuthProvider>
+          <ScrollProvider>
+            <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: theme.Colors.background }}>
+              {showDesktop && !hideNavigation && <SidebarNavigation />}
+              <View style={{ flex: 1 }}>
+                {!showDesktop && !hideHeader && (
+                  <MobileHeader 
+                    title={getHeaderTitle(pathname)} 
+                    onMenuPress={() => setMoreSheetVisible(true)} 
+                    onNotificationPress={() => router.push('/tenant-home')}
+                  />
+                )}
+                <ScreenWrapper isAuth={hideNavigation}>
+                  <OnboardingGate>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="index" />
+                      <Stack.Screen name="login" />
+                      <Stack.Screen name="signup" />
+                      <Stack.Screen name="onboarding" />
+                      <Stack.Screen name="tenant-home" />
+                      <Stack.Screen 
+                        name="ai" 
+                        options={{ 
+                          presentation: 'transparentModal',
+                          animation: 'fade',
+                          contentStyle: { backgroundColor: 'transparent' }
+                        }} 
+                      />
+                      <Stack.Screen name="tenant-property" />
+                      <Stack.Screen name="tenant-inventory" />
+                      <Stack.Screen name="tenant-maintenance" />
+                      <Stack.Screen name="tenant-payments" />
+                      <Stack.Screen name="settings" />
+                    </Stack>
+                  </OnboardingGate>
+                </ScreenWrapper>
+                
+                {!showDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
+                  <>
+                    <BottomNavigation 
+                      onMorePress={() => setMoreSheetVisible(true)} 
+                      onQRPress={() => setQrModalVisible(true)} 
+                    />
+                    <FloatingAIAssistant />
+                    <MobileMoreSheet 
+                      visible={moreSheetVisible} 
+                      onClose={() => setMoreSheetVisible(false)} 
+                    />
+                    <Suspense fallback={null}>
+                      <QRScannerModal 
+                        visible={qrModalVisible} 
+                        onClose={() => setQrModalVisible(false)} 
+                      />
+                    </Suspense>
+                  </>
+                )}
+              </View>
+            </View>
+          </ScrollProvider>
+        </AuthProvider>
+      </ToastProvider>
+      <StatusBar style={isDark ? "light" : "dark"} translucent backgroundColor="transparent" />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  useEffect(() => {
     if (Platform.OS === 'web') {
       const link = document.createElement('link');
       link.rel = 'stylesheet';
@@ -82,85 +159,12 @@ export default function RootLayout() {
     }
   }, []);
 
-  const hideNavigation = pathname === '/login' || pathname === '/signup';
-  const cleanPathname = pathname.split('?')[0];
-  const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
-  const showDesktop = mounted && isDesktop;
-  const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
-  if (!mounted && Platform.OS === 'web') {
-    return <View style={{ flex: 1, backgroundColor: LightColors.background }} />;
-  }
-
   return (
     <SafeAreaProvider>
       <ThemeContextProvider>
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <ToastProvider>
-                <AuthProvider>
-                  <ScrollProvider>
-                    <View style={{ flex: 1, flexDirection: showDesktop && !hideNavigation ? 'row' : 'column', backgroundColor: LightColors.background }}>
-                      {showDesktop && !hideNavigation && <SidebarNavigation />}
-                      <View style={{ flex: 1 }}>
-                        {!showDesktop && !hideHeader && (
-                          <MobileHeader 
-                            title={getHeaderTitle(pathname)} 
-                            onMenuPress={() => setMoreSheetVisible(true)} 
-                            onNotificationPress={() => router.push('/tenant-home')}
-                          />
-                        )}
-                        <ScreenWrapper isAuth={hideNavigation}>
-                          <OnboardingGate>
-                            <Stack screenOptions={{ headerShown: false }}>
-                              <Stack.Screen name="index" />
-                              <Stack.Screen name="login" />
-                              <Stack.Screen name="signup" />
-                              <Stack.Screen name="onboarding" />
-                              <Stack.Screen name="tenant-home" />
-                              <Stack.Screen 
-                                name="ai" 
-                                options={{ 
-                                  presentation: 'transparentModal',
-                                  animation: 'fade',
-                                  contentStyle: { backgroundColor: 'transparent' }
-                                }} 
-                              />
-                              <Stack.Screen name="tenant-property" />
-                              <Stack.Screen name="tenant-inventory" />
-                              <Stack.Screen name="tenant-maintenance" />
-                              <Stack.Screen name="tenant-payments" />
-                              <Stack.Screen name="settings" />
-                            </Stack>
-                          </OnboardingGate>
-                        </ScreenWrapper>
-                        
-                        {!showDesktop && !hideNavigation && !(pathname === '/ai' || pathname.startsWith('/ai') || pathname === '/ai-assistant') && (
-                          <>
-                            <BottomNavigation 
-                              onMorePress={() => setMoreSheetVisible(true)} 
-                              onQRPress={() => setQrModalVisible(true)} 
-                            />
-                            <FloatingAIAssistant />
-                            <MobileMoreSheet 
-                              visible={moreSheetVisible} 
-                              onClose={() => setMoreSheetVisible(false)} 
-                            />
-                            <Suspense fallback={null}>
-                              <QRScannerModal 
-                                visible={qrModalVisible} 
-                                onClose={() => setQrModalVisible(false)} 
-                              />
-                            </Suspense>
-                          </>
-                        )}
-                      </View>
-                    </View>
-                  </ScrollProvider>
-                </AuthProvider>
-              </ToastProvider>
-              <StatusBar style="dark" translucent backgroundColor="transparent" />
-            </ThemeProvider>
+            <MainAppLayout />
           </QueryClientProvider>
         </ErrorBoundary>
       </ThemeContextProvider>

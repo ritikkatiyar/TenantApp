@@ -44,10 +44,10 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
     >
       {isDesktop ? <DesktopNavBar title="My Unit & Property Lease" /> : <FloatingBackButton />}
           {/* Main Unit Card */}
-          <BlurView intensity={70} tint="light" style={styles.glassCard}>
+          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
             <View style={styles.mainCardHeaderRow}>
               <View style={styles.iconBox}>
-                <MaterialIcons name="apartment" size={30} color={Theme.Colors.primary} />
+                <MaterialIcons name="apartment" size={30} color={theme.Colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.propertyName}>{lease?.propertyName || 'Assigned Residence'}</Text>
@@ -68,21 +68,21 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               </View>
               <View style={styles.statBox}>
                 <Text style={styles.statLabel}>Security Deposit</Text>
-                <Text style={[styles.statValue, { color: Theme.Colors.primary }]}>{lease?.securityDeposit ? `₹${lease.securityDeposit.toLocaleString()}` : 'N/A'}</Text>
+                <Text style={[styles.statValue, { color: theme.Colors.primary }]}>{lease?.securityDeposit ? `₹${lease.securityDeposit.toLocaleString()}` : 'N/A'}</Text>
               </View>
             </View>
           </BlurView>
 
           {/* Lease Contract Card */}
-          <BlurView intensity={70} tint="light" style={styles.darkLeaseCard}>
+          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.darkLeaseCard}>
             <View style={styles.leaseHeaderRow}>
               <Text style={styles.leaseTitle}>Lease Agreement Details</Text>
-              <MaterialIcons name="gavel" size={24} color={Theme.Colors.primaryContainer} />
+              <MaterialIcons name="gavel" size={24} color={theme.Colors.primaryContainer} />
             </View>
             
             <View style={styles.leaseGrid}>
               <View style={styles.leaseRow}>
-                <MaterialIcons name="calendar-today" size={22} color={Theme.Colors.primaryFixed} />
+                <MaterialIcons name="calendar-today" size={22} color={theme.Colors.primaryFixedDim} />
                 <View style={{ marginLeft: 14 }}>
                   <Text style={styles.leaseLabel}>Move-In Date</Text>
                   <Text style={styles.leaseValue}>{lease?.moveInDate || 'On File'}</Text>
@@ -90,7 +90,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               </View>
               
               <View style={styles.leaseRow}>
-                <MaterialIcons name="event-busy" size={22} color={Theme.Colors.primaryFixed} />
+                <MaterialIcons name="event-busy" size={22} color={theme.Colors.primaryFixedDim} />
                 <View style={{ marginLeft: 14 }}>
                   <Text style={styles.leaseLabel}>Move-Out Date</Text>
                   <Text style={styles.leaseValue}>{lease?.moveOutDate || 'On File'}</Text>
@@ -98,7 +98,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
               </View>
 
               <View style={styles.leaseRow}>
-                <MaterialIcons name="verified-user" size={22} color={Theme.Colors.primaryFixed} />
+                <MaterialIcons name="verified-user" size={22} color={theme.Colors.primaryFixedDim} />
                 <View style={{ marginLeft: 14 }}>
                   <Text style={styles.leaseLabel}>Escrow Protection</Text>
                   <Text style={styles.leaseValue}>Verified & Locked</Text>
@@ -130,33 +130,33 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
           </View>
           
           <View style={styles.amenitiesGrid}>
-            <BlurView intensity={60} tint="light" style={styles.amenityCard}>
+            <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
               <View style={styles.amenityIconBox}>
-                <MaterialIcons name="wifi" size={24} color={Theme.Colors.primary} />
+                <MaterialIcons name="wifi" size={24} color={theme.Colors.primary} />
               </View>
               <Text style={styles.amenityTitle}>High-speed Fiber Wi-Fi</Text>
               <Text style={styles.amenitySub}>1 Gbps Unlimited</Text>
             </BlurView>
 
-            <BlurView intensity={60} tint="light" style={styles.amenityCard}>
+            <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
               <View style={styles.amenityIconBox}>
-                <MaterialIcons name="pool" size={24} color={Theme.Colors.primary} />
+                <MaterialIcons name="pool" size={24} color={theme.Colors.primary} />
               </View>
               <Text style={styles.amenityTitle}>Rooftop Pool</Text>
               <Text style={styles.amenitySub}>Temperature Controlled</Text>
             </BlurView>
 
-            <BlurView intensity={60} tint="light" style={styles.amenityCard}>
+            <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
               <View style={styles.amenityIconBox}>
-                <MaterialIcons name="local-parking" size={24} color={Theme.Colors.primary} />
+                <MaterialIcons name="local-parking" size={24} color={theme.Colors.primary} />
               </View>
               <Text style={styles.amenityTitle}>Covered Parking</Text>
               <Text style={styles.amenitySub}>Assigned Slot #B2</Text>
             </BlurView>
 
-            <BlurView intensity={60} tint="light" style={styles.amenityCard}>
+            <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
               <View style={styles.amenityIconBox}>
-                <MaterialIcons name="fitness-center" size={24} color={Theme.Colors.primary} />
+                <MaterialIcons name="fitness-center" size={24} color={theme.Colors.primary} />
               </View>
               <Text style={styles.amenityTitle}>24/7 Fitness Center</Text>
               <Text style={styles.amenitySub}>Cardio & Free Weights</Text>
@@ -205,33 +205,33 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   scrollContentDesktop: { paddingTop: 20 },
   
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)',
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: Theme.Colors.primary,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)',
+    shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
+    shadowOpacity: isDark ? 0.2 : 0.06,
     shadowRadius: 20,
     elevation: 4,
     overflow: 'hidden'
   },
   mainCardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
-  iconBox: { width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  propertyName: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: Theme.Colors.onBackground },
-  unitInfo: { fontSize: theme.Typography.bodyMedium.fontSize, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
-  statusBadge: { backgroundColor: 'rgba(0, 104, 117, 0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  statusBadgeText: { color: Theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', letterSpacing: 0.8 },
+  iconBox: { width: 50, height: 50, borderRadius: 14, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
+  propertyName: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  unitInfo: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
+  statusBadge: { backgroundColor: isDark ? 'rgba(0, 229, 255, 0.18)' : 'rgba(0, 104, 117, 0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  statusBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', letterSpacing: 0.8 },
   
   statsGrid: { flexDirection: 'row', gap: 14 },
-  statBox: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.9)' },
-  statLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: Theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
-  statSubLabel: { fontSize: theme.Typography.bodySmall.fontSize, color: Theme.Colors.onSurfaceVariant },
-  statValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: Theme.Colors.onBackground },
+  statBox: { flex: 1, backgroundColor: isDark ? 'rgba(27, 38, 51, 0.85)' : 'rgba(255, 255, 255, 0.7)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.9)' },
+  statLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  statSubLabel: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant },
+  statValue: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
 
   darkLeaseCard: {
-    backgroundColor: Theme.Colors.inverseSurface,
+    backgroundColor: isDark ? '#141E2A' : '#2b3133',
     borderRadius: 24,
     padding: 24,
     shadowColor: 'black',
@@ -245,29 +245,29 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   leaseTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800' },
   leaseGrid: { gap: 16, marginBottom: 20 },
   leaseRow: { flexDirection: 'row', alignItems: 'center' },
-  leaseLabel: { color: Theme.Colors.outlineVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', marginBottom: 2 },
+  leaseLabel: { color: isDark ? '#94A3B8' : theme.Colors.outlineVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', marginBottom: 2 },
   leaseValue: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
   leaseBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
   leaseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
-  leaseSignedText: { color: Theme.Colors.outlineVariant, fontSize: theme.Typography.bodySmall.fontSize, textAlign: 'center', marginTop: 12 },
+  leaseSignedText: { color: isDark ? '#94A3B8' : theme.Colors.outlineVariant, fontSize: theme.Typography.bodySmall.fontSize, textAlign: 'center', marginTop: 12 },
 
   sectionHeader: { marginTop: 4 },
-  sectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: Theme.Colors.onBackground },
-  sectionSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+  sectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  sectionSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
   
   amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  amenityCard: { width: '47.8%', backgroundColor: 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
-  amenityIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  amenityTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: Theme.Colors.onBackground },
-  amenitySub: { fontSize: theme.Typography.bodySmall.fontSize, color: Theme.Colors.onSurfaceVariant, marginTop: 2 },
+  amenityCard: { width: '47.8%', backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
+  amenityIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  amenityTitle: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  amenitySub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.6)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.75)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: isDark ? '#131C26' : theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: 24, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: Theme.Colors.onBackground },
-  modalContractTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: Theme.Colors.primary, marginBottom: 12 },
-  modalContractText: { fontSize: theme.Typography.bodyMedium.fontSize, color: Theme.Colors.onSurfaceVariant, lineHeight: 22 },
-  modalCloseBtn: { backgroundColor: Theme.Colors.primary, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  modalContractTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.primary, marginBottom: 12 },
+  modalContractText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 22 },
+  modalCloseBtn: { backgroundColor: theme.Colors.primary, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
 });
 

@@ -60,7 +60,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.xl,
     borderBottomWidth: 1,
     borderColor: theme.Surface.border,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: isDark ? 'rgba(11, 17, 24, 0.94)' : theme.Colors.glassFill,
   },
   topbarLeft: {
     flexDirection: 'row',

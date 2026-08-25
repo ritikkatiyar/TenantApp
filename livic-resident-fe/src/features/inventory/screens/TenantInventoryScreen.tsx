@@ -188,7 +188,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   snapshotCard: {
     flex: 0.85,
     minWidth: 280,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
     borderColor: theme.Colors.glassStroke,
     borderRadius: theme.Rounded.lg,

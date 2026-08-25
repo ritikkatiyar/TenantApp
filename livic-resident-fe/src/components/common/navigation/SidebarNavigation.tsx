@@ -117,6 +117,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingBottom: theme.Spacing.lg,
     borderRightWidth: 1,
     borderRightColor: theme.Surface.border,
+    backgroundColor: isDark ? 'rgba(11, 17, 24, 0.96)' : theme.Colors.glassFill,
     overflow: 'hidden',
   },
   sidebarHeader: {
@@ -136,10 +137,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   collapseButton: {
     padding: theme.Spacing.xs,
     borderRadius: 8,
-    backgroundColor: theme.Colors.surfaceContainerLow,
+    backgroundColor: isDark ? '#141E2A' : theme.Colors.surfaceContainerLow,
   },
   sidebarBrandTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', lineHeight: 34, color: theme.Colors.primary },
-  sidebarBrandSub: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', letterSpacing: 2, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
+  sidebarBrandSub: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', letterSpacing: 2, color: isDark ? '#94A3B8' : theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
   sidebarNavScroll: { flex: 1, marginBottom: theme.Spacing.md },
   sidebarNav: { gap: 14, paddingBottom: theme.Spacing.md },
   sidebarLink: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md, paddingHorizontal: 18, borderRadius: theme.Rounded.lg },
@@ -153,12 +154,12 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
     letterSpacing: 1.2,
-    color: theme.Colors.onSurfaceVariant,
+    color: isDark ? '#CBD5E1' : theme.Colors.onSurfaceVariant,
   },
   sidebarLinkTextActive: {
     color: theme.Colors.primary,
     fontWeight: '800',
   },
-  sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
+  sidebarFooter: { marginTop: 'auto', borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.outlineVariant, paddingTop: 28, gap: 10 },
   sidebarFooterCollapsed: { alignItems: 'center' },
 });

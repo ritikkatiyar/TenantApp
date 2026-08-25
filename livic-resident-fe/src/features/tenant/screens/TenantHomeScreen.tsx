@@ -114,7 +114,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
             ))}
 
             {/* Active Property Glass Card */}
-            <BlurView intensity={70} tint="light" style={styles.glassCard}>
+            <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
               <View style={styles.cardHeaderRow}>
                 <View style={styles.iconBox}>
                   <MaterialIcons name="apartment" size={30} color={theme.Colors.primary} />
@@ -183,7 +183,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
             </TouchableOpacity>
 
             {/* Notice Board Glass Section */}
-            <BlurView intensity={70} tint="light" style={styles.glassCard}>
+            <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
               <View style={styles.noticeHeaderRow}>
                 <View>
                   <Text style={styles.noticeSectionTitle}>Landlord Notice Board</Text>
@@ -281,33 +281,33 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   greetingSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
 
   glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)',
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)',
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
+    shadowOpacity: isDark ? 0.2 : 0.06,
     shadowRadius: 20,
     elevation: 4,
     overflow: 'hidden'
   },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
-  iconBox: { width: 50, height: 50, borderRadius: 14, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
+  iconBox: { width: 50, height: 50, borderRadius: 14, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center' },
   propertyName: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
   unitInfo: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
-  statusBadge: { backgroundColor: 'rgba(0, 104, 117, 0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  statusBadge: { backgroundColor: isDark ? 'rgba(0, 229, 255, 0.18)' : 'rgba(0, 104, 117, 0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
   statusBadgeText: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', letterSpacing: 0.8 },
 
   statsGrid: { flexDirection: 'row', gap: 14, marginBottom: 20 },
-  statBox: { flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 16, padding: theme.Spacing.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.9)' },
+  statBox: { flex: 1, backgroundColor: isDark ? 'rgba(27, 38, 51, 0.85)' : 'rgba(255, 255, 255, 0.7)', borderRadius: 16, padding: theme.Spacing.md, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.9)' },
   statLabel: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
   statSubLabel: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginLeft: 2 },
   statValue: { fontSize: theme.Typography.headlineSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
 
-  quickActionsRow: { flexDirection: 'row', gap: 10, paddingTop: theme.Spacing.md, borderTopWidth: 1, borderTopColor: 'rgba(186, 201, 204, 0.3)' },
-  quickActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255, 255, 255, 0.8)', paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(0, 104, 117, 0.15)' },
+  quickActionsRow: { flexDirection: 'row', gap: 10, paddingTop: theme.Spacing.md, borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(186, 201, 204, 0.3)' },
+  quickActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: isDark ? 'rgba(27, 38, 51, 0.9)' : 'rgba(255, 255, 255, 0.8)', paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.15)' },
   quickActionText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary },
 
   actionStrip: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
@@ -321,14 +321,14 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   noticeHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.md },
   noticeSectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
   noticeSectionSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
-  emptyNoticeBox: { alignItems: 'center', paddingVertical: theme.Spacing.xl, paddingHorizontal: 20, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(186, 201, 204, 0.4)', borderStyle: 'dashed', backgroundColor: 'rgba(255, 255, 255, 0.4)' },
-  emptyNoticeIconWrapper: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  emptyNoticeBox: { alignItems: 'center', paddingVertical: theme.Spacing.xl, paddingHorizontal: 20, borderRadius: 16, borderWidth: 2, borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(186, 201, 204, 0.4)', borderStyle: 'dashed', backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.4)' },
+  emptyNoticeIconWrapper: { width: 56, height: 56, borderRadius: 28, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   emptyNoticeText: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onBackground, fontWeight: '700' },
   emptyNoticeSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
 
   noticeItem: { padding: theme.Spacing.md, borderRadius: 16, borderWidth: 1, marginBottom: 12 },
-  noticeItemRead: { backgroundColor: 'rgba(255, 255, 255, 0.7)', borderColor: 'rgba(186, 201, 204, 0.4)' },
-  noticeItemUnread: { backgroundColor: theme.Colors.surfaceContainerLowest, borderColor: theme.Colors.primaryContainer, shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
+  noticeItemRead: { backgroundColor: isDark ? 'rgba(19, 28, 38, 0.85)' : 'rgba(255, 255, 255, 0.7)', borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(186, 201, 204, 0.4)' },
+  noticeItemUnread: { backgroundColor: isDark ? '#141E2A' : theme.Colors.surfaceContainerLowest, borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : theme.Colors.primaryContainer, shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   noticeItemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.sm },
   noticeBadge: { paddingHorizontal: theme.Spacing.sm, paddingVertical: theme.Spacing.xs, borderRadius: 6 },
   noticeBadgeText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
@@ -344,8 +344,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   criticalDismissBtn: { backgroundColor: 'rgba(255, 255, 255, 0.25)', paddingHorizontal: 14, paddingVertical: theme.Spacing.sm, borderRadius: 10 },
   criticalDismissText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.55)', justifyContent: 'center', padding: 20 },
-  modalContent: { backgroundColor: theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: theme.Spacing.lg, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.75)', justifyContent: 'center', padding: 20 },
+  modalContent: { backgroundColor: isDark ? '#131C26' : theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: theme.Spacing.lg, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.md },
   modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
   modalMeta: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginBottom: theme.Spacing.md },
