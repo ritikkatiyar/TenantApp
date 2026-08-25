@@ -50,7 +50,7 @@ public class PropertyController {
     }
 
     @GetMapping("/{propertyId}")
-    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW') or @authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW_OWN_LEASE') or hasAnyRole('TENANT', 'LANDLORD', 'ADMIN', 'SUPERADMIN')")
     public ResponseEntity<ApiResponse<PropertyDTOs.PropertyResponse>> getProperty(
             @PathVariable UUID propertyId) {
         PropertyTbl property = propertyQueryService.getPropertyById(propertyId);
@@ -94,7 +94,8 @@ public class PropertyController {
                 property.getLandmark(),
                 property.getTotalFloors(),
                 null,
-                property.isActive()
+                property.isActive(),
+                property.getAmenities() != null ? property.getAmenities() : List.of()
         );
     }
 }

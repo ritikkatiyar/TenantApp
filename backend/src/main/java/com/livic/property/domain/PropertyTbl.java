@@ -45,4 +45,10 @@ public class PropertyTbl extends BaseEntity {
     @Column(name = "allow_partial_payment", nullable = false)
     @Builder.Default
     private boolean allowPartialPayment = false;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "property_amenities_tbl", joinColumns = @JoinColumn(name = "property_id"))
+    @Column(name = "amenity")
+    @Builder.Default
+    private List<String> amenities = new ArrayList<>();
 }

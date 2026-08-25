@@ -9,12 +9,14 @@ public final class PropertyMapper {
     }
 
     public static PropertyTbl toEntity(PropertyDTOs.CreatePropertyRequest request) {
+        java.util.List<String> am = request.amenities() != null ? new java.util.ArrayList<>(request.amenities()) : new java.util.ArrayList<>();
         return PropertyTbl.builder()
                 .name(request.name())
                 .address(request.address())
                 .city(request.city())
                 .landmark(request.landmark())
                 .totalFloors(request.totalFloors())
+                .amenities(am)
                 .build();
     }
 
@@ -24,5 +26,9 @@ public final class PropertyMapper {
         property.setCity(request.city());
         property.setLandmark(request.landmark());
         property.setTotalFloors(request.totalFloors());
+        if (request.amenities() != null) {
+            property.getAmenities().clear();
+            property.getAmenities().addAll(request.amenities());
+        }
     }
 }

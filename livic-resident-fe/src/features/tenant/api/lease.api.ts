@@ -26,6 +26,7 @@ export interface LeaseResponse {
   tenantName?: string;
   tenantPhone?: string;
   propertyName?: string;
+  propertyId?: string;
 }
 
 export function createLease(payload: CreateLeaseRequest, token: string): Promise<LeaseResponse> {

@@ -4,6 +4,7 @@ export type CreatePropertyRequest = {
   city: string;
   landmark?: string;
   totalFloors?: number;
+  amenities?: string[];
 };
 
 export type UpdatePropertyRequest = {
@@ -12,6 +13,7 @@ export type UpdatePropertyRequest = {
   city: string;
   landmark?: string;
   totalFloors?: number;
+  amenities?: string[];
 };
 
 export type PropertyResponse = {
@@ -23,4 +25,5 @@ export type PropertyResponse = {
   totalFloors?: number;
   ownerId?: string;
   isActive?: boolean;
+  amenities?: string[];
 };

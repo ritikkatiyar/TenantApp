@@ -21,6 +21,19 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
   const [errorMsg, setErrorMsg] = useState('');
   const [showErrors, setShowErrors] = useState(false);
 
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([
+    'High-speed Fiber Wi-Fi',
+    'Covered Parking',
+    '24/7 Security',
+    'Power Backup'
+  ]);
+
+  const toggleAmenity = (amenity: string) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity]
+    );
+  };
+
   const shakeName = useRef(new Animated.Value(0)).current;
   const shakeAddress = useRef(new Animated.Value(0)).current;
   const shakeCity = useRef(new Animated.Value(0)).current;
@@ -74,7 +87,8 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
           address,
           city,
           landmark,
-          totalFloors: parseInt(totalFloors, 10)
+          totalFloors: parseInt(totalFloors, 10),
+          amenities: selectedAmenities
         },
       });
 
@@ -115,6 +129,8 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
     setGlobalUnitsPerFloor,
     globalUnitType,
     setGlobalUnitType,
+    selectedAmenities,
+    toggleAmenity,
     loading,
     errorMsg,
     setErrorMsg,

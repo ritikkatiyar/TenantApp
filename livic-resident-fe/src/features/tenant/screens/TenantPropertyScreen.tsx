@@ -13,6 +13,8 @@ import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
+import { getPropertyDetails, PropertyDetailsResponse } from '@/src/features/property/api/property.api';
+
 interface TenantPropertyScreenProps {
   token: string;
   onLogout: () => void;
@@ -24,17 +26,29 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
   const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
   const [lease, setLease] = useState<LeaseResponse | null>(null);
+  const [property, setProperty] = useState<PropertyDetailsResponse | null>(null);
   const [showLeaseModal, setShowLeaseModal] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     getActiveLease(token)
       .then((data) => {
-        if (isMounted && data) setLease(data);
+        if (isMounted && data) {
+          setLease(data);
+          if (data.propertyId) {
+            getPropertyDetails(data.propertyId, token).then(propData => {
+              if (isMounted && propData) setProperty(propData);
+            });
+          }
+        }
       })
       .catch((err) => console.error('[TenantProperty]', err));
     return () => { isMounted = false; };
   }, [token]);
+
+  const amenitiesList = (property?.amenities && property.amenities.length > 0)
+    ? property.amenities
+    : ['High-speed Fiber Wi-Fi', 'Rooftop Pool', 'Covered Parking', '24/7 Fitness Center'];
 
   return (
     <PageShell
@@ -130,37 +144,18 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
           </View>
           
           <View style={styles.amenitiesGrid}>
-            <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
-              <View style={styles.amenityIconBox}>
-                <MaterialIcons name="wifi" size={24} color={theme.Colors.primary} />
-              </View>
-              <Text style={styles.amenityTitle}>High-speed Fiber Wi-Fi</Text>
-              <Text style={styles.amenitySub}>1 Gbps Unlimited</Text>
-            </BlurView>
-
-            <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
-              <View style={styles.amenityIconBox}>
-                <MaterialIcons name="pool" size={24} color={theme.Colors.primary} />
-              </View>
-              <Text style={styles.amenityTitle}>Rooftop Pool</Text>
-              <Text style={styles.amenitySub}>Temperature Controlled</Text>
-            </BlurView>
-
-            <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
-              <View style={styles.amenityIconBox}>
-                <MaterialIcons name="local-parking" size={24} color={theme.Colors.primary} />
-              </View>
-              <Text style={styles.amenityTitle}>Covered Parking</Text>
-              <Text style={styles.amenitySub}>Assigned Slot #B2</Text>
-            </BlurView>
-
-            <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
-              <View style={styles.amenityIconBox}>
-                <MaterialIcons name="fitness-center" size={24} color={theme.Colors.primary} />
-              </View>
-              <Text style={styles.amenityTitle}>24/7 Fitness Center</Text>
-              <Text style={styles.amenitySub}>Cardio & Free Weights</Text>
-            </BlurView>
+            {amenitiesList.map((amenityName, idx) => {
+              const meta = getAmenityMeta(amenityName);
+              return (
+                <BlurView key={idx} intensity={60} tint={isDark ? "dark" : "light"} style={styles.amenityCard}>
+                  <View style={styles.amenityIconBox}>
+                    <MaterialIcons name={meta.icon} size={24} color={theme.Colors.primary} />
+                  </View>
+                  <Text style={styles.amenityTitle}>{amenityName}</Text>
+                  <Text style={styles.amenitySub}>{meta.sub}</Text>
+                </BlurView>
+              );
+            })}
           </View>
 
 
@@ -270,5 +265,40 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalCloseBtn: { backgroundColor: theme.Colors.primary, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
 });
+
+function getAmenityMeta(name: string): { icon: React.ComponentProps<typeof MaterialIcons>['name']; sub: string } {
+  const lower = (name || '').toLowerCase();
+  if (lower.includes('wifi') || lower.includes('wi-fi') || lower.includes('internet')) {
+    return { icon: 'wifi', sub: 'High-Speed Fiber Connection' };
+  }
+  if (lower.includes('pool') || lower.includes('swim')) {
+    return { icon: 'pool', sub: 'Temperature Controlled Pool' };
+  }
+  if (lower.includes('gym') || lower.includes('fit')) {
+    return { icon: 'fitness-center', sub: 'Cardio & Strength Training' };
+  }
+  if (lower.includes('park')) {
+    return { icon: 'local-parking', sub: 'Reserved Resident Slot' };
+  }
+  if (lower.includes('secur') || lower.includes('cctv') || lower.includes('guard')) {
+    return { icon: 'security', sub: '24/7 Gated & Monitored Security' };
+  }
+  if (lower.includes('power') || lower.includes('backup') || lower.includes('generator')) {
+    return { icon: 'bolt', sub: '100% Automatic Inverter / DG Backup' };
+  }
+  if (lower.includes('laundry') || lower.includes('wash')) {
+    return { icon: 'local-laundry-service', sub: 'In-Building Shared Laundry' };
+  }
+  if (lower.includes('lift') || lower.includes('elevat')) {
+    return { icon: 'elevator', sub: 'High-Speed Automatic Elevator' };
+  }
+  if (lower.includes('ev') || lower.includes('charg')) {
+    return { icon: 'ev-station', sub: 'Dedicated EV Fast Charger' };
+  }
+  if (lower.includes('club') || lower.includes('lounge')) {
+    return { icon: 'weekend', sub: 'Community Lounge & Event Space' };
+  }
+  return { icon: 'stars', sub: 'Included Property Facility' };
+}
 
 

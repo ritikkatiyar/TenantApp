@@ -21,6 +21,7 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasConfiguredFloor, setHasConfiguredFloor] = useState(false);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
   useEffect(() => {
     fetchPropertyDetails();
@@ -34,6 +35,7 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
       setCity(data.city);
       setLandmark(data.landmark || '');
       setTotalFloors(data.totalFloors?.toString() || '');
+      setSelectedAmenities(data.amenities || ['High-speed Fiber Wi-Fi', 'Covered Parking', '24/7 Security', 'Power Backup']);
       
       const floorSummaries = await getFloorSummaries(propertyId, userToken);
       const isAnyConfigured = floorSummaries.some(f => f.configured);
@@ -44,6 +46,12 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleAmenity = (amenity: string) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity]
+    );
   };
 
   const handleUpdate = async () => {
@@ -67,7 +75,8 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
           address, 
           city, 
           landmark, 
-          totalFloors: parseInt(totalFloors, 10) 
+          totalFloors: parseInt(totalFloors, 10),
+          amenities: selectedAmenities
         }
       });
 
@@ -106,6 +115,8 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
     setGlobalUnitsPerFloor,
     globalUnitType,
     setGlobalUnitType,
+    selectedAmenities,
+    toggleAmenity,
     loading,
     saving,
     hasConfiguredFloor,

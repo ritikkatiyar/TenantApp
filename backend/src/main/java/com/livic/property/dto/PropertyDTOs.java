@@ -22,7 +22,9 @@ public class PropertyDTOs {
                         String landmark,
 
                         @NotNull(message = "Total floors is required") @Min(value = 1, message = "Property must have at least 1 floor")
-            Integer totalFloors
+            Integer totalFloors,
+
+            java.util.List<String> amenities
     ) {}
 
         public record UpdatePropertyRequest(
@@ -38,7 +40,9 @@ public class PropertyDTOs {
                         String landmark,
 
                         @NotNull(message = "Total floors is required") @Min(value = 1, message = "Property must have at least 1 floor")
-            Integer totalFloors
+            Integer totalFloors,
+
+            java.util.List<String> amenities
     ) {}
 
         public record PropertyResponse(
@@ -49,7 +53,8 @@ public class PropertyDTOs {
             String landmark,
             Integer totalFloors,
             UUID ownerId,
-            boolean isActive
+            boolean isActive,
+            java.util.List<String> amenities
     ) {}
 
         public record BatchUnitRequest(
