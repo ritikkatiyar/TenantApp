@@ -68,7 +68,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
           <View style={[styles.orb, styles.orb2]} />
           
           {/* Main Content Area */}
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.cardContainer}>
+          <BlurView intensity={40} tint="light" style={styles.cardContainer}>
             {/* Branding */}
             <View style={styles.brandingContainer}>
               <View style={styles.iconWrapper}>
