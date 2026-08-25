@@ -53,10 +53,11 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
   return (
     <PageShell
       scrollable={true}
+      header={isDesktop ? <DesktopNavBar title="My Unit & Property Lease" /> : null}
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >
-      {isDesktop ? <DesktopNavBar title="My Unit & Property Lease" /> : <FloatingBackButton />}
+      {!isDesktop && <FloatingBackButton />}
           {/* Main Unit Card */}
           <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
             <View style={styles.mainCardHeaderRow}>

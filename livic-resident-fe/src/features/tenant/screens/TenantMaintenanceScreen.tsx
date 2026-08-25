@@ -87,14 +87,12 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
   return (
     <PageShell
       scrollable={true}
+      header={isDesktop ? <DesktopNavBar title="Support & Maintenance" /> : null}
       edges={isDesktop ? ['top'] : []}
-      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 68 + insets.top }]}
+      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >
-      {isDesktop ? (
-        <DesktopNavBar title="Maintenance & Service Center" />
-      ) : (
-        <FloatingBackButton />
-      )}
+      {!isDesktop && <FloatingBackButton />}
+
           {/* New Ticket Form Glass Card */}
           <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
             <View style={styles.formHeaderRow}>

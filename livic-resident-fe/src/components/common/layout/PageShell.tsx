@@ -7,6 +7,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 
 interface PageShellProps {
   children: React.ReactNode;
+  header?: React.ReactNode;
   scrollable?: boolean;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
@@ -18,6 +19,7 @@ interface PageShellProps {
 
 export function PageShell({
   children,
+  header,
   scrollable = false,
   style,
   contentContainerStyle,
@@ -57,6 +59,7 @@ export function PageShell({
 
   const container = (
     <SafeAreaView edges={edges} style={[styles.safeArea, style]}>
+      {header}
       {scrollable ? (
         <ScrollView
           style={styles.scrollView}

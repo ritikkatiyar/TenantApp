@@ -79,10 +79,11 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
   return (
     <PageShell
       scrollable={!loading}
+      header={isDesktop ? <DesktopNavBar title="Billing & Rent Payments" /> : null}
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >
-      {isDesktop ? <DesktopNavBar title="Billing & Rent Payments" /> : <FloatingBackButton />}
+      {!isDesktop && <FloatingBackButton />}
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>

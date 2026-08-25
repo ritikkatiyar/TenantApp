@@ -19,7 +19,7 @@ public class InvoiceController {
     private final PaymentStatementService paymentStatementService;
 
     @GetMapping(value = "/{rentCycleId}/invoice", produces = MediaType.TEXT_HTML_VALUE)
-    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_VIEW') or @authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_VIEW_OWN') or hasAnyRole('TENANT', 'LANDLORD', 'ADMIN', 'SUPERADMIN')")
     public ResponseEntity<String> getPaymentStatementHtml(@PathVariable UUID rentCycleId) {
         log.info("API request: Get payment statement HTML for RentCycle: {}", rentCycleId);
         String html = paymentStatementService.generateStatementHtml(rentCycleId);

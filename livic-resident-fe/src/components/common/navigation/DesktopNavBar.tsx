@@ -43,6 +43,10 @@ export default function DesktopNavBar({
       <View style={styles.topbarRight}>
         {rightContent}
 
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeToggleBtn} activeOpacity={0.8}>
+          <MaterialIcons name={isDark ? "wb-sunny" : "nights-stay"} size={20} color={isDark ? "#FFD700" : theme.Colors.primary} />
+        </TouchableOpacity>
+
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
