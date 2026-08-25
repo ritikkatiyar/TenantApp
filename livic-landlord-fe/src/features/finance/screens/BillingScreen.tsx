@@ -27,8 +27,53 @@ import { PlanCard } from '../components/billing/PlanCard';
 import { CalculatorCard } from '../components/billing/CalculatorCard';
 import { TopUpCard } from '../components/billing/TopUpCard';
 
+import { PlanResponse } from '@/src/features/finance/api/billing.api';
+
 const { width } = Dimensions.get('window');
-const LUMINOUS_BACKGROUND = ['#f4faff', '#ecf5fb', '#d8e2ff'] as const;
+
+const DEFAULT_PLANS: PlanResponse[] = [
+  {
+    id: 'starter-plan',
+    planKey: 'STARTER',
+    name: 'Starter Plan',
+    priceMonthly: 999,
+    priceYearly: 799,
+    currency: 'INR',
+    features: [
+      { featureKey: 'UNITS', displayLabel: 'Up to 10 Units', limitValue: 10, included: true },
+      { featureKey: 'AI_DESK', displayLabel: 'Basic AI Support Desk', limitValue: 100, included: true },
+      { featureKey: 'COMMUNICATION', displayLabel: 'Tenant Announcements', limitValue: 0, included: true },
+    ],
+  },
+  {
+    id: 'pro-plan',
+    planKey: 'PRO',
+    name: 'Pro Landlord',
+    priceMonthly: 2499,
+    priceYearly: 1999,
+    currency: 'INR',
+    features: [
+      { featureKey: 'UNITS', displayLabel: 'Up to 50 Units', limitValue: 50, included: true },
+      { featureKey: 'AI_DESK', displayLabel: 'Priority AI Copilot & Escalations', limitValue: 1000, included: true },
+      { featureKey: 'FINANCE', displayLabel: 'Automated Rent Cycles & Online Payments', limitValue: 0, included: true },
+      { featureKey: 'COMMUNICATION', displayLabel: 'SMS & WhatsApp Notifications', limitValue: 0, included: true },
+    ],
+  },
+  {
+    id: 'enterprise-plan',
+    planKey: 'ENTERPRISE',
+    name: 'Enterprise Portfolio',
+    priceMonthly: 5999,
+    priceYearly: 4799,
+    currency: 'INR',
+    features: [
+      { featureKey: 'UNITS', displayLabel: 'Unlimited Property Units', limitValue: 9999, included: true },
+      { featureKey: 'AI_DESK', displayLabel: 'Custom AI Assistant & Full Automation', limitValue: 10000, included: true },
+      { featureKey: 'FINANCE', displayLabel: 'Multi-Bank Reconciliation & Custom Reports', limitValue: 0, included: true },
+      { featureKey: 'DEDICATED', displayLabel: '24/7 Dedicated Account Manager', limitValue: 0, included: true },
+    ],
+  },
+];
 
 type BillingScreenProps = {
   token: string;
@@ -219,22 +264,27 @@ export default function BillingScreen({ token }: BillingScreenProps) {
 
   if (isLoading) {
     return (
-      <LinearGradient colors={LUMINOUS_BACKGROUND} style={styles.loaderContainer}>
-        <View style={{ width: '80%', gap: theme.Spacing.md }}>
-          <SkeletonRow />
+      <PageShell
+        scrollable={false}
+        header={isDesktop ? <DesktopNavBar title="SaaS Subscription & Billing" /> : null}
+        edges={isDesktop ? ['top'] : []}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 }}>
           <SkeletonRow />
           <SkeletonRow />
         </View>
-      </LinearGradient>
+      </PageShell>
     );
   }
 
   const currentPlan = billingData?.subscription?.planName || 'STARTER';
   const remainingCredits = billingData?.wallet?.creditBalance || 0;
+  const displayPlans = plans && plans.length > 0 ? plans : DEFAULT_PLANS;
 
   return (
     <PageShell
       scrollable={true}
+      header={isDesktop ? <DesktopNavBar title="SaaS Subscription & Billing" /> : null}
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
     >
@@ -281,11 +331,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
 
             {/* 3. Subscription Packages */}
             <View style={[styles.cardsWrapper, isDesktop && styles.cardsWrapperDesktop]}>
-              {plans.length === 0 ? (
-                <View style={{ padding: theme.Spacing.lg, alignItems: 'center', width: '100%' }}>
-                  <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.bodyMedium.fontSize }}>No plans available. Please try again later.</Text>
-                </View>
-              ) : plans.map((plan) => (
+              {displayPlans.map((plan) => (
                 <View key={plan.id || plan.planKey} style={[styles.planCardContainer, isDesktop && styles.planCardContainerDesktop]}>
                   <PlanCard
                     plan={plan}
