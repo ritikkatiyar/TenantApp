@@ -78,8 +78,8 @@ function MainAppLayout() {
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
-  const initialWebIsDesktop = isWeb ? window.innerWidth >= 900 : false;
-  const showDesktop = isWeb ? (mounted ? isDesktop : initialWebIsDesktop) : isDesktop;
+  // Synchronously determine desktop layout on web client on frame 1
+  const showDesktop = isWeb ? window.innerWidth >= 900 : isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
   return (

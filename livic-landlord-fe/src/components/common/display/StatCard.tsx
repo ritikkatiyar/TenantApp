@@ -3,10 +3,13 @@ import { StyleSheet, View, Text, ViewStyle, TextStyle, StyleProp } from 'react-n
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { GlassCard } from './GlassCard';
+import { SkeletonRow } from '../feedback/Skeleton';
 
 export interface StatCardProps {
   label: string;
   value: string | number;
+  loading?: boolean;
+  valueColor?: string;
   helperText?: string;
   trend?: string;
   trendType?: 'positive' | 'negative' | 'neutral';
@@ -20,6 +23,8 @@ export interface StatCardProps {
 export function StatCard({
   label,
   value,
+  loading = false,
+  valueColor,
   helperText,
   trend,
   trendType = 'neutral',
@@ -34,6 +39,7 @@ export function StatCard({
 
   const activeIconColor = iconColor || theme.Colors.primary;
   const activeIconBg = iconBg || (isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)');
+  const activeValueColor = valueColor || theme.Colors.onSurface;
 
   const getTrendColor = () => {
     switch (trendType) {
@@ -71,10 +77,18 @@ export function StatCard({
           </View>
         )}
       </View>
-      <Text style={[styles.value, valueStyle]} numberOfLines={1}>
-        {value}
-      </Text>
-      {trend && (
+
+      {loading ? (
+        <View style={styles.skeletonContainer}>
+          <SkeletonRow style={{ width: 70, height: 24 }} />
+        </View>
+      ) : (
+        <Text style={[styles.value, { color: activeValueColor }, valueStyle]} numberOfLines={1}>
+          {value}
+        </Text>
+      )}
+
+      {trend && !loading && (
         <View style={styles.trendRow}>
           <MaterialIcons name={getTrendIcon()} size={15} color={getTrendColor()} style={styles.trendIcon} />
           <Text style={[styles.trendText, { color: getTrendColor() }]}>
@@ -82,7 +96,7 @@ export function StatCard({
           </Text>
         </View>
       )}
-      {helperText && !trend && (
+      {helperText && !trend && !loading && (
         <Text style={styles.helperText} numberOfLines={1}>
           {helperText}
         </Text>
@@ -126,6 +140,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onSurface,
     letterSpacing: -0.5,
     marginVertical: 2,
+  },
+  skeletonContainer: {
+    marginVertical: 4,
+    height: 32,
+    justifyContent: 'center',
   },
   trendRow: {
     flexDirection: 'row',

@@ -25,6 +25,7 @@ import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import { SectionHeader } from '@/src/components/common/display/SectionHeader';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
+import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 import { useRentRoll } from '@/src/features/finance/hooks/useRentRoll';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -45,10 +46,11 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
-  const { selectedPropertyId } = useGlobalPropertySelection();
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
-  const propertyId = paramPropertyId || selectedPropertyId || null;
+  const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
+  const propertyId = selectedPropertyId || validParamId || null;
   const { showToast } = useToast();
 
   const [billingMonth, setBillingMonth] = useState<string>(() => {
@@ -254,6 +256,22 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
       );
     }
 
+    if (!propertyId) {
+      return (
+        <View style={{ flex: 1, padding: theme.Spacing.lg, justifyContent: 'center', alignItems: 'center' }}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: theme.Spacing.xl, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%', backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke }}>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: theme.Spacing.md }}>
+              <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
+            </View>
+            <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: theme.Spacing.sm, textAlign: 'center' }}>Select a Property</Text>
+            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
+              Please select a property from the top navigation bar to view rent cycles and compile invoices.
+            </Text>
+          </BlurView>
+        </View>
+      );
+    }
+
     if (isLoading && invoices.length === 0) {
       return (
         <View style={{ flex: 1, justifyContent: 'center', padding: 40 }}>
@@ -321,17 +339,23 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
                 <StatCard
                   label="Published"
                   value={publishedCount}
+                  loading={isLoading}
                   trend="Tenant App notified"
                   trendType="positive"
                   iconName="check-circle"
+                  iconColor={theme.Colors.tertiary}
+                  valueColor={theme.Colors.tertiary}
                   style={styles.miniStat}
                 />
                 <StatCard
                   label="Pending Drafts"
                   value={pendingCount}
+                  loading={isLoading}
                   trend="Awaiting publish"
                   trendType="neutral"
                   iconName="hourglass-empty"
+                  iconColor={theme.Colors.primary}
+                  valueColor={theme.Colors.primary}
                   style={styles.miniStat}
                 />
               </View>

@@ -54,12 +54,18 @@ export function Skeleton({ style, width, height, borderRadius }: SkeletonProps) 
 export function SkeletonCard({ style }: { style?: StyleProp<ViewStyle> }) {
   return (
     <GlassCard style={[styles.cardContainer, style]}>
+      {/* Property Hero Image Placeholder */}
+      <Skeleton width="100%" height={130} borderRadius={14} style={{ marginBottom: 14 }} />
       <View style={styles.cardHeader}>
-        <Skeleton width="40%" height={20} borderRadius={6} />
-        <Skeleton width={32} height={32} borderRadius={16} />
+        <Skeleton width="55%" height={20} borderRadius={6} />
+        <Skeleton width={28} height={28} borderRadius={8} />
       </View>
-      <Skeleton width="70%" height={28} borderRadius={8} style={{ marginVertical: 12 }} />
-      <Skeleton width="90%" height={16} borderRadius={4} />
+      <Skeleton width="75%" height={14} borderRadius={4} style={{ marginTop: 8, marginBottom: 14 }} />
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+        <Skeleton width="30%" height={34} borderRadius={10} />
+        <Skeleton width="30%" height={34} borderRadius={10} />
+        <Skeleton width="30%" height={34} borderRadius={10} />
+      </View>
     </GlassCard>
   );
 }

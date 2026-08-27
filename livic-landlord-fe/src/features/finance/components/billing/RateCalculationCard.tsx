@@ -243,7 +243,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.md,
@@ -279,10 +279,10 @@ const createStyles = (theme: any) => StyleSheet.create({
   unitBtn: {
     paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: theme.Colors.glassStroke,
   },
   unitText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -297,7 +297,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: theme.Colors.glassStroke,
     borderTopRightRadius: 14,
     borderBottomRightRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
   },
   scrollItem: {
     height: 40,

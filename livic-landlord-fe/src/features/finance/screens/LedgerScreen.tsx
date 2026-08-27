@@ -17,9 +17,12 @@ import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { useLedger } from '@/src/features/finance/hooks/useLedger';
+
+import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 
 // Sub-components
 import { LedgerTable } from '../components/billing/LedgerTable';
@@ -31,11 +34,12 @@ export default function LedgerScreen({ token }: { token: string | null }) {
   const insets = useSafeAreaInsets();
   const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
-  const { handleScroll } = useScrollNav();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
-  const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
+  const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
+  const propertyId = selectedPropertyId || validParamId || null;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -222,21 +226,33 @@ export default function LedgerScreen({ token }: { token: string | null }) {
       </View>
 
       <View style={styles.desktopFilterRow}>
-        <View style={{ flex: 1.5 }}>
+        <View style={{ flex: 1, minWidth: 260 }}>
           {renderSearchBox()}
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={{ minWidth: 360 }}>
           {renderDateFilters()}
         </View>
       </View>
 
-      <LedgerTable
-        ledger={accumulatedLedger}
-        properties={properties}
-        isLoading={isLoading && accumulatedLedger.length === 0}
-        isDesktop={isDesktop}
-        isDark={isDark}
-      />
+      {!propertyId ? (
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginVertical: 20, width: '100%', backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke }}>
+          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
+          </View>
+          <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>Select a Property</Text>
+          <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
+            Please select a property from the top navigation bar to view its general ledger transactions.
+          </Text>
+        </BlurView>
+      ) : (
+        <LedgerTable
+          ledger={accumulatedLedger}
+          properties={properties}
+          isLoading={isLoading && accumulatedLedger.length === 0}
+          isDesktop={isDesktop}
+          isDark={isDark}
+        />
+      )}
 
       {page + 1 < totalPages && (
         <View style={{ paddingVertical: 20, alignItems: 'center', justifyContent: 'center' }}>
@@ -355,30 +371,32 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   filtersContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
     borderRadius: 16,
-    padding: 10,
-    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 8,
     marginBottom: theme.Spacing.md,
   },
-  dateInputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dateInputContainer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   filterLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '700',
   },
   dateInput: {
-    flex: 1,
+    width: 110,
     height: 38,
     borderRadius: 10,
     backgroundColor: theme.Colors.surfaceContainerLow,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     color: theme.Colors.onSurface,
-    paddingHorizontal: 10,
-    fontSize: theme.Typography.bodyMedium.fontSize,
+    paddingHorizontal: 8,
+    fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
   },

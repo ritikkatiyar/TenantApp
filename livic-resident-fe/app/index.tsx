@@ -1,45 +1,22 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import React from 'react';
-
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
-import { getMyContext } from '@/src/features/auth/api/me.api';
 
 export default function IndexScreen() {
-  const { accessToken, isAuthenticated, isReady, setContext } = useAuth();
-  const [target, setTarget] = React.useState<'/tenant-home' | null>(null);
+  const { isAuthenticated, isReady } = useAuth();
 
-  React.useEffect(() => {
-    if (!isReady || !isAuthenticated || !accessToken) {
-      return;
-    }
-
-    let isMounted = true;
-    getMyContext(accessToken)
-      .then((context) => {
-        if (isMounted) {
-          setContext(context);
-          setTarget('/tenant-home');
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setTarget('/tenant-home');
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [accessToken, isAuthenticated, isReady]);
-
-  if (!isReady || (isAuthenticated && !target)) {
+  if (!isReady) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator />
+        <ActivityIndicator size="large" />
       </View>
     );
   }
 
-  return <Redirect href={isAuthenticated ? target! : '/login'} />;
+  if (isAuthenticated) {
+    return <Redirect href="/tenant-home" />;
+  }
+
+  return <Redirect href="/login" />;
 }

@@ -38,7 +38,7 @@ export function PropertySelector({
       <View style={styles.dropdownWrap}>
         <GlassDropdown
           options={options}
-          value={selectedPropertyId || (properties?.[0]?.id ?? null)}
+          value={selectedPropertyId || null}
           onChange={(val) => {
             if (val === 'create_new_prop') {
               router.push('/properties/create');

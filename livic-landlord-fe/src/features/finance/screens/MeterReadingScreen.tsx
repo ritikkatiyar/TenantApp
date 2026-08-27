@@ -14,7 +14,10 @@ import { PageShell } from '@/src/components/common/layout/PageShell';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+
+import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 
 import { useMeterReading } from '@/src/features/finance/hooks/useMeterReading';
 import { MeterReadingSummary } from '@/src/features/finance/components/MeterReadingSummary';
@@ -29,7 +32,10 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
   const { id: paramPropertyId, propertyId: paramPropertyIdAlt } = useLocalSearchParams<{ id?: string; propertyId?: string }>();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
-  const propertyId = paramPropertyId || paramPropertyIdAlt || (properties && properties.length > 0 ? properties[0].id : null);
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
+  const rawParam = paramPropertyId || paramPropertyIdAlt;
+  const validParamId = (rawParam && rawParam !== 'null' && rawParam !== 'undefined') ? rawParam : null;
+  const propertyId = selectedPropertyId || validParamId || null;
   const scrollY = useRef(new Animated.Value(0)).current;
   const { handleScroll } = useScrollNav();
 
@@ -179,7 +185,15 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
             </View>
 
             {/* Main Content Grid */}
-            {isLoading ? (
+            {!propertyId ? (
+              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
+                <MaterialIcons name="business" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+                <Text style={[styles.emptyText, { fontWeight: '800', color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLg.fontSize, marginBottom: 8 }]}>Select a Property</Text>
+                <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40 }]}>
+                  Please select a property from the top navigation bar to view and log meter readings.
+                </Text>
+              </BlurView>
+            ) : isLoading ? (
               <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
             ) : worksheet.length === 0 ? (
               <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>

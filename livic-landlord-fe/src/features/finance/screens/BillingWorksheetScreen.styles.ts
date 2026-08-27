@@ -70,10 +70,10 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   monthAdjustButton: {
     padding: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.glassStroke,
   },
   monthBadge: {
     flex: 1,

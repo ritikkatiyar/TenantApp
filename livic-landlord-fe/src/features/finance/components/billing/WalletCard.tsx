@@ -8,9 +8,10 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 interface WalletCardProps {
   currentPlan: string;
   remainingCredits: number;
+  loading?: boolean;
 }
 
-export function WalletCard({ currentPlan, remainingCredits }: WalletCardProps) {
+export function WalletCard({ currentPlan, remainingCredits, loading = false }: WalletCardProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
@@ -23,10 +24,14 @@ export function WalletCard({ currentPlan, remainingCredits }: WalletCardProps) {
         <View style={styles.walletHeader}>
           <View>
             <Text style={styles.walletLabel}>ACTIVE SUBSCRIPTION TIER</Text>
-            <Text style={styles.walletValue}>{currentPlan}</Text>
+            {loading ? (
+              <View style={{ height: 24, width: 140, borderRadius: 6, backgroundColor: theme.Colors.surfaceContainerHigh, opacity: 0.6, marginTop: 4 }} />
+            ) : (
+              <Text style={styles.walletValue}>{currentPlan}</Text>
+            )}
           </View>
           <View style={styles.badgeContainer}>
-            <Text style={styles.activeBadge}>ACTIVE</Text>
+            <Text style={styles.activeBadge}>{loading ? '...' : 'ACTIVE'}</Text>
           </View>
         </View>
 
@@ -35,9 +40,13 @@ export function WalletCard({ currentPlan, remainingCredits }: WalletCardProps) {
         <View style={styles.walletFooter}>
           <View>
             <Text style={styles.walletLabel}>PREPAID AI CREDIT BALANCE</Text>
-            <Text style={styles.creditValue}>
-              {remainingCredits.toLocaleString()} <Text style={styles.creditUnit}>AI Credits</Text>
-            </Text>
+            {loading ? (
+              <View style={{ height: 24, width: 100, borderRadius: 6, backgroundColor: theme.Colors.surfaceContainerHigh, opacity: 0.6, marginTop: 4 }} />
+            ) : (
+              <Text style={styles.creditValue}>
+                {remainingCredits.toLocaleString()} <Text style={styles.creditUnit}>AI Credits</Text>
+              </Text>
+            )}
           </View>
           <Ionicons name="wallet-outline" size={32} color={theme.Colors.primary} />
         </View>

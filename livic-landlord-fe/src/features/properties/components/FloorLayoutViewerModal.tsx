@@ -28,6 +28,7 @@ import Animated, {
 import { useFloorLayoutViewer, UnitBlock } from '../hooks/useFloorLayoutViewer';
 import { TenantDetailsSidebar } from './TenantDetailsSidebar';
 import { createStyles } from './FloorLayoutViewerModal.styles';
+import { FloorLayoutGridCanvas } from './FloorLayoutGridCanvas';
 
 const GRID_SIZE_X = 10;
 const GRID_SIZE_Y = 15;
@@ -185,141 +186,17 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
 
   const selectedBlock = blocks.find(b => b.id === selectedUnitId);
 
-  const renderGrid = () => {
-    const rows = [];
-    for (let y = 0; y < GRID_SIZE_Y; y++) {
-      const cols = [];
-      for (let x = 0; x < GRID_SIZE_X; x++) {
-        const block = blocks.find(b => b.gridX === x && b.gridY === y);
-
-        cols.push(
-          <View
-            key={`${x}-${y}`}
-            style={[
-              styles.cell,
-              styles.cellEmpty
-            ]}
-            pointerEvents="box-none"
-          >
-            {block && (() => {
-              const colorStyles = getBlockColorStyles(block);
-              const isSelected = selectedUnitId === block.id;
-              const activeCount = block.activeLeases ? block.activeLeases.length : 0;
-              const cap = block.capacity || 1;
-              const isVacant = activeCount === 0;
-
-              return (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -1, 
-                    left: -1, 
-                    width: block.gridWidth * CELL_SIZE,
-                    height: block.gridHeight * CELL_SIZE,
-                    zIndex: isSelected ? 50 : 10,
-                  }}
-                >
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      setSelectedUnitId(block.id);
-                      resetTenantAssignmentForm();
-                    }}
-                    style={[
-                      styles.cellActive, 
-                      { 
-                        width: '100%', 
-                        height: '100%',
-                        backgroundColor: colorStyles.backgroundColor,
-                        borderColor: isSelected ? '#00e5ff' : colorStyles.borderColor,
-                        borderWidth: isSelected ? 3 : 2,
-                        justifyContent: 'space-between',
-                        paddingVertical: block.gridHeight >= 2 ? 6 : 2,
-                        paddingHorizontal: block.gridWidth >= 2 ? 6 : 2,
-                      }
-                    ]}
-                  >
-                    <View style={{ flexDirection: 'column', gap: 1 }}>
-                      <Text style={[styles.cellText, { color: colorStyles.textColor }]}>{block.unitNumber}</Text>
-                      <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: colorStyles.textColor + 'cc' }}>
-                        {UNIT_TYPE_OPTIONS.find(opt => opt.value === block.type)?.label || '1 BHK'}
-                      </Text>
-                    </View>
-
-                    {(block.gridWidth >= 2 || block.gridHeight >= 2) ? (
-                      <View style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        alignSelf: 'stretch',
-                        backgroundColor: 'rgba(255,255,255,0.85)',
-                        borderRadius: 6,
-                        paddingHorizontal: 5,
-                        paddingVertical: 3,
-                        gap: theme.Spacing.xs,
-                      }}>
-                        <View style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: 3,
-                          backgroundColor: colorStyles.backgroundColor,
-                          borderWidth: 1,
-                          borderColor: colorStyles.borderColor,
-                        }} />
-                        <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.onSurface }}>
-                          {isVacant ? 'OPEN' : `${activeCount}/${cap}`}
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        alignSelf: 'center',
-                        backgroundColor: 'rgba(255,255,255,0.85)',
-                        borderRadius: 4,
-                        paddingHorizontal: theme.Spacing.xs,
-                        paddingVertical: 2,
-                        gap: 3,
-                      }}>
-                        <View style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: 3,
-                          backgroundColor: colorStyles.backgroundColor,
-                          borderWidth: 1,
-                          borderColor: colorStyles.borderColor,
-                        }} />
-                        <Text style={{ fontSize: theme.Typography.labelSmall.fontSize - 4, fontWeight: '800', color: theme.Colors.onSurface }}>
-                          {isVacant ? '—' : `${activeCount}/${cap}`}
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              );
-            })()}
-          </View>
-        );
-      }
-      rows.push(
-        <View key={`row-${y}`} style={styles.gridRow} pointerEvents="box-none">
-          {cols}
-        </View>
-      );
-    }
-
-    return (
-      <View style={{ 
-        width: GRID_SIZE_X * CELL_SIZE, 
-        height: GRID_SIZE_Y * CELL_SIZE, 
-        backgroundColor: 'rgba(255,255,255,0.01)',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-start'
-      }}>
-        {rows}
-      </View>
-    );
-  };
+  const renderGrid = () => (
+    <FloorLayoutGridCanvas
+      blocks={blocks}
+      selectedUnitId={selectedUnitId}
+      setSelectedUnitId={setSelectedUnitId}
+      resetTenantAssignmentForm={resetTenantAssignmentForm}
+      getBlockColorStyles={getBlockColorStyles}
+      styles={styles}
+      theme={theme}
+    />
+  );
 
   const renderDetailsSidebar = () => {
     if (!selectedBlock) return null;

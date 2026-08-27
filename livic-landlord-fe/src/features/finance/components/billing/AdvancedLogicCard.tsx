@@ -139,7 +139,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.md,

@@ -261,21 +261,6 @@ export default function BillingScreen({ token }: BillingScreenProps) {
     }
   };
 
-  if (isLoading) {
-    return (
-      <PageShell
-        scrollable={false}
-        header={null}
-        edges={isDesktop ? ['top'] : []}
-      >
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 }}>
-          <SkeletonRow />
-          <SkeletonRow />
-        </View>
-      </PageShell>
-    );
-  }
-
   const currentPlan = billingData?.subscription?.planName || 'STARTER';
   const remainingCredits = billingData?.wallet?.creditBalance || 0;
   const displayPlans = plans && plans.length > 0 ? plans : DEFAULT_PLANS;
@@ -310,7 +295,7 @@ export default function BillingScreen({ token }: BillingScreenProps) {
             )}
           
             {/* 1. Wallet Status Card */}
-            <WalletCard currentPlan={currentPlan} remainingCredits={remainingCredits} />
+            <WalletCard currentPlan={currentPlan} remainingCredits={remainingCredits} loading={isLoading} />
 
             {/* 2. Billing Cycle Toggle */}
             <View style={styles.toggleContainer}>

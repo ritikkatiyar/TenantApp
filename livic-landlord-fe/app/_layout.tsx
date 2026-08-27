@@ -89,6 +89,8 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
 
   return (
     <LinearGradient
+      // @ts-ignore
+      dataSet={{ responsiveLayout: 'desktop' }}
       colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -204,8 +206,8 @@ export default function RootLayout() {
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
-  const initialWebIsDesktop = isWeb ? window.innerWidth >= 900 : false;
-  const showDesktop = isWeb ? (mounted ? isDesktop : initialWebIsDesktop) : isDesktop;
+  // Synchronously determine desktop layout on web client on frame 1
+  const showDesktop = isWeb ? window.innerWidth >= 900 : isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
   return (

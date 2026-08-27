@@ -12,6 +12,80 @@ interface Building3DViewProps {
   maxContainerHeight?: number;
 }
 
+function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) {
+  const pulseAnim = useRef(new Animated.Value(0.35)).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 0.85, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.35, duration: 800, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [pulseAnim]);
+
+  const tileBorderColor = isDark ? 'rgba(0, 229, 255, 0.4)' : 'rgba(0, 104, 117, 0.3)';
+  const tileBgColor = isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)';
+
+  return (
+    <View style={styles3DSkeleton.wrapper}>
+      {[0, 1, 2].map((idx) => (
+        <Animated.View
+          key={idx}
+          style={[
+            styles3DSkeleton.plate,
+            {
+              borderColor: tileBorderColor,
+              backgroundColor: tileBgColor,
+              transform: [
+                { translateY: -idx * 24 + 14 },
+                { rotateX: '60deg' },
+                { rotateZ: '-45deg' },
+              ],
+              opacity: pulseAnim,
+            },
+          ]}
+        >
+          <View style={styles3DSkeleton.gridRow}>
+            <View style={[styles3DSkeleton.cell, { flex: 1, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 104, 117, 0.2)' }]} />
+            <View style={[styles3DSkeleton.cell, { flex: 1.2, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.2)' : 'rgba(0, 104, 117, 0.15)' }]} />
+            <View style={[styles3DSkeleton.cell, { flex: 0.8, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.35)' : 'rgba(0, 104, 117, 0.25)' }]} />
+          </View>
+        </Animated.View>
+      ))}
+    </View>
+  );
+}
+
+const styles3DSkeleton = StyleSheet.create({
+  wrapper: {
+    width: 220,
+    height: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  plate: {
+    position: 'absolute',
+    width: 120,
+    height: 75,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    padding: 5,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 4,
+    flex: 1,
+  },
+  cell: {
+    borderRadius: 3,
+    height: '100%',
+  },
+});
+
 export default function Building3DView({ propertyId, token, onFloorClick, resetRotationTrigger, maxContainerHeight = 260 }: Building3DViewProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
@@ -264,9 +338,7 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
       {...(webMouseProps as any)}
     >
       {loading || !containerDimensions ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#00e5ff" />
-        </View>
+        <Building3DSkeleton isDark={isDark} theme={theme} />
       ) : !units || units.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No Layout</Text>

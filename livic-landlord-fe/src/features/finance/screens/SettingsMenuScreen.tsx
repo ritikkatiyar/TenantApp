@@ -16,6 +16,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { listRentCycles } from '@/src/features/finance/api/rentCycle.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
@@ -36,7 +37,9 @@ export default function SettingsMenuScreen() {
   const { properties, isLoading } = useProperties();
   const { accessToken } = useAuth();
   const { showToast } = useToast();
-  const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
+  const { selectedPropertyId } = useGlobalPropertySelection();
+  const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
+  const propertyId = selectedPropertyId || validParamId || null;
 
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [publishedCount, setPublishedCount] = useState<number | null>(null);
@@ -78,6 +81,8 @@ export default function SettingsMenuScreen() {
     fetchStats();
   }, [accessToken]);
 
+  const querySuffix = propertyId ? `?propertyId=${propertyId}` : '';
+
   const menuItems = [
     {
       step: 1,
@@ -85,7 +90,7 @@ export default function SettingsMenuScreen() {
       title: 'Charge Configuration',
       description: 'Set up rents, utilities & billing logic',
       icon: 'receipt-long',
-      route: `/expenses/charge-config?propertyId=${propertyId}`,
+      route: `/expenses/charge-config${querySuffix}`,
       gradientColors: [theme.Colors.primary, '#06b6d4'] as const,
       accentColor: theme.Colors.primary,
       bg: 'rgba(0, 104, 117, 0.1)',
@@ -96,7 +101,7 @@ export default function SettingsMenuScreen() {
       title: 'Billing Worksheets',
       description: 'Input meter readings & variable charges',
       icon: 'edit-document',
-      route: `/expenses/billing-worksheet?propertyId=${propertyId}`,
+      route: `/expenses/billing-worksheet${querySuffix}`,
       gradientColors: [theme.Colors.secondary, '#7c3aed'] as const,
       accentColor: theme.Colors.secondary,
       bg: 'rgba(79, 70, 229, 0.1)',
@@ -107,7 +112,7 @@ export default function SettingsMenuScreen() {
       title: 'Generate Rent Roll',
       description: 'Publish monthly invoices to tenants',
       icon: 'point-of-sale',
-      route: `/expenses/rent-roll?propertyId=${propertyId}`,
+      route: `/expenses/rent-roll${querySuffix}`,
       gradientColors: [theme.Colors.primary, '#10b981'] as const,
       accentColor: theme.Colors.primary,
       bg: 'rgba(5, 150, 105, 0.1)',
@@ -118,7 +123,7 @@ export default function SettingsMenuScreen() {
       title: 'Finance Ledger',
       description: 'Audit trail of all transactions',
       icon: 'account-balance',
-      route: `/expenses/ledger?propertyId=${propertyId}`,
+      route: `/expenses/ledger${querySuffix}`,
       gradientColors: ['#0d9488', '#14b8a6'] as const,
       accentColor: '#0d9488',
       bg: 'rgba(13, 148, 136, 0.1)',
