@@ -429,7 +429,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   manageButtonWrapperMobile: {
     marginHorizontal: theme.Spacing.lg,
     marginBottom: theme.Spacing.lg,
-    shadowColor: theme.Colors.primaryContainer,
+    shadowColor: theme.Colors.accentGradientEnd,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -610,7 +610,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   composerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: theme.Surface.overlay,
     justifyContent: 'flex-end',
   },
   composerSheet: {
@@ -619,7 +619,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopRightRadius: 28,
     maxHeight: '92%',
     paddingTop: 12,
-    shadowColor: 'black',
+    shadowColor: theme.Surface.shadowColor,
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.15,
     shadowRadius: 24,
@@ -665,7 +665,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 14,
     fontSize: theme.Typography.bodyLarge.fontSize,
     color: theme.Colors.onSurface,
-    backgroundColor: theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.glassFill,
   },
   composerTextarea: {
     minHeight: 110,
@@ -681,7 +681,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1.5,
     borderColor: theme.Colors.outlineVariant,
-    backgroundColor: theme.Colors.primaryContainer,
+    backgroundColor: theme.Colors.glassFill,
     marginRight: 10,
     flexShrink: 0,
   },
@@ -702,7 +702,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     margin: 20,
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: theme.Colors.primary,
+    shadowColor: theme.Colors.accentGradientEnd,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 14,
