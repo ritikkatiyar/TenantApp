@@ -19,7 +19,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
 import ErrorBoundary from '@/src/components/common/feedback/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { LightColors } from '@/src/theme/Theme';
+import { LightColors, Breakpoints } from '@/src/theme/Theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -79,7 +79,7 @@ function MainAppLayout() {
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
   // Synchronously determine desktop layout on web client on frame 1
-  const showDesktop = isWeb ? window.innerWidth >= 900 : isDesktop;
+  const showDesktop = isWeb ? window.innerWidth >= Breakpoints.desktop : isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
   return (

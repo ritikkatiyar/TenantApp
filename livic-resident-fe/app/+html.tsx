@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollViewStyleReset } from 'expo-router/html';
+import { Breakpoints } from '@/src/theme/Theme';
 
 export default function HTML({ children }: { children: React.ReactNode }) {
   return (
@@ -18,14 +19,14 @@ export default function HTML({ children }: { children: React.ReactNode }) {
         <ScrollViewStyleReset />
 
         <style dangerouslySetInnerHTML={{ __html: `
-          @media (min-width: 900px) {
+          @media (min-width: ${Breakpoints.desktop}px) {
             [data-responsive-layout="mobile"],
             [data-mobile-header="true"],
             [data-bottom-nav="true"] {
               display: none !important;
             }
           }
-          @media (max-width: 899px) {
+          @media (max-width: ${Breakpoints.desktop - 1}px) {
             [data-responsive-layout="desktop"] {
               display: none !important;
             }
