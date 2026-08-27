@@ -38,7 +38,7 @@ export function StatCard({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const activeIconColor = iconColor || theme.Colors.primary;
-  const activeIconBg = iconBg || (isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)');
+  const activeIconBg = iconBg || theme.Colors.primaryContainer;
   const activeValueColor = valueColor || theme.Colors.onSurface;
 
   const getTrendColor = () => {
@@ -139,10 +139,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '900',
     color: theme.Colors.onSurface,
     letterSpacing: -0.5,
-    marginVertical: 2,
+    marginVertical: theme.Spacing.xs,
   },
   skeletonContainer: {
-    marginVertical: 4,
+    marginVertical: theme.Spacing.xs,
     height: 32,
     justifyContent: 'center',
   },
