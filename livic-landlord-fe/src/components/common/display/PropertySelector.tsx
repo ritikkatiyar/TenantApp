@@ -38,7 +38,7 @@ export function PropertySelector({
       <View style={styles.dropdownWrap}>
         <GlassDropdown
           options={options}
-          value={selectedPropertyId || (properties?.[0]?.id ?? null)}
+          value={selectedPropertyId || null}
           onChange={(val) => {
             if (val === 'create_new_prop') {
               router.push('/properties/create');
@@ -58,11 +58,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: theme.Spacing.sm,
   },
   label: {
-    fontSize: theme.Typography.bodySmall.fontSize,
-    fontWeight: '800',
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: theme.Typography.labelSmall.fontWeight,
     color: theme.Colors.primary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,

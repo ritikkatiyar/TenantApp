@@ -19,7 +19,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
 import ErrorBoundary from '@/src/components/common/feedback/ErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { LightColors } from '@/src/theme/Theme';
+import { LightColors, Breakpoints } from '@/src/theme/Theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,9 +77,7 @@ function MainAppLayout() {
   const hideNavigation = pathname === '/login' || pathname === '/signup';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
-  const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
-  const initialWebIsDesktop = isWeb ? window.innerWidth >= 900 : false;
-  const showDesktop = isWeb ? (mounted ? isDesktop : initialWebIsDesktop) : isDesktop;
+  const showDesktop = isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
   return (

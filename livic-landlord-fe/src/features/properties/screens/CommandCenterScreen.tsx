@@ -110,7 +110,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
           totalUnits += p.totalUnits || 0;
           totalOccupied += p.occupiedUnits || 0;
         });
-        const aggregateRate = totalUnits > 0 ? (totalOccupied / totalUnits) * 100 : 0;
+        const aggregateRate = totalUnits > 0 ? Math.min(100, Math.max(0, (totalOccupied / totalUnits) * 100)) : 0;
         setOccupancyRate(`${aggregateRate.toFixed(1)}%`);
 
         // Format collected revenue
@@ -173,12 +173,16 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   });
 
 
-  const renderStatCard = (label: string, value: string, icon: keyof typeof MaterialIcons.glyphMap, color = theme.Colors.primary) => (
+  const isPageLoading = isLoading || metricsLoading;
+
+  const renderStatCard = (label: string, value: string, icon: keyof typeof MaterialIcons.glyphMap, color = theme.Colors.primary, valueColor?: string) => (
     <StatCard
       label={label}
       value={value}
+      loading={isPageLoading}
       iconName={icon}
       iconColor={color}
+      valueColor={valueColor || color}
       style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
     />
   );
@@ -204,8 +208,22 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   const ListHeader = () => (
     <Animated.View style={[styles.titleContainer, !isDesktop && { opacity: largeTitleOpacity }]}>
-      {isDesktop && (
+      {isDesktop ? (
         <View style={styles.desktopTitleRow}>
+          <Text style={styles.mainTitle}>My Properties</Text>
+          {properties.length > 0 && (
+            <ActionButton
+              label="ADD PROPERTY"
+              icon="add"
+              iconPosition="right"
+              variant="primary"
+              size="md"
+              onPress={onNavigateToCreateProperty}
+            />
+          )}
+        </View>
+      ) : (
+        <View style={styles.mobileTitleRow}>
           <Text style={styles.mainTitle}>My Properties</Text>
           {properties.length > 0 && (
             <ActionButton
@@ -221,10 +239,10 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
       )}
       {isDesktop ? (
         <View style={styles.statsGrid}>
-          {renderStatCard('TOTAL ASSETS', String(properties.length), 'real-estate-agent')}
-          {renderStatCard('OCCUPANCY', properties.length > 0 ? occupancyRate : '0.0%', 'trending-up', theme.Colors.primaryContainer)}
-          {renderStatCard('REVENUE', revenueText, 'payments', theme.Colors.secondary)}
-          {renderStatCard('ALERTS', String(issueMetrics.open + issueMetrics.escalated), 'warning', theme.Colors.error)}
+          {renderStatCard('TOTAL ASSETS', String(properties.length), 'real-estate-agent', theme.Colors.primary, theme.Colors.primary)}
+          {renderStatCard('OCCUPANCY', properties.length > 0 ? occupancyRate : '0.0%', 'trending-up', theme.Colors.tertiary, theme.Colors.tertiary)}
+          {renderStatCard('REVENUE', revenueText, 'payments', theme.Colors.secondary, isDark ? '#A78BFA' : theme.Colors.secondary)}
+          {renderStatCard('ALERTS', String(issueMetrics.open + issueMetrics.escalated), 'warning', theme.Colors.error, theme.Colors.error)}
         </View>
       ) : (
         <View style={styles.mobileSearchRow}>
@@ -250,9 +268,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   const ListEmptyComponent = () => {
     // Don't show the empty state while the initial fetch is in progress.
-    // Without this guard, `properties` is [] for the brief moment the API call
-    // is in flight, causing the "Create Property" banner to flash then disappear.
-    if (isLoading) return null;
+    if (isPageLoading) return null;
     return <CommandCenterEmptyState onNavigateToCreateProperty={onNavigateToCreateProperty} />;
   };
 
@@ -276,8 +292,8 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     <>
       <PageShell scrollable edges={isDesktop ? ['top'] : []} onEndReached={handleEndReached}>
         <ListHeader />
-        {isLoading ? (
-          <SkeletonCardGrid count={4} />
+        {isPageLoading ? (
+          <SkeletonCardGrid count={1} />
         ) : properties.length === 0 ? (
           <ListEmptyComponent />
         ) : (

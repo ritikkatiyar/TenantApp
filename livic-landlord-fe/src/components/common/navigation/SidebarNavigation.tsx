@@ -109,23 +109,6 @@ export default function SidebarNavigation() {
             </LinearGradient>
           </TouchableOpacity>
         )}
-        {renderSidebarLink('help-outline', 'Billing Help', '/billing')}
-        <TouchableOpacity 
-          style={[styles.sidebarLink, isCollapsed && styles.sidebarLinkCollapsed]} 
-          onPress={toggleTheme}
-          activeOpacity={0.75}
-        >
-          <MaterialIcons 
-            name={isDark ? "wb-sunny" : "dark-mode"} 
-            size={22} 
-            color={isDark ? theme.Colors.tertiary : theme.Colors.onSurfaceVariant} 
-          />
-          {!isCollapsed && (
-            <Text style={styles.sidebarLinkText}>
-              {isDark ? 'Light Mode' : 'Dark Mode'}
-            </Text>
-          )}
-        </TouchableOpacity>
         <TouchableOpacity style={[styles.sidebarLink, isCollapsed && styles.sidebarLinkCollapsed]} onPress={async () => {
           await signOut();
           router.replace('/login');

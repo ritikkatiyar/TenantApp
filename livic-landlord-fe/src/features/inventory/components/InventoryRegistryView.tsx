@@ -9,6 +9,7 @@ import { StatCard } from '@/src/components/common/display/StatCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { DesktopRegistryRow, MobileInventoryCard } from './InventoryCardComponents';
+import { PaginatedContainer } from '@/src/components/common/layout/PaginatedContainer';
 
 interface InventoryRegistryViewProps {
   items: InventoryItem[];
@@ -72,11 +73,12 @@ export function InventoryRegistryView({
             key={stat.label}
             label={stat.label}
             value={stat.value}
+            loading={!stats && items.length === 0}
             helperText={stat.helper}
             iconName={stat.icon as any}
             iconColor={STAT_COLORS[i % STAT_COLORS.length]}
+            valueColor={STAT_COLORS[i % STAT_COLORS.length]}
             style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
-            valueStyle={{ color: STAT_COLORS[i % STAT_COLORS.length] }}
           />
         ))}
       </View>
@@ -125,21 +127,15 @@ export function InventoryRegistryView({
               />
             )}
           </View>
-        ) : isDesktop ? (
-          <View style={styles.tableContainer}>
-            <View style={styles.tableHeaderRow}>
-              {['Item', 'Category', 'Location', 'Condition', 'Status', 'Value', ''].map((h, i) => (
-                <View key={i} style={[styles.tableCell, i === 0 && styles.itemCell, i === 6 && { flex: 0, width: 36 }]}>
-                  <Text style={styles.tableHeaderText}>{h}</Text>
-                </View>
-              ))}
-            </View>
-            {items.map(item => <DesktopRegistryRow key={item.id} item={item} />)}
-          </View>
         ) : (
-          <View style={styles.cardList}>
-            {items.map(item => <MobileInventoryCard key={item.id} item={item} />)}
-          </View>
+          <PaginatedContainer
+            data={items}
+            itemGap={isDesktop ? 0 : 12}
+            keyExtractor={(item) => item.id}
+            renderItem={(item) => (
+              isDesktop ? <DesktopRegistryRow item={item} /> : <MobileInventoryCard item={item} />
+            )}
+          />
         )}
       </BlurView>
     </View>

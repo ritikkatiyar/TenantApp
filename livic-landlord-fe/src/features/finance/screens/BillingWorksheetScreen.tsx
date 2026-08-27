@@ -26,6 +26,9 @@ import { formatErrorMessage } from '@/src/utils/errors';
 import { createStyles } from './BillingWorksheetScreen.styles';
 import { SkeletonRow } from '@/src/components/common/feedback/Skeleton';
 
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
+import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+
 // Sub-components
 import { WorksheetFloorList } from '../components/billing/WorksheetFloorList';
 
@@ -35,11 +38,13 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
   const router = useRouter();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
   const insets = useSafeAreaInsets();
   const { properties } = useProperties();
-  const propertyId = paramPropertyId || null;
+  const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
+  const propertyId = selectedPropertyId || validParamId || null;
   
   const [selectedChargeId, setSelectedChargeId] = useState<string | null>(null);
   const [billingMonth, setBillingMonth] = useState<string>(() => {
@@ -122,10 +127,10 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
     if (!propertyId) {
       return (
         <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
-          <MaterialIcons name="search" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+          <MaterialIcons name="business" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
           <Text style={[styles.emptyText, { fontWeight: '800', color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLg.fontSize, marginBottom: 8 }]}>Select a Property</Text>
           <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40 }]}>
-            Search and select a property from the top navbar search bar to view its billing worksheets.
+            Please select a property from the top navigation bar to view and manage its billing worksheet entries.
           </Text>
         </BlurView>
       );
@@ -252,7 +257,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               <View style={{ width: 250 }}>
                 <Text style={styles.filterLabelCaps}>BILLING MONTH</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                  <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
+                  <TouchableOpacity onPress={handlePrevMonth} style={styles.monthAdjustButton}>
                     <MaterialIcons name="chevron-left" size={20} color={theme.Colors.primary} />
                   </TouchableOpacity>
                   
@@ -261,7 +266,7 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
                     <Text style={styles.monthBadgeText}>{billingMonth}</Text>
                   </View>
                   
-                  <TouchableOpacity onPress={handleNextMonth} style={{ padding: 6, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 8 }}>
+                  <TouchableOpacity onPress={handleNextMonth} style={styles.monthAdjustButton}>
                     <MaterialIcons name="chevron-right" size={20} color={theme.Colors.primary} />
                   </TouchableOpacity>
                 </View>

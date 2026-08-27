@@ -67,8 +67,8 @@ function ToastItem({
 }) {
   const insets = useSafeAreaInsets();
   const config = TOAST_CONFIG[toast.type];
-  const { theme } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const isWeb = Platform.OS === 'web';
 
@@ -102,11 +102,11 @@ function ToastItem({
             <Text style={styles.toastMessage} numberOfLines={3}>{toast.message}</Text>
           </View>
           <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <MaterialIcons name="close" size={16} color="#849495" />
+            <MaterialIcons name="close" size={16} color={isDark ? '#94a3b8' : '#64748b'} />
           </TouchableOpacity>
         </View>
       ) : (
-        <BlurView intensity={70} tint="light" style={styles.toastBlur}>
+        <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={styles.toastBlur}>
           <LinearGradient colors={config.gradientColors} style={styles.accentStripe} />
           <View style={[styles.iconCircle, { backgroundColor: `${config.accentColor}18` }]}>
             <MaterialIcons name={config.icon as any} size={22} color={config.accentColor} />
@@ -120,7 +120,7 @@ function ToastItem({
             <Text style={styles.toastMessage} numberOfLines={3}>{toast.message}</Text>
           </View>
           <TouchableOpacity onPress={onDismiss} style={styles.dismissBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <MaterialIcons name="close" size={16} color="#849495" />
+            <MaterialIcons name="close" size={16} color={isDark ? '#94a3b8' : '#64748b'} />
           </TouchableOpacity>
         </BlurView>
       )}
@@ -134,9 +134,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const slideAnim = useRef(new Animated.Value(60)).current;
   const timerRef = useRef<any>(null);
   const originalAlertRef = useRef(Alert.alert);
-  const { theme } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme), [theme]);
-  
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+
   interface ConfirmButton {
     text: string;
     style?: 'default' | 'cancel' | 'destructive';
@@ -314,7 +314,7 @@ export function useToast() {
   return context;
 }
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   toastWrapper: {
     position: 'absolute',
     left: 16,
@@ -347,12 +347,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)',
     paddingVertical: 14,
     paddingRight: 14,
     paddingLeft: 0,
     gap: 12,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.95)',
   },
   accentStripe: {
     width: 5,
@@ -379,20 +379,20 @@ const createStyles = (theme: any) => StyleSheet.create({
     letterSpacing: 0.2,
   },
   toastMessage: {
-    color: theme.Colors.onSurface,
+    color: isDark ? '#f8fafc' : '#0f172a',
     fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '500',
+    fontWeight: '600',
     lineHeight: 18,
   },
   toastBlurWeb: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
     backdropFilter: 'blur(20px)',
   },
   dismissBtn: {
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -404,7 +404,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   modalCard: {
     width: 320,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
     borderRadius: 24,
     padding: theme.Spacing.lg,
     alignItems: 'center',
@@ -414,7 +414,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.8)',
     ...Platform.select({
       web: {
         backdropFilter: 'blur(20px)',
@@ -424,14 +424,14 @@ const createStyles = (theme: any) => StyleSheet.create({
   modalTitle: {
     fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
-    color: theme.Colors.onSurface,
+    color: isDark ? '#f8fafc' : '#0f172a',
     marginBottom: theme.Spacing.sm,
     textAlign: 'center',
     fontFamily: 'Inter',
   },
   modalMessage: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    color: theme.Colors.onSurfaceVariant,
+    color: isDark ? '#94a3b8' : '#475569',
     textAlign: 'center',
     marginBottom: theme.Spacing.lg,
     lineHeight: 20,

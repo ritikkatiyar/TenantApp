@@ -1,11 +1,20 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  TextInput,
+  ScrollView,
+  Platform,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-
-import { Platform } from 'react-native';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
+import { useProperties } from '@/src/hooks/useProperties';
 
 interface MobileHeaderProps {
   title: string;
@@ -14,37 +23,180 @@ interface MobileHeaderProps {
 }
 
 export default function MobileHeader({ title, onMenuPress, onNotificationPress }: MobileHeaderProps) {
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.innerWidth >= 900) {
-    return null;
-  }
-
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const insets = useSafeAreaInsets();
 
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
+  const { properties } = useProperties();
+
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [searchFilter, setSearchFilter] = useState('');
+
+  const selectedProperty = properties?.find((p) => p.id === selectedPropertyId);
+  const propertyLabel = selectedProperty ? selectedProperty.name : 'All Properties';
+
+  const filteredProperties = (properties || []).filter((p) =>
+    p.name.toLowerCase().includes(searchFilter.toLowerCase())
+  );
+
   return (
-    <View style={[styles.headerWrapper, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
-      <View style={styles.headerContainer}>
-        <View style={{ width: 40 }} />
-        
-        <View style={styles.titleContainer}>
-          <Text style={styles.titleText} numberOfLines={1}>
-            {title}
-          </Text>
+    <>
+      {Platform.OS === 'web' && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media (min-width: 900px) {
+            .mobile-header-container {
+              display: none !important;
+            }
+          }
+        `}} />
+      )}
+      <View
+        // @ts-ignore
+        dataSet={{ mobileHeader: 'true', responsiveLayout: 'mobile' }}
+        className="mobile-header-container"
+        style={[styles.headerWrapper, { paddingTop: insets.top, height: 56 + insets.top }]}
+      >
+        <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
+        <View style={styles.headerContainer}>
+          {/* Compact Mobile Property Selector Trigger */}
+          <TouchableOpacity
+            style={styles.propertySelectorPill}
+            activeOpacity={0.75}
+            onPress={() => setIsSheetOpen(true)}
+          >
+            <MaterialIcons
+              name="business"
+              size={15}
+              color={selectedPropertyId ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
+            />
+            <Text style={styles.propertySelectorText} numberOfLines={1}>
+              {propertyLabel}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={theme.Colors.onSurfaceVariant} />
+          </TouchableOpacity>
+
+          <View style={styles.titleContainer}>
+            <Text style={styles.titleText} numberOfLines={1}>
+              {title}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.notificationButton}
+            activeOpacity={0.7}
+            onPress={onNotificationPress}
+            disabled={!onNotificationPress}
+          >
+            <Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} />
+            <View style={styles.notificationBadge} />
+          </TouchableOpacity>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.notificationButton} 
-          activeOpacity={0.7}
-          onPress={onNotificationPress}
-          disabled={!onNotificationPress}
+
+        {/* Mobile Property Selection Modal / Bottom Sheet */}
+        <Modal
+          visible={isSheetOpen}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setIsSheetOpen(false)}
         >
-          <Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} />
-          <View style={styles.notificationBadge} />
-        </TouchableOpacity>
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              activeOpacity={1}
+              onPress={() => setIsSheetOpen(false)}
+            />
+            <View style={styles.sheetContent}>
+              <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
+              
+              <View style={styles.sheetHeader}>
+                <View style={styles.sheetHandle} />
+                <Text style={styles.sheetTitle}>Select Property</Text>
+              </View>
+
+              <View style={styles.searchBox}>
+                <Ionicons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search properties..."
+                  placeholderTextColor={theme.Colors.onSurfaceVariant}
+                  value={searchFilter}
+                  onChangeText={setSearchFilter}
+                />
+                {searchFilter ? (
+                  <TouchableOpacity onPress={() => setSearchFilter('')}>
+                    <Ionicons name="close-circle" size={18} color={theme.Colors.onSurfaceVariant} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              <ScrollView style={styles.propertyList} keyboardShouldPersistTaps="handled">
+                <TouchableOpacity
+                  style={[
+                    styles.propertyItem,
+                    !selectedPropertyId && styles.propertyItemActive,
+                  ]}
+                  onPress={() => {
+                    setSelectedPropertyId(null);
+                    setIsSheetOpen(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons
+                    name="storefront"
+                    size={20}
+                    color={!selectedPropertyId ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
+                  />
+                  <Text
+                    style={[
+                      styles.propertyItemText,
+                      !selectedPropertyId && styles.propertyItemTextActive,
+                    ]}
+                  >
+                    All Properties
+                  </Text>
+                  {!selectedPropertyId && (
+                    <Ionicons name="checkmark-circle" size={20} color={theme.Colors.primary} />
+                  )}
+                </TouchableOpacity>
+
+                {filteredProperties.map((p) => {
+                  const isSelected = p.id === selectedPropertyId;
+                  return (
+                    <TouchableOpacity
+                      key={p.id}
+                      style={[styles.propertyItem, isSelected && styles.propertyItemActive]}
+                      onPress={() => {
+                        setSelectedPropertyId(p.id);
+                        setIsSheetOpen(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialIcons
+                        name="business"
+                        size={20}
+                        color={isSelected ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
+                      />
+                      <Text
+                        style={[
+                          styles.propertyItemText,
+                          isSelected && styles.propertyItemTextActive,
+                        ]}
+                      >
+                        {p.name}
+                      </Text>
+                      {isSelected && (
+                        <Ionicons name="checkmark-circle" size={20} color={theme.Colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </View>
-    </View>
+    </>
   );
 }
 
@@ -65,35 +217,39 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     elevation: 4,
     zIndex: 999,
   },
-  safeArea: {
-    // Top padding handled by safe area context
-  },
   headerContainer: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.Spacing.md,
+    gap: theme.Spacing.xs,
   },
-  menuButton: {
-    padding: theme.Spacing.sm,
-    borderRadius: 20,
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.45)',
+  propertySelectorPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    maxWidth: 130,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.55)',
     borderWidth: 1,
-    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)',
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.7)',
+  },
+  propertySelectorText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '700',
+    color: theme.Colors.onSurface,
+    maxWidth: 80,
   },
   titleContainer: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 4,
   },
   titleText: {
-    fontSize: theme.Typography.titleLarge.fontSize,
+    fontSize: theme.Typography.titleMedium.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
@@ -103,11 +259,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.45)',
     borderWidth: 1,
     borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)',
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
     position: 'relative',
   },
   notificationBadge: {
@@ -118,5 +269,78 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: theme.Colors.error || '#ba1a1a',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  sheetContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+    maxHeight: '70%',
+    paddingBottom: 30,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+  },
+  sheetHeader: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+    marginBottom: 8,
+  },
+  sheetTitle: {
+    fontSize: theme.Typography.titleMedium.fontSize,
+    fontWeight: '700',
+    color: theme.Colors.onSurface,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 16,
+    paddingHorizontal: 12,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    color: theme.Colors.onSurface,
+  },
+  propertyList: {
+    paddingHorizontal: 16,
+  },
+  propertyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    gap: 12,
+    marginBottom: 4,
+  },
+  propertyItemActive: {
+    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)',
+  },
+  propertyItemText: {
+    flex: 1,
+    fontSize: theme.Typography.bodyMedium.fontSize,
+    fontWeight: '600',
+    color: theme.Colors.onSurface,
+  },
+  propertyItemTextActive: {
+    color: theme.Colors.primary,
+    fontWeight: '800',
   },
 });

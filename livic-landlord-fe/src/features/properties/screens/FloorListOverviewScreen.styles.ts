@@ -15,7 +15,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     height: 56,
     zIndex: 999,
     borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(255, 255, 255, 0.45)',
+    borderBottomColor: theme.Colors.glassStroke,
     overflow: 'hidden',
   },
   headerContent: {
@@ -39,9 +39,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
+    borderColor: theme.Colors.glassStroke,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: 'black',
@@ -64,7 +64,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   propertyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: theme.Colors.primaryContainer,
     paddingRight: theme.Spacing.md,
     paddingLeft: 6,
     paddingVertical: 6,
@@ -72,7 +72,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.1)',
+    borderColor: theme.Colors.outlineVariant,
   },
   propertyIconWrapper: {
     width: 24,

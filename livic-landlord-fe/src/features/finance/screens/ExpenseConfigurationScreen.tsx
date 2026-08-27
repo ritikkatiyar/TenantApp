@@ -19,10 +19,13 @@ import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useExpenseConfiguration } from '@/src/features/finance/hooks/useExpenseConfiguration';
 import { createStyles } from './ExpenseConfigurationScreen.styles';
+
+import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 
 // Sub-components
 import { ExpenseConfigCard } from '../components/billing/ExpenseConfigCard';
@@ -39,7 +42,9 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties } = useProperties();
-  const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
+  const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
+  const propertyId = selectedPropertyId || validParamId || null;
   const { showToast } = useToast();
 
   const {
@@ -119,6 +124,14 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
     );
   };
 
+  const handleConfigureExpense = () => {
+    if (!propertyId) {
+      showToast("Please select a property from the top navigation bar first", "info");
+      return;
+    }
+    router.push(`/create-expense?propertyId=${propertyId}`);
+  };
+
   const headerOpacity = scrollY.interpolate({
     inputRange: [40, 90],
     outputRange: [0, 1],
@@ -157,6 +170,20 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
               <Text style={styles.createPropertyText}>CREATE FIRST PROPERTY</Text>
             </LinearGradient>
           </TouchableOpacity>
+        </BlurView>
+      );
+    }
+
+    if (!propertyId) {
+      return (
+        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
+          <View style={styles.emptyIconCircle}>
+            <MaterialIcons name="business" size={36} color={theme.Colors.primary} />
+          </View>
+          <Text style={styles.emptyTitle}>Select a Property</Text>
+          <Text style={styles.emptySubtitle}>
+            Please select a property from the top navigation bar to view and manage its charge configurations.
+          </Text>
         </BlurView>
       );
     }
@@ -245,7 +272,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
                 iconPosition="right"
                 variant="primary"
                 size="md"
-                onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+                onPress={handleConfigureExpense}
               />
             </View>
 
@@ -269,7 +296,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
           </View>
           <TouchableOpacity 
             style={styles.headerCreateTouch}
-            onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+            onPress={handleConfigureExpense}
             activeOpacity={0.8}
           >
             <LinearGradient
@@ -309,7 +336,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             <TouchableOpacity 
               style={styles.dashedButton} 
               activeOpacity={0.7}
-              onPress={() => router.push(`/create-expense?propertyId=${propertyId}`)}
+              onPress={handleConfigureExpense}
             >
               <View style={styles.dashedIconCircle}>
                  <MaterialIcons name="add" size={24} color="#00bcd4" />

@@ -14,16 +14,27 @@ interface MobileHeaderProps {
 }
 
 export default function MobileHeader({ title, onMenuPress, onNotificationPress }: MobileHeaderProps) {
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.innerWidth >= 900) {
-    return null;
-  }
-
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.headerWrapper, { paddingTop: insets.top, height: 56 + insets.top }]}>
+    <>
+      {Platform.OS === 'web' && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media (min-width: 900px) {
+            .mobile-header-container {
+              display: none !important;
+            }
+          }
+        `}} />
+      )}
+      <View
+        // @ts-ignore
+        dataSet={{ mobileHeader: 'true', responsiveLayout: 'mobile' }}
+        className="mobile-header-container"
+        style={[styles.headerWrapper, { paddingTop: insets.top, height: 56 + insets.top }]}
+      >
       <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContainer}>
         {onMenuPress ? (
@@ -51,6 +62,7 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress }
         </TouchableOpacity>
       </View>
     </View>
+    </>
   );
 }
 

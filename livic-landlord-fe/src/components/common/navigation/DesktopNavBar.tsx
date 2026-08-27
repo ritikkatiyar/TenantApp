@@ -44,7 +44,7 @@ export default function DesktopNavBar({
 }: DesktopNavBarProps) {
   const router = useRouter();
   const { user, accessToken } = useAuth();
-  const { theme, isDark } = useAppTheme();
+  const { theme, isDark, toggleTheme } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const initial = user?.fullName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
@@ -188,6 +188,18 @@ export default function DesktopNavBar({
         {rightContent}
 
         <TouchableOpacity 
+          style={styles.themeToggleButton} 
+          onPress={toggleTheme}
+          activeOpacity={0.75}
+        >
+          <MaterialIcons 
+            name={isDark ? "wb-sunny" : "dark-mode"} 
+            size={20} 
+            color={isDark ? theme.Colors.tertiary : theme.Colors.onSurfaceVariant} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
           style={styles.notificationButton} 
           onPress={() => router.push('/escalations')}
           activeOpacity={0.75}
@@ -286,6 +298,16 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   suggestionTextActive: {
     color: theme.Colors.primary,
     fontWeight: '800',
+  },
+  themeToggleButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.Colors.glassFill,
+    borderWidth: 1,
+    borderColor: theme.Surface.border,
   },
   notificationButton: {
     padding: 8,

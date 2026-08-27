@@ -20,10 +20,6 @@ interface BottomNavigationProps {
 }
 
 export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavigationProps) {
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.innerWidth >= 900) {
-    return null;
-  }
-
   const router = useRouter();
   const pathname = usePathname();
   const { navTranslateY } = useScrollNav();
@@ -62,7 +58,23 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
   });
 
   return (
-    <View style={styles.outerContainer} pointerEvents="box-none">
+    <>
+      {Platform.OS === 'web' && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media (min-width: 900px) {
+            .mobile-bottom-nav-container {
+              display: none !important;
+            }
+          }
+        `}} />
+      )}
+      <View
+        // @ts-ignore
+        dataSet={{ bottomNav: 'true', responsiveLayout: 'mobile' }}
+        className="mobile-bottom-nav-container"
+        style={styles.outerContainer}
+        pointerEvents="box-none"
+      >
       {/* Centered Navigation Pill */}
       <Animated.View
         style={[
@@ -108,6 +120,7 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
         </View>
       </Animated.View>
     </View>
+    </>
   );
 }
 

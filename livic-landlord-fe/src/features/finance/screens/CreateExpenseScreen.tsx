@@ -22,6 +22,7 @@ import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useChargeConfig } from '@/src/features/finance/hooks/useChargeConfig';
 
 // Sub-components
@@ -40,8 +41,9 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const { propertyId: paramPropertyId, chargeId } = useLocalSearchParams<{ propertyId?: string, chargeId?: string }>();
   const { isDesktop } = useResponsive();
   const insets = useSafeAreaInsets();
-  const { properties } = useProperties();
-  const propertyId = paramPropertyId && paramPropertyId !== 'null' ? paramPropertyId : (properties && properties.length > 0 ? properties[0].id : null);
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
+  const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
+  const propertyId = selectedPropertyId || validParamId || null;
   const { showToast } = useToast();
   const isEditMode = !!chargeId;
 
@@ -94,7 +96,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         return;
     }
     if (!propertyId) {
-        showToast("Missing property ID context.", "error");
+        showToast("Please select a property from the top navigation bar first.", "info");
         return;
     }
 

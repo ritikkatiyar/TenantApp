@@ -107,11 +107,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   
   monthSelector: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 12, 
     paddingVertical: theme.Spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     marginTop: theme.Spacing.md,
   },
   monthBtn: { padding: theme.Spacing.sm },
@@ -124,9 +124,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   floorCard: {
     marginBottom: theme.Spacing.lg,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1, 
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     paddingHorizontal: theme.Spacing.lg,
     overflow: 'hidden',
     shadowColor: theme.Colors.primary,
@@ -423,9 +423,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.glassStroke,
   },
   pageButtonDisabled: {
     opacity: 0.4,

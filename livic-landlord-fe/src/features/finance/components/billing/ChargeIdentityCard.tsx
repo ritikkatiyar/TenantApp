@@ -142,7 +142,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: theme.Colors.glassStroke,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     justifyContent: 'center',
     paddingHorizontal: theme.Spacing.md,
     marginBottom: 20,
@@ -169,10 +169,10 @@ const createStyles = (theme: any) => StyleSheet.create({
   categoryButton: {
     paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: theme.Colors.glassStroke,
   },
   categoryText: {
     fontSize: theme.Typography.bodySmall.fontSize,
@@ -183,9 +183,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row',
     height: 48,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.glassStroke,
     padding: theme.Spacing.xs,
   },
   segmentButtonWrapper: {

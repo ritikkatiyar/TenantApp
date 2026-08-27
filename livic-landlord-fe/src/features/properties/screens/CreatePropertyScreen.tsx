@@ -94,17 +94,6 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
     extrapolate: 'clamp',
   });
 
-  const renderSidebarLink = (icon: any, label: string, active: boolean = false, route?: string) => (
-    <TouchableOpacity
-      style={[styles.sidebarLink, active && styles.sidebarLinkActive]}
-      onPress={route ? () => (route === '/command-center' ? onBack?.() : router.push(route as any)) : undefined}
-      activeOpacity={route ? 0.75 : 1}
-    >
-      <MaterialIcons name={icon} size={22} color={active ? theme.Colors.primary : theme.Colors.onSurfaceVariant} />
-      <Text style={[styles.sidebarLinkText, active && styles.sidebarLinkTextActive]}>{label}</Text>
-    </TouchableOpacity>
-  );
-
   const renderFormFieldsContent = (showSubmit = true) => (
     <>
       <Text style={styles.description}>

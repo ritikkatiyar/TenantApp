@@ -26,7 +26,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useProperties } from '@/src/hooks/useProperties';
 import { LinearGradient } from 'expo-linear-gradient';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-import { LightColors } from '@/src/theme/Theme';
+import { LightColors, Breakpoints } from '@/src/theme/Theme';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/command-center': 'Portfolio',
@@ -81,6 +81,8 @@ const queryClient = new QueryClient({
 
 import { PropertySelectionProvider, useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 
+const LinearGradientWithDataSet = LinearGradient as React.ComponentType<any>;
+
 function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
   const { theme } = useAppTheme();
   const pathname = usePathname();
@@ -88,8 +90,9 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
   const { selectedPropertyId, setSelectedPropertyId, searchQuery, setSearchQuery } = useGlobalPropertySelection();
 
   return (
-    <LinearGradient
-      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
+    <LinearGradientWithDataSet
+      dataSet={{ responsiveLayout: 'desktop' }}
+      colors={theme.Colors.backgroundGradient}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1, flexDirection: 'row' }}
@@ -113,7 +116,7 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
           {children}
         </View>
       </View>
-    </LinearGradient>
+    </LinearGradientWithDataSet>
   );
 }
 
@@ -203,9 +206,7 @@ export default function RootLayout() {
   const hideNavigation = pathname === '/login' || pathname === '/signup';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
-  const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
-  const initialWebIsDesktop = isWeb ? window.innerWidth >= 900 : false;
-  const showDesktop = isWeb ? (mounted ? isDesktop : initialWebIsDesktop) : isDesktop;
+  const showDesktop = isDesktop;
   const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
 
   return (
