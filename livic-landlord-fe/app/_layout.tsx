@@ -81,6 +81,8 @@ const queryClient = new QueryClient({
 
 import { PropertySelectionProvider, useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 
+const LinearGradientWithDataSet = LinearGradient as React.ComponentType<any>;
+
 function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
   const { theme } = useAppTheme();
   const pathname = usePathname();
@@ -88,9 +90,9 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
   const { selectedPropertyId, setSelectedPropertyId, searchQuery, setSearchQuery } = useGlobalPropertySelection();
 
   return (
-    <LinearGradient
-      dataSet={{ responsiveLayout: 'desktop' } as any}
-      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
+    <LinearGradientWithDataSet
+      dataSet={{ responsiveLayout: 'desktop' }}
+      colors={theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1, flexDirection: 'row' }}
@@ -114,7 +116,7 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
           {children}
         </View>
       </View>
-    </LinearGradient>
+    </LinearGradientWithDataSet>
   );
 }
 
