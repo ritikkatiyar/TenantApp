@@ -17,15 +17,14 @@ public class MembershipMapper {
         if (m == null) {
             return null;
         }
-        String rCode = m.getRole() != null ? m.getRole().getCode() : null;
-        String rName = m.getRole() != null ? m.getRole().getName() : null;
         return new MembershipSummaryDTO(
                 m.getId(),
                 m.getPropertyId(),
                 propertyName,
                 m.getUserId(),
-                rCode,
-                rName
+                m.getTitle(),
+                m.getAccessType(),
+                m.isActive()
         );
     }
 }

@@ -1,6 +1,8 @@
 package com.livic.auth.dto;
 
+import com.livic.common.enums.AccessType;
 import jakarta.validation.constraints.NotNull;
+import java.util.Set;
 import java.util.UUID;
 
 public class MembershipDTOs {
@@ -10,13 +12,21 @@ public class MembershipDTOs {
             UUID userId,
             String fullName,
             String email,
-            String roleCode,
-            String roleName
+            String title,
+            AccessType accessType,
+            boolean isActive,
+            Set<String> permissionCodes
     ) {}
 
-    public record AssignRoleRequest(
-            @NotNull UUID userId,
-            @NotNull String roleCode
+    public record UpdateMembershipRequest(
+            String title,
+            AccessType accessType,
+            Boolean isActive,
+            Set<String> permissionCodes
+    ) {}
+
+    public record UpdateMembershipPermissionsRequest(
+            @NotNull Set<String> permissionCodes
     ) {}
 
     public record TransferOwnershipRequest(

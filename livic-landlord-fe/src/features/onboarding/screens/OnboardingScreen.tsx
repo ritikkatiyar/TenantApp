@@ -10,33 +10,15 @@ import ActionButton from '@/src/components/common/inputs/ActionButton';
 const MODULES = [
   {
     id: 'RENTAL',
-    title: 'Rental Properties',
-    description: 'Manage apartments, flats, and rental houses.',
-    icon: '🏠'
-  },
-  {
-    id: 'HOSTEL',
-    title: 'Hostel & PG',
-    description: 'Manage beds, rooms, and students.',
-    icon: '🛏️'
-  },
-  {
-    id: 'INDIVIDUAL',
-    title: 'Individual / Person',
-    description: 'Manage individual tenants or renting agreements.',
-    icon: '👤'
-  },
-  {
-    id: 'SOCIETY',
-    title: 'Society Management',
-    description: 'Manage society members, maintenance, and visitors.',
+    title: 'Rental Block',
+    description: 'Manage apartments, flats, tenants, and rental leases.',
     icon: '🏢'
   },
   {
-    id: 'MESS',
-    title: 'Mess & Food',
-    description: 'Manage meal plans, subscriptions, and daily food.',
-    icon: '🍽️'
+    id: 'RESIDENTIAL',
+    title: 'Residential Block',
+    description: 'Manage residential properties, owners, and community maintenance.',
+    icon: '🏠'
   }
 ] as const;
 
@@ -76,16 +58,16 @@ export default function OnboardingScreen() {
     }
     setJoining(true);
     try {
-      const res = await validateAndApplyJoinCode(inviteCode.trim(), accessToken!);
+      const res = await validateAndApplyJoinCode(accessToken!, inviteCode.trim());
 
       Alert.alert(
         'Welcome!',
-        `Successfully joined ${res.propertyName || 'the property'} as ${res.roleCode}!`,
+        `Successfully joined ${res.propertyName || 'the property'} as ${res.title || 'Member'}!`,
         [
           {
             text: 'Continue',
             onPress: () => {
-              if (res.roleCode === 'TENANT') {
+              if (res.title?.toLowerCase() === 'resident' || res.title?.toLowerCase() === 'tenant') {
                 router.replace('/tenant-home' as any);
               } else {
                 router.replace('/(tabs)' as any);

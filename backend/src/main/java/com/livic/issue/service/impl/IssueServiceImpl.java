@@ -147,7 +147,7 @@ public class IssueServiceImpl implements IssueService {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(callerUserId);
         
         List<UUID> staffPropertyIds = memberships.stream()
-                .filter(m -> !"PROPERTY_TENANT".equals(m.roleCode()))
+                .filter(MembershipSummaryDTO::isActive)
                 .map(MembershipSummaryDTO::propertyId)
                 .filter(Objects::nonNull)
                 .toList();
@@ -309,7 +309,7 @@ public class IssueServiceImpl implements IssueService {
     private void publishCreatedNotifications(IssueTbl issue, String propName, String unitNumber, String creatorName) {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByPropertyId(issue.getPropertyId());
         List<String> staffUserIds = memberships.stream()
-                .filter(m -> "PROPERTY_OWNER".equals(m.roleCode()) || "PROPERTY_CARETAKER".equals(m.roleCode()) || "PROPERTY_MANAGER".equals(m.roleCode()))
+                .filter(MembershipSummaryDTO::isActive)
                 .map(m -> m.userId().toString())
                 .distinct()
                 .toList();
@@ -332,7 +332,7 @@ public class IssueServiceImpl implements IssueService {
     private void publishEscalationNotifications(IssueTbl issue, String propName, String unitNumber, String reason) {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByPropertyId(issue.getPropertyId());
         List<String> escalationUserIds = memberships.stream()
-                .filter(m -> "PROPERTY_OWNER".equals(m.roleCode()) || "PROPERTY_MANAGER".equals(m.roleCode()))
+                .filter(m -> com.livic.common.enums.AccessType.FULL_ACCESS.equals(m.accessType()))
                 .map(m -> m.userId().toString())
                 .distinct()
                 .toList();
@@ -377,8 +377,8 @@ public class IssueServiceImpl implements IssueService {
     }
 
     private boolean isPropertyStaff(UUID userId, UUID propertyId) {
-        return authFacade.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, "PROPERTY_OWNER")
-                || authFacade.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, "PROPERTY_MANAGER")
-                || authFacade.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, "PROPERTY_CARETAKER");
+        List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
+        return memberships.stream()
+                .anyMatch(m -> propertyId.equals(m.propertyId()) && m.isActive());
     }
 }

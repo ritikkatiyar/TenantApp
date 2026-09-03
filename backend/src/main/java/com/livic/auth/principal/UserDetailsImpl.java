@@ -98,6 +98,14 @@ public class UserDetailsImpl implements UserDetails {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + roleName));
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
     /**
      * Returns the user ID as a {@link UUID}, avoiding repeated {@code UUID.fromString(getId())} calls.
      */

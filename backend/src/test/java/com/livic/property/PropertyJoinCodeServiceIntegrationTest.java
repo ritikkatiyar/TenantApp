@@ -1,10 +1,9 @@
 package com.livic.property;
 
-import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.repository.MembershipRepository;
-import com.livic.auth.repository.MembershipRoleRepository;
 import com.livic.auth.service.interfaces.MembershipService;
 import com.livic.common.domain.UserRole;
+import com.livic.common.enums.AccessType;
 import com.livic.common.exception.BusinessException;
 import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.domain.PropertyTbl;
@@ -12,11 +11,8 @@ import com.livic.property.dto.PropertyJoinCodeDTOs;
 import com.livic.property.repository.PropertyJoinCodeRepository;
 import com.livic.property.repository.PropertyRepository;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
-import com.livic.common.constant.RoleConstants;
 import com.livic.user.domain.UserTbl;
-
 import com.livic.user.repository.UserRepository;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,9 +39,6 @@ public class PropertyJoinCodeServiceIntegrationTest {
 
     @Autowired
     private PropertyRepository propertyRepository;
-
-    @Autowired
-    private MembershipRoleRepository membershipRoleRepository;
 
     @Autowired
     private MembershipRepository membershipRepository;
@@ -100,8 +93,15 @@ public class PropertyJoinCodeServiceIntegrationTest {
         // Assign landlord as property owner
         membershipService.createOwnerMembership(property.getId(), landlord.getId());
 
-        // Assign manager as manager
-        membershipService.assignRole(property.getId(), manager.getId(), RoleConstants.PROPERTY_MANAGER, landlord.getId());
+        // Assign manager as custom access
+        membershipService.createMembership(
+                property.getId(),
+                manager.getId(),
+                "Property Manager",
+                AccessType.CUSTOM_ACCESS,
+                Set.of("PROPERTY_VIEW", "LEASE_VIEW"),
+                landlord.getId()
+        );
     }
 
     @Test
@@ -109,7 +109,9 @@ public class PropertyJoinCodeServiceIntegrationTest {
         // Act - Landlord generates caretaker join code
         PropertyJoinCodeDTOs.JoinCodeResponse joinCode = propertyJoinCodeService.generateJoinCode(
                 property.getId(),
-                RoleConstants.PROPERTY_CARETAKER,
+                "Caretaker",
+                AccessType.CUSTOM_ACCESS,
+                Set.of("PROPERTY_VIEW"),
                 1,
                 landlord.getId()
         );
@@ -117,7 +119,8 @@ public class PropertyJoinCodeServiceIntegrationTest {
         assertNotNull(joinCode);
         assertNotNull(joinCode.code());
         assertTrue(joinCode.isActive());
-        assertEquals(RoleConstants.PROPERTY_CARETAKER, joinCode.roleCode());
+        assertEquals("Caretaker", joinCode.title());
+        assertEquals(AccessType.CUSTOM_ACCESS, joinCode.accessType());
 
         // Act - New caretaker applies join code
         PropertyJoinCodeDTOs.JoinCodeResultResponse result = propertyJoinCodeService.validateAndApplyJoinCode(
@@ -128,7 +131,8 @@ public class PropertyJoinCodeServiceIntegrationTest {
         // Assert - Membership created successfully
         assertNotNull(result);
         assertEquals(property.getId(), result.propertyId());
-        assertEquals(RoleConstants.PROPERTY_CARETAKER, result.roleCode());
+        assertEquals("Caretaker", result.title());
+        assertEquals(AccessType.CUSTOM_ACCESS, result.accessType());
         assertNotNull(result.membershipId());
 
         // Assert - Join code usage tracked
@@ -138,19 +142,20 @@ public class PropertyJoinCodeServiceIntegrationTest {
     }
 
     @Test
-    public void testManagerCannotDelegateHigherRole() {
-        // Act & Assert - Manager tries to generate Owner join code, should fail delegation check
+    public void testManagerCannotDelegateFullAccessRole() {
+        // Act & Assert - Manager (Custom Access) tries to assign Full Access membership, should fail
         BusinessException exception = assertThrows(BusinessException.class, () -> {
-            propertyJoinCodeService.generateJoinCode(
+            membershipService.createMembership(
                     property.getId(),
-                    RoleConstants.PROPERTY_OWNER,
-                    1,
+                    newStaff.getId(),
+                    "Co-Owner",
+                    AccessType.FULL_ACCESS,
+                    null,
                     manager.getId()
             );
         });
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
-        assertTrue(exception.getMessage().contains("Cannot invite someone to a role containing permissions you do not possess"));
+        assertTrue(exception.getMessage().contains("Only members with Full Access can grant Full Access"));
     }
-
 }

@@ -3,20 +3,22 @@ package com.livic.auth.service.impl;
 import com.livic.auth.domain.MembershipTbl;
 import com.livic.auth.repository.MembershipRepository;
 import com.livic.auth.service.interfaces.MembershipCrudService;
+import com.livic.common.enums.AccessType;
 import com.livic.common.service.impl.AbstractCrudService;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class MembershipCrudServiceImpl extends AbstractCrudService<MembershipTbl, UUID, MembershipRepository> implements MembershipCrudService {
 
-    public MembershipCrudServiceImpl(MembershipRepository repository) {
-        super(repository);
+    public MembershipCrudServiceImpl(MembershipRepository membershipRepository) {
+        super(membershipRepository);
     }
 
     @Override
@@ -30,8 +32,18 @@ public class MembershipCrudServiceImpl extends AbstractCrudService<MembershipTbl
     }
 
     @Override
-    public List<MembershipTbl> findByUserIdAndPropertyId(UUID userId, UUID propertyId) {
+    public Page<MembershipTbl> findByPropertyId(UUID propertyId, Pageable pageable) {
+        return repository.findByPropertyId(propertyId, pageable);
+    }
+
+    @Override
+    public Optional<MembershipTbl> findByUserIdAndPropertyId(UUID userId, UUID propertyId) {
         return repository.findByUserIdAndPropertyId(userId, propertyId);
+    }
+
+    @Override
+    public Optional<MembershipTbl> findByUserIdAndPropertyIdAndIsActiveTrue(UUID userId, UUID propertyId) {
+        return repository.findByUserIdAndPropertyIdAndIsActiveTrue(userId, propertyId);
     }
 
     @Override
@@ -40,14 +52,13 @@ public class MembershipCrudServiceImpl extends AbstractCrudService<MembershipTbl
     }
 
     @Override
-    @Cacheable(value = "userPermissions", key = "#userId.toString() + ':' + #propertyId.toString()")
     public Set<String> findPermissionCodesByUserIdAndPropertyId(UUID userId, UUID propertyId) {
         return repository.findPermissionCodesByUserIdAndPropertyId(userId, propertyId);
     }
 
     @Override
-    public boolean existsByUserIdAndPropertyIdAndRoleCode(UUID userId, UUID propertyId, String roleCode) {
-        return repository.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode);
+    public boolean existsByUserIdAndPropertyIdAndAccessType(UUID userId, UUID propertyId, AccessType accessType) {
+        return repository.existsByUserIdAndPropertyIdAndAccessType(userId, propertyId, accessType);
     }
 
     @Override
@@ -56,12 +67,11 @@ public class MembershipCrudServiceImpl extends AbstractCrudService<MembershipTbl
     }
 
     @Override
-    public List<MembershipTbl> findByPropertyIdAndRoleCode(UUID propertyId, String roleCode) {
-        return repository.findByPropertyIdAndRoleCode(propertyId, roleCode);
+    public List<MembershipTbl> findByPropertyIdAndAccessType(UUID propertyId, AccessType accessType) {
+        return repository.findByPropertyIdAndAccessType(propertyId, accessType);
     }
 
     @Override
-    @CacheEvict(value = "userPermissions", allEntries = true)
     public void deleteByPropertyId(UUID propertyId) {
         repository.deleteByPropertyId(propertyId);
     }

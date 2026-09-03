@@ -1,6 +1,7 @@
 package com.livic.auth.domain;
 
 import com.livic.common.domain.BaseEntity;
+import com.livic.common.enums.AccessType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,14 +20,26 @@ public class MembershipTbl extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "property_id")
+    @Column(name = "property_id", nullable = false)
     private UUID propertyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    @ToString.Exclude
-    private MembershipRoleTbl role;
-    
+    @Column(name = "title", nullable = false)
+    @Builder.Default
+    private String title = "Member";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "access_type", nullable = false)
+    @Builder.Default
+    private AccessType accessType = AccessType.CUSTOM_ACCESS;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private boolean isActive = true;
+
     @Column(name = "assigned_by_id")
-    private UUID assignedById;
+    private UUID assignedBy;
+
+    public boolean isFullAccess() {
+        return AccessType.FULL_ACCESS.equals(accessType);
+    }
 }

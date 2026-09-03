@@ -1,17 +1,21 @@
 package com.livic.analytics.service.interfaces;
 
-import com.livic.analytics.dto.AnalyticsDTOs;
+import com.livic.analytics.dto.DefaulterResponse;
+import com.livic.analytics.dto.ExpensesBreakdownResponse;
+import com.livic.analytics.dto.PortfolioOccupancyResponse;
+import com.livic.analytics.dto.SummaryResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface AnalyticsService {
 
-    AnalyticsDTOs.SummaryResponse getSummary(UUID landlordId, String billingMonth);
+    SummaryResponse getSummary(UUID landlordId, String billingMonth);
 
-    List<AnalyticsDTOs.PortfolioOccupancyResponse> getOccupancy(UUID landlordId);
+    Page<PortfolioOccupancyResponse> getOccupancy(UUID landlordId, Pageable pageable);
 
-    List<AnalyticsDTOs.DefaulterResponse> getDefaulters(UUID landlordId);
+    Page<DefaulterResponse> getDefaulters(UUID landlordId, Pageable pageable);
 
-    AnalyticsDTOs.ExpensesBreakdownResponse getExpensesBreakdown(UUID landlordId, String billingMonth);
+    ExpensesBreakdownResponse getExpensesBreakdown(UUID landlordId, String billingMonth);
 }

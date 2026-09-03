@@ -72,11 +72,17 @@ public class NotificationIntegrationTest {
         // Act - publish the Spring event (observer pattern trigger)
         eventPublisher.publishEvent(event);
 
-        // Wait briefly for @Async processing to complete
-        TimeUnit.MILLISECONDS.sleep(500);
+        // Wait for @Async processing to complete
+        List<NotificationLogTbl> logs = List.of();
+        for (int i = 0; i < 30; i++) {
+            logs = notificationLogRepository.findByRecipientId(testUser.getId());
+            if (!logs.isEmpty()) {
+                break;
+            }
+            TimeUnit.MILLISECONDS.sleep(100);
+        }
 
         // Assert - verify audit log was saved to DB
-        List<NotificationLogTbl> logs = notificationLogRepository.findByRecipientId(testUser.getId());
         assertFalse(logs.isEmpty(), "At least one notification log should be persisted after IssueCreatedEvent");
 
         NotificationLogTbl emailLog = logs.stream()
@@ -105,10 +111,18 @@ public class NotificationIntegrationTest {
 
         // Act
         eventPublisher.publishEvent(event);
-        TimeUnit.MILLISECONDS.sleep(500);
+        
+        // Wait for @Async processing to complete
+        List<NotificationLogTbl> logs = List.of();
+        for (int i = 0; i < 30; i++) {
+            logs = notificationLogRepository.findByRecipientId(testUser.getId());
+            if (!logs.isEmpty()) {
+                break;
+            }
+            TimeUnit.MILLISECONDS.sleep(100);
+        }
 
         // Assert
-        List<NotificationLogTbl> logs = notificationLogRepository.findByRecipientId(testUser.getId());
         assertFalse(logs.isEmpty(), "At least one escalation notification log should be persisted");
 
         boolean hasEscalationTitle = logs.stream()

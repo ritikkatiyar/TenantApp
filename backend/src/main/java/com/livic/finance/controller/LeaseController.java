@@ -1,6 +1,7 @@
 package com.livic.finance.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.common.enums.ResourceType;
 import com.livic.common.response.ApiResponse;
 import com.livic.finance.dto.LeaseDTOs;
 import com.livic.finance.service.interfaces.LeaseOrchestrationService;
@@ -47,7 +48,7 @@ public class LeaseController {
     }
 
     @PostMapping
-    @PreAuthorize("@authorizationService.hasPermissionByUnitId(#request.unitId, 'LEASE_CREATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).UNIT, #request.unitId, 'LEASE_CREATE')")
     public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> create(
             @Valid @RequestBody LeaseDTOs.CreateLeaseRequest request,
             @AuthenticationPrincipal UserDetailsImpl currentUser
@@ -58,7 +59,7 @@ public class LeaseController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#id, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#id, 'LEASE_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #id, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #id, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> get(
             @PathVariable UUID id
     ) {
@@ -66,7 +67,7 @@ public class LeaseController {
     }
 
     @PutMapping("/{id}/terminate")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#id, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #id, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> terminateLease(
             @PathVariable UUID id
     ) {
@@ -74,7 +75,7 @@ public class LeaseController {
     }
 
     @PutMapping("/{id}/notice")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#id, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #id, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> serveNotice(
             @PathVariable UUID id,
             @RequestBody Map<String, String> request
@@ -85,7 +86,7 @@ public class LeaseController {
     }
 
     @PutMapping("/{id}/terms")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#id, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #id, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<LeaseDTOs.LeaseResponse>> updateLeaseTerms(
             @PathVariable UUID id,
             @Valid @RequestBody LeaseDTOs.UpdateLeaseTermsRequest request

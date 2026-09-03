@@ -1,7 +1,9 @@
 package com.livic.common.event;
 
+import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
+@Getter
 public class IssueEscalatedEvent extends ApplicationEvent {
     private final String issueId;
     private final String propertyName;
@@ -19,29 +21,5 @@ public class IssueEscalatedEvent extends ApplicationEvent {
         this.title = title;
         this.reason = reason;
         this.recipientUserId = recipientUserId;
-    }
-
-    public String getIssueId() {
-        return issueId;
-    }
-
-    public String getPropertyName() {
-        return propertyName;
-    }
-
-    public String getUnitNumber() {
-        return unitNumber;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public String getRecipientUserId() {
-        return recipientUserId;
     }
 }

@@ -1,17 +1,21 @@
 package com.livic.auth.service.interfaces;
 
 import com.livic.auth.domain.MembershipTbl;
+import com.livic.common.enums.AccessType;
+
+import java.util.Set;
 import java.util.UUID;
 
 public interface MembershipService {
-    void ensureTenantRole(UUID tenantId, UUID propertyId, UUID assignedByUserId);
-    void removeTenantRole(UUID tenantId, UUID propertyId);
-    
     void createOwnerMembership(UUID propertyId, UUID ownerId);
     
-    MembershipTbl assignRole(UUID propertyId, UUID userId, String roleCode, UUID assignedByUserId);
-    
-    void removeRole(UUID propertyId, UUID membershipId);
+    MembershipTbl createMembership(UUID propertyId, UUID userId, String title, AccessType accessType, Set<String> permissionCodes, UUID assignedByUserId);
+
+    MembershipTbl updateMembership(UUID propertyId, UUID membershipId, String title, AccessType accessType, Boolean isActive, Set<String> permissionCodes, UUID actorUserId);
+
+    void toggleMembershipActive(UUID propertyId, UUID membershipId, boolean isActive, UUID actorUserId);
+
+    void removeMembership(UUID propertyId, UUID membershipId, UUID actorUserId);
     
     void transferOwnership(UUID propertyId, UUID currentOwnerId, UUID toUserId);
 }

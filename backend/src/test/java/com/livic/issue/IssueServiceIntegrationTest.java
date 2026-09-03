@@ -77,42 +77,41 @@ public class IssueServiceIntegrationTest {
     @BeforeEach
     public void setUp() {
         landlord = UserTbl.builder()
-                .authUid("landlord-" + UUID.randomUUID() + "@test.com")
+                .authUid("landlord@test.com")
                 .fullName("Landlord User")
-                .phoneNumber("+919999999999")
+                .phoneNumber("1234567890")
                 .failedLoginAttempts(0)
                 .build();
         userRepository.save(landlord);
 
         caretaker = UserTbl.builder()
-                .authUid("caretaker-" + UUID.randomUUID() + "@test.com")
+                .authUid("caretaker@test.com")
                 .fullName("Caretaker User")
-                .phoneNumber("+918888888888")
+                .phoneNumber("1234567891")
                 .failedLoginAttempts(0)
                 .build();
         userRepository.save(caretaker);
 
         tenant = UserTbl.builder()
-                .authUid("tenant-" + UUID.randomUUID() + "@test.com")
+                .authUid("tenant@test.com")
                 .fullName("Tenant User")
-                .phoneNumber("+917777777777")
+                .phoneNumber("1234567892")
                 .failedLoginAttempts(0)
                 .build();
         userRepository.save(tenant);
 
         unauthorizedTenant = UserTbl.builder()
-                .authUid("unauth-tenant-" + UUID.randomUUID() + "@test.com")
-                .fullName("Unauthorized Tenant User")
-                .phoneNumber("+916666666666")
+                .authUid("unauth@test.com")
+                .fullName("Unauthorized Tenant")
+                .phoneNumber("1234567893")
                 .failedLoginAttempts(0)
                 .build();
         userRepository.save(unauthorizedTenant);
 
         property = PropertyTbl.builder()
-                .name("Spring Monolith Heights")
-                .address("101 Monolith Road")
-                .city("Modular City")
-                .totalFloors(4)
+                .name("Greenfield Heights")
+                .address("Sector 45")
+                .city("Gurugram")
                 .build();
         propertyRepository.save(property);
 
@@ -141,7 +140,14 @@ public class IssueServiceIntegrationTest {
 
         // Seed property memberships
         authFacade.createOwnerMembership(property.getId(), landlord.getId());
-        authFacade.assignRole(property.getId(), caretaker.getId(), "PROPERTY_CARETAKER", landlord.getId());
+        authFacade.createMembership(
+                property.getId(),
+                caretaker.getId(),
+                "Caretaker",
+                com.livic.common.enums.AccessType.CUSTOM_ACCESS,
+                java.util.Set.of("PROPERTY_VIEW", "ANNOUNCEMENT_CREATE"),
+                landlord.getId()
+        );
     }
 
     @Test

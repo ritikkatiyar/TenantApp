@@ -1,4 +1,4 @@
-﻿-- MySQL dump 10.13  Distrib 8.4.8, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 8.4.8, for Linux (x86_64)
 --
 -- Host: localhost    Database: livic
 -- ------------------------------------------------------
@@ -297,29 +297,6 @@ CREATE TABLE `maintenance_ticket_tbl` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `membership_role_tbl`
---
-
-DROP TABLE IF EXISTS `membership_role_tbl`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `membership_role_tbl` (
-  `id` varchar(36) NOT NULL,
-  `code` varchar(50) NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `description` text,
-  `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-  `property_id` varchar(36) DEFAULT NULL,
-  `role_rank` int NOT NULL DEFAULT '30',
-  `is_active` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_role_code_property` (`code`,`property_id`),
-  KEY `fk_membership_role_property` (`property_id`),
-  CONSTRAINT `fk_membership_role_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
 --
 -- Table structure for table `membership_tbl`
 --
@@ -330,19 +307,19 @@ DROP TABLE IF EXISTS `membership_tbl`;
 CREATE TABLE `membership_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
-  `property_id` varchar(36) DEFAULT NULL,
-  `role_id` varchar(36) NOT NULL,
+  `property_id` varchar(36) NOT NULL,
+  `title` varchar(100) NOT NULL DEFAULT 'Member',
+  `access_type` varchar(20) NOT NULL DEFAULT 'CUSTOM_ACCESS',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `assigned_by` varchar(36) DEFAULT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `user_id` (`user_id`,`property_id`,`role_id`),
+  UNIQUE KEY `uq_membership_user_property` (`user_id`,`property_id`),
   KEY `fk_membership_property` (`property_id`),
-  KEY `fk_membership_role` (`role_id`),
   KEY `fk_membership_assigned_by` (`assigned_by`),
   CONSTRAINT `fk_membership_assigned_by` FOREIGN KEY (`assigned_by`) REFERENCES `user_tbl` (`id`),
   CONSTRAINT `fk_membership_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_membership_role` FOREIGN KEY (`role_id`) REFERENCES `membership_role_tbl` (`id`),
   CONSTRAINT `fk_membership_user` FOREIGN KEY (`user_id`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -503,8 +480,9 @@ DROP TABLE IF EXISTS `property_join_code_tbl`;
 CREATE TABLE `property_join_code_tbl` (
   `id` varchar(36) NOT NULL,
   `property_id` varchar(36) NOT NULL,
-  `role_id` varchar(36) NOT NULL,
   `code` varchar(50) NOT NULL,
+  `title` varchar(100) NOT NULL DEFAULT 'Member',
+  `access_type` varchar(20) NOT NULL DEFAULT 'CUSTOM_ACCESS',
   `created_by` varchar(36) NOT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `max_uses` int NOT NULL DEFAULT '1',
@@ -515,12 +493,25 @@ CREATE TABLE `property_join_code_tbl` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`),
   KEY `fk_join_code_property` (`property_id`),
-  KEY `fk_join_code_role` (`role_id`),
   KEY `fk_join_code_created_by` (`created_by`),
   KEY `idx_join_code_lookup` (`code`),
   CONSTRAINT `fk_join_code_created_by` FOREIGN KEY (`created_by`) REFERENCES `user_tbl` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_join_code_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_join_code_role` FOREIGN KEY (`role_id`) REFERENCES `membership_role_tbl` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_join_code_property` FOREIGN KEY (`property_id`) REFERENCES `property_tbl` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `property_join_code_permission_tbl`
+--
+
+DROP TABLE IF EXISTS `property_join_code_permission_tbl`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `property_join_code_permission_tbl` (
+  `join_code_id` varchar(36) NOT NULL,
+  `permission_code` varchar(100) NOT NULL,
+  PRIMARY KEY (`join_code_id`,`permission_code`),
+  CONSTRAINT `fk_join_code_permission_code` FOREIGN KEY (`join_code_id`) REFERENCES `property_join_code_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -562,7 +553,6 @@ CREATE TABLE `property_tbl` (
   `total_floors` int DEFAULT NULL,
   `auto_bill_day_of_month` int DEFAULT NULL,
   `auto_bill_time` time DEFAULT NULL,
-  `property_type` varchar(50) NOT NULL DEFAULT 'RENTAL',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `allow_partial_payment` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
@@ -646,23 +636,23 @@ CREATE TABLE `rent_cycle_tbl` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `role_permission_tbl`
+-- Table structure for table `membership_permission_tbl`
 --
 
-DROP TABLE IF EXISTS `role_permission_tbl`;
+DROP TABLE IF EXISTS `membership_permission_tbl`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `role_permission_tbl` (
+CREATE TABLE `membership_permission_tbl` (
   `id` varchar(36) NOT NULL,
-  `role_id` varchar(36) NOT NULL,
+  `membership_id` varchar(36) NOT NULL,
   `permission_id` varchar(36) NOT NULL,
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `role_id` (`role_id`,`permission_id`),
-  KEY `fk_role_permission_perm` (`permission_id`),
-  CONSTRAINT `fk_role_permission_perm` FOREIGN KEY (`permission_id`) REFERENCES `permission_tbl` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_role_permission_role` FOREIGN KEY (`role_id`) REFERENCES `membership_role_tbl` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `uq_membership_perm` (`membership_id`,`permission_id`),
+  KEY `fk_membership_permission_perm` (`permission_id`),
+  CONSTRAINT `fk_membership_permission_mem` FOREIGN KEY (`membership_id`) REFERENCES `membership_tbl` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_membership_permission_perm` FOREIGN KEY (`permission_id`) REFERENCES `permission_tbl` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -790,7 +780,7 @@ DROP TABLE IF EXISTS `user_preference_tbl`;
 CREATE TABLE `user_preference_tbl` (
   `id` varchar(36) NOT NULL,
   `user_id` varchar(36) NOT NULL,
-  `active_mode` enum('RENTAL','HOSTEL','MESS','SOCIETY','INDIVIDUAL') NOT NULL DEFAULT 'RENTAL',
+  `active_mode` varchar(20) NOT NULL DEFAULT 'RENTAL',
   `onboarding_done` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),

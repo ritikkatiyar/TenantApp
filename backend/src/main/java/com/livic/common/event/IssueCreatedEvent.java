@@ -1,7 +1,9 @@
 package com.livic.common.event;
 
+import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
+@Getter
 public class IssueCreatedEvent extends ApplicationEvent {
     private final String issueId;
     private final String propertyName;
@@ -21,33 +23,5 @@ public class IssueCreatedEvent extends ApplicationEvent {
         this.title = title;
         this.description = description;
         this.recipientUserId = recipientUserId;
-    }
-
-    public String getIssueId() {
-        return issueId;
-    }
-
-    public String getPropertyName() {
-        return propertyName;
-    }
-
-    public String getUnitNumber() {
-        return unitNumber;
-    }
-
-    public String getCreatorName() {
-        return creatorName;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getRecipientUserId() {
-        return recipientUserId;
     }
 }

@@ -33,7 +33,9 @@ public class PropertyJoinCodeController {
         UUID actorId = UUID.fromString(currentUser.getId());
         PropertyJoinCodeDTOs.JoinCodeResponse created = propertyJoinCodeService.generateJoinCode(
                 propertyId, 
-                request.roleCode(), 
+                request.title(),
+                request.accessType(),
+                request.permissionCodes(),
                 request.maxUses(), 
                 actorId
         );

@@ -1,13 +1,14 @@
 package com.livic.inventory.controller;
 
+import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.common.enums.ResourceType;
+import com.livic.common.response.ApiResponse;
 import com.livic.inventory.dto.ApproveDeductionsRequest;
 import com.livic.inventory.dto.AssignmentItemResponse;
 import com.livic.inventory.dto.CreateAssignmentRequest;
 import com.livic.inventory.dto.MoveOutChecklistRequest;
 import com.livic.inventory.dto.ReturnVerificationRequest;
 import com.livic.inventory.dto.VerificationItemResponse;
-import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.common.response.ApiResponse;
 import com.livic.inventory.service.interfaces.LeaseInventoryAssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +32,7 @@ public class LeaseInventoryAssignmentController {
     private final LeaseInventoryAssignmentService assignmentService;
 
     @PostMapping("/leases/{leaseId}/assignments")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<AssignmentItemResponse>>> createAssignments(
             @PathVariable UUID leaseId,
             @Valid @RequestBody CreateAssignmentRequest request,
@@ -48,7 +43,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @GetMapping("/leases/{leaseId}/assignments")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<Page<AssignmentItemResponse>>> getAssignments(
             @PathVariable UUID leaseId,
             @PageableDefault(size = 20) Pageable pageable) {
@@ -57,7 +52,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PostMapping("/leases/{leaseId}/move-out-checklist")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<VerificationItemResponse>>> generateMoveOutChecklist(
             @PathVariable UUID leaseId,
             @RequestBody(required = false) MoveOutChecklistRequest request,
@@ -72,7 +67,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PutMapping("/assignments/{assignmentId}/return-verification")
-    @PreAuthorize("@authorizationService.hasPermissionByAssignmentId(#assignmentId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).INVENTORY_ASSIGNMENT, #assignmentId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<VerificationItemResponse>> verifyReturn(
             @PathVariable UUID assignmentId,
             @Valid @RequestBody ReturnVerificationRequest request,
@@ -83,7 +78,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @PostMapping("/leases/{leaseId}/deductions/approve")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<List<VerificationItemResponse>>> approveDeductions(
             @PathVariable UUID leaseId,
             @RequestBody ApproveDeductionsRequest request,
@@ -94,7 +89,7 @@ public class LeaseInventoryAssignmentController {
     }
 
     @GetMapping("/leases/{leaseId}/verification-checklist")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW') or @authorizationService.hasPermissionByLeaseId(#leaseId, 'LEASE_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW') or @authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #leaseId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<Page<VerificationItemResponse>>> getVerificationChecklist(
             @PathVariable UUID leaseId,
             @PageableDefault(size = 20) Pageable pageable) {

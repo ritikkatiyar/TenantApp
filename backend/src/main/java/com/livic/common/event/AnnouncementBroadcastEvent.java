@@ -1,8 +1,10 @@
 package com.livic.common.event;
 
+import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 import java.util.List;
 
+@Getter
 public class AnnouncementBroadcastEvent extends ApplicationEvent {
     private final String announcementId;
     private final String title;
@@ -20,29 +22,5 @@ public class AnnouncementBroadcastEvent extends ApplicationEvent {
         this.category = category;
         this.severity = severity;
         this.recipientUserIds = recipientUserIds;
-    }
-
-    public String getAnnouncementId() {
-        return announcementId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public String getSeverity() {
-        return severity;
-    }
-
-    public List<String> getRecipientUserIds() {
-        return recipientUserIds;
     }
 }

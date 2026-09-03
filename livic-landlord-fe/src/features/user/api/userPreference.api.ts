@@ -1,13 +1,15 @@
 import { apiRequest } from '@/src/api/client';
 
+export type UserActiveMode = 'RENTAL' | 'RESIDENTIAL';
+
 export interface SaveUserPreferenceRequest {
-  activeMode: 'RENTAL' | 'HOSTEL' | 'MESS' | 'SOCIETY' | 'INDIVIDUAL';
+  activeMode: UserActiveMode;
   onboardingDone: boolean;
 }
 
 export interface UserPreferenceResponse {
   userId: string;
-  activeMode: 'RENTAL' | 'HOSTEL' | 'MESS' | 'SOCIETY' | 'INDIVIDUAL';
+  activeMode: UserActiveMode;
   onboardingDone: boolean;
 }
 

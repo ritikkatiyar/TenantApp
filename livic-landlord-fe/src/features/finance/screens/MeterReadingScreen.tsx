@@ -11,6 +11,7 @@ import FloatingBackButton from '@/src/components/common/navigation/FloatingBackB
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { PageShell } from '@/src/components/common/layout/PageShell';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useProperties } from '@/src/hooks/useProperties';
@@ -186,13 +187,30 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
             {/* Main Content Grid */}
             {!propertyId ? (
-              <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyStateCard}>
-                <MaterialIcons name="business" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-                <Text style={[styles.emptyText, { fontWeight: '800', color: theme.Colors.onSurface, fontSize: theme.Typography.bodyLg.fontSize, marginBottom: 8 }]}>Select a Property</Text>
-                <Text style={[styles.emptyText, { textAlign: 'center', paddingHorizontal: 40 }]}>
-                  Please select a property from the top navigation bar to view and log meter readings.
-                </Text>
-              </BlurView>
+              <GlassCard
+                style={{
+                  marginVertical: 20,
+                  minHeight: 280,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                contentStyle={{
+                  padding: 48,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
+                }}
+              >
+                <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                  <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+                  <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
+                    Select a Property
+                  </Text>
+                  <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
+                    Please select a property from the top navigation bar to view and log meter readings.
+                  </Text>
+                </View>
+              </GlassCard>
             ) : isLoading ? (
               <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
             ) : worksheet.length === 0 ? (

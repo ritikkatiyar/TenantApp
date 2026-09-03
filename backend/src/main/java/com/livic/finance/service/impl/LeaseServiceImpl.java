@@ -1,6 +1,5 @@
 package com.livic.finance.service.impl;
 
-import com.livic.auth.facade.AuthFacade;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.common.domain.LedgerTransactionType;
 import com.livic.common.domain.UnitBookingStatus;
@@ -15,23 +14,19 @@ import com.livic.finance.service.interfaces.LeaseCrudService;
 import com.livic.finance.service.interfaces.LeaseService;
 import com.livic.finance.service.interfaces.LeaseQueryService;
 import com.livic.finance.service.interfaces.UnitBookingCrudService;
-import com.livic.property.domain.UnitTbl;
+import com.livic.property.dto.UnitSummaryDTO;
 import com.livic.property.facade.UnitFacade;
-import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
-
-import com.livic.property.dto.UnitSummaryDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +38,6 @@ public class LeaseServiceImpl implements LeaseService {
     private final LeaseQueryService leaseQueryService;
     private final UnitFacade unitFacade;
     private final UserFacade userFacade;
-    private final AuthFacade authFacade;
     private final UnitBookingCrudService unitBookingCrudService;
     private final FinanceLedgerCrudService financeLedgerCrudService;
 
@@ -57,8 +51,6 @@ public class LeaseServiceImpl implements LeaseService {
 
         UnitSummaryDTO unitSummary = unitFacade.getUnitById(request.unitId())
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Unit not found"));
-        UnitTbl unit = new UnitTbl();
-        unit.setId(unitSummary.id());
         
         if (request.moveOutDate() != null && request.moveOutDate().isBefore(request.moveInDate())) {
             throw new BusinessException("moveOutDate cannot be before moveInDate");
@@ -109,10 +101,8 @@ public class LeaseServiceImpl implements LeaseService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "User ID is required for lease creation when no booking is converted");
         }
 
-        UserSummaryDTO tenant = userFacade.getUserById(targetUserId)
+        userFacade.getUserById(targetUserId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
-
-        authFacade.ensureTenantRole(tenant.id(), unitSummary.propertyId(), assignedByUserId);
 
         LeaseTbl lease = LeaseMapper.toEntity(request, unitSummary.id(), targetUserId);
         LeaseTbl saved = leaseCrudService.save(lease);
@@ -154,23 +144,6 @@ public class LeaseServiceImpl implements LeaseService {
             lease.setMoveOutDate(LocalDate.now());
         }
         LeaseTbl saved = leaseCrudService.save(lease);
-
-        UUID tenantId = saved.getUserId();
-        UUID propertyId = unitFacade.getUnitById(saved.getUnitId())
-                .map(UnitSummaryDTO::propertyId)
-                .orElse(null);
-
-        // Check if this tenant has any other active leases in any unit of the same property
-        boolean hasOtherLeases = false;
-        if (propertyId != null) {
-            hasOtherLeases = leaseQueryService.existsByUserIdAndPropertyIdAndStatus(
-                tenantId, propertyId, LeaseStatus.ACTIVE
-            );
-        }
-
-        if (!hasOtherLeases && propertyId != null) {
-            authFacade.removeTenantRole(tenantId, propertyId);
-        }
 
         // Map to DTO — entity must not cross the service boundary.
         // tenantName/tenantPhone are intentionally omitted here;

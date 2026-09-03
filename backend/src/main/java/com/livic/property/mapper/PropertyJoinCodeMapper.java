@@ -3,6 +3,7 @@ package com.livic.property.mapper;
 import com.livic.property.domain.PropertyJoinCodeTbl;
 import com.livic.property.dto.PropertyJoinCodeDTOs;
 
+import java.util.Set;
 import java.util.UUID;
 
 public class PropertyJoinCodeMapper {
@@ -11,32 +12,39 @@ public class PropertyJoinCodeMapper {
         // Private constructor to prevent instantiation
     }
 
-    public static PropertyJoinCodeDTOs.JoinCodeResponse toResponse(PropertyJoinCodeTbl jc, String roleCode, String roleName) {
+    public static PropertyJoinCodeDTOs.JoinCodeResponse toResponse(PropertyJoinCodeTbl jc) {
         if (jc == null) {
             return null;
         }
+        Set<String> perms = jc.getPermissionCodes() != null
+                ? jc.getPermissionCodes()
+                : Set.of();
+
         return new PropertyJoinCodeDTOs.JoinCodeResponse(
                 jc.getId(),
                 jc.getCode(),
-                roleCode != null ? roleCode : "",
-                roleName != null ? roleName : "",
+                jc.getTitle(),
+                jc.getAccessType(),
                 jc.getMaxUses(),
                 jc.getUsesCount(),
                 jc.isActive(),
-                jc.getExpiresAt()
+                jc.getExpiresAt(),
+                perms
         );
     }
 
     public static PropertyJoinCodeDTOs.JoinCodeResultResponse toResultResponse(
             UUID propertyId,
             String propertyName,
-            String roleCode,
+            String title,
+            com.livic.common.enums.AccessType accessType,
             UUID membershipId
     ) {
         return new PropertyJoinCodeDTOs.JoinCodeResultResponse(
                 propertyId,
                 propertyName,
-                roleCode,
+                title,
+                accessType,
                 membershipId
         );
     }

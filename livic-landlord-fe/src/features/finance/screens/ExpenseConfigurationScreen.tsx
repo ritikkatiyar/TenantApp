@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -176,15 +177,30 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
 
     if (!propertyId) {
       return (
-        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={styles.emptyCard}>
-          <View style={styles.emptyIconCircle}>
-            <MaterialIcons name="business" size={36} color={theme.Colors.primary} />
+        <GlassCard
+          style={{
+            marginVertical: 20,
+            minHeight: 280,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          contentStyle={{
+            padding: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+          }}
+        >
+          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
+              Select a Property
+            </Text>
+            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
+              Please select a property from the top navigation bar to view and manage its charge configurations.
+            </Text>
           </View>
-          <Text style={styles.emptyTitle}>Select a Property</Text>
-          <Text style={styles.emptySubtitle}>
-            Please select a property from the top navigation bar to view and manage its charge configurations.
-          </Text>
-        </BlurView>
+        </GlassCard>
       );
     }
 

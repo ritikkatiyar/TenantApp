@@ -2,6 +2,7 @@ package com.livic.finance.service.impl;
 
 import com.livic.auth.service.interfaces.AuthorizationService;
 import com.livic.common.domain.UnitBookingStatus;
+import com.livic.common.enums.ResourceType;
 import com.livic.common.exception.BusinessException;
 import com.livic.finance.domain.UnitBookingTbl;
 import com.livic.finance.dto.UnitBookingDTOs;
@@ -69,7 +70,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Processing booking forfeit for ID: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermissionByUnitId(booking.getUnitId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermission(ResourceType.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -84,7 +85,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Processing booking refund for ID: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermissionByUnitId(booking.getUnitId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermission(ResourceType.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -99,7 +100,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Initiating online token payment for booking: {} by user: {}", bookingId, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermissionByUnitId(booking.getUnitId(), "LEASE_CREATE")) {
+        if (!authorizationService.hasPermission(ResourceType.UNIT, booking.getUnitId(), "LEASE_CREATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 
@@ -122,7 +123,7 @@ public class UnitBookingServiceImpl implements UnitBookingService {
         log.info("Recording token cash payment for booking: {} amount: {} by user: {}", bookingId, amount, userDetailsId);
         UnitBookingTbl booking = getBookingOrThrow(bookingId);
 
-        if (!authorizationService.hasPermissionByUnitId(booking.getUnitId(), "LEASE_UPDATE")) {
+        if (!authorizationService.hasPermission(ResourceType.UNIT, booking.getUnitId(), "LEASE_UPDATE")) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Access Denied");
         }
 

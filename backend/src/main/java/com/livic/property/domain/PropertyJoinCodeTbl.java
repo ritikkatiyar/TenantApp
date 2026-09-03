@@ -1,10 +1,14 @@
 package com.livic.property.domain;
 
+
 import com.livic.common.domain.BaseEntity;
+import com.livic.common.enums.AccessType;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -22,8 +26,23 @@ public class PropertyJoinCodeTbl extends BaseEntity {
     @ToString.Exclude
     private PropertyTbl property;
 
-    @Column(name = "role_id", nullable = false)
-    private UUID roleId;
+    @Column(name = "title", nullable = false)
+    @Builder.Default
+    private String title = "Member";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "access_type", nullable = false)
+    @Builder.Default
+    private AccessType accessType = AccessType.CUSTOM_ACCESS;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "property_join_code_permission_tbl",
+            joinColumns = @JoinColumn(name = "join_code_id")
+    )
+    @Column(name = "permission_code", nullable = false)
+    @Builder.Default
+    private Set<String> permissionCodes = new HashSet<>();
 
     @Column(name = "code", nullable = false, unique = true)
     private String code;

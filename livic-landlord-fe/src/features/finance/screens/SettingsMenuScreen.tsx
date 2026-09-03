@@ -262,7 +262,46 @@ export default function SettingsMenuScreen() {
 
   return (
     <PageShell scrollable edges={isDesktop ? ['top'] : []}>
-      {isDesktop ? (
+      {isDesktop && (
+        <View style={{ marginBottom: 24 }}>
+          <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>
+            FINANCIAL MANAGEMENT
+          </Text>
+          <Text style={{ fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '800', color: theme.Colors.onBackground, letterSpacing: -0.5 }}>
+            Finance & Billing
+          </Text>
+          <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>
+            Manage rents, recurring charges, billing worksheets, and financial ledgers.
+          </Text>
+        </View>
+      )}
+
+      {!propertyId ? (
+        <GlassCard
+          style={{
+            marginVertical: 20,
+            minHeight: 280,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          contentStyle={{
+            padding: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+          }}
+        >
+          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
+              Select Property to View Finance & Billing
+            </Text>
+            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
+              Please select a property from the top navbar selector to view billing worksheets, rent roll, charge configurations, or ledger.
+            </Text>
+          </View>
+        </GlassCard>
+      ) : isDesktop ? (
         <View style={styles.gridContainer}>
           {menuItems.map((item) => (
             <TouchableOpacity

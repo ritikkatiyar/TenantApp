@@ -3,6 +3,7 @@ package com.livic.property.domain;
 import com.livic.common.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,12 +32,7 @@ public class PropertyTbl extends BaseEntity {
     private Integer autoBillDayOfMonth;
 
     @Column(name = "auto_bill_time")
-    private java.time.LocalTime autoBillTime;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "property_type", nullable = false)
-    @Builder.Default
-    private PropertyType propertyType = PropertyType.RENTAL;
+    private LocalTime autoBillTime;
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default

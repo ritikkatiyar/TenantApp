@@ -100,14 +100,7 @@ INSERT INTO plan_feature_limit_tbl (id, plan_id, feature_key, limit_value) VALUE
 (UUID(), '10000000-0000-0000-0000-000000000004', 'ADVANCED_ANALYTICS', 1),
 (UUID(), '10000000-0000-0000-0000-000000000004', 'ADVANCED_REPORTS', 1);
 
--- 4. Seed Initial Roles
-INSERT INTO membership_role_tbl (id, code, name, description) VALUES
-('40000000-0000-0000-0000-000000000001', 'PROPERTY_OWNER', 'Property Owner', 'Full access to property'),
-('40000000-0000-0000-0000-000000000002', 'PROPERTY_MANAGER', 'Property Manager', 'Operational access to property'),
-('40000000-0000-0000-0000-000000000003', 'PROPERTY_TENANT', 'Tenant', 'Limited access to own lease and property details'),
-('40000000-0000-0000-0000-000000000004', 'PROPERTY_CARETAKER', 'Caretaker', 'Day to day operations access');
-
--- 5. Seed Permissions
+-- 4. Seed Permissions
 INSERT INTO permission_tbl (id, code, description) VALUES
 (UUID(), 'PROPERTY_VIEW', 'Can view property details'),
 (UUID(), 'PROPERTY_EDIT', 'Can edit property details'),
@@ -124,28 +117,8 @@ INSERT INTO permission_tbl (id, code, description) VALUES
 (UUID(), 'MANAGE_STAFF', 'Can assign/remove manager and caretaker roles on property'),
 (UUID(), 'PROPERTY_VIEW_OWN_LEASE', 'Can view own lease details as tenant');
 
--- 6. Map Role Permissions
--- Map all permissions to OWNER
-INSERT INTO role_permission_tbl (id, role_id, permission_id)
-SELECT UUID(), '40000000-0000-0000-0000-000000000001', id FROM permission_tbl;
 
--- Map permissions to MANAGER
-INSERT INTO role_permission_tbl (id, role_id, permission_id)
-SELECT UUID(), '40000000-0000-0000-0000-000000000002', id FROM permission_tbl
-WHERE code IN ('PROPERTY_VIEW', 'LEASE_CREATE', 'LEASE_UPDATE', 'LEASE_VIEW', 'EXPENSE_CREATE', 'PAYMENT_VIEW', 'ANNOUNCEMENT_CREATE');
-
--- Map permissions to TENANT
-INSERT INTO role_permission_tbl (id, role_id, permission_id)
-SELECT UUID(), '40000000-0000-0000-0000-000000000003', id FROM permission_tbl
-WHERE code IN ('PROPERTY_VIEW', 'LEASE_VIEW_OWN', 'PAYMENT_CREATE_OWN', 'PROPERTY_VIEW_OWN_LEASE');
-
--- Map permissions to CARETAKER
-INSERT INTO role_permission_tbl (id, role_id, permission_id)
-SELECT UUID(), '40000000-0000-0000-0000-000000000004', id FROM permission_tbl
-WHERE code IN ('PROPERTY_VIEW', 'ANNOUNCEMENT_CREATE');
-
-
--- 7. Seed Mom's PG Load Stored Procedure
+-- 5. Seed Mom's PG Load Stored Procedure
 DELIMITER //
 
 CREATE PROCEDURE seed_moms_pg_load_data()
@@ -153,11 +126,6 @@ BEGIN
     DECLARE owner_id VARCHAR(36);
     DECLARE manager_id VARCHAR(36);
     DECLARE caretaker_id VARCHAR(36);
-    
-    DECLARE owner_role_id VARCHAR(36);
-    DECLARE manager_role_id VARCHAR(36);
-    DECLARE caretaker_role_id VARCHAR(36);
-    DECLARE tenant_role_id VARCHAR(36);
     DECLARE password_hash VARCHAR(255);
     
     DECLARE b INT DEFAULT 1;
@@ -173,12 +141,6 @@ BEGIN
     SET manager_id = 'c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f';
     SET caretaker_id = 'd4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a';
     SET password_hash = '$2a$10$iF2sCXo.GR6uLLooK5FiHubhCvAY8xAr3mYmCIQDEgFuTvOK/PCzq'; -- 'Adm!n@super'
-    
-    -- Retrieve role IDs
-    SELECT id INTO owner_role_id FROM membership_role_tbl WHERE code = 'PROPERTY_OWNER' LIMIT 1;
-    SELECT id INTO manager_role_id FROM membership_role_tbl WHERE code = 'PROPERTY_MANAGER' LIMIT 1;
-    SELECT id INTO caretaker_role_id FROM membership_role_tbl WHERE code = 'PROPERTY_CARETAKER' LIMIT 1;
-    SELECT id INTO tenant_role_id FROM membership_role_tbl WHERE code = 'PROPERTY_TENANT' LIMIT 1;
     
     -- 1. Insert Owner, Manager, Caretaker Users
     INSERT INTO user_tbl (id, auth_uid, full_name, phone_number, password_hash, global_role) VALUES
@@ -197,14 +159,14 @@ BEGIN
         SET prop_id = UUID();
         
         -- Insert Property
-        INSERT INTO property_tbl (id, name, city, address, total_floors, property_type, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
-        VALUES (prop_id, CONCAT('mom\'s pg ', b), 'New York', CONCAT('Address Building ', b), 5, 'RENTAL', TRUE, TRUE, 1, '09:00:00');
+        INSERT INTO property_tbl (id, name, city, address, total_floors, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
+        VALUES (prop_id, CONCAT('mom\'s pg ', b), 'New York', CONCAT('Address Building ', b), 5, TRUE, TRUE, 1, '09:00:00');
         
         -- Map Owner, Manager, Caretaker to this specific Building
-        INSERT INTO membership_tbl (id, user_id, property_id, role_id) VALUES
-        (UUID(), owner_id, prop_id, owner_role_id),
-        (UUID(), manager_id, prop_id, manager_role_id),
-        (UUID(), caretaker_id, prop_id, caretaker_role_id);
+        INSERT INTO membership_tbl (id, user_id, property_id, title, access_type, is_active) VALUES
+        (UUID(), owner_id, prop_id, 'Owner', 'FULL_ACCESS', TRUE),
+        (UUID(), manager_id, prop_id, 'Manager', 'CUSTOM_ACCESS', TRUE),
+        (UUID(), caretaker_id, prop_id, 'Caretaker', 'CUSTOM_ACCESS', TRUE);
         
         -- Insert Base Rent Charge Configuration for this Building
         INSERT INTO charge_config_tbl (id, property_id, charge_name, charge_category, billing_frequency, calculation_strategy, base_rate, apply_sales_tax, is_system_required, is_active, auto_carry_forward)
@@ -228,9 +190,6 @@ BEGIN
                 INSERT INTO user_tbl (id, auth_uid, full_name, phone_number, password_hash, global_role)
                 VALUES (curr_tenant_id, CONCAT('tenant_', b, '_', f, '_', r, '_1@moms.com'), CONCAT('Tenant ', b, '-', unit_num, ' A'), CONCAT('9', LPAD(b, 2, '0'), f, LPAD(r, 2, '0'), '1'), password_hash, 'USER');
                 
-                INSERT INTO membership_tbl (id, user_id, property_id, role_id)
-                VALUES (UUID(), curr_tenant_id, prop_id, tenant_role_id);
-                
                 INSERT INTO lease_tbl (id, unit_id, user_id, monthly_rent_amount, security_deposit, move_in_date, status, split_strategy)
                 VALUES (UUID(), curr_unit_id, curr_tenant_id, 1000.00, 2000.00, '2026-08-01', 'ACTIVE', 'FULL_UNIT');
                 
@@ -238,9 +197,6 @@ BEGIN
                 SET curr_tenant_id = UUID();
                 INSERT INTO user_tbl (id, auth_uid, full_name, phone_number, password_hash, global_role)
                 VALUES (curr_tenant_id, CONCAT('tenant_', b, '_', f, '_', r, '_2@moms.com'), CONCAT('Tenant ', b, '-', unit_num, ' B'), CONCAT('9', LPAD(b, 2, '0'), f, LPAD(r, 2, '0'), '2'), password_hash, 'USER');
-                
-                INSERT INTO membership_tbl (id, user_id, property_id, role_id)
-                VALUES (UUID(), curr_tenant_id, prop_id, tenant_role_id);
                 
                 INSERT INTO lease_tbl (id, unit_id, user_id, monthly_rent_amount, security_deposit, move_in_date, status, split_strategy)
                 VALUES (UUID(), curr_unit_id, curr_tenant_id, 1000.00, 2000.00, '2026-08-01', 'ACTIVE', 'FULL_UNIT');
