@@ -1,6 +1,5 @@
 package com.livic.analytics.controller;
 
-import com.livic.analytics.dto.AnalyticsDTOs;
 import com.livic.analytics.service.interfaces.AnalyticsService;
 import com.livic.auth.principal.UserDetailsImpl;
 import com.livic.common.response.ApiResponse;
@@ -16,6 +15,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import static com.livic.analytics.dto.AnalyticsDTOs.DefaulterResponse;
+import static com.livic.analytics.dto.AnalyticsDTOs.ExpensesBreakdownResponse;
+import static com.livic.analytics.dto.AnalyticsDTOs.PortfolioOccupancyResponse;
+import static com.livic.analytics.dto.AnalyticsDTOs.SummaryResponse;
+
 @RestController
 @RequestMapping("/api/v1/analytics")
 @RequiredArgsConstructor
@@ -24,7 +28,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
 
     @GetMapping("/summary")
-    public ResponseEntity<ApiResponse<AnalyticsDTOs.SummaryResponse>> getSummary(
+    public ResponseEntity<ApiResponse<SummaryResponse>> getSummary(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) String billingMonth
     ) {
@@ -34,7 +38,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/occupancy")
-    public ResponseEntity<ApiResponse<List<AnalyticsDTOs.PortfolioOccupancyResponse>>> getOccupancy(
+    public ResponseEntity<ApiResponse<List<PortfolioOccupancyResponse>>> getOccupancy(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
@@ -42,7 +46,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/defaulters")
-    public ResponseEntity<ApiResponse<List<AnalyticsDTOs.DefaulterResponse>>> getDefaulters(
+    public ResponseEntity<ApiResponse<List<DefaulterResponse>>> getDefaulters(
             @AuthenticationPrincipal UserDetailsImpl currentUser
     ) {
         UUID userId = UUID.fromString(currentUser.getId());
@@ -50,7 +54,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/expenses-breakdown")
-    public ResponseEntity<ApiResponse<AnalyticsDTOs.ExpensesBreakdownResponse>> getExpensesBreakdown(
+    public ResponseEntity<ApiResponse<ExpensesBreakdownResponse>> getExpensesBreakdown(
             @AuthenticationPrincipal UserDetailsImpl currentUser,
             @RequestParam(required = false) String billingMonth
     ) {

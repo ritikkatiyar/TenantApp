@@ -1,11 +1,8 @@
 package com.livic.property.controller;
 
-import com.livic.auth.dto.MembershipDTOs;
 import com.livic.auth.dto.MembershipSummaryDTO;
 import com.livic.auth.facade.AuthFacade;
 import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.billing.annotation.EnforceSubscription;
-import com.livic.billing.annotation.FeatureKey;
 import com.livic.common.enums.AccessType;
 import com.livic.common.response.ApiResponse;
 import com.livic.user.dto.UserSummaryDTO;
@@ -18,10 +15,26 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import static com.livic.auth.dto.MembershipDTOs.MembershipResponse;
+import static com.livic.auth.dto.MembershipDTOs.TransferOwnershipRequest;
+import static com.livic.auth.dto.MembershipDTOs.UpdateMembershipRequest;
 
 @RestController
 @RequestMapping("/api/v1/properties/{propertyId}/memberships")
@@ -33,7 +46,7 @@ public class MembershipController {
 
     @GetMapping
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'PROPERTY_VIEW')")
-    public ResponseEntity<ApiResponse<Page<MembershipDTOs.MembershipResponse>>> listMemberships(
+    public ResponseEntity<ApiResponse<Page<MembershipResponse>>> listMemberships(
             @PathVariable UUID propertyId,
             @PageableDefault(size = 20) Pageable pageable) {
             
@@ -52,14 +65,14 @@ public class MembershipController {
                 .toList();
         Map<UUID, Set<String>> permsMap = authFacade.getPermissionsByMembershipIds(customAccessMembershipIds);
 
-        Page<MembershipDTOs.MembershipResponse> responsePage = membershipsPage.map(m -> {
+        Page<MembershipResponse> responsePage = membershipsPage.map(m -> {
             UserSummaryDTO user = usersMap.get(m.userId());
             String fullName = user != null ? user.fullName() : "Unknown User";
             String phoneOrEmail = user != null && user.phoneNumber() != null ? user.phoneNumber() : "";
             Set<String> perms = AccessType.FULL_ACCESS.equals(m.accessType())
                     ? Collections.emptySet()
                     : permsMap.getOrDefault(m.id(), Collections.emptySet());
-            return new MembershipDTOs.MembershipResponse(
+            return new MembershipResponse(
                     m.id(),
                     m.userId(),
                     fullName,
@@ -76,11 +89,11 @@ public class MembershipController {
 
     @PutMapping("/{membershipId}")
     @PreAuthorize("@authorizationService.hasPermission(#propertyId, 'MANAGE_STAFF')")
-    public ResponseEntity<ApiResponse<MembershipDTOs.MembershipResponse>> updateMembership(
+    public ResponseEntity<ApiResponse<MembershipResponse>> updateMembership(
             @PathVariable UUID propertyId,
             @PathVariable UUID membershipId,
             @AuthenticationPrincipal UserDetailsImpl currentUser,
-            @Valid @RequestBody MembershipDTOs.UpdateMembershipRequest request) {
+            @Valid @RequestBody UpdateMembershipRequest request) {
             
         MembershipSummaryDTO updated = authFacade.updateMembership(
                 propertyId,
@@ -97,7 +110,7 @@ public class MembershipController {
         String email = user != null && user.phoneNumber() != null ? user.phoneNumber() : "";
         Set<String> perms = authFacade.getMembershipPermissions(updated.id());
 
-        MembershipDTOs.MembershipResponse response = new MembershipDTOs.MembershipResponse(
+        MembershipResponse response = new MembershipResponse(
                 updated.id(),
                 updated.userId(),
                 fullName,
@@ -138,7 +151,7 @@ public class MembershipController {
     public ResponseEntity<ApiResponse<Void>> transferOwnership(
             @PathVariable UUID propertyId,
             @AuthenticationPrincipal UserDetailsImpl currentUser,
-            @Valid @RequestBody MembershipDTOs.TransferOwnershipRequest request) {
+            @Valid @RequestBody TransferOwnershipRequest request) {
             
         UUID currentOwnerId = UUID.fromString(currentUser.getId());
         authFacade.transferOwnership(propertyId, currentOwnerId, request.toUserId());
