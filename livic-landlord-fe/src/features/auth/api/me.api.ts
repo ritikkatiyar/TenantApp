@@ -3,8 +3,8 @@ import { apiRequest } from '@/src/api/client';
 export interface MembershipSummary {
   propertyId: string;
   propertyName: string;
-  membershipRoleCode: 'PROPERTY_OWNER' | 'PROPERTY_MANAGER' | 'PROPERTY_CARETAKER' | 'PROPERTY_TENANT';
-  membershipRoleName: string;
+  title: string;
+  accessType?: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
 }
 
 export interface ActiveLeaseSummary {

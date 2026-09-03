@@ -1,14 +1,18 @@
 package com.livic.property.dto;
 
+import com.livic.common.enums.AccessType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 public class PropertyJoinCodeDTOs {
 
     public record GenerateJoinCodeRequest(
-            @NotBlank String roleCode,
+            String title,
+            AccessType accessType,
+            Set<String> permissionCodes,
             @NotNull Integer maxUses
     ) {}
 
@@ -19,18 +23,20 @@ public class PropertyJoinCodeDTOs {
     public record JoinCodeResponse(
             UUID id,
             String code,
-            String roleCode,
-            String roleName,
+            String title,
+            AccessType accessType,
             int maxUses,
             int usesCount,
             boolean isActive,
-            Instant expiresAt
+            Instant expiresAt,
+            Set<String> permissionCodes
     ) {}
 
     public record JoinCodeResultResponse(
             UUID propertyId,
             String propertyName,
-            String roleCode,
+            String title,
+            AccessType accessType,
             UUID membershipId
     ) {}
 }

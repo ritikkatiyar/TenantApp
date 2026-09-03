@@ -1,9 +1,11 @@
 package com.livic.user.dto;
 
-import com.livic.common.domain.UserRole;
 import com.livic.auth.dto.MembershipSummaryDTO;
+import com.livic.common.domain.UserRole;
+import com.livic.common.enums.AccessType;
 import com.livic.finance.dto.LeaseSummaryDTO;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,15 +39,15 @@ public class MeDTOs {
     public record MembershipSummary(
             UUID propertyId,
             String propertyName,
-            String membershipRoleCode,
-            String membershipRoleName
+            String title,
+            AccessType accessType
     ) {
         public static MembershipSummary from(MembershipSummaryDTO membership) {
             return new MembershipSummary(
                     membership.propertyId(),
                     membership.propertyName(),
-                    membership.roleCode(),
-                    membership.roleName()
+                    membership.title(),
+                    membership.accessType()
             );
         }
     }
@@ -56,7 +58,7 @@ public class MeDTOs {
             String propertyName,
             UUID unitId,
             String unitNumber,
-            java.math.BigDecimal rentAmount,
+            BigDecimal rentAmount,
             String status
     ) {
         public static ActiveLeaseSummary from(LeaseSummaryDTO lease) {

@@ -4,20 +4,22 @@ import com.livic.common.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
-@Table(name = "role_permission_tbl")
+@Table(name = "membership_permission_tbl")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @ToString(callSuper = true)
-public class RolePermissionTbl extends BaseEntity {
+public class MembershipPermissionTbl extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
+    @JoinColumn(name = "membership_id", nullable = false)
     @ToString.Exclude
-    private MembershipRoleTbl role;
+    private MembershipTbl membership;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "permission_id", nullable = false)

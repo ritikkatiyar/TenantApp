@@ -168,12 +168,29 @@ export default function InventoryScreen() {
           </View>
 
           {!propertyId ? (
-            <GlassCard style={{ padding: 40, alignItems: 'center', justifyContent: 'center', marginVertical: 20 }}>
-              <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 12 }} />
-              <Text style={{ fontSize: 18, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 6 }}>Select Property to View & Add Inventory</Text>
-              <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 420 }}>
-                Please select a property from the top navbar selector to view assets, assign items, or add new inventory.
-              </Text>
+            <GlassCard
+              style={{
+                marginVertical: 20,
+                minHeight: 280,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              contentStyle={{
+                padding: 48,
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
+              <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+                <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
+                  Select Property to View & Add Inventory
+                </Text>
+                <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
+                  Please select a property from the top navbar selector to view assets, assign items, or add new inventory.
+                </Text>
+              </View>
             </GlassCard>
           ) : (
             <>

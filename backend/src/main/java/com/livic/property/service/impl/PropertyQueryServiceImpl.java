@@ -1,29 +1,33 @@
 package com.livic.property.service.impl;
 
+import com.livic.auth.dto.MembershipSummaryDTO;
+import com.livic.auth.facade.AuthFacade;
+import com.livic.common.enums.AccessType;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.service.interfaces.PropertyCrudService;
 import com.livic.property.service.interfaces.PropertyQueryService;
-import com.livic.auth.dto.MembershipSummaryDTO;
-import com.livic.auth.facade.AuthFacade;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PropertyQueryServiceImpl implements PropertyQueryService {
 
     private final PropertyCrudService propertyCrudService;
     private final AuthFacade authFacade;
+
+    public PropertyQueryServiceImpl(PropertyCrudService propertyCrudService, AuthFacade authFacade) {
+        this.propertyCrudService = propertyCrudService;
+        this.authFacade = authFacade;
+    }
 
     @Override
     public Page<PropertyTbl> getPropertiesByUserId(UUID userId, Pageable pageable) {
@@ -34,9 +38,9 @@ public class PropertyQueryServiceImpl implements PropertyQueryService {
     public Page<PropertyTbl> getPropertiesByUserId(UUID userId, String search, Pageable pageable) {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
         List<UUID> propertyIds = memberships.stream()
-                .filter(m -> m.roleCode() == null || !"PROPERTY_TENANT".equals(m.roleCode()))
+                .filter(MembershipSummaryDTO::isActive)
                 .map(MembershipSummaryDTO::propertyId)
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .distinct()
                 .toList();
         if (search == null || search.trim().isEmpty()) {
@@ -49,9 +53,9 @@ public class PropertyQueryServiceImpl implements PropertyQueryService {
     public List<PropertyTbl> getPropertiesByUserId(UUID userId) {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(userId);
         List<UUID> propertyIds = memberships.stream()
-                .filter(m -> m.roleCode() == null || !"PROPERTY_TENANT".equals(m.roleCode()))
+                .filter(MembershipSummaryDTO::isActive)
                 .map(MembershipSummaryDTO::propertyId)
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .distinct()
                 .toList();
         return getPropertiesByIds(propertyIds);

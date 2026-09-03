@@ -20,7 +20,7 @@ public abstract class BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include // Only use ID for equals/hashCode to prevent JPA infinite loops
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @CreatedDate

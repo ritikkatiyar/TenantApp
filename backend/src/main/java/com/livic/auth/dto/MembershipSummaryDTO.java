@@ -1,5 +1,6 @@
 package com.livic.auth.dto;
 
+import com.livic.common.enums.AccessType;
 import java.util.UUID;
 
 public record MembershipSummaryDTO(
@@ -7,6 +8,7 @@ public record MembershipSummaryDTO(
         UUID propertyId,
         String propertyName,
         UUID userId,
-        String roleCode,
-        String roleName
+        String title,
+        AccessType accessType,
+        boolean isActive
 ) {}

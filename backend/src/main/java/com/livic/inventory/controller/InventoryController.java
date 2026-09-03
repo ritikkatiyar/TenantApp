@@ -1,5 +1,10 @@
 package com.livic.inventory.controller;
 
+import com.livic.auth.principal.UserDetailsImpl;
+import com.livic.common.enums.ResourceType;
+import com.livic.common.response.ApiResponse;
+import com.livic.inventory.domain.enums.InventoryScope;
+import com.livic.inventory.domain.enums.InventoryStatus;
 import com.livic.inventory.dto.CreateInventoryItemRequest;
 import com.livic.inventory.dto.InventoryItemResponse;
 import com.livic.inventory.dto.InventoryStatsResponse;
@@ -7,10 +12,6 @@ import com.livic.inventory.dto.ServiceExpenseRequest;
 import com.livic.inventory.dto.ServiceExpenseResponse;
 import com.livic.inventory.dto.TenantVisibleInventoryResponse;
 import com.livic.inventory.dto.UpdateInventoryItemRequest;
-import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.common.response.ApiResponse;
-import com.livic.inventory.domain.enums.InventoryScope;
-import com.livic.inventory.domain.enums.InventoryStatus;
 import com.livic.inventory.service.interfaces.InventoryItemService;
 import com.livic.inventory.service.interfaces.InventoryServiceExpenseService;
 import jakarta.validation.Valid;
@@ -19,14 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -64,7 +58,7 @@ public class InventoryController {
     }
 
     @PutMapping("/items/{itemId}")
-    @PreAuthorize("@authorizationService.hasPermissionByItemId(#itemId, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<InventoryItemResponse>> updateItem(
             @PathVariable UUID itemId,
             @Valid @RequestBody UpdateInventoryItemRequest request,
@@ -75,13 +69,13 @@ public class InventoryController {
     }
 
     @GetMapping("/items/{itemId}")
-    @PreAuthorize("@authorizationService.hasPermissionByItemId(#itemId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<InventoryItemResponse>> getItem(@PathVariable UUID itemId) {
         return ResponseEntity.ok(ApiResponse.success(inventoryItemService.getItem(itemId)));
     }
 
     @PostMapping("/items/{itemId}/service-expenses")
-    @PreAuthorize("@authorizationService.hasPermissionByItemId(#itemId, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<ServiceExpenseResponse>> recordServiceExpense(
             @PathVariable UUID itemId,
             @Valid @RequestBody ServiceExpenseRequest request,
@@ -92,7 +86,7 @@ public class InventoryController {
     }
 
     @GetMapping("/items/{itemId}/service-expenses")
-    @PreAuthorize("@authorizationService.hasPermissionByItemId(#itemId, 'PROPERTY_VIEW')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).INVENTORY_ITEM, #itemId, 'PROPERTY_VIEW')")
     public ResponseEntity<ApiResponse<List<ServiceExpenseResponse>>> listServiceExpenses(@PathVariable UUID itemId) {
         return ResponseEntity.ok(ApiResponse.success(serviceExpenseService.listExpensesByItem(itemId)));
     }

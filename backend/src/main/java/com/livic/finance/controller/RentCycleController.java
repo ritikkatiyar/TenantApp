@@ -1,15 +1,15 @@
 package com.livic.finance.controller;
 
 import com.livic.auth.principal.UserDetailsImpl;
-import com.livic.finance.domain.RentCycleStatus;
+import com.livic.common.enums.ResourceType;
 import com.livic.common.response.ApiResponse;
+import com.livic.finance.domain.RentCycleStatus;
 import com.livic.finance.dto.RentCycleDTOs;
 import com.livic.finance.service.interfaces.RentCycleService;
 import com.livic.payment.dto.PaymentInitiationResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -19,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -31,7 +30,7 @@ public class RentCycleController {
     private final RentCycleService rentCycleService;
 
     @PostMapping("/generate")
-    @PreAuthorize("@authorizationService.hasPermissionByLeaseId(#request.leaseId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).LEASE, #request.leaseId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> generate(
             @Valid @RequestBody RentCycleDTOs.GenerateRentCycleRequest request
     ) {
@@ -49,7 +48,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{id}/publish")
-    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).RENT_CYCLE, #id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> publish(
             @PathVariable UUID id
     ) {
@@ -57,7 +56,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{id}/unpublish")
-    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).RENT_CYCLE, #id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> unpublish(
             @PathVariable UUID id
     ) {
@@ -104,7 +103,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{id}/mark-paid")
-    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#id, 'PROPERTY_EDIT')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).RENT_CYCLE, #id, 'PROPERTY_EDIT')")
     public ResponseEntity<ApiResponse<RentCycleDTOs.RentCycleResponse>> markPaid(
             @PathVariable UUID id
     ) {
@@ -112,7 +111,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{rentCycleId}/online")
-    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_VIEW_OWN')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).RENT_CYCLE, #rentCycleId, 'LEASE_VIEW_OWN')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> initiateRentOnlinePayment(
             @PathVariable UUID rentCycleId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -123,7 +122,7 @@ public class RentCycleController {
     }
 
     @PostMapping("/{rentCycleId}/cash")
-    @PreAuthorize("@authorizationService.hasPermissionByRentCycleId(#rentCycleId, 'LEASE_UPDATE')")
+    @PreAuthorize("@authorizationService.hasPermission(T(com.livic.common.enums.ResourceType).RENT_CYCLE, #rentCycleId, 'LEASE_UPDATE')")
     public ResponseEntity<ApiResponse<PaymentInitiationResponse>> recordRentCashPayment(
             @PathVariable UUID rentCycleId,
             @Valid @RequestBody RentCycleDTOs.RecordRentCashPaymentRequest request,

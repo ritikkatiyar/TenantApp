@@ -31,7 +31,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private List<UUID> getLandlordPropertyIds(UUID landlordId) {
         List<MembershipSummaryDTO> memberships = authFacade.getMembershipsByUserId(landlordId);
         return memberships.stream()
-                .filter(m -> m.roleCode() != null && ("PROPERTY_OWNER".equals(m.roleCode()) || "PROPERTY_MANAGER".equals(m.roleCode())))
+                .filter(MembershipSummaryDTO::isActive)
                 .filter(m -> m.propertyId() != null)
                 .map(MembershipSummaryDTO::propertyId)
                 .distinct()

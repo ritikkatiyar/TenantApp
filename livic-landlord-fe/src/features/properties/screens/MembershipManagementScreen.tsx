@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, 
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-import { getMemberships, assignRole, removeRole, transferOwnership, MembershipResponse } from '@/src/features/properties/api/membership.api';
-import { searchUserByPhone } from '@/src/features/auth/api/user.api';
+import { getMemberships, removeMembership, transferOwnership, MembershipResponse } from '@/src/features/properties/api/membership.api';
+import { generateJoinCode, JoinCodeResponse } from '@/src/features/properties/api/rolePermission.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { formatErrorMessage } from '@/src/utils/errors';
@@ -15,13 +15,6 @@ import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { ConfirmDialog } from '@/src/components/common/feedback/ConfirmDialog';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
-
-interface UserSearchResponse {
-  id: string;
-  fullName: string;
-  phoneNumber: string;
-  authUid: string;
-}
 
 interface Props {
   propertyId: string;
@@ -38,13 +31,12 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
   const [memberships, setMemberships] = useState<MembershipResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const [searchPhone, setSearchPhone] = useState('');
-  const [searchResults, setSearchResults] = useState<UserSearchResponse[]>([]);
-  const [searching, setSearching] = useState(false);
-  
-  const [selectedUser, setSelectedUser] = useState<UserSearchResponse | null>(null);
-  const [selectedRole, setSelectedRole] = useState<string>('PROPERTY_MANAGER');
+  // Invite Modal
+  const [inviteModalVisible, setInviteModalVisible] = useState(false);
+  const [inviteTitle, setInviteTitle] = useState('');
+  const [inviteAccessType, setInviteAccessType] = useState<'FULL_ACCESS' | 'CUSTOM_ACCESS'>('CUSTOM_ACCESS');
+  const [inviteMaxUses, setInviteMaxUses] = useState('1');
+  const [generatingInvite, setGeneratingInvite] = useState(false);
 
   // ConfirmDialog states
   const [removeDialogVisible, setRemoveDialogVisible] = useState(false);
@@ -56,15 +48,15 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
   const [isTransferring, setIsTransferring] = useState(false);
 
   useEffect(() => {
-    loadMemberships();
+    loadData();
   }, [propertyId]);
 
-  const loadMemberships = async () => {
+  const loadData = async () => {
     if (!accessToken) return;
     try {
       setLoading(true);
-      const data = await getMemberships(accessToken, propertyId);
-      setMemberships(data);
+      const membershipsData = await getMemberships(accessToken, propertyId);
+      setMemberships(membershipsData);
     } catch (err: any) {
       Alert.alert('Error', formatErrorMessage(err));
     } finally {
@@ -72,40 +64,25 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
     }
   };
 
-  const handleSearch = async () => {
-    if (!accessToken || !searchPhone.trim()) return;
+  const handleGenerateInvite = async () => {
+    if (!accessToken || !inviteTitle.trim()) return;
     try {
-      setSearching(true);
-      const data = await searchUserByPhone(searchPhone, accessToken);
-      const mappedData: UserSearchResponse[] = (data || []).map(item => ({
-        id: item.id,
-        fullName: item.fullName,
-        phoneNumber: item.phoneNumber || '',
-        authUid: ''
-      }));
-      setSearchResults(mappedData);
+      setGeneratingInvite(true);
+      const maxUses = parseInt(inviteMaxUses, 10) || 1;
+      const res = await generateJoinCode(accessToken, propertyId, {
+        title: inviteTitle.trim(),
+        accessType: inviteAccessType,
+        maxUses,
+      });
+      setInviteModalVisible(false);
+      setInviteTitle('');
+      setInviteAccessType('CUSTOM_ACCESS');
+      setInviteMaxUses('1');
+      Alert.alert('Join Code Generated', `Share this code with your team member: ${res.code}`);
     } catch (err: any) {
       Alert.alert('Error', formatErrorMessage(err));
     } finally {
-      setSearching(false);
-    }
-  };
-
-  const handleAssignRole = async () => {
-    if (!accessToken || !selectedUser) return;
-    try {
-      await assignRole(accessToken, propertyId, {
-        userId: selectedUser.id,
-        roleCode: selectedRole
-      });
-      setSearchModalVisible(false);
-      setSelectedUser(null);
-      setSearchPhone('');
-      setSearchResults([]);
-      loadMemberships();
-      Alert.alert('Success', 'Role assigned successfully');
-    } catch (err: any) {
-      Alert.alert('Error', formatErrorMessage(err));
+      setGeneratingInvite(false);
     }
   };
 
@@ -118,10 +95,10 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
     if (!accessToken || !membershipToRemove) return;
     try {
       setIsRemoving(true);
-      await removeRole(accessToken, propertyId, membershipToRemove.id);
+      await removeMembership(accessToken, propertyId, membershipToRemove.id);
       setRemoveDialogVisible(false);
       setMembershipToRemove(null);
-      loadMemberships();
+      loadData();
     } catch (err: any) {
       Alert.alert('Error', formatErrorMessage(err));
     } finally {
@@ -141,7 +118,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
       await transferOwnership(accessToken, propertyId, { toUserId: membershipToTransfer.userId });
       setTransferDialogVisible(false);
       setMembershipToTransfer(null);
-      loadMemberships();
+      loadData();
       Alert.alert('Success', 'Ownership transferred successfully');
     } catch (err: any) {
       Alert.alert('Error', formatErrorMessage(err));
@@ -150,64 +127,79 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
     }
   };
 
-  const renderItem = ({ item }: { item: MembershipResponse }) => (
-    <GlassCard style={styles.card}>
-      <View style={styles.cardInfo}>
-        <Text style={styles.name}>{item.fullName}</Text>
-        <Text style={styles.email}>{item.email}</Text>
-        <StatusPill status={item.roleName || item.roleCode} style={styles.pillOverride} />
-      </View>
-      <View style={styles.cardActions}>
-        {item.roleCode !== 'PROPERTY_OWNER' && (
-          <TouchableOpacity onPress={() => triggerTransferOwnership(item)} style={styles.actionBtn}>
-            <MaterialIcons name="swap-horiz" size={20} color={theme.Colors.primary} />
-          </TouchableOpacity>
-        )}
-        {item.roleCode !== 'PROPERTY_OWNER' && (
-          <TouchableOpacity onPress={() => triggerRemoveRole(item)} style={styles.actionBtn}>
-            <MaterialIcons name="delete-outline" size={20} color={theme.Colors.error} />
-          </TouchableOpacity>
-        )}
-      </View>
-    </GlassCard>
-  );
+  const renderMembershipItem = ({ item }: { item: MembershipResponse }) => {
+    const isOwner = item.accessType === 'FULL_ACCESS';
 
-  const renderHeaderRight = () => (
-    <TouchableOpacity onPress={() => setSearchModalVisible(true)} style={styles.addBtn}>
-      <MaterialIcons name="person-add" size={24} color={theme.Colors.primary} />
-    </TouchableOpacity>
-  );
+    return (
+      <GlassCard style={styles.card}>
+        <View style={styles.cardInfo}>
+          <Text style={styles.name}>{item.fullName || 'Unnamed User'}</Text>
+          <Text style={styles.email}>{item.email || 'No email provided'}</Text>
+          <StatusPill
+            status={item.title || 'Member'}
+            style={styles.pillOverride}
+          />
+        </View>
+
+        <View style={styles.cardActions}>
+          {!isOwner && (
+            <>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => triggerTransferOwnership(item)}
+                accessibilityLabel="Transfer Ownership"
+              >
+                <MaterialIcons name="swap-horiz" size={20} color={theme.Colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => triggerRemoveRole(item)}
+                accessibilityLabel="Remove Member"
+              >
+                <MaterialIcons name="delete-outline" size={20} color={theme.Colors.error} />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </GlassCard>
+    );
+  };
 
   return (
-    <PageShell contentContainerStyle={styles.container}>
-      <ResponsiveHeader 
-        title="Manage Staff" 
-        onBack={() => router.back()} 
-        rightAction={renderHeaderRight()}
+    <PageShell onScroll={handleScroll}>
+      <ResponsiveHeader
+        title="Team & Staff"
+        onBack={() => router.back()}
+        rightAction={
+          <ActionButton
+            title="Invite Staff"
+            onPress={() => setInviteModalVisible(true)}
+          />
+        }
       />
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.Colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={memberships.filter(m => m.roleCode !== 'PROPERTY_TENANT')}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.list}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No staff members found.</Text>
-          }
-        />
-      )}
+      <View style={styles.container}>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={theme.Colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={memberships}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMembershipItem}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No team members assigned yet</Text>
+            }
+          />
+        )}
+      </View>
 
-      {/* Remove Role confirmation */}
+      {/* Remove Confirmation */}
       <ConfirmDialog
         visible={removeDialogVisible}
-        title="Remove Staff"
+        title="Remove Staff Member"
         message={`Are you sure you want to remove ${membershipToRemove?.fullName || ''} from this property?`}
         onConfirm={executeRemoveRole}
         onCancel={() => {
@@ -215,7 +207,6 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
           setMembershipToRemove(null);
         }}
         confirmText="Remove"
-        isDestructive
         loading={isRemoving}
       />
 
@@ -223,7 +214,7 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
       <ConfirmDialog
         visible={transferDialogVisible}
         title="Transfer Ownership"
-        message={`Transfer ownership to ${membershipToTransfer?.fullName || ''}? You will be demoted to Manager.`}
+        message={`Transfer ownership to ${membershipToTransfer?.fullName || ''}?`}
         onConfirm={executeTransferOwnership}
         onCancel={() => {
           setTransferDialogVisible(false);
@@ -233,82 +224,62 @@ export default function MembershipManagementScreen({ propertyId }: Props) {
         loading={isTransferring}
       />
 
-      {/* Add Staff Modal */}
-      <Modal visible={searchModalVisible} animationType="slide" transparent>
+      {/* Generate Invite Modal */}
+      <Modal visible={inviteModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Staff Member</Text>
-              <TouchableOpacity onPress={() => {
-                setSearchModalVisible(false);
-                setSelectedUser(null);
-              }}>
+              <Text style={styles.modalTitle}>Invite Staff Member</Text>
+              <TouchableOpacity onPress={() => setInviteModalVisible(false)}>
                 <MaterialIcons name="close" size={24} color={theme.Colors.onSurface} />
               </TouchableOpacity>
             </View>
 
-            {!selectedUser ? (
-              <>
-                <Text style={styles.label}>Search User by Phone</Text>
-                <View style={styles.searchRow}>
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Enter phone number"
-                    value={searchPhone}
-                    onChangeText={setSearchPhone}
-                    keyboardType="phone-pad"
-                  />
-                  <ActionButton 
-                    title="Search" 
-                    onPress={handleSearch} 
-                    loading={searching}
-                    style={styles.searchBtn} 
-                  />
-                </View>
+            <Text style={styles.label}>Staff Title / Role</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="e.g. Manager, Caretaker, Supervisor"
+              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              value={inviteTitle}
+              onChangeText={setInviteTitle}
+            />
 
-                <FlatList
-                  data={searchResults}
-                  keyExtractor={item => item.id}
-                  style={{ maxHeight: 200, marginTop: 10 }}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.userResult} onPress={() => setSelectedUser(item)}>
-                      <Text style={styles.userName}>{item.fullName}</Text>
-                      <Text style={styles.userPhone}>{item.phoneNumber}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </>
-            ) : (
-              <>
-                <Text style={styles.label}>Selected User</Text>
-                <View style={styles.userResult}>
-                  <Text style={styles.userName}>{selectedUser.fullName}</Text>
-                  <Text style={styles.userPhone}>{selectedUser.phoneNumber}</Text>
-                </View>
+            <Text style={[styles.label, { marginTop: theme.Spacing.md }]}>Access Level</Text>
+            <View style={styles.roleOptions}>
+              <TouchableOpacity
+                style={[styles.roleOption, inviteAccessType === 'CUSTOM_ACCESS' && styles.roleOptionActive]}
+                onPress={() => setInviteAccessType('CUSTOM_ACCESS')}
+              >
+                <Text style={[styles.roleOptionText, inviteAccessType === 'CUSTOM_ACCESS' && styles.roleOptionTextActive]}>
+                  Custom Access
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleOption, inviteAccessType === 'FULL_ACCESS' && styles.roleOptionActive]}
+                onPress={() => setInviteAccessType('FULL_ACCESS')}
+              >
+                <Text style={[styles.roleOptionText, inviteAccessType === 'FULL_ACCESS' && styles.roleOptionTextActive]}>
+                  Full Access
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-                <Text style={[styles.label, { marginTop: theme.Spacing.md }]}>Select Role</Text>
-                <View style={styles.roleOptions}>
-                  <TouchableOpacity 
-                    style={[styles.roleOption, selectedRole === 'PROPERTY_MANAGER' && styles.roleOptionActive]}
-                    onPress={() => setSelectedRole('PROPERTY_MANAGER')}
-                  >
-                    <Text style={[styles.roleOptionText, selectedRole === 'PROPERTY_MANAGER' && styles.roleOptionTextActive]}>Manager</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.roleOption, selectedRole === 'PROPERTY_CARETAKER' && styles.roleOptionActive]}
-                    onPress={() => setSelectedRole('PROPERTY_CARETAKER')}
-                  >
-                    <Text style={[styles.roleOptionText, selectedRole === 'PROPERTY_CARETAKER' && styles.roleOptionTextActive]}>Caretaker</Text>
-                  </TouchableOpacity>
-                </View>
+            <Text style={[styles.label, { marginTop: theme.Spacing.md }]}>Max Uses</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="1"
+              placeholderTextColor={theme.Colors.onSurfaceVariant}
+              value={inviteMaxUses}
+              onChangeText={setInviteMaxUses}
+              keyboardType="number-pad"
+            />
 
-                <ActionButton 
-                  title="Assign Role" 
-                  onPress={handleAssignRole}
-                  style={styles.assignBtn}
-                />
-              </>
-            )}
+            <ActionButton
+              title="Generate Join Code"
+              onPress={handleGenerateInvite}
+              loading={generatingInvite}
+              style={styles.assignBtn}
+            />
           </View>
         </View>
       </Modal>
@@ -356,7 +327,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: theme.Spacing.lg,
-    minHeight: '50%',
+    minHeight: '40%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -364,37 +335,24 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '700' },
+  modalTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '700', color: theme.Colors.onSurface },
   label: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '600', marginBottom: theme.Spacing.sm, color: theme.Colors.onSurfaceVariant },
-  searchRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   searchInput: {
-    flex: 1,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     borderRadius: 8,
     padding: 12,
     fontSize: theme.Typography.bodyLarge.fontSize,
     height: 48,
+    color: theme.Colors.onSurface,
   },
-  searchBtn: {
-    justifyContent: 'center',
-    height: 48,
-  },
-  userResult: {
-    padding: theme.Spacing.md,
-    backgroundColor: theme.Colors.surfaceContainer,
-    borderRadius: 8,
-    marginBottom: theme.Spacing.sm,
-  },
-  userName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '600' },
-  userPhone: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs },
-  roleOptions: { flexDirection: 'row', gap: 12 },
+  roleOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   roleOption: {
-    flex: 1,
     borderWidth: 1,
     borderColor: theme.Colors.outlineVariant,
     borderRadius: 8,
-    padding: theme.Spacing.md,
+    paddingHorizontal: theme.Spacing.md,
+    paddingVertical: theme.Spacing.sm,
     alignItems: 'center',
   },
   roleOptionActive: {
@@ -407,4 +365,3 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: theme.Spacing.lg,
   },
 });
-

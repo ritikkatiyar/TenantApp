@@ -5,13 +5,14 @@ export interface MembershipResponse {
   userId: string;
   fullName: string;
   email: string;
-  roleCode: string;
+  roleId: string;
   roleName: string;
+  accessType?: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
 }
 
 export interface AssignRoleRequest {
   userId: string;
-  roleCode: string;
+  roleId: string;
 }
 
 export interface TransferOwnershipRequest {

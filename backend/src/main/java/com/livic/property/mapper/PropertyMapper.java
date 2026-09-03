@@ -3,13 +3,16 @@ package com.livic.property.mapper;
 import com.livic.property.domain.PropertyTbl;
 import com.livic.property.dto.PropertyDTOs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class PropertyMapper {
 
     private PropertyMapper() {
     }
 
     public static PropertyTbl toEntity(PropertyDTOs.CreatePropertyRequest request) {
-        java.util.List<String> am = request.amenities() != null ? new java.util.ArrayList<>(request.amenities()) : new java.util.ArrayList<>();
+        List<String> am = request.amenities() != null ? new ArrayList<>(request.amenities()) : new ArrayList<>();
         return PropertyTbl.builder()
                 .name(request.name())
                 .address(request.address())
@@ -30,5 +33,22 @@ public final class PropertyMapper {
             property.getAmenities().clear();
             property.getAmenities().addAll(request.amenities());
         }
+    }
+
+    public static PropertyDTOs.PropertyResponse toResponse(PropertyTbl property) {
+        if (property == null) {
+            return null;
+        }
+        return new PropertyDTOs.PropertyResponse(
+                property.getId(),
+                property.getName(),
+                property.getAddress(),
+                property.getCity(),
+                property.getLandmark(),
+                property.getTotalFloors(),
+                null,
+                property.isActive(),
+                property.getAmenities() != null ? property.getAmenities() : List.of()
+        );
     }
 }

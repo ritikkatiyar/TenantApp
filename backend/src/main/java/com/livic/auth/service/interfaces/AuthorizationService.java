@@ -1,24 +1,28 @@
 package com.livic.auth.service.interfaces;
 
 import com.livic.common.enums.OwnerModule;
-
+import com.livic.common.enums.ResourceType;
 
 import java.util.UUID;
 
-
 public interface AuthorizationService {
+
+    // Core Property Authorization
     boolean hasPermission(UUID propertyId, String permissionCode);
+
     boolean hasAnyPermission(UUID propertyId, String... permissionCodes);
-    boolean hasRole(UUID propertyId, String roleCode);
-    boolean hasAnyRole(UUID propertyId, String... roleCodes);
 
-    boolean hasPermissionByUnitId(UUID unitId, String permissionCode);
-    boolean hasPermissionByLeaseId(UUID leaseId, String permissionCode);
-    boolean hasPermissionByAssignmentId(UUID assignmentId, String permissionCode);
-    boolean hasPermissionByItemId(UUID itemId, String permissionCode);
-    boolean hasPermissionByRentCycleId(UUID rentCycleId, String permissionCode);
+    boolean hasFullAccess(UUID propertyId);
 
+    // Generic Resource Authorization
+    boolean hasPermission(ResourceType resourceType, UUID resourceId, String permissionCode);
+
+    boolean hasAnyPermission(ResourceType resourceType, UUID resourceId, String... permissionCodes);
+
+    boolean hasFullAccess(ResourceType resourceType, UUID resourceId);
+
+    // Media Authorization
     boolean hasMediaAccess(OwnerModule ownerModule, UUID referenceId, String action);
+
     boolean hasMediaAssetAccess(UUID mediaAssetId, String action);
 }
-

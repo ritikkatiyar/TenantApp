@@ -54,7 +54,7 @@ export function PropertyCard({
                     token={accessToken} 
                     onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
                     resetRotationTrigger={resetRotationTrigger}
-                    maxContainerHeight={250}
+                    maxContainerHeight={232}
                   />
                 )}
               </View>
@@ -164,7 +164,7 @@ export function PropertyCard({
               token={accessToken} 
               onFloorClick={(floorNum) => handleFloorClick(item.id, floorNum)} 
               resetRotationTrigger={resetRotationTrigger}
-              maxContainerHeight={210}
+              maxContainerHeight={180}
             />
           )}
         </View>

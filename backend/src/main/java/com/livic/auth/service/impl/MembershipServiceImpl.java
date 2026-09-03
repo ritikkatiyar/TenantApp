@@ -1,10 +1,13 @@
 package com.livic.auth.service.impl;
 
-import com.livic.auth.domain.MembershipRoleTbl;
+import com.livic.auth.domain.MembershipPermissionTbl;
 import com.livic.auth.domain.MembershipTbl;
+import com.livic.auth.domain.PermissionTbl;
 import com.livic.auth.service.interfaces.MembershipCrudService;
-import com.livic.auth.service.interfaces.MembershipRoleCrudService;
+import com.livic.auth.service.interfaces.MembershipPermissionCrudService;
 import com.livic.auth.service.interfaces.MembershipService;
+import com.livic.auth.service.interfaces.PermissionCrudService;
+import com.livic.common.enums.AccessType;
 import com.livic.common.exception.BusinessException;
 import com.livic.user.facade.UserFacade;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -23,63 +27,33 @@ import java.util.UUID;
 public class MembershipServiceImpl implements MembershipService {
 
     private final MembershipCrudService membershipCrudService;
-    private final MembershipRoleCrudService membershipRoleCrudService;
+    private final MembershipPermissionCrudService membershipPermissionCrudService;
+    private final PermissionCrudService permissionCrudService;
     private final UserFacade userFacade;
-
-    @Override
-    @Transactional
-    public void ensureTenantRole(UUID tenantId, UUID propertyId, UUID assignedByUserId) {
-        List<MembershipTbl> existing = membershipCrudService.findByUserIdAndPropertyId(tenantId, propertyId);
-        if (existing.stream().anyMatch(m -> "PROPERTY_TENANT".equals(m.getRole().getCode()))) {
-            return;
-        }
-
-        userFacade.getUserById(tenantId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Tenant user not found"));
-
-        MembershipRoleTbl tenantRole = membershipRoleCrudService.findByCode("PROPERTY_TENANT")
-                .orElseThrow(() -> new RuntimeException("PROPERTY_TENANT role not found"));
-
-        MembershipTbl membership = MembershipTbl.builder()
-                .userId(tenantId)
-                .propertyId(propertyId)
-                .role(tenantRole)
-                .assignedById(assignedByUserId)
-                .build();
-        
-        membershipCrudService.save(membership);
-    }
-
-    private void removeOtherTenantMemberships(List<MembershipTbl> memberships) {
-        List<MembershipTbl> tenantsToRemove = memberships.stream()
-                .filter(m -> "PROPERTY_TENANT".equals(m.getRole().getCode()))
-                .toList();
-        if (!tenantsToRemove.isEmpty()) {
-            membershipCrudService.deleteAll(tenantsToRemove);
-        }
-    }
-
-    @Override
-    @Transactional
-    public void removeTenantRole(UUID tenantId, UUID propertyId) {
-        List<MembershipTbl> memberships = membershipCrudService.findByUserIdAndPropertyId(tenantId, propertyId);
-        removeOtherTenantMemberships(memberships);
-    }
 
     @Override
     @Transactional
     public void createOwnerMembership(UUID propertyId, UUID ownerId) {
         userFacade.getUserById(ownerId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Owner user not found"));
-        
-        MembershipRoleTbl ownerRole = membershipRoleCrudService.findByCode("PROPERTY_OWNER")
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "PROPERTY_OWNER role not found"));
+
+        Optional<MembershipTbl> existing = membershipCrudService.findByUserIdAndPropertyId(ownerId, propertyId);
+        if (existing.isPresent()) {
+            MembershipTbl m = existing.get();
+            m.setAccessType(AccessType.FULL_ACCESS);
+            m.setTitle("Owner");
+            m.setActive(true);
+            membershipCrudService.save(m);
+            return;
+        }
 
         MembershipTbl membership = MembershipTbl.builder()
                 .userId(ownerId)
                 .propertyId(propertyId)
-                .role(ownerRole)
-                .assignedById(ownerId)
+                .title("Owner")
+                .accessType(AccessType.FULL_ACCESS)
+                .isActive(true)
+                .assignedBy(ownerId)
                 .build();
         
         membershipCrudService.save(membership);
@@ -87,36 +61,117 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     @Transactional
-    public MembershipTbl assignRole(UUID propertyId, UUID userId, String roleCode, UUID assignedByUserId) {
-        if ("PROPERTY_OWNER".equals(roleCode)) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Use ownership transfer to assign PROPERTY_OWNER");
-        }
-        if ("PROPERTY_TENANT".equals(roleCode)) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Tenant roles are assigned automatically via leases");
-        }
-        
-        if (membershipCrudService.existsByUserIdAndPropertyIdAndRoleCode(userId, propertyId, roleCode)) {
-            throw new BusinessException(HttpStatus.CONFLICT, "User already has this role on the property");
+    public MembershipTbl createMembership(UUID propertyId, UUID userId, String title, AccessType accessType, Set<String> permissionCodes, UUID assignedByUserId) {
+        if (membershipCrudService.existsByUserIdAndPropertyId(userId, propertyId)) {
+            throw new BusinessException(HttpStatus.CONFLICT, "User is already a member of this property");
         }
         
         userFacade.getUserById(userId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
-        MembershipRoleTbl role = membershipRoleCrudService.findByCode(roleCode)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Role not found"));
+
+        if (AccessType.FULL_ACCESS.equals(accessType)) {
+            boolean callerHasFullAccess = membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(assignedByUserId, propertyId, AccessType.FULL_ACCESS);
+            if (!callerHasFullAccess) {
+                throw new BusinessException(HttpStatus.FORBIDDEN, "Only members with Full Access can grant Full Access.");
+            }
+        }
         
         MembershipTbl membership = MembershipTbl.builder()
                 .userId(userId)
                 .propertyId(propertyId)
-                .role(role)
-                .assignedById(assignedByUserId)
+                .title(title != null && !title.isBlank() ? title : "Member")
+                .accessType(accessType != null ? accessType : AccessType.CUSTOM_ACCESS)
+                .isActive(true)
+                .assignedBy(assignedByUserId)
                 .build();
                 
-        return membershipCrudService.save(membership);
+        MembershipTbl saved = membershipCrudService.save(membership);
+
+        if (AccessType.CUSTOM_ACCESS.equals(saved.getAccessType()) && permissionCodes != null && !permissionCodes.isEmpty()) {
+            List<PermissionTbl> permissions = permissionCrudService.findByCodeIn(permissionCodes);
+            for (PermissionTbl p : permissions) {
+                membershipPermissionCrudService.save(MembershipPermissionTbl.builder()
+                        .membership(saved)
+                        .permission(p)
+                        .build());
+            }
+        }
+
+        return saved;
     }
 
     @Override
     @Transactional
-    public void removeRole(UUID propertyId, UUID membershipId) {
+    public MembershipTbl updateMembership(UUID propertyId, UUID membershipId, String title, AccessType accessType, Boolean isActive, Set<String> permissionCodes, UUID actorUserId) {
+        MembershipTbl membership = membershipCrudService.findById(membershipId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Membership not found"));
+
+        if (!propertyId.equals(membership.getPropertyId())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Membership does not belong to this property");
+        }
+
+        boolean actorHasFullAccess = membershipCrudService.existsByUserIdAndPropertyIdAndAccessType(actorUserId, propertyId, AccessType.FULL_ACCESS);
+        if (!actorHasFullAccess) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Only Full Access members can update membership permissions and access.");
+        }
+
+        if (title != null && !title.isBlank()) {
+            membership.setTitle(title.trim());
+        }
+
+        if (accessType != null) {
+            if (membership.isFullAccess() && AccessType.CUSTOM_ACCESS.equals(accessType)) {
+                ensureNotDemotingLastFullAccess(propertyId, membership.getId());
+            }
+            membership.setAccessType(accessType);
+        }
+
+        if (isActive != null) {
+            if (membership.isFullAccess() && !isActive) {
+                ensureNotDemotingLastFullAccess(propertyId, membership.getId());
+            }
+            membership.setActive(isActive);
+        }
+
+        MembershipTbl updated = membershipCrudService.save(membership);
+
+        if (permissionCodes != null) {
+            membershipPermissionCrudService.deleteByMembershipId(updated.getId());
+            if (AccessType.CUSTOM_ACCESS.equals(updated.getAccessType()) && !permissionCodes.isEmpty()) {
+                List<PermissionTbl> permissions = permissionCrudService.findByCodeIn(permissionCodes);
+                for (PermissionTbl p : permissions) {
+                    membershipPermissionCrudService.save(MembershipPermissionTbl.builder()
+                            .membership(updated)
+                            .permission(p)
+                            .build());
+                }
+            }
+        }
+
+        return updated;
+    }
+
+    @Override
+    @Transactional
+    public void toggleMembershipActive(UUID propertyId, UUID membershipId, boolean isActive, UUID actorUserId) {
+        MembershipTbl membership = membershipCrudService.findById(membershipId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Membership not found"));
+
+        if (!propertyId.equals(membership.getPropertyId())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Membership does not belong to this property");
+        }
+
+        if (membership.isFullAccess() && !isActive) {
+            ensureNotDemotingLastFullAccess(propertyId, membership.getId());
+        }
+
+        membership.setActive(isActive);
+        membershipCrudService.save(membership);
+    }
+
+    @Override
+    @Transactional
+    public void removeMembership(UUID propertyId, UUID membershipId, UUID actorUserId) {
         MembershipTbl membership = membershipCrudService.findById(membershipId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Membership not found"));
         
@@ -124,10 +179,11 @@ public class MembershipServiceImpl implements MembershipService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Membership does not belong to this property");
         }
 
-        if ("PROPERTY_OWNER".equals(membership.getRole().getCode())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot remove the PROPERTY_OWNER role directly. Use ownership transfer.");
+        if (membership.isFullAccess()) {
+            ensureNotDemotingLastFullAccess(propertyId, membership.getId());
         }
 
+        membershipPermissionCrudService.deleteByMembershipId(membership.getId());
         membershipCrudService.delete(membership);
     }
 
@@ -137,44 +193,34 @@ public class MembershipServiceImpl implements MembershipService {
         userFacade.getUserById(toUserId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Target owner user not found"));
 
-        MembershipRoleTbl ownerRole = membershipRoleCrudService.findByCode("PROPERTY_OWNER")
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "PROPERTY_OWNER role not found"));
-        MembershipRoleTbl managerRole = membershipRoleCrudService.findByCode("PROPERTY_MANAGER")
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "PROPERTY_MANAGER role not found"));
+        Optional<MembershipTbl> toUserMembershipOpt = membershipCrudService.findByUserIdAndPropertyId(toUserId, propertyId);
+        if (toUserMembershipOpt.isPresent()) {
+            MembershipTbl m = toUserMembershipOpt.get();
+            m.setAccessType(AccessType.FULL_ACCESS);
+            m.setTitle("Owner");
+            m.setActive(true);
+            membershipCrudService.save(m);
+        } else {
+            MembershipTbl newMembership = MembershipTbl.builder()
+                    .userId(toUserId)
+                    .propertyId(propertyId)
+                    .title("Owner")
+                    .accessType(AccessType.FULL_ACCESS)
+                    .isActive(true)
+                    .assignedBy(currentOwnerId)
+                    .build();
+            membershipCrudService.save(newMembership);
+        }
+    }
 
-        // Demote current owner
-        List<MembershipTbl> currentOwnerMemberships = membershipCrudService.findByUserIdAndPropertyId(currentOwnerId, propertyId);
-        MembershipTbl currentOwnerMembership = currentOwnerMemberships.stream()
-                .filter(m -> "PROPERTY_OWNER".equals(m.getRole().getCode()))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Current user is not the property owner"));
-
-        currentOwnerMembership.setRole(managerRole);
-        membershipCrudService.save(currentOwnerMembership);
-
-        // Promote or add new owner
-        List<MembershipTbl> toUserMemberships = membershipCrudService.findByUserIdAndPropertyId(toUserId, propertyId);
-        Optional<MembershipTbl> toUserOwnerMembership = toUserMemberships.stream()
-                .filter(m -> "PROPERTY_OWNER".equals(m.getRole().getCode()))
-                .findFirst();
-
-        if (toUserOwnerMembership.isEmpty()) {
-            Optional<MembershipTbl> managerOrCaretakerMembership = toUserMemberships.stream()
-                    .filter(m -> !m.getRole().getCode().equals("PROPERTY_TENANT"))
-                    .findFirst();
-                    
-            if (managerOrCaretakerMembership.isPresent()) {
-                managerOrCaretakerMembership.get().setRole(ownerRole);
-                membershipCrudService.save(managerOrCaretakerMembership.get());
-            } else {
-                MembershipTbl newMembership = MembershipTbl.builder()
-                        .userId(toUserId)
-                        .propertyId(propertyId)
-                        .role(ownerRole)
-                        .assignedById(currentOwnerId)
-                        .build();
-                membershipCrudService.save(newMembership);
-            }
+    private void ensureNotDemotingLastFullAccess(UUID propertyId, UUID currentMembershipId) {
+        List<MembershipTbl> fullAccessMembers = membershipCrudService.findByPropertyIdAndAccessType(propertyId, AccessType.FULL_ACCESS);
+        long activeFullAccessCount = fullAccessMembers.stream()
+                .filter(MembershipTbl::isActive)
+                .filter(m -> !m.getId().equals(currentMembershipId))
+                .count();
+        if (activeFullAccessCount < 1) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Cannot remove, deactivate, or demote the only active Full Access member on the property.");
         }
     }
 }

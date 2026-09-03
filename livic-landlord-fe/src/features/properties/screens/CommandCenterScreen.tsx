@@ -173,13 +173,11 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   });
 
 
-  const isPageLoading = isLoading || metricsLoading;
-
   const renderStatCard = (label: string, value: string, icon: keyof typeof MaterialIcons.glyphMap, color = theme.Colors.primary, valueColor?: string) => (
     <StatCard
       label={label}
       value={value}
-      loading={isPageLoading}
+      loading={metricsLoading}
       iconName={icon}
       iconColor={color}
       valueColor={valueColor || color}
@@ -268,7 +266,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
 
   const ListEmptyComponent = () => {
     // Don't show the empty state while the initial fetch is in progress.
-    if (isPageLoading) return null;
+    if (isLoading) return null;
     return <CommandCenterEmptyState onNavigateToCreateProperty={onNavigateToCreateProperty} />;
   };
 
@@ -292,8 +290,8 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     <>
       <PageShell scrollable edges={isDesktop ? ['top'] : []} onEndReached={handleEndReached}>
         <ListHeader />
-        {isPageLoading ? (
-          <SkeletonCardGrid count={1} />
+        {isLoading ? (
+          <SkeletonCardGrid count={isDesktop ? 2 : 1} isDesktop={isDesktop} />
         ) : properties.length === 0 ? (
           <ListEmptyComponent />
         ) : (
@@ -308,7 +306,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
             {hasMore && (
               <View style={{ paddingVertical: 24, alignItems: 'center', justifyContent: 'center' }}>
                 <ActivityIndicator size="small" color={theme.Colors.primary} />
-                <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 6, fontWeight: '700', letterSpacing: 0.5 }}>
+                <Text style={[{ color: theme.Colors.onSurfaceVariant, marginTop: 6, fontWeight: '700', letterSpacing: 0.5 }, theme.Typography.labelSmall]}>
                   Loading more properties...
                 </Text>
               </View>

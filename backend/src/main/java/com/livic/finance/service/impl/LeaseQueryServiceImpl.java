@@ -95,13 +95,4 @@ public class LeaseQueryServiceImpl implements LeaseQueryService {
         boolean isOccupied = leaseCrudService.existsActiveLeaseOnDate(unitId, LeaseStatus.ACTIVE, date);
         return !isOccupied;
     }
-
-    @Override
-    public boolean existsByUserIdAndPropertyIdAndStatus(UUID userId, UUID propertyId, LeaseStatus status) {
-        List<UnitSummaryDTO> units = unitFacade.getUnitsByPropertyId(propertyId);
-        List<UUID> unitIds = units.stream().map(UnitSummaryDTO::id).toList();
-        if (unitIds.isEmpty()) return false;
-        List<LeaseTbl> leases = leaseCrudService.findByUnitIdInAndStatus(unitIds, status);
-        return leases.stream().anyMatch(l -> l.getUserId().equals(userId));
-    }
 }

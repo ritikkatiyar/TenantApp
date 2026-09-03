@@ -1,6 +1,7 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text, Animated, PanResponder, Platform } from 'react-native';
+import { View, StyleSheet, Text, Animated, PanResponder, Platform } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { getAllFloorsLayout, UnitResponse } from '@/src/features/properties/api/unit.api';
 import { logger } from '@/src/utils/logger';
 
@@ -13,13 +14,13 @@ interface Building3DViewProps {
 }
 
 function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) {
-  const pulseAnim = useRef(new Animated.Value(0.35)).current;
+  const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.85, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 0.35, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.85, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.4, duration: 900, useNativeDriver: true }),
       ])
     );
     anim.start();
@@ -30,9 +31,9 @@ function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) 
   const tileBgColor = isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 104, 117, 0.08)';
 
   return (
-    <View style={styles3DSkeleton.wrapper}>
+    <Animated.View style={[styles3DSkeleton.wrapper, { opacity: pulseAnim }]}>
       {[0, 1, 2].map((idx) => (
-        <Animated.View
+        <View
           key={idx}
           style={[
             styles3DSkeleton.plate,
@@ -44,7 +45,6 @@ function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) 
                 { rotateX: '60deg' },
                 { rotateZ: '-45deg' },
               ],
-              opacity: pulseAnim,
             },
           ]}
         >
@@ -53,16 +53,16 @@ function Building3DSkeleton({ isDark, theme }: { isDark: boolean; theme: any }) 
             <View style={[styles3DSkeleton.cell, { flex: 1.2, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.2)' : 'rgba(0, 104, 117, 0.15)' }]} />
             <View style={[styles3DSkeleton.cell, { flex: 0.8, backgroundColor: isDark ? 'rgba(0, 229, 255, 0.35)' : 'rgba(0, 104, 117, 0.25)' }]} />
           </View>
-        </Animated.View>
+        </View>
       ))}
-    </View>
+    </Animated.View>
   );
 }
 
 const styles3DSkeleton = StyleSheet.create({
   wrapper: {
-    width: 220,
-    height: 180,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -74,6 +74,7 @@ const styles3DSkeleton = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1.5,
     padding: 5,
+    backfaceVisibility: 'hidden',
   },
   gridRow: {
     flexDirection: 'row',
@@ -89,15 +90,24 @@ const styles3DSkeleton = StyleSheet.create({
 export default function Building3DView({ propertyId, token, onFloorClick, resetRotationTrigger, maxContainerHeight = 260 }: Building3DViewProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const [units, setUnits] = useState<UnitResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const { data: units = [], isLoading: loading } = useQuery<UnitResponse[]>({
+    queryKey: ['property-layouts', propertyId],
+    queryFn: () => getAllFloorsLayout(propertyId, token),
+    enabled: !!propertyId && !!token,
+    staleTime: 1000 * 60 * 5,
+  });
+
   const containerRef = useRef<View>(null);
-  const [containerDimensions, setContainerDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [containerDimensions, setContainerDimensions] = useState<{ width: number; height: number }>({
+    width: 280,
+    height: maxContainerHeight,
+  });
 
   const handleLayout = (event: any) => {
     const { width, height } = event.nativeEvent.layout;
     if (width > 0 && height > 0) {
-      if (!containerDimensions || Math.abs(containerDimensions.width - width) > 2 || Math.abs(containerDimensions.height - height) > 2) {
+      if (Math.abs(containerDimensions.width - width) > 5 || Math.abs(containerDimensions.height - height) > 5) {
         setContainerDimensions({ width, height });
       }
     }
@@ -198,19 +208,17 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     buildingWidth,
   });
 
-  useEffect(() => {
-    stateRef.current = {
-      floorNumbers,
-      minFloor,
-      dynamicFloorHeight,
-      stackHeightOffset,
-      buildingHeight,
-      visualIsoHeight,
-      containerHeight,
-      onFloorClick,
-      buildingWidth,
-    };
-  });
+  stateRef.current = {
+    floorNumbers,
+    minFloor,
+    dynamicFloorHeight,
+    stackHeightOffset,
+    buildingHeight,
+    visualIsoHeight,
+    containerHeight,
+    onFloorClick,
+    buildingWidth,
+  };
 
   useEffect(() => {
     const animations = Object.keys(floorElevations).map((fKey) => {
@@ -283,26 +291,6 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     outputRange: ['0deg', '90deg'],
   });
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchLayouts = async () => {
-      try {
-        const layout = await getAllFloorsLayout(propertyId, token);
-        if (isMounted) {
-          setUnits(layout);
-        }
-      } catch (error) {
-        logger.error('Failed to fetch layouts for 3D building:', error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    fetchLayouts();
-    return () => {
-      isMounted = false;
-    };
-  }, [propertyId, token]);
-
   const handleResetRotation = () => {
     lastRotation.current = -45;
     lastRotationX.current = 60;
@@ -334,10 +322,10 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
   return (
     <View 
       onLayout={handleLayout}
-      style={{ position: 'relative', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', minHeight: maxContainerHeight, overflow: 'visible' }}
+      style={{ position: 'relative', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', overflow: 'visible' }}
       {...(webMouseProps as any)}
     >
-      {loading || !containerDimensions ? (
+      {loading ? (
         <Building3DSkeleton isDark={isDark} theme={theme} />
       ) : !units || units.length === 0 ? (
         <View style={styles.emptyContainer}>

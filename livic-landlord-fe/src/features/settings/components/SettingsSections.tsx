@@ -14,16 +14,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { EmptyState } from '@/src/components/common/display/EmptyState';
-import { JoinCodeResponse, RoleResponse } from '@/src/features/properties/api/rolePermission.api';
+import { MembershipResponse } from '@/src/features/properties/api/membership.api';
+import { JoinCodeResponse } from '@/src/features/properties/api/rolePermission.api';
+import { ActiveTab } from '@/src/features/settings/hooks/useSettings';
 
-type ActiveTab = 'roles' | 'invites' | 'preferences';
 type ThemeLike = any;
 type StylesLike = Record<string, any>;
 
 type SettingsHeroProps = {
   activeTab: ActiveTab;
   isOwner: boolean;
-  onCreateRolePress: () => void;
   onGenerateInvitePress: () => void;
   styles: StylesLike;
   theme: ThemeLike;
@@ -32,7 +32,6 @@ type SettingsHeroProps = {
 export function SettingsHero({
   activeTab,
   isOwner,
-  onCreateRolePress,
   onGenerateInvitePress,
   styles,
   theme,
@@ -40,9 +39,9 @@ export function SettingsHero({
   return (
     <View style={styles.heroSection}>
       <View>
-        <Text style={styles.heroTitle}>System & Team Hub</Text>
+        <Text style={styles.heroTitle}>Team & System Hub</Text>
         <Text style={styles.heroSubtitle}>
-          Configure property role matrices, staff onboarding keys, automated invoices & subscriptions
+          Configure member access permissions, staff onboarding keys, automated invoices & preferences
         </Text>
       </View>
 
@@ -50,7 +49,7 @@ export function SettingsHero({
         <View style={styles.heroActions}>
           <TouchableOpacity
             style={styles.actionPillBtn}
-            onPress={activeTab === 'invites' ? onGenerateInvitePress : onCreateRolePress}
+            onPress={onGenerateInvitePress}
             activeOpacity={0.8}
           >
             <LinearGradient
@@ -60,13 +59,11 @@ export function SettingsHero({
               style={styles.actionPillGradient}
             >
               <MaterialIcons
-                name={activeTab === 'invites' ? 'vpn-key' : 'add'}
+                name="vpn-key"
                 size={18}
                 color={theme.Colors.surfaceContainerLowest}
               />
-              <Text style={styles.actionPillText}>
-                {activeTab === 'invites' ? 'GENERATE INVITE' : 'CREATE ROLE'}
-              </Text>
+              <Text style={styles.actionPillText}>GENERATE INVITE</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -77,7 +74,7 @@ export function SettingsHero({
 
 type SettingsHubGridProps = {
   activeTab: ActiveTab;
-  rolesCount: number;
+  membersCount: number;
   invitesCount: number;
   onTabChange: (tab: ActiveTab) => void;
   onBillingPress: () => void;
@@ -87,7 +84,7 @@ type SettingsHubGridProps = {
 
 export function SettingsHubGrid({
   activeTab,
-  rolesCount,
+  membersCount,
   invitesCount,
   onTabChange,
   onBillingPress,
@@ -96,18 +93,18 @@ export function SettingsHubGrid({
 }: SettingsHubGridProps) {
   return (
     <View style={styles.hubGrid}>
-      <TouchableOpacity activeOpacity={0.85} onPress={() => onTabChange('roles')} style={styles.hubCardTouch}>
-        <GlassCard style={[styles.hubCard, activeTab === 'roles' && styles.hubCardActive]}>
+      <TouchableOpacity activeOpacity={0.85} onPress={() => onTabChange('members')} style={styles.hubCardTouch}>
+        <GlassCard style={[styles.hubCard, activeTab === 'members' && styles.hubCardActive]}>
           <View style={styles.hubCardHeader}>
             <View style={[styles.hubIconHalo, { backgroundColor: 'rgba(0, 104, 117, 0.12)' }]}>
-              <MaterialIcons name="admin-panel-settings" size={24} color={theme.Colors.primary} />
+              <MaterialIcons name="people" size={24} color={theme.Colors.primary} />
             </View>
             <View style={styles.hubBadge}>
-              <Text style={[styles.hubBadgeText, { color: theme.Colors.primary }]}>{rolesCount} Roles</Text>
+              <Text style={[styles.hubBadgeText, { color: theme.Colors.primary }]}>{membersCount} Members</Text>
             </View>
           </View>
-          <Text style={styles.hubCardTitle}>Roles & Permissions</Text>
-          <Text style={styles.hubCardDesc}>Custom staff roles & fine-grained permission matrix.</Text>
+          <Text style={styles.hubCardTitle}>Staff & Permissions</Text>
+          <Text style={styles.hubCardDesc}>Member titles, access tiers & permission matrix.</Text>
         </GlassCard>
       </TouchableOpacity>
 
@@ -122,7 +119,7 @@ export function SettingsHubGrid({
             </View>
           </View>
           <Text style={styles.hubCardTitle}>Staff Join Keys</Text>
-          <Text style={styles.hubCardDesc}>Single-use onboarding keys for managers & caretakers.</Text>
+          <Text style={styles.hubCardDesc}>Direct onboarding keys for managers & caretakers.</Text>
         </GlassCard>
       </TouchableOpacity>
 
@@ -133,11 +130,11 @@ export function SettingsHubGrid({
               <MaterialIcons name="tune" size={24} color={theme.Colors.secondary} />
             </View>
             <View style={styles.hubBadge}>
-              <Text style={[styles.hubBadgeText, { color: theme.Colors.secondary }]}>Automations</Text>
+              <Text style={[styles.hubBadgeText, { color: theme.Colors.secondary }]}>Preferences</Text>
             </View>
           </View>
           <Text style={styles.hubCardTitle}>System Preferences</Text>
-          <Text style={styles.hubCardDesc}>Auto-invoicing cycles, WhatsApp notifications & late fees.</Text>
+          <Text style={styles.hubCardDesc}>App appearance & interface display mode.</Text>
         </GlassCard>
       </TouchableOpacity>
     </View>
@@ -146,46 +143,34 @@ export function SettingsHubGrid({
 
 type SettingsTabContentProps = {
   activeTab: ActiveTab;
-  autoInvoiceDay: string;
-  enableEmailAlerts: boolean;
-  enableLateFee: boolean;
-  enableWhatsappAlerts: boolean;
   invites: JoinCodeResponse[];
   loading: boolean;
   mode: 'system' | 'light' | 'dark';
-  roles: RoleResponse[];
-  canModifyRole: (role: RoleResponse) => boolean;
-  handleOpenEditPermissions: (role: RoleResponse) => void;
-  handleToggleRoleActive: (role: RoleResponse, value: boolean) => void;
-  setEnableEmailAlerts: (value: boolean) => void;
-  setEnableLateFee: (value: boolean) => void;
-  setEnableWhatsappAlerts: (value: boolean) => void;
+  members: MembershipResponse[];
+  canModifyMember: (member: MembershipResponse) => boolean;
+  handleOpenEditPermissions: (member: MembershipResponse) => void;
+  handleOpenEditDetails?: (member: MembershipResponse) => void;
+  handleToggleMemberActive: (member: MembershipResponse, value: boolean) => void;
+  handleRemoveMember: (member: MembershipResponse) => void;
   setMode: (mode: 'system' | 'light' | 'dark') => void;
   showToast: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
-  onLogout?: () => void;
   styles: StylesLike;
   theme: ThemeLike;
 };
 
 export function SettingsTabContent({
   activeTab,
-  autoInvoiceDay,
-  enableEmailAlerts,
-  enableLateFee,
-  enableWhatsappAlerts,
   invites,
   loading,
   mode,
-  roles,
-  canModifyRole,
+  members,
+  canModifyMember,
   handleOpenEditPermissions,
-  handleToggleRoleActive,
-  setEnableEmailAlerts,
-  setEnableLateFee,
-  setEnableWhatsappAlerts,
+  handleOpenEditDetails,
+  handleToggleMemberActive,
+  handleRemoveMember,
   setMode,
   showToast,
-  onLogout,
   styles,
   theme,
 }: SettingsTabContentProps) {
@@ -198,43 +183,52 @@ export function SettingsTabContent({
     );
   }
 
-  if (activeTab === 'roles') {
+  if (activeTab === 'members') {
     return (
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeaderRow}>
           <View>
-            <Text style={styles.sectionTitle}>Property Role Hierarchy</Text>
-            <Text style={styles.sectionSub}>Staff roles configured for this property context</Text>
+            <Text style={styles.sectionTitle}>Property Team Members</Text>
+            <Text style={styles.sectionSub}>Configure access level, permissions, and member status</Text>
           </View>
         </View>
 
         <View style={styles.rolesGrid}>
-          {roles.map((item) => {
-            const isOwner = item.code === 'PROPERTY_OWNER';
-            const isTenant = item.code === 'PROPERTY_TENANT';
-            const canEdit = canModifyRole(item) && !isOwner;
+          {members.map((item) => {
+            const isFullAccess = item.accessType === 'FULL_ACCESS';
+            const canEdit = canModifyMember(item);
 
             return (
               <GlassCard key={item.id} style={styles.roleCard}>
                 <View style={styles.roleCardTop}>
                   <View style={styles.roleTitleGroup}>
-                    <Text style={styles.roleName}>{item.name}</Text>
-                    {item.propertyId ? (
-                      <View style={styles.customRolePill}>
-                        <Text style={styles.customRolePillText}>Custom</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={styles.roleName}>{item.fullName || item.title}</Text>
+                      {canEdit && handleOpenEditDetails && (
+                        <TouchableOpacity
+                          onPress={() => handleOpenEditDetails(item)}
+                          style={{ padding: 4 }}
+                          activeOpacity={0.7}
+                        >
+                          <MaterialIcons name="edit" size={16} color={theme.Colors.primary} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <Text style={[styles.roleDesc, { marginTop: 2 }]}>{item.email || item.title}</Text>
+                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                      <View style={isFullAccess ? styles.systemRolePill : styles.customRolePill}>
+                        <Text style={isFullAccess ? styles.systemRolePillText : styles.customRolePillText}>
+                          {item.title} ({isFullAccess ? 'Full Access' : 'Custom Access'})
+                        </Text>
                       </View>
-                    ) : (
-                      <View style={styles.systemRolePill}>
-                        <Text style={styles.systemRolePillText}>System Default</Text>
-                      </View>
-                    )}
+                    </View>
                   </View>
-                  {!isOwner && !isTenant && (
+                  {!isFullAccess && (
                     <Switch
                       value={item.isActive}
                       onValueChange={(val) => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        handleToggleRoleActive(item, val);
+                        handleToggleMemberActive(item, val);
                       }}
                       disabled={!canEdit}
                       trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
@@ -243,24 +237,26 @@ export function SettingsTabContent({
                   )}
                 </View>
 
-                <Text style={styles.roleDesc}>{item.description || 'No description provided.'}</Text>
-
                 <View style={styles.roleCardBottom}>
                   <View style={styles.permCountTag}>
                     <MaterialIcons name="shield" size={14} color={theme.Colors.primary} />
-                    <Text style={styles.permCountText}>{item.permissionCodes.length} Permissions</Text>
+                    <Text style={styles.permCountText}>
+                      {isFullAccess ? 'All Permissions' : `${item.permissionCodes?.length || 0} Permissions`}
+                    </Text>
                   </View>
 
-                  <TouchableOpacity
-                    style={[styles.configureBtn, !canEdit && styles.configureBtnDisabled]}
-                    disabled={!canEdit}
-                    onPress={() => handleOpenEditPermissions(item)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.configureBtnText, !canEdit && styles.configureBtnTextDisabled]}>
-                      {canEdit ? 'Configure Matrix' : 'View Only'}
-                    </Text>
-                  </TouchableOpacity>
+                  {!isFullAccess && (
+                    <TouchableOpacity
+                      style={[styles.configureBtn, !canEdit && styles.configureBtnDisabled]}
+                      disabled={!canEdit}
+                      onPress={() => handleOpenEditPermissions(item)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.configureBtnText, !canEdit && styles.configureBtnTextDisabled]}>
+                        {canEdit ? 'Configure Matrix' : 'View Only'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </GlassCard>
             );
@@ -296,8 +292,12 @@ export function SettingsTabContent({
 
                   <View style={styles.inviteMetaRow}>
                     <View style={styles.inviteMetaCol}>
-                      <Text style={styles.inviteMetaLabel}>TARGET ROLE</Text>
-                      <Text style={styles.inviteMetaVal}>{item.roleName}</Text>
+                      <Text style={styles.inviteMetaLabel}>TARGET TITLE</Text>
+                      <Text style={styles.inviteMetaVal}>{item.title}</Text>
+                    </View>
+                    <View style={styles.inviteMetaCol}>
+                      <Text style={styles.inviteMetaLabel}>ACCESS TIER</Text>
+                      <Text style={styles.inviteMetaVal}>{item.accessType}</Text>
                     </View>
                     <View style={styles.inviteMetaCol}>
                       <Text style={styles.inviteMetaLabel}>USES COUNT</Text>
@@ -343,8 +343,8 @@ export function SettingsTabContent({
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeaderRow}>
         <View>
-          <Text style={styles.sectionTitle}>Automation & Preference Rules</Text>
-          <Text style={styles.sectionSub}>Configure invoicing triggers and alert preferences</Text>
+          <Text style={styles.sectionTitle}>System Preferences</Text>
+          <Text style={styles.sectionSub}>Configure app appearance and interface settings</Text>
         </View>
       </View>
 
@@ -372,7 +372,7 @@ export function SettingsTabContent({
                     paddingHorizontal: 12,
                     borderRadius: 10,
                     borderWidth: 1.5,
-                    borderColor: isSelected ? '#006875' : 'rgba(0, 104, 117, 0.2)',
+                    borderColor: isSelected ? theme.Colors.primary : 'rgba(0, 104, 117, 0.2)',
                     backgroundColor: isSelected ? 'rgba(0, 104, 117, 0.12)' : 'transparent',
                     alignItems: 'center',
                     flexDirection: 'row',
@@ -391,14 +391,14 @@ export function SettingsTabContent({
                         : 'light-mode'
                     }
                     size={18}
-                    color={isSelected ? '#006875' : '#6b7a7d'}
+                    color={isSelected ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
                   />
                   <Text
                     style={{
                       fontSize: theme.Typography.bodySmall.fontSize,
                       fontWeight: '700',
                       textTransform: 'capitalize',
-                      color: isSelected ? '#006875' : '#6b7a7d',
+                      color: isSelected ? theme.Colors.primary : theme.Colors.onSurfaceVariant,
                     }}
                   >
                     {themeOption}
@@ -406,105 +406,6 @@ export function SettingsTabContent({
                 </TouchableOpacity>
               );
             })}
-          </View>
-        </GlassCard>
-
-        <GlassCard style={styles.prefCard}>
-          <View style={styles.prefCardHeader}>
-            <MaterialIcons name="receipt-long" size={22} color={theme.Colors.primary} />
-            <Text style={styles.prefCardTitle}>Billing Automation</Text>
-          </View>
-          <View style={styles.prefItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.prefItemName}>Automated Rent Roll Invoicing</Text>
-              <Text style={styles.prefItemDesc}>Automatically compile charges on the 1st of every month</Text>
-            </View>
-            <View style={styles.prefBadgeActive}>
-              <Text style={styles.prefBadgeText}>{autoInvoiceDay}</Text>
-            </View>
-          </View>
-          <View style={styles.prefItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.prefItemName}>Late Payment Penalty</Text>
-              <Text style={styles.prefItemDesc}>Apply flat fine after grace period expires</Text>
-            </View>
-            <Switch
-              value={enableLateFee}
-              onValueChange={(val) => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setEnableLateFee(val);
-              }}
-              trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
-              thumbColor={enableLateFee ? '#00d4ff' : '#9ca3af'}
-            />
-          </View>
-        </GlassCard>
-
-        <GlassCard style={styles.prefCard}>
-          <View style={styles.prefCardHeader}>
-            <MaterialIcons name="notifications-active" size={22} color={theme.Colors.primary} />
-            <Text style={styles.prefCardTitle}>Communication Channels</Text>
-          </View>
-          <View style={styles.prefItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.prefItemName}>WhatsApp Payment Reminders</Text>
-              <Text style={styles.prefItemDesc}>Send WhatsApp invoice summaries to tenants</Text>
-            </View>
-            <Switch
-              value={enableWhatsappAlerts}
-              onValueChange={(val) => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setEnableWhatsappAlerts(val);
-              }}
-              trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
-              thumbColor={enableWhatsappAlerts ? '#00d4ff' : '#9ca3af'}
-            />
-          </View>
-          <View style={styles.prefItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.prefItemName}>Email Notifications</Text>
-              <Text style={styles.prefItemDesc}>Dispatch monthly PDF statement receipts via email</Text>
-            </View>
-            <Switch
-              value={enableEmailAlerts}
-              onValueChange={(val) => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setEnableEmailAlerts(val);
-              }}
-              trackColor={{ false: 'rgba(0, 104, 117, 0.15)', true: '#006875' }}
-              thumbColor={enableEmailAlerts ? '#00d4ff' : '#9ca3af'}
-            />
-          </View>
-        </GlassCard>
-
-        <GlassCard style={styles.prefCard}>
-          <View style={styles.prefCardHeader}>
-            <MaterialIcons name="security" size={22} color={theme.Colors.error} />
-            <Text style={[styles.prefCardTitle, { color: theme.Colors.error }]}>Account & Session</Text>
-          </View>
-          <View style={styles.prefItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.prefItemName}>Sign Out</Text>
-              <Text style={styles.prefItemDesc}>Log out securely from your current session on this device</Text>
-            </View>
-            <TouchableOpacity
-              style={{
-                backgroundColor: theme.Colors.error + '1F',
-                paddingHorizontal: 16,
-                paddingVertical: 10,
-                borderRadius: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                borderWidth: 1,
-                borderColor: theme.Colors.error + '40',
-              }}
-              onPress={() => onLogout?.()}
-              activeOpacity={0.75}
-            >
-              <MaterialIcons name="logout" size={18} color={theme.Colors.error} />
-              <Text style={{ color: theme.Colors.error, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize }}>Log Out</Text>
-            </TouchableOpacity>
           </View>
         </GlassCard>
       </View>

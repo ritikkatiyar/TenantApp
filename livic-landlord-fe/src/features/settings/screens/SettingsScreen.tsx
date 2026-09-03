@@ -1,41 +1,38 @@
 import React from 'react';
+import { View, Text } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { PageShell } from '@/src/components/common/layout/PageShell';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { createStyles } from './SettingsScreen.styles';
 import { useSettings } from '../hooks/useSettings';
 import { SettingsHero, SettingsHubGrid, SettingsTabContent } from '../components/SettingsSections';
-import { PermissionsMatrixModal, CreateCustomRoleModal, GenerateInviteCodeModal } from '../components/SettingsModals';
+import {
+  PermissionsMatrixModal,
+  EditMemberDetailsModal,
+  GenerateInviteCodeModal,
+} from '../components/SettingsModals';
 
 export default function SettingsScreen() {
   const { theme, isDark, mode, setMode } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
-  const { signOut } = useAuth();
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
 
   const settings = useSettings(paramPropertyId || null);
 
-  const handleLogout = async () => {
-    await signOut();
-    router.replace('/login');
-  };
-
   const handleBillingPress = () => {
     router.push('/settings?tab=billing' as any);
-  };
-
-  const handleCreateRolePress = () => {
-    settings.setNewRolePerms(settings.currentUserRole ? [...settings.currentUserRole.permissionCodes] : []);
-    settings.setCustomRoleModalVisible(true);
   };
 
   const handleGenerateInvitePress = () => {
     settings.setInviteModalVisible(true);
   };
+
+  const isOwner = Boolean(settings.propertyId) && settings.currentMember?.accessType === 'FULL_ACCESS';
 
   return (
     <PageShell
@@ -46,8 +43,7 @@ export default function SettingsScreen() {
       {/* Hero Section */}
       <SettingsHero
         activeTab={settings.activeTab}
-        isOwner={settings.currentUserRole?.code === 'PROPERTY_OWNER'}
-        onCreateRolePress={handleCreateRolePress}
+        isOwner={isOwner}
         onGenerateInvitePress={handleGenerateInvitePress}
         styles={styles}
         theme={theme}
@@ -56,7 +52,7 @@ export default function SettingsScreen() {
       {/* Hub Grid Selector */}
       <SettingsHubGrid
         activeTab={settings.activeTab}
-        rolesCount={settings.roles.length}
+        membersCount={settings.members.length}
         invitesCount={settings.invites.length}
         onTabChange={settings.setActiveTab}
         onBillingPress={handleBillingPress}
@@ -65,69 +61,105 @@ export default function SettingsScreen() {
       />
 
       {/* Main Tab Content */}
-      <SettingsTabContent
-        activeTab={settings.activeTab}
-        autoInvoiceDay={settings.autoInvoiceDay}
-        enableEmailAlerts={settings.enableEmailAlerts}
-        enableLateFee={settings.enableLateFee}
-        enableWhatsappAlerts={settings.enableWhatsappAlerts}
-        invites={settings.invites}
-        loading={settings.loading}
-        mode={mode}
-        roles={settings.roles}
-        canModifyRole={settings.canModifyRole}
-        handleOpenEditPermissions={settings.handleOpenEditPermissions}
-        handleToggleRoleActive={settings.handleToggleRoleActive}
-        setEnableEmailAlerts={settings.setEnableEmailAlerts}
-        setEnableLateFee={settings.setEnableLateFee}
-        setEnableWhatsappAlerts={settings.setEnableWhatsappAlerts}
-        setMode={setMode}
-        showToast={() => {}}
-        onLogout={handleLogout}
-        styles={styles}
-        theme={theme}
-      />
+      {!settings.propertyId && settings.activeTab !== 'preferences' ? (
+        <GlassCard
+          style={{
+            marginVertical: 20,
+            minHeight: 280,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          contentStyle={{
+            padding: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+          }}
+        >
+          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+            <Text
+              style={{
+                fontSize: theme.Typography.titleMedium.fontSize,
+                fontWeight: '800',
+                color: theme.Colors.onSurface,
+                marginBottom: 8,
+                textAlign: 'center',
+              }}
+            >
+              Select Property to View Staff & Permissions
+            </Text>
+            <Text
+              style={{
+                fontSize: theme.Typography.bodyMedium.fontSize,
+                color: theme.Colors.onSurfaceVariant,
+                textAlign: 'center',
+                maxWidth: 440,
+                lineHeight: 22,
+              }}
+            >
+              Please select a property from the top navbar selector to view and manage team members, access roles, and invite keys.
+            </Text>
+          </View>
+        </GlassCard>
+      ) : (
+        <SettingsTabContent
+          activeTab={settings.activeTab}
+          invites={settings.invites}
+          loading={settings.loading}
+          mode={mode}
+          members={settings.members}
+          canModifyMember={settings.canModifyMember}
+          handleOpenEditPermissions={settings.handleOpenEditPermissions}
+          handleOpenEditDetails={settings.handleOpenEditDetails}
+          handleToggleMemberActive={settings.handleToggleMemberActive}
+          handleRemoveMember={settings.handleRemoveMember}
+          setMode={setMode}
+          showToast={() => {}}
+          styles={styles}
+          theme={theme}
+        />
+      )}
 
       {/* Modals */}
       <PermissionsMatrixModal
         editingPermissions={settings.editingPermissions}
         savingPermissions={settings.savingPermissions}
-        selectedRole={settings.selectedRole}
+        selectedMember={settings.selectedMember}
         canDelegatePermission={settings.canDelegatePermission}
         handleSavePermissions={settings.handleSavePermissions}
         handleTogglePermission={settings.handleTogglePermission}
-        setSelectedRole={settings.setSelectedRole}
+        setSelectedMember={settings.setSelectedMember}
         styles={styles}
         theme={theme}
       />
 
-      <CreateCustomRoleModal
-        creatingRole={settings.creatingRole}
-        customRoleModalVisible={settings.customRoleModalVisible}
-        newRoleDesc={settings.newRoleDesc}
-        newRoleName={settings.newRoleName}
-        newRolePerms={settings.newRolePerms}
-        canDelegatePermission={settings.canDelegatePermission}
-        handleCreateCustomRole={settings.handleCreateCustomRole}
-        setCustomRoleModalVisible={settings.setCustomRoleModalVisible}
-        setNewRoleDesc={settings.setNewRoleDesc}
-        setNewRoleName={settings.setNewRoleName}
-        setNewRolePerms={settings.setNewRolePerms}
+      <EditMemberDetailsModal
+        editDetailsMember={settings.editDetailsMember}
+        editMemberTitle={settings.editMemberTitle}
+        editMemberAccessType={settings.editMemberAccessType}
+        savingMemberDetails={settings.savingMemberDetails}
+        handleSaveMemberDetails={settings.handleSaveMemberDetails}
+        setEditDetailsMember={settings.setEditDetailsMember}
+        setEditMemberTitle={settings.setEditMemberTitle}
+        setEditMemberAccessType={settings.setEditMemberAccessType}
         styles={styles}
         theme={theme}
       />
 
       <GenerateInviteCodeModal
         generatingInvite={settings.generatingInvite}
+        inviteTitle={settings.inviteTitle}
+        inviteAccessType={settings.inviteAccessType}
+        invitePerms={settings.invitePerms}
         inviteMaxUses={settings.inviteMaxUses}
         inviteModalVisible={settings.inviteModalVisible}
-        roles={settings.roles}
-        selectedInviteRole={settings.selectedInviteRole}
-        canModifyRole={settings.canModifyRole}
         handleGenerateInvite={settings.handleGenerateInvite}
+        handleToggleInvitePerm={settings.handleToggleInvitePerm}
+        setInviteTitle={settings.setInviteTitle}
+        setInviteAccessType={settings.setInviteAccessType}
         setInviteMaxUses={settings.setInviteMaxUses}
         setInviteModalVisible={settings.setInviteModalVisible}
-        setSelectedInviteRole={settings.setSelectedInviteRole}
         styles={styles}
         theme={theme}
       />

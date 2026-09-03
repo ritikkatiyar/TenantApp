@@ -292,8 +292,8 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
               <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 24, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' }}>Rent Roll & Invoices</Text>
-              <Text style={{ fontSize: 13, color: theme.Colors.onSurfaceVariant, fontFamily: 'Inter' }}>Generate draft invoices, publish monthly cycles & track collection status</Text>
+              <Text style={{ fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, fontFamily: 'Inter' }}>Rent Roll & Invoices</Text>
+              <Text style={{ fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, fontFamily: 'Inter' }}>Generate draft invoices, publish monthly cycles & track collection status</Text>
             </View>
           </View>
 
@@ -314,12 +314,29 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
         </View>
 
         {!propertyId ? (
-          <GlassCard style={{ padding: 40, alignItems: 'center', justifyContent: 'center', marginVertical: 20 }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 12 }} />
-            <Text style={{ fontSize: 18, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 6 }}>Select Property to Generate Draft</Text>
-            <Text style={{ fontSize: 14, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 420 }}>
-              Please select a property from the top navbar selector to view or generate a draft billing worksheet.
-            </Text>
+          <GlassCard
+            style={{
+              marginVertical: 20,
+              minHeight: 280,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            contentStyle={{
+              padding: 48,
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+            }}
+          >
+            <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+              <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+              <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
+                Select Property to Generate Draft
+              </Text>
+              <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
+                Please select a property from the top navbar selector to view or generate a draft billing worksheet.
+              </Text>
+            </View>
           </GlassCard>
         ) : !hasGenerated ? (
           <PreFlightChecklistCard

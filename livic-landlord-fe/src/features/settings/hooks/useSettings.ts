@@ -1,137 +1,157 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Clipboard } from 'react-native';
 import {
-  getPropertyRoles,
-  toggleRoleActive,
-  updateRolePermissions,
-  createCustomRole,
+  getMemberships,
+  updateMembership,
+  toggleMembershipActive,
+  removeMembership,
+  transferOwnership,
+  MembershipResponse,
+} from '@/src/features/properties/api/membership.api';
+import {
   generateJoinCode,
   getPropertyJoinCodes,
-  RoleResponse,
   JoinCodeResponse,
 } from '@/src/features/properties/api/rolePermission.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 
-type ActiveTab = 'roles' | 'invites' | 'preferences';
+export type ActiveTab = 'members' | 'invites' | 'preferences';
 
 export function useSettings(paramPropertyId: string | null) {
   const { properties, isLoading: propertiesLoading } = useProperties();
-  const propertyId = paramPropertyId || (properties && properties.length > 0 ? properties[0].id : null);
+  const { selectedPropertyId } = useGlobalPropertySelection();
+  const propertyId = paramPropertyId || selectedPropertyId || null;
   const { accessToken, context } = useAuth();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('roles');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('members');
   const [loading, setLoading] = useState(true);
 
   // Core Data
-  const [roles, setRoles] = useState<RoleResponse[]>([]);
+  const [members, setMembers] = useState<MembershipResponse[]>([]);
   const [invites, setInvites] = useState<JoinCodeResponse[]>([]);
-  const [currentUserRole, setCurrentUserRole] = useState<RoleResponse | null>(null);
+  const [currentMember, setCurrentMember] = useState<MembershipResponse | null>(null);
 
-  // System Preferences State
-  const [autoInvoiceDay, setAutoInvoiceDay] = useState('1st of Month');
-  const [enableWhatsappAlerts, setEnableWhatsappAlerts] = useState(true);
-  const [enableEmailAlerts, setEnableEmailAlerts] = useState(true);
-  const [enableLateFee, setEnableLateFee] = useState(true);
-  const [lateFeeGraceDays, setLateFeeGraceDays] = useState('5');
-  const [lateFeeAmount, setLateFeeAmount] = useState('500');
-
-  // Edit Role Modal State
-  const [selectedRole, setSelectedRole] = useState<RoleResponse | null>(null);
+  // Edit Permissions Modal State
+  const [selectedMember, setSelectedMember] = useState<MembershipResponse | null>(null);
   const [editingPermissions, setEditingPermissions] = useState<string[]>([]);
   const [savingPermissions, setSavingPermissions] = useState(false);
 
-  // Custom Role Modal State
-  const [customRoleModalVisible, setCustomRoleModalVisible] = useState(false);
-  const [newRoleName, setNewRoleName] = useState('');
-  const [newRoleDesc, setNewRoleDesc] = useState('');
-  const [newRolePerms, setNewRolePerms] = useState<string[]>([]);
-  const [creatingRole, setCreatingRole] = useState(false);
+  // Edit Member Details Modal State
+  const [editDetailsMember, setEditDetailsMember] = useState<MembershipResponse | null>(null);
+  const [editMemberTitle, setEditMemberTitle] = useState('');
+  const [editMemberAccessType, setEditMemberAccessType] = useState<'FULL_ACCESS' | 'CUSTOM_ACCESS'>('CUSTOM_ACCESS');
+  const [savingMemberDetails, setSavingMemberDetails] = useState(false);
 
   // Generate Invite Modal State
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
-  const [selectedInviteRole, setSelectedInviteRole] = useState('');
+  const [inviteTitle, setInviteTitle] = useState('');
+  const [inviteAccessType, setInviteAccessType] = useState<'FULL_ACCESS' | 'CUSTOM_ACCESS'>('CUSTOM_ACCESS');
+  const [invitePerms, setInvitePerms] = useState<string[]>([]);
   const [inviteMaxUses, setInviteMaxUses] = useState('1');
   const [generatingInvite, setGeneratingInvite] = useState(false);
 
   useEffect(() => {
     if (propertiesLoading) return;
-    if (!properties || properties.length === 0) {
+    if (!properties || properties.length === 0 || !propertyId || !accessToken) {
+      setMembers([]);
+      setInvites([]);
+      setCurrentMember(null);
       setLoading(false);
       return;
     }
-    if (propertyId && accessToken) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
+    loadData();
   }, [propertyId, accessToken, properties, propertiesLoading]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [fetchedRoles, fetchedInvites] = await Promise.all([
-        getPropertyRoles(accessToken!, propertyId as string),
+      const [fetchedMembers, fetchedInvites] = await Promise.all([
+        getMemberships(accessToken!, propertyId as string),
         getPropertyJoinCodes(accessToken!, propertyId as string),
       ]);
 
-      setRoles(fetchedRoles || []);
+      setMembers(fetchedMembers || []);
       setInvites(fetchedInvites || []);
 
-      const myMembership = context?.managedProperties.find((m) => m.propertyId === propertyId);
-      if (myMembership) {
-        const found = (fetchedRoles || []).find((r) => r.code === myMembership.membershipRoleCode);
+      const myManaged = context?.managedProperties.find((m) => m.propertyId === propertyId);
+      if (myManaged) {
+        const found = (fetchedMembers || []).find((m) => m.title === myManaged.title || m.accessType === myManaged.accessType);
         if (found) {
-          setCurrentUserRole(found);
+          setCurrentMember(found);
         }
       }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to load preferences');
+      Alert.alert('Error', err.message || 'Failed to load settings');
     } finally {
       setLoading(false);
     }
   };
 
-  const getRoleRank = (code: string, currentRank: number) => {
-    if (code === 'PROPERTY_OWNER') return 100;
-    if (code === 'PROPERTY_MANAGER') return 50;
-    if (code === 'PROPERTY_CARETAKER') return 20;
-    if (code === 'PROPERTY_TENANT') return 10;
-    return currentRank;
+  const isFullAccessUser = () => {
+    if (!currentMember) {
+      const myManaged = context?.managedProperties.find((m) => m.propertyId === propertyId);
+      return myManaged?.accessType === 'FULL_ACCESS';
+    }
+    return currentMember.accessType === 'FULL_ACCESS';
   };
 
-  const canModifyRole = (targetRole: RoleResponse) => {
-    if (!currentUserRole) return false;
-    const myRank = getRoleRank(currentUserRole.code, currentUserRole.roleRank);
-    const targetRank = getRoleRank(targetRole.code, targetRole.roleRank);
-    return myRank > targetRank;
+  const canModifyMember = (_targetMember: MembershipResponse) => {
+    return isFullAccessUser();
   };
 
-  const canDelegatePermission = (permissionCode: string) => {
-    if (!currentUserRole) return false;
-    if (currentUserRole.code === 'PROPERTY_OWNER') return true;
-    return currentUserRole.permissionCodes.includes(permissionCode);
+  const canDelegatePermission = (_permissionCode: string) => {
+    return isFullAccessUser();
   };
 
-  const handleToggleRoleActive = async (role: RoleResponse, value: boolean) => {
+  const handleToggleMemberActive = async (member: MembershipResponse, value: boolean) => {
     try {
-      await toggleRoleActive(accessToken!, propertyId as string, role.code, value);
-      showToast(`Role ${role.name} ${value ? 'enabled' : 'disabled'}`, 'success');
+      await toggleMembershipActive(accessToken!, propertyId as string, member.id, value);
+      showToast(`Member ${member.fullName} ${value ? 'enabled' : 'disabled'}`, 'success');
       loadData();
     } catch (err: any) {
-      showToast(err.message || 'Failed to update role status', 'error');
+      showToast(err.message || 'Failed to update member status', 'error');
     }
   };
 
-  const handleOpenEditPermissions = (role: RoleResponse) => {
-    setSelectedRole(role);
-    setEditingPermissions([...role.permissionCodes]);
+  const handleOpenEditPermissions = (member: MembershipResponse) => {
+    setSelectedMember(member);
+    setEditingPermissions([...(member.permissionCodes || [])]);
+  };
+
+  const handleOpenEditDetails = (member: MembershipResponse) => {
+    setEditDetailsMember(member);
+    setEditMemberTitle(member.title);
+    setEditMemberAccessType(member.accessType);
+  };
+
+  const handleSaveMemberDetails = async () => {
+    if (!editDetailsMember) return;
+    if (!editMemberTitle.trim()) {
+      showToast('Title cannot be empty', 'error');
+      return;
+    }
+
+    try {
+      setSavingMemberDetails(true);
+      await updateMembership(accessToken!, propertyId as string, editDetailsMember.id, {
+        title: editMemberTitle.trim(),
+        accessType: editMemberAccessType,
+      });
+      setEditDetailsMember(null);
+      loadData();
+      showToast('Member details updated successfully', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update member details', 'error');
+    } finally {
+      setSavingMemberDetails(false);
+    }
   };
 
   const handleTogglePermission = (code: string) => {
-    if (!canDelegatePermission(code)) return;
     if (editingPermissions.includes(code)) {
       setEditingPermissions(editingPermissions.filter((p) => p !== code));
     } else {
@@ -139,14 +159,24 @@ export function useSettings(paramPropertyId: string | null) {
     }
   };
 
+  const handleToggleInvitePerm = (code: string) => {
+    if (invitePerms.includes(code)) {
+      setInvitePerms(invitePerms.filter((p) => p !== code));
+    } else {
+      setInvitePerms([...invitePerms, code]);
+    }
+  };
+
   const handleSavePermissions = async () => {
-    if (!selectedRole) return;
+    if (!selectedMember) return;
     try {
       setSavingPermissions(true);
-      await updateRolePermissions(accessToken!, propertyId as string, selectedRole.code, editingPermissions);
-      setSelectedRole(null);
+      await updateMembership(accessToken!, propertyId as string, selectedMember.id, {
+        permissionCodes: editingPermissions,
+      });
+      setSelectedMember(null);
       loadData();
-      showToast('Permissions matrix updated successfully', 'success');
+      showToast('Permissions updated successfully', 'success');
     } catch (err: any) {
       showToast(err.message || 'Failed to update permissions', 'error');
     } finally {
@@ -154,36 +184,19 @@ export function useSettings(paramPropertyId: string | null) {
     }
   };
 
-  const handleCreateCustomRole = async () => {
-    if (!newRoleName.trim()) {
-      showToast('Please enter a role name', 'error');
-      return;
-    }
-
+  const handleRemoveMember = async (member: MembershipResponse) => {
     try {
-      setCreatingRole(true);
-      await createCustomRole(accessToken!, propertyId as string, {
-        name: newRoleName,
-        description: newRoleDesc,
-        permissionCodes: newRolePerms,
-      });
-
-      setCustomRoleModalVisible(false);
-      setNewRoleName('');
-      setNewRoleDesc('');
-      setNewRolePerms([]);
+      await removeMembership(accessToken!, propertyId as string, member.id);
       loadData();
-      showToast('Custom role created successfully', 'success');
+      showToast('Member removed successfully', 'success');
     } catch (err: any) {
-      showToast(err.message || 'Failed to create role', 'error');
-    } finally {
-      setCreatingRole(false);
+      showToast(err.message || 'Failed to remove member', 'error');
     }
   };
 
   const handleGenerateInvite = async () => {
-    if (!selectedInviteRole) {
-      showToast('Please select a target role', 'error');
+    if (!inviteTitle.trim()) {
+      showToast('Please enter an invite role/title', 'error');
       return;
     }
     const maxUses = parseInt(inviteMaxUses, 10);
@@ -194,9 +207,16 @@ export function useSettings(paramPropertyId: string | null) {
 
     try {
       setGeneratingInvite(true);
-      const codeRes = await generateJoinCode(accessToken!, propertyId as string, selectedInviteRole, maxUses);
+      const codeRes = await generateJoinCode(accessToken!, propertyId as string, {
+        title: inviteTitle.trim(),
+        accessType: inviteAccessType,
+        permissionCodes: inviteAccessType === 'FULL_ACCESS' ? [] : invitePerms,
+        maxUses,
+      });
       setInviteModalVisible(false);
-      setSelectedInviteRole('');
+      setInviteTitle('');
+      setInviteAccessType('CUSTOM_ACCESS');
+      setInvitePerms([]);
       setInviteMaxUses('1');
       loadData();
       showToast(`Invite code generated: ${codeRes.code}`, 'success');
@@ -215,48 +235,41 @@ export function useSettings(paramPropertyId: string | null) {
     activeTab,
     setActiveTab,
     loading,
-    roles,
+    members,
     invites,
-    currentUserRole,
-    autoInvoiceDay,
-    setAutoInvoiceDay,
-    enableWhatsappAlerts,
-    setEnableWhatsappAlerts,
-    enableEmailAlerts,
-    setEnableEmailAlerts,
-    enableLateFee,
-    setEnableLateFee,
-    lateFeeGraceDays,
-    setLateFeeGraceDays,
-    lateFeeAmount,
-    setLateFeeAmount,
-    selectedRole,
-    setSelectedRole,
+    currentMember,
+    selectedMember,
+    setSelectedMember,
     editingPermissions,
     savingPermissions,
-    customRoleModalVisible,
-    setCustomRoleModalVisible,
-    newRoleName,
-    setNewRoleName,
-    newRoleDesc,
-    setNewRoleDesc,
-    newRolePerms,
-    setNewRolePerms,
-    creatingRole,
+    editDetailsMember,
+    setEditDetailsMember,
+    editMemberTitle,
+    setEditMemberTitle,
+    editMemberAccessType,
+    setEditMemberAccessType,
+    savingMemberDetails,
     inviteModalVisible,
     setInviteModalVisible,
-    selectedInviteRole,
-    setSelectedInviteRole,
+    inviteTitle,
+    setInviteTitle,
+    inviteAccessType,
+    setInviteAccessType,
+    invitePerms,
+    setInvitePerms,
     inviteMaxUses,
     setInviteMaxUses,
     generatingInvite,
-    canModifyRole,
+    canModifyMember,
     canDelegatePermission,
-    handleToggleRoleActive,
+    handleToggleMemberActive,
     handleOpenEditPermissions,
+    handleOpenEditDetails,
+    handleSaveMemberDetails,
     handleTogglePermission,
+    handleToggleInvitePerm,
     handleSavePermissions,
-    handleCreateCustomRole,
+    handleRemoveMember,
     handleGenerateInvite,
     refresh: loadData,
   };

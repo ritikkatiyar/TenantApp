@@ -6,6 +6,7 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 interface GlassCardProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  contentStyle?: StyleProp<ViewStyle>;
   intensity?: number;
   tint?: 'light' | 'dark' | 'default';
 }
@@ -13,6 +14,7 @@ interface GlassCardProps {
 export function GlassCard({
   children,
   style,
+  contentStyle,
   intensity = 70,
   tint,
 }: GlassCardProps) {
@@ -20,10 +22,15 @@ export function GlassCard({
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const activeTint = tint ?? (isDark ? 'dark' : 'light');
 
+  const flattened = StyleSheet.flatten(style);
+  const inheritedAlignment: ViewStyle = {};
+  if (flattened?.alignItems) inheritedAlignment.alignItems = flattened.alignItems;
+  if (flattened?.justifyContent) inheritedAlignment.justifyContent = flattened.justifyContent;
+
   return (
     <View style={[styles.outerContainer, style]}>
-      <BlurView intensity={intensity} tint={activeTint} style={styles.blurView}>
-        <View style={styles.content}>
+      <BlurView intensity={intensity} tint={activeTint} style={[styles.blurView, inheritedAlignment.justifyContent ? { flex: 1 } : null]}>
+        <View style={[styles.content, inheritedAlignment, contentStyle]}>
           {children}
         </View>
       </BlurView>

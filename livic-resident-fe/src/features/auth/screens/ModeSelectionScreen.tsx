@@ -13,31 +13,17 @@ interface ModeSelectionScreenProps {
 const MODES = [
   {
     id: 'RENTAL',
-    label: 'Rental Property',
-    icon: 'house',
+    label: 'Rental Block',
+    icon: 'domain',
     badge: null,
     disabled: false,
   },
   {
-    id: 'HOSTEL',
-    label: 'Hostel / PG',
-    icon: 'domain',
-    badge: 'Coming Soon',
-    disabled: true,
-  },
-  {
-    id: 'MESS',
-    label: 'Mess',
-    icon: 'restaurant',
-    badge: 'Coming Soon',
-    disabled: true,
-  },
-  {
-    id: 'SOCIETY',
-    label: 'Society',
-    icon: 'holiday-village',
-    badge: 'Coming Soon',
-    disabled: true,
+    id: 'RESIDENTIAL',
+    label: 'Residential Block',
+    icon: 'house',
+    badge: null,
+    disabled: false,
   },
 ] as const;
 

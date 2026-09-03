@@ -16,6 +16,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { PageShell } from '@/src/components/common/layout/PageShell';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
@@ -235,15 +236,30 @@ export default function LedgerScreen({ token }: { token: string | null }) {
       </View>
 
       {!propertyId ? (
-        <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: 32, borderRadius: 24, alignItems: 'center', maxWidth: 500, alignSelf: 'center', marginVertical: 20, width: '100%', backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke }}>
-          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-            <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
+        <GlassCard
+          style={{
+            marginVertical: 20,
+            minHeight: 280,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          contentStyle={{
+            padding: 48,
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+          }}
+        >
+          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
+              Select a Property
+            </Text>
+            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
+              Please select a property from the top navigation bar to view its general ledger transactions.
+            </Text>
           </View>
-          <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>Select a Property</Text>
-          <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
-            Please select a property from the top navigation bar to view its general ledger transactions.
-          </Text>
-        </BlurView>
+        </GlassCard>
       ) : (
         <LedgerTable
           ledger={accumulatedLedger}
@@ -256,7 +272,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
       {page + 1 < totalPages && (
         <View style={{ paddingVertical: 20, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, fontWeight: '700', letterSpacing: 0.5 }}>
+          <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '700', letterSpacing: 0.5 }}>
             Scroll down to load more ledger entries...
           </Text>
         </View>
@@ -285,7 +301,7 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
       {page + 1 < totalPages && (
         <View style={{ paddingVertical: 20, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, fontWeight: '700', letterSpacing: 0.5 }}>
+          <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '700', letterSpacing: 0.5 }}>
             Scroll down to load more ledger entries...
           </Text>
         </View>
@@ -396,7 +412,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: theme.Colors.outlineVariant,
     color: theme.Colors.onSurface,
     paddingHorizontal: 8,
-    fontSize: 12,
+    fontSize: theme.Typography.labelSmall.fontSize,
     fontWeight: '600',
     textAlign: 'center',
   },

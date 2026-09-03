@@ -50,8 +50,6 @@ public class SaasSubscriptionTbl extends BaseEntity {
     @Column(name = "gateway_customer_id")
     private String gatewayCustomerId;
 
-    // --- Helper Convenience Methods ---
-
     public String getPlanId() {
         return (plan != null && plan.getId() != null) ? plan.getId().toString() : null;
     }

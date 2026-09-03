@@ -13,9 +13,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
-import { RoleResponse } from '@/src/features/properties/api/rolePermission.api';
+import { MembershipResponse } from '@/src/features/properties/api/membership.api';
 
-const ALL_PERMISSIONS = [
+export const ALL_PERMISSIONS = [
   { code: 'PROPERTY_VIEW', name: 'View Property', description: 'Can view property details and announcements', category: 'Property' },
   { code: 'PROPERTY_EDIT', name: 'Edit Property', description: 'Can edit property details, structures, and layouts', category: 'Property' },
   { code: 'PROPERTY_DELETE', name: 'Delete Property', description: 'Can permanently delete the property', category: 'Property' },
@@ -26,7 +26,7 @@ const ALL_PERMISSIONS = [
   { code: 'EXPENSE_APPROVE', name: 'Approve Expenses', description: 'Can approve and publish expenses to tenants', category: 'Expenses' },
   { code: 'PAYMENT_VIEW', name: 'View Payments', description: 'Can view rent and invoice payment history', category: 'Payments' },
   { code: 'ANNOUNCEMENT_CREATE', name: 'Broadcast Notices', description: 'Can post notice board announcements to tenants', category: 'Announcements' },
-  { code: 'MANAGE_STAFF', name: 'Manage Staff', description: 'Can manage other staff roles and invite codes', category: 'Staff' },
+  { code: 'MANAGE_STAFF', name: 'Manage Staff', description: 'Can manage other staff access and invite codes', category: 'Staff' },
 ];
 
 type ThemeLike = any;
@@ -35,11 +35,11 @@ type StylesLike = Record<string, any>;
 type PermissionsMatrixModalProps = {
   editingPermissions: string[];
   savingPermissions: boolean;
-  selectedRole: RoleResponse | null;
+  selectedMember: MembershipResponse | null;
   canDelegatePermission: (permissionCode: string) => boolean;
   handleSavePermissions: () => void;
   handleTogglePermission: (code: string) => void;
-  setSelectedRole: (role: RoleResponse | null) => void;
+  setSelectedMember: (member: MembershipResponse | null) => void;
   styles: StylesLike;
   theme: ThemeLike;
 };
@@ -47,25 +47,25 @@ type PermissionsMatrixModalProps = {
 export function PermissionsMatrixModal({
   editingPermissions,
   savingPermissions,
-  selectedRole,
+  selectedMember,
   canDelegatePermission,
   handleSavePermissions,
   handleTogglePermission,
-  setSelectedRole,
+  setSelectedMember,
   styles,
   theme,
 }: PermissionsMatrixModalProps) {
   return (
-    <Modal visible={selectedRole !== null} animationType="fade" transparent>
+    <Modal visible={selectedMember !== null} animationType="fade" transparent>
       <View style={styles.modalOverlay}>
         <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
         <View style={styles.modalCard}>
           <View style={styles.modalHeader}>
             <View>
-              <Text style={styles.modalTitle}>{selectedRole?.name}</Text>
-              <Text style={styles.modalSub}>Configure assigned permission matrix</Text>
+              <Text style={styles.modalTitle}>{selectedMember?.fullName || selectedMember?.title}</Text>
+              <Text style={styles.modalSub}>Configure assigned permissions</Text>
             </View>
-            <TouchableOpacity onPress={() => setSelectedRole(null)} style={styles.closeIconBtn}>
+            <TouchableOpacity onPress={() => setSelectedMember(null)} style={styles.closeIconBtn}>
               <MaterialIcons name="close" size={22} color={theme.Colors.onSurface} />
             </TouchableOpacity>
           </View>
@@ -98,11 +98,21 @@ export function PermissionsMatrixModal({
                         </Text>
                         <Text style={styles.permCheckDesc}>{item.description}</Text>
                       </View>
-                      <MaterialIcons
-                        name={isChecked ? 'check-box' : 'check-box-outline-blank'}
-                        size={24}
-                        color={isChecked ? '#006875' : isDelegatable ? 'rgba(0, 104, 117, 0.3)' : 'rgba(107, 122, 125, 0.2)'}
-                      />
+                      <View
+                        style={[
+                          styles.permCheckbox,
+                          isChecked && styles.permCheckboxChecked,
+                          !isDelegatable && styles.permCheckboxDisabled,
+                        ]}
+                      >
+                        {isChecked && (
+                          <MaterialIcons
+                            name="check"
+                            size={16}
+                            color={theme.Colors.surfaceContainerLowest}
+                          />
+                        )}
+                      </View>
                     </TouchableOpacity>
                   );
                 })}
@@ -112,13 +122,20 @@ export function PermissionsMatrixModal({
 
           <View style={styles.modalFooter}>
             <TouchableOpacity
+              style={styles.modalCancelBtn}
+              onPress={() => setSelectedMember(null)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCancelBtnText}>CANCEL</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.modalPrimaryBtn}
               onPress={handleSavePermissions}
               disabled={savingPermissions}
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
+                colors={[theme.Colors.primary, theme.Colors.secondary]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalBtnGradient}
@@ -126,7 +143,7 @@ export function PermissionsMatrixModal({
                 {savingPermissions ? (
                   <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
                 ) : (
-                  <Text style={styles.modalBtnText}>SAVE PERMISSIONS MATRIX</Text>
+                  <Text style={styles.modalBtnText}>SAVE CHANGES</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
@@ -137,116 +154,93 @@ export function PermissionsMatrixModal({
   );
 }
 
-type CreateCustomRoleModalProps = {
-  creatingRole: boolean;
-  customRoleModalVisible: boolean;
-  newRoleDesc: string;
-  newRoleName: string;
-  newRolePerms: string[];
-  canDelegatePermission: (permissionCode: string) => boolean;
-  handleCreateCustomRole: () => void;
-  setCustomRoleModalVisible: (visible: boolean) => void;
-  setNewRoleDesc: (description: string) => void;
-  setNewRoleName: (name: string) => void;
-  setNewRolePerms: (permissions: string[]) => void;
+type EditMemberDetailsModalProps = {
+  editDetailsMember: MembershipResponse | null;
+  editMemberTitle: string;
+  editMemberAccessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
+  savingMemberDetails: boolean;
+  handleSaveMemberDetails: () => void;
+  setEditDetailsMember: (member: MembershipResponse | null) => void;
+  setEditMemberTitle: (title: string) => void;
+  setEditMemberAccessType: (accessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS') => void;
   styles: StylesLike;
   theme: ThemeLike;
 };
 
-export function CreateCustomRoleModal({
-  creatingRole,
-  customRoleModalVisible,
-  newRoleDesc,
-  newRoleName,
-  newRolePerms,
-  canDelegatePermission,
-  handleCreateCustomRole,
-  setCustomRoleModalVisible,
-  setNewRoleDesc,
-  setNewRoleName,
-  setNewRolePerms,
+export function EditMemberDetailsModal({
+  editDetailsMember,
+  editMemberTitle,
+  editMemberAccessType,
+  savingMemberDetails,
+  handleSaveMemberDetails,
+  setEditDetailsMember,
+  setEditMemberTitle,
+  setEditMemberAccessType,
   styles,
   theme,
-}: CreateCustomRoleModalProps) {
+}: EditMemberDetailsModalProps) {
   return (
-    <Modal visible={customRoleModalVisible} animationType="fade" transparent>
+    <Modal visible={editDetailsMember !== null} animationType="fade" transparent>
       <View style={styles.modalOverlay}>
         <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { maxHeight: 420 }]}>
           <View style={styles.modalHeader}>
             <View>
-              <Text style={styles.modalTitle}>Create Custom Role</Text>
-              <Text style={styles.modalSub}>Define role parameters & permission scope</Text>
+              <Text style={styles.modalTitle}>Edit Member Role & Access</Text>
+              <Text style={styles.modalSub}>{editDetailsMember?.fullName || 'Configure access'}</Text>
             </View>
-            <TouchableOpacity onPress={() => setCustomRoleModalVisible(false)} style={styles.closeIconBtn}>
+            <TouchableOpacity onPress={() => setEditDetailsMember(null)} style={styles.closeIconBtn}>
               <MaterialIcons name="close" size={22} color={theme.Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.modalBody}>
-            <Text style={styles.inputLabel}>ROLE NAME</Text>
+          <View style={{ padding: 24 }}>
+            <Text style={styles.inputLabel}>TITLE / ROLE NAME</Text>
             <TextInput
               style={styles.modalTextInput}
-              placeholder="e.g. Senior Floor Manager"
+              value={editMemberTitle}
+              onChangeText={setEditMemberTitle}
+              placeholder="e.g. Property Manager, Caretaker"
               placeholderTextColor={theme.Colors.onSurfaceVariant}
-              value={newRoleName}
-              onChangeText={setNewRoleName}
             />
 
-            <Text style={styles.inputLabel}>DESCRIPTION</Text>
-            <TextInput
-              style={[styles.modalTextInput, { height: 70, paddingTop: 10 }]}
-              placeholder="Describe role responsibilities..."
-              placeholderTextColor={theme.Colors.onSurfaceVariant}
-              value={newRoleDesc}
-              onChangeText={setNewRoleDesc}
-              multiline
-            />
+            <Text style={[styles.inputLabel, { marginTop: 16 }]}>ACCESS LEVEL</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <TouchableOpacity
+                style={[styles.roleSelectChip, editMemberAccessType === 'CUSTOM_ACCESS' && styles.roleSelectChipActive]}
+                onPress={() => setEditMemberAccessType('CUSTOM_ACCESS')}
+              >
+                <Text style={[styles.roleSelectChipText, editMemberAccessType === 'CUSTOM_ACCESS' && styles.roleSelectChipTextActive]}>
+                  Custom Access
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleSelectChip, editMemberAccessType === 'FULL_ACCESS' && styles.roleSelectChipActive]}
+                onPress={() => setEditMemberAccessType('FULL_ACCESS')}
+              >
+                <Text style={[styles.roleSelectChipText, editMemberAccessType === 'FULL_ACCESS' && styles.roleSelectChipTextActive]}>
+                  Full Access (Admin)
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-            <Text style={[styles.categoryHeading, { marginTop: 16 }]}>DELEGATED PERMISSIONS</Text>
-            {ALL_PERMISSIONS.filter((p) => canDelegatePermission(p.code)).map((p) => {
-              const isChecked = newRolePerms.includes(p.code);
-              return (
-                <TouchableOpacity
-                  key={p.code}
-                  style={styles.permCheckRow}
-                  onPress={() => {
-                    if (isChecked) {
-                      setNewRolePerms(newRolePerms.filter((code) => code !== p.code));
-                    } else {
-                      setNewRolePerms([...newRolePerms, p.code]);
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.permCheckInfo}>
-                    <Text style={styles.permCheckName}>{p.name}</Text>
-                    <Text style={styles.permCheckDesc}>{p.description}</Text>
-                  </View>
-                  <MaterialIcons
-                    name={isChecked ? 'check-box' : 'check-box-outline-blank'}
-                    size={24}
-                    color={isChecked ? '#006875' : 'rgba(0, 104, 117, 0.3)'}
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
             <TouchableOpacity
-              style={styles.modalPrimaryBtn}
-              onPress={handleCreateCustomRole}
-              disabled={creatingRole}
+              style={[styles.modalPrimaryBtn, { marginTop: 24 }]}
+              onPress={handleSaveMemberDetails}
+              disabled={savingMemberDetails}
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
+                colors={[theme.Colors.primary, theme.Colors.secondary]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalBtnGradient}
               >
-                {creatingRole ? <ActivityIndicator color={theme.Colors.surfaceContainerLowest} /> : <Text style={styles.modalBtnText}>CREATE ROLE</Text>}
+                {savingMemberDetails ? (
+                  <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
+                ) : (
+                  <Text style={styles.modalBtnText}>SAVE CHANGES</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -258,30 +252,34 @@ export function CreateCustomRoleModal({
 
 type GenerateInviteCodeModalProps = {
   generatingInvite: boolean;
+  inviteTitle: string;
+  inviteAccessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS';
+  invitePerms: string[];
   inviteMaxUses: string;
   inviteModalVisible: boolean;
-  roles: RoleResponse[];
-  selectedInviteRole: string;
-  canModifyRole: (role: RoleResponse) => boolean;
   handleGenerateInvite: () => void;
+  handleToggleInvitePerm: (code: string) => void;
+  setInviteTitle: (title: string) => void;
+  setInviteAccessType: (accessType: 'FULL_ACCESS' | 'CUSTOM_ACCESS') => void;
   setInviteMaxUses: (maxUses: string) => void;
   setInviteModalVisible: (visible: boolean) => void;
-  setSelectedInviteRole: (roleCode: string) => void;
   styles: StylesLike;
   theme: ThemeLike;
 };
 
 export function GenerateInviteCodeModal({
   generatingInvite,
+  inviteTitle,
+  inviteAccessType,
+  invitePerms,
   inviteMaxUses,
   inviteModalVisible,
-  roles,
-  selectedInviteRole,
-  canModifyRole,
   handleGenerateInvite,
+  handleToggleInvitePerm,
+  setInviteTitle,
+  setInviteAccessType,
   setInviteMaxUses,
   setInviteModalVisible,
-  setSelectedInviteRole,
   styles,
   theme,
 }: GenerateInviteCodeModalProps) {
@@ -289,40 +287,73 @@ export function GenerateInviteCodeModal({
     <Modal visible={inviteModalVisible} animationType="fade" transparent>
       <View style={styles.modalOverlay}>
         <BlurView intensity={30} style={StyleSheet.absoluteFillObject} />
-        <View style={[styles.modalCard, { maxHeight: 420 }]}>
+        <View style={[styles.modalCard, { maxHeight: 600 }]}>
           <View style={styles.modalHeader}>
             <View>
               <Text style={styles.modalTitle}>Generate Staff Join Code</Text>
-              <Text style={styles.modalSub}>Create a single-use token for onboarding</Text>
+              <Text style={styles.modalSub}>Create a code with direct permissions</Text>
             </View>
             <TouchableOpacity onPress={() => setInviteModalVisible(false)} style={styles.closeIconBtn}>
               <MaterialIcons name="close" size={22} color={theme.Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
-          <View style={{ padding: 24 }}>
-            <Text style={styles.inputLabel}>SELECT ROLE TO GRANT</Text>
-            <View style={styles.roleChipsRow}>
-              {roles
-                .filter((r) => r.isActive && canModifyRole(r))
-                .map((r) => (
-                  <TouchableOpacity
-                    key={r.code}
-                    style={[styles.roleSelectChip, selectedInviteRole === r.code && styles.roleSelectChipActive]}
-                    onPress={() => setSelectedInviteRole(r.code)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.roleSelectChipText,
-                        selectedInviteRole === r.code && styles.roleSelectChipTextActive,
-                      ]}
-                    >
-                      {r.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+          <ScrollView contentContainerStyle={{ padding: 24 }}>
+            <Text style={styles.inputLabel}>STAFF TITLE / ROLE</Text>
+            <TextInput
+              style={styles.modalTextInput}
+              value={inviteTitle}
+              onChangeText={setInviteTitle}
+              placeholder="e.g. Manager, Caretaker, Supervisor"
+              placeholderTextColor={theme.Colors.onSurfaceVariant}
+            />
+
+            <Text style={[styles.inputLabel, { marginTop: 16 }]}>ACCESS LEVEL</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <TouchableOpacity
+                style={[styles.roleSelectChip, inviteAccessType === 'CUSTOM_ACCESS' && styles.roleSelectChipActive]}
+                onPress={() => setInviteAccessType('CUSTOM_ACCESS')}
+              >
+                <Text style={[styles.roleSelectChipText, inviteAccessType === 'CUSTOM_ACCESS' && styles.roleSelectChipTextActive]}>
+                  Custom Access
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roleSelectChip, inviteAccessType === 'FULL_ACCESS' && styles.roleSelectChipActive]}
+                onPress={() => setInviteAccessType('FULL_ACCESS')}
+              >
+                <Text style={[styles.roleSelectChipText, inviteAccessType === 'FULL_ACCESS' && styles.roleSelectChipTextActive]}>
+                  Full Access
+                </Text>
+              </TouchableOpacity>
             </View>
+
+            {inviteAccessType === 'CUSTOM_ACCESS' && (
+              <>
+                <Text style={[styles.inputLabel, { marginTop: 16 }]}>ATTACH PERMISSIONS</Text>
+                <View style={{ gap: 8, marginTop: 6 }}>
+                  {ALL_PERMISSIONS.map((p) => {
+                    const isChecked = invitePerms.includes(p.code);
+                    return (
+                      <TouchableOpacity
+                        key={p.code}
+                        style={styles.permCheckRow}
+                        onPress={() => handleToggleInvitePerm(p.code)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.permCheckInfo}>
+                          <Text style={styles.permCheckName}>{p.name}</Text>
+                          <Text style={styles.permCheckDesc}>{p.description}</Text>
+                        </View>
+                        <View style={[styles.permCheckbox, isChecked && styles.permCheckboxChecked]}>
+                          {isChecked && <MaterialIcons name="check" size={16} color={theme.Colors.surfaceContainerLowest} />}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
 
             <Text style={[styles.inputLabel, { marginTop: 16 }]}>MAX USES</Text>
             <TextInput
@@ -335,13 +366,13 @@ export function GenerateInviteCodeModal({
             />
 
             <TouchableOpacity
-              style={[styles.modalPrimaryBtn, { marginTop: 16 }]}
+              style={[styles.modalPrimaryBtn, { marginTop: 24 }]}
               onPress={handleGenerateInvite}
-              disabled={generatingInvite || !selectedInviteRole}
+              disabled={generatingInvite || !inviteTitle.trim()}
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#00d4ff', '#0072ff']}
+                colors={[theme.Colors.primary, theme.Colors.secondary]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.modalBtnGradient}
@@ -353,7 +384,7 @@ export function GenerateInviteCodeModal({
                 )}
               </LinearGradient>
             </TouchableOpacity>
-          </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
