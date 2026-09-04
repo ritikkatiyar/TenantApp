@@ -20,9 +20,11 @@ interface MobileHeaderProps {
   title: string;
   onMenuPress?: () => void;
   onNotificationPress?: () => void;
+  showBackButton?: boolean;
+  onBackPress?: () => void;
 }
 
-export default function MobileHeader({ title, onMenuPress, onNotificationPress }: MobileHeaderProps) {
+export default function MobileHeader({ title, onMenuPress, onNotificationPress, showBackButton, onBackPress }: MobileHeaderProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const insets = useSafeAreaInsets();
@@ -59,22 +61,35 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress }
       >
         <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
         <View style={styles.headerContainer}>
-          {/* Compact Mobile Property Selector Trigger */}
-          <TouchableOpacity
-            style={styles.propertySelectorPill}
-            activeOpacity={0.75}
-            onPress={() => setIsSheetOpen(true)}
-          >
-            <MaterialIcons
-              name="business"
-              size={15}
-              color={selectedPropertyId ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
-            />
-            <Text style={styles.propertySelectorText} numberOfLines={1}>
-              {propertyLabel}
-            </Text>
-            <Ionicons name="chevron-down" size={14} color={theme.Colors.onSurfaceVariant} />
-          </TouchableOpacity>
+          <View style={styles.headerLeftGroup}>
+            {showBackButton && (
+              <TouchableOpacity
+                style={styles.backButton}
+                activeOpacity={0.7}
+                onPress={onBackPress}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="arrow-back" size={18} color={theme.Colors.onSurface} />
+              </TouchableOpacity>
+            )}
+
+            {/* Compact Mobile Property Selector Trigger */}
+            <TouchableOpacity
+              style={styles.propertySelectorPill}
+              activeOpacity={0.75}
+              onPress={() => setIsSheetOpen(true)}
+            >
+              <MaterialIcons
+                name="business"
+                size={15}
+                color={selectedPropertyId ? theme.Colors.primary : theme.Colors.onSurfaceVariant}
+              />
+              <Text style={styles.propertySelectorText} numberOfLines={1}>
+                {propertyLabel}
+              </Text>
+              <Ionicons name="chevron-down" size={14} color={theme.Colors.onSurfaceVariant} />
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.titleContainer}>
             <Text style={styles.titleText} numberOfLines={1}>
@@ -226,6 +241,21 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: theme.Spacing.md,
     gap: theme.Spacing.xs,
+  },
+  headerLeftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.55)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   propertySelectorPill: {
     flexDirection: 'row',

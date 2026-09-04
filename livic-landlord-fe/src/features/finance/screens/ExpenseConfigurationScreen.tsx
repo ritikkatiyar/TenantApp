@@ -295,50 +295,35 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
 
   const renderMobileShell = () => (
     <View style={[styles.gradient, { flex: 1 }]}>
-      <Animated.View style={[styles.headerContainer, { opacity: headerOpacity, paddingTop: insets.top, height: 56 + insets.top }]}>
-        <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-          </TouchableOpacity>
-          <View style={styles.titleWrapper}>
-            <Text style={styles.compactTitleText}>Configurations</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.headerCreateTouch}
-            onPress={handleConfigureExpense}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerCreateInner}
-            >
-              <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
-              <Text style={styles.headerCreateText}>ADD</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-
-      <Animated.ScrollView
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true, listener: handleScroll }
-        )}
+      <ScrollView
+        onScroll={handleScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: 68 + insets.top }
-        ]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.inner}>
-          <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.screenTitle}>Billing Elements</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.kicker}>FINANCE CONFIGURATION</Text>
+            <View style={styles.titleActionRow}>
+              <Text style={styles.screenTitle}>Billing Configurations</Text>
+              <TouchableOpacity 
+                style={styles.headerCreateTouch}
+                onPress={handleConfigureExpense}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.headerCreateInner}
+                >
+                  <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
+                  <Text style={styles.headerCreateText}>ADD</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.screenSubtitle}>Configure ledger charge codes, utility scales and automation thresholds</Text>
-          </Animated.View>
+          </View>
 
           {renderContent()}
 
@@ -355,7 +340,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             </TouchableOpacity>
           )}
         </View>
-      </Animated.ScrollView>
+      </ScrollView>
     </View>
   );
 

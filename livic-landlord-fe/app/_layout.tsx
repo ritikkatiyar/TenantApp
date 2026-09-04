@@ -33,25 +33,40 @@ const ROUTE_TITLES: Record<string, string> = {
   '/leases': 'Leases',
   '/inventory': 'Items',
   '/expenses': 'Finance',
+  '/expenses/charge-config': 'Charges',
+  '/expenses/billing-worksheet': 'Worksheets',
+  '/expenses/ledger': 'Ledger',
+  '/expenses/rent-roll': 'Rent Roll',
+  '/create-expense': 'New Charge',
   '/reports': 'Reports',
   '/ai': 'AI Desk',
   '/escalations': 'Escalations',
   '/announcements': 'Announcements',
   '/analytics': 'Overview',
   '/settings': 'Settings',
+  '/admin': 'Admin',
+  '/billing': 'Subscription',
+  '/properties/create': 'New Property',
 };
 
 function getHeaderTitle(pathname: string): string {
-  if (ROUTE_TITLES[pathname]) {
-    return ROUTE_TITLES[pathname];
+  const clean = pathname.split('?')[0];
+  if (ROUTE_TITLES[clean]) {
+    return ROUTE_TITLES[clean];
   }
-  if (pathname.startsWith('/properties/')) {
-    if (pathname.includes('/floors/')) {
+  if (clean.startsWith('/properties/')) {
+    if (clean.includes('/floors')) {
       return 'Floor View';
+    }
+    if (clean.includes('/meter-readings')) {
+      return 'Meter Readings';
+    }
+    if (clean.includes('/memberships')) {
+      return 'Members';
     }
     return 'Property Details';
   }
-  if (pathname.startsWith('/expenses')) {
+  if (clean.startsWith('/expenses/')) {
     return 'Finance';
   }
   return 'Livic';
@@ -203,11 +218,13 @@ export default function RootLayout() {
     }
   }, []);
 
+  const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/onboarding', '/mode-selection', '/'];
   const hideNavigation = pathname === '/login' || pathname === '/signup';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = isDesktop;
-  const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
+  const hideHeader = hideNavigation || AUTH_OR_STANDALONE_ROUTES.includes(cleanPathname);
+  const showBackButton = !isPrimaryRoute && !hideHeader;
 
   return (
     <SafeAreaProvider>
@@ -232,6 +249,7 @@ export default function RootLayout() {
                               <Stack.Screen name="index" />
                               <Stack.Screen name="login" />
                               <Stack.Screen name="signup" />
+                              <Stack.Screen name="mode-selection" />
                               <Stack.Screen name="onboarding" />
                               <Stack.Screen name="command-center" />
                               <Stack.Screen name="ai" />
@@ -240,12 +258,17 @@ export default function RootLayout() {
                               <Stack.Screen name="reports" />
                               <Stack.Screen name="billing" />
                               <Stack.Screen name="expenses/index" />
+                              <Stack.Screen name="expenses/charge-config" />
+                              <Stack.Screen name="expenses/billing-worksheet" />
+                              <Stack.Screen name="expenses/ledger" />
+                              <Stack.Screen name="expenses/rent-roll" />
                               <Stack.Screen name="leases" />
                               <Stack.Screen name="inventory" />
                               <Stack.Screen name="create-expense" />
                               <Stack.Screen name="properties/create" />
                               <Stack.Screen name="properties/[id]/index" />
                               <Stack.Screen name="properties/[id]/meter-readings" />
+                              <Stack.Screen name="properties/[id]/memberships" />
                               <Stack.Screen name="escalations" />
                               <Stack.Screen name="announcements" />
                               <Stack.Screen name="settings" />
@@ -259,6 +282,14 @@ export default function RootLayout() {
                           <MobileHeader 
                             title={getHeaderTitle(pathname)} 
                             onNotificationPress={() => router.push('/escalations')}
+                            showBackButton={showBackButton}
+                            onBackPress={() => {
+                              if (cleanPathname.startsWith('/expenses/')) {
+                                router.push('/expenses');
+                              } else {
+                                router.back();
+                              }
+                            }}
                           />
                         )}
                         <ScreenWrapper isAuth={hideNavigation}>
@@ -272,6 +303,7 @@ export default function RootLayout() {
                               <Stack.Screen name="index" />
                               <Stack.Screen name="login" />
                               <Stack.Screen name="signup" />
+                              <Stack.Screen name="mode-selection" />
                               <Stack.Screen name="onboarding" />
                               <Stack.Screen name="command-center" />
                               <Stack.Screen name="ai" />
@@ -280,12 +312,17 @@ export default function RootLayout() {
                               <Stack.Screen name="reports" />
                               <Stack.Screen name="billing" />
                               <Stack.Screen name="expenses/index" />
+                              <Stack.Screen name="expenses/charge-config" />
+                              <Stack.Screen name="expenses/billing-worksheet" />
+                              <Stack.Screen name="expenses/ledger" />
+                              <Stack.Screen name="expenses/rent-roll" />
                               <Stack.Screen name="leases" />
                               <Stack.Screen name="inventory" />
                               <Stack.Screen name="create-expense" />
                               <Stack.Screen name="properties/create" />
                               <Stack.Screen name="properties/[id]/index" />
                               <Stack.Screen name="properties/[id]/meter-readings" />
+                              <Stack.Screen name="properties/[id]/memberships" />
                               <Stack.Screen name="escalations" />
                               <Stack.Screen name="announcements" />
                               <Stack.Screen name="settings" />
