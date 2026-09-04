@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -158,7 +159,12 @@ export default function OwnerLeasesScreen() {
           </View>
 
           {/* Tabs */}
-          <View style={{ flexDirection: 'row', gap: 10, marginVertical: 14 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabsScrollContent}
+            style={styles.tabsScrollView}
+          >
             {TABS.map((t) => (
               <FilterPill
                 key={t.id}
@@ -169,7 +175,7 @@ export default function OwnerLeasesScreen() {
                 onPress={() => setActiveTab(t.id)}
               />
             ))}
-          </View>
+          </ScrollView>
 
           {/* Search */}
           <View style={styles.searchBar}>
@@ -198,6 +204,7 @@ export default function OwnerLeasesScreen() {
               <LeasesTab
                 filteredLeases={filteredLeases}
                 isDark={isDark}
+                isDesktop={isDesktop}
                 styles={styles}
                 theme={theme}
                 isFetchingMore={isFetchingMore}
@@ -210,6 +217,7 @@ export default function OwnerLeasesScreen() {
               <BookingsTab
                 filteredBookings={filteredBookings}
                 isDark={isDark}
+                isDesktop={isDesktop}
                 styles={styles}
                 theme={theme}
                 onCashToken={(id: string) => { setSelectedBookingId(id); setIsCashModalVisible(true); }}
@@ -222,6 +230,7 @@ export default function OwnerLeasesScreen() {
               <VacanciesTab
                 vacatingUnits={vacatingUnits}
                 isDark={isDark}
+                isDesktop={isDesktop}
                 styles={styles}
                 theme={theme}
                 currentPropertyName={currentPropertyName}
@@ -275,6 +284,7 @@ export default function OwnerLeasesScreen() {
 function LeasesTab({
   filteredLeases,
   isDark,
+  isDesktop,
   styles,
   theme,
   isFetchingMore,
@@ -305,8 +315,8 @@ function LeasesTab({
                   <Text style={styles.tenantAvatarText}>{(l.tenantName || 'T').substring(0, 2).toUpperCase()}</Text>
                 </View>
                 <View style={styles.tenantTextContainer}>
-                  <Text style={styles.tenantName}>{l.tenantName || 'Active Tenant'}</Text>
-                  <Text style={styles.tenantContact}>{l.tenantPhone || 'No contact specified'}</Text>
+                  <Text style={styles.tenantName} numberOfLines={1}>{l.tenantName || 'Active Tenant'}</Text>
+                  <Text style={styles.tenantContact} numberOfLines={1}>{l.tenantPhone || 'No contact specified'}</Text>
                 </View>
               </View>
 
@@ -346,44 +356,84 @@ function LeasesTab({
                 <Text style={styles.detailValueSecondary}>{l.moveInDate || '—'}</Text>
               </View>
               {l.moveOutDate && (
-                <View style={styles.detailItem}>
+                <View style={[styles.detailItem, { borderColor: 'rgba(239, 68, 68, 0.25)' }]}>
                   <Text style={[styles.detailLabel, { color: theme.Colors.error }]}>EXPECTED VACATE</Text>
                   <Text style={[styles.detailValueSecondary, { color: theme.Colors.error, fontWeight: '800' }]}>{l.moveOutDate}</Text>
                 </View>
               )}
             </View>
 
-            {/* Footer with Contract ID and Horizontal Action Buttons */}
-            <View style={styles.cardFooter}>
-              <View style={styles.footerLeft}>
-                <Text style={styles.leaseIdText}>ID: #{l.id?.substring(0, 8)}</Text>
-              </View>
-              <View style={styles.leaseActionsRow}>
-                <ActionButton
-                  label="Edit Terms"
-                  icon="edit"
-                  variant="outline"
-                  size="sm"
-                  onPress={() => onEditTerms(l)}
-                />
-                <ActionButton
-                  label="Inventory"
-                  icon="inventory-2"
-                  variant="outline"
-                  size="sm"
-                  onPress={() => onInventory(l)}
-                />
+            {/* Responsive Actions: Clean stacked/grid rows on mobile, horizontal row on desktop */}
+            {!isDesktop ? (
+              <View style={styles.mobileActionsContainer}>
+                <View style={styles.cardFooterMobile}>
+                  <Text style={styles.leaseIdText}>ID: #{l.id?.substring(0, 8)}</Text>
+                </View>
+                <View style={styles.mobileActionsRow}>
+                  <View style={{ flex: 1 }}>
+                    <ActionButton
+                      label="Edit Terms"
+                      icon="edit"
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onPress={() => onEditTerms(l)}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <ActionButton
+                      label="Inventory"
+                      icon="inventory-2"
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onPress={() => onInventory(l)}
+                    />
+                  </View>
+                </View>
                 {!l.moveOutDate && (
                   <ActionButton
                     label="Serve Notice"
                     icon="warning"
                     variant="danger"
                     size="sm"
+                    fullWidth
                     onPress={() => onServeNotice(l.id)}
                   />
                 )}
               </View>
-            </View>
+            ) : (
+              <View style={styles.cardFooter}>
+                <View style={styles.footerLeft}>
+                  <Text style={styles.leaseIdText}>ID: #{l.id?.substring(0, 8)}</Text>
+                </View>
+                <View style={styles.leaseActionsRow}>
+                  <ActionButton
+                    label="Edit Terms"
+                    icon="edit"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => onEditTerms(l)}
+                  />
+                  <ActionButton
+                    label="Inventory"
+                    icon="inventory-2"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => onInventory(l)}
+                  />
+                  {!l.moveOutDate && (
+                    <ActionButton
+                      label="Serve Notice"
+                      icon="warning"
+                      variant="danger"
+                      size="sm"
+                      onPress={() => onServeNotice(l.id)}
+                    />
+                  )}
+                </View>
+              </View>
+            )}
           </GlassCard>
         );
       })}
@@ -404,7 +454,7 @@ function LeasesTab({
   );
 }
 
-function BookingsTab({ filteredBookings, isDark, styles, theme, onCashToken, onOnlinePay, onConvert, onForfeit, onRefund }: any) {
+function BookingsTab({ filteredBookings, isDark, isDesktop, styles, theme, onCashToken, onOnlinePay, onConvert, onForfeit, onRefund }: any) {
   if (filteredBookings.length === 0) {
     return (
       <EmptyState
@@ -424,8 +474,8 @@ function BookingsTab({ filteredBookings, isDark, styles, theme, onCashToken, onO
                 <Text style={[styles.tenantAvatarText, { color: theme.Colors.secondary }]}>{(b.prospectiveTenantName || 'P').substring(0, 2).toUpperCase()}</Text>
               </View>
               <View style={styles.tenantTextContainer}>
-                <Text style={styles.tenantName}>{b.prospectiveTenantName}</Text>
-                <Text style={styles.tenantContact}>{b.prospectiveTenantPhone}{b.prospectiveTenantEmail ? ` · ${b.prospectiveTenantEmail}` : ''}</Text>
+                <Text style={styles.tenantName} numberOfLines={1}>{b.prospectiveTenantName}</Text>
+                <Text style={styles.tenantContact} numberOfLines={1}>{b.prospectiveTenantPhone}{b.prospectiveTenantEmail ? ` · ${b.prospectiveTenantEmail}` : ''}</Text>
               </View>
             </View>
 
@@ -449,28 +499,34 @@ function BookingsTab({ filteredBookings, isDark, styles, theme, onCashToken, onO
             </View>
           </View>
 
-          <View style={styles.cardFooter}>
-            <View style={styles.footerLeft}>
-              <Text style={styles.leaseIdText}>Booking #{b.id?.substring(0, 8)}</Text>
-            </View>
-            <View style={styles.leaseActionsRow}>
+          {!isDesktop ? (
+            <View style={styles.mobileActionsContainer}>
+              <View style={styles.cardFooterMobile}>
+                <Text style={styles.leaseIdText}>Booking #{b.id?.substring(0, 8)}</Text>
+              </View>
               {b.status === 'BOOKED' && !b.paymentTransactionId && (
-                <>
-                  <ActionButton
-                    label="Cash Token"
-                    icon="payments"
-                    variant="outline"
-                    size="sm"
-                    onPress={() => onCashToken(b.id)}
-                  />
-                  <ActionButton
-                    label="Online Pay"
-                    icon="link"
-                    variant="outline"
-                    size="sm"
-                    onPress={() => onOnlinePay(b.id)}
-                  />
-                </>
+                <View style={styles.mobileActionsRow}>
+                  <View style={{ flex: 1 }}>
+                    <ActionButton
+                      label="Cash Token"
+                      icon="payments"
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onPress={() => onCashToken(b.id)}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <ActionButton
+                      label="Online Pay"
+                      icon="link"
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onPress={() => onOnlinePay(b.id)}
+                    />
+                  </View>
+                </View>
               )}
               {b.status === 'BOOKED' && (
                 <ActionButton
@@ -478,29 +534,89 @@ function BookingsTab({ filteredBookings, isDark, styles, theme, onCashToken, onO
                   icon="check-circle"
                   variant="primary"
                   size="sm"
+                  fullWidth
                   onPress={() => onConvert(b.id)}
                 />
               )}
               {b.status === 'BOOKED' && (
-                <>
-                  <ActionButton
-                    label="Forfeit"
-                    icon="cancel"
-                    variant="danger"
-                    size="sm"
-                    onPress={() => onForfeit(b.id)}
-                  />
-                  <ActionButton
-                    label="Refund"
-                    icon="replay"
-                    variant="outline"
-                    size="sm"
-                    onPress={() => onRefund(b.id)}
-                  />
-                </>
+                <View style={styles.mobileActionsRow}>
+                  <View style={{ flex: 1 }}>
+                    <ActionButton
+                      label="Forfeit"
+                      icon="cancel"
+                      variant="danger"
+                      size="sm"
+                      fullWidth
+                      onPress={() => onForfeit(b.id)}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <ActionButton
+                      label="Refund"
+                      icon="replay"
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onPress={() => onRefund(b.id)}
+                    />
+                  </View>
+                </View>
               )}
             </View>
-          </View>
+          ) : (
+            <View style={styles.cardFooter}>
+              <View style={styles.footerLeft}>
+                <Text style={styles.leaseIdText}>Booking #{b.id?.substring(0, 8)}</Text>
+              </View>
+              <View style={styles.leaseActionsRow}>
+                {b.status === 'BOOKED' && !b.paymentTransactionId && (
+                  <>
+                    <ActionButton
+                      label="Cash Token"
+                      icon="payments"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => onCashToken(b.id)}
+                    />
+                    <ActionButton
+                      label="Online Pay"
+                      icon="link"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => onOnlinePay(b.id)}
+                    />
+                  </>
+                )}
+                {b.status === 'BOOKED' && (
+                  <ActionButton
+                    label="Convert to Lease"
+                    icon="check-circle"
+                    variant="primary"
+                    size="sm"
+                    onPress={() => onConvert(b.id)}
+                  />
+                )}
+                {b.status === 'BOOKED' && (
+                  <>
+                    <ActionButton
+                      label="Forfeit"
+                      icon="cancel"
+                      variant="danger"
+                      size="sm"
+                      onPress={() => onForfeit(b.id)}
+                    />
+                    <ActionButton
+                      label="Refund"
+                      icon="replay"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => onRefund(b.id)}
+                    />
+                  </>
+                )}
+              </View>
+            </View>
+          )}
         </GlassCard>
       ))}
     </View>

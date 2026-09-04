@@ -108,8 +108,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: 12,
   },
   headerLeft: {
@@ -117,12 +116,12 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     flex: 1,
-    minWidth: 200,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
   cardTitle: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
   cardSubtitle: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontWeight: '600' },
@@ -406,20 +405,20 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   leaseDetailsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
-    paddingVertical: 14,
-    marginTop: 10,
-    marginBottom: 6,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: theme.Colors.outlineVariant,
+    gap: 10,
+    marginVertical: 12,
   },
   detailItem: {
     flex: 1,
-    minWidth: 110,
+    minWidth: 95,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 104, 117, 0.04)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 104, 117, 0.08)',
   },
   detailLabel: {
-    fontSize: theme.Typography.labelSmall.fontSize - 2,
+    fontSize: 10,
     fontWeight: '800',
     color: theme.Colors.onSurfaceVariant,
     letterSpacing: 0.6,
@@ -442,7 +441,6 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 8,
-    flexWrap: 'wrap',
     gap: 10,
   },
   footerLeft: {
@@ -453,6 +451,29 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.labelSmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     fontWeight: '600',
+  },
+  mobileActionsContainer: {
+    marginTop: 10,
+    gap: 8,
+  },
+  cardFooterMobile: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  mobileActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  tabsScrollView: {
+    marginVertical: 14,
+  },
+  tabsScrollContent: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingVertical: 4,
   },
   leaseActionsRow: {
     flexDirection: 'row',
