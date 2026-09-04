@@ -27,6 +27,7 @@ import { useExpenseConfiguration } from '@/src/features/finance/hooks/useExpense
 import { createStyles } from './ExpenseConfigurationScreen.styles';
 
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 // Sub-components
 import { ExpenseConfigCard } from '../components/billing/ExpenseConfigCard';
@@ -177,30 +178,14 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
 
     if (!propertyId) {
       return (
-        <GlassCard
-          style={{
-            marginVertical: 20,
-            minHeight: 280,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          contentStyle={{
-            padding: 48,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-              Select a Property
-            </Text>
-            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-              Please select a property from the top navigation bar to view and manage its charge configurations.
-            </Text>
-          </View>
-        </GlassCard>
+        <PropertyRequiredBanner
+          title="Select Property for Expense Setup"
+          description="Select a property below to view, configure, and manage its utility and maintenance charges."
+          icon="receipt-long"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+        />
       );
     }
 

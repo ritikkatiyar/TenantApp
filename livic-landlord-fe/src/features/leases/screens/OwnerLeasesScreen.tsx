@@ -112,6 +112,15 @@ export default function OwnerLeasesScreen() {
               <Text style={styles.subtitle}>Manage active tenancies, notice periods, unit bookings, and move-in/out inventory.</Text>
             </View>
             <View style={styles.headerActions}>
+              {isDesktop && properties.length > 0 && (
+                <PropertySelector
+                  properties={properties}
+                  selectedPropertyId={selectedPropertyId}
+                  onSelectProperty={setSelectedPropertyId}
+                  allowAll={true}
+                  style={{ marginRight: 12 }}
+                />
+              )}
               <ActionButton
                 label="Book Room"
                 icon="bookmark-add"
@@ -123,7 +132,12 @@ export default function OwnerLeasesScreen() {
           </View>
 
           {!isDesktop && properties.length > 0 && (
-            <PropertySelector properties={properties} selectedPropertyId={selectedPropertyId} onSelectProperty={setSelectedPropertyId} />
+            <PropertySelector
+              properties={properties}
+              selectedPropertyId={selectedPropertyId}
+              onSelectProperty={setSelectedPropertyId}
+              allowAll={true}
+            />
           )}
 
           {/* Stats */}

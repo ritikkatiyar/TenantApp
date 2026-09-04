@@ -275,7 +275,7 @@ BEGIN
             
             -- Create Unit
             INSERT INTO unit_tbl (id, property_id, unit_number, floor, capacity, type, grid_x, grid_y, grid_width, grid_height)
-            VALUES (curr_unit_id, prop_id, unit_num, f, 1, 'SINGLE_UNIT', u, f, 1, 1);
+            VALUES (curr_unit_id, prop_id, unit_num, f, 1, 'SINGLE_UNIT', u, 1, 1, 1);
             
             -- Create Tenant for this unit
             SET curr_tenant_id = UUID();

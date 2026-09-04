@@ -22,6 +22,7 @@ import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { createStyles } from './SettingsMenuScreen.styles';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 export default function SettingsMenuScreen() {
   const { theme, isDark } = useAppTheme();
@@ -37,7 +38,7 @@ export default function SettingsMenuScreen() {
   const { properties, isLoading } = useProperties();
   const { accessToken } = useAuth();
   const { showToast } = useToast();
-  const { selectedPropertyId } = useGlobalPropertySelection();
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
   const propertyId = selectedPropertyId || validParamId || null;
 
@@ -276,32 +277,19 @@ export default function SettingsMenuScreen() {
         </View>
       )}
 
-      {!propertyId ? (
-        <GlassCard
-          style={{
-            marginVertical: 20,
-            minHeight: 280,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          contentStyle={{
-            padding: 48,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-              Select Property to View Finance & Billing
-            </Text>
-            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-              Please select a property from the top navbar selector to view billing worksheets, rent roll, charge configurations, or ledger.
-            </Text>
-          </View>
-        </GlassCard>
-      ) : isDesktop ? (
+      {!propertyId && (
+        <PropertyRequiredBanner
+          title="Select Active Property"
+          description="Choose a property below to scope your billing worksheets, rent roll, charges, and ledger."
+          icon="account-balance"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+          style={{ marginBottom: theme.Spacing.lg }}
+        />
+      )}
+
+      {isDesktop ? (
         <View style={styles.gridContainer}>
           {menuItems.map((item) => (
             <TouchableOpacity

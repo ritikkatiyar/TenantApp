@@ -19,6 +19,7 @@ import { useGlobalPropertySelection } from '@/src/context/PropertySelectionConte
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 import { useMeterReading } from '@/src/features/finance/hooks/useMeterReading';
 import { MeterReadingSummary } from '@/src/features/finance/components/MeterReadingSummary';
@@ -187,30 +188,14 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
             {/* Main Content Grid */}
             {!propertyId ? (
-              <GlassCard
-                style={{
-                  marginVertical: 20,
-                  minHeight: 280,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                contentStyle={{
-                  padding: 48,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%',
-                }}
-              >
-                <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                  <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-                  <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-                    Select a Property
-                  </Text>
-                  <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-                    Please select a property from the top navigation bar to view and log meter readings.
-                  </Text>
-                </View>
-              </GlassCard>
+              <PropertyRequiredBanner
+                title="Select Property for Meter Readings"
+                description="Utility meters and consumptions are tracked per property. Select a property to enter unit readings."
+                icon="speed"
+                properties={properties}
+                selectedPropertyId={propertyId}
+                onSelectProperty={setSelectedPropertyId}
+              />
             ) : isLoading ? (
               <ActivityIndicator size="large" color={theme.Colors.primary} style={{ marginTop: 80 }} />
             ) : worksheet.length === 0 ? (

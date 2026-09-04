@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { createStyles } from './SettingsScreen.styles';
@@ -62,46 +63,13 @@ export default function SettingsScreen() {
 
       {/* Main Tab Content */}
       {!settings.propertyId && settings.activeTab !== 'preferences' ? (
-        <GlassCard
-          style={{
-            marginVertical: 20,
-            minHeight: 280,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          contentStyle={{
-            padding: 48,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-            <Text
-              style={{
-                fontSize: theme.Typography.titleMedium.fontSize,
-                fontWeight: '800',
-                color: theme.Colors.onSurface,
-                marginBottom: 8,
-                textAlign: 'center',
-              }}
-            >
-              Select Property to View Staff & Permissions
-            </Text>
-            <Text
-              style={{
-                fontSize: theme.Typography.bodyMedium.fontSize,
-                color: theme.Colors.onSurfaceVariant,
-                textAlign: 'center',
-                maxWidth: 440,
-                lineHeight: 22,
-              }}
-            >
-              Please select a property from the top navbar selector to view and manage team members, access roles, and invite keys.
-            </Text>
-          </View>
-        </GlassCard>
+        <PropertyRequiredBanner
+          title="Select Property for Staff & Permissions"
+          description="Manage property team members, manager roles, custom access permissions, and join codes by selecting a property below."
+          icon="admin-panel-settings"
+          properties={settings.properties}
+          selectedPropertyId={settings.propertyId}
+        />
       ) : (
         <SettingsTabContent
           activeTab={settings.activeTab}

@@ -24,6 +24,7 @@ import { AddItemModal } from '@/src/features/inventory/components/AddItemModal';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { useRouter } from 'expo-router';
@@ -165,30 +166,14 @@ export default function InventoryScreen() {
           </View>
 
           {!propertyId ? (
-            <GlassCard
-              style={{
-                marginVertical: 20,
-                minHeight: 280,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              contentStyle={{
-                padding: 48,
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-              }}
-            >
-              <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-                <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-                  Select Property to View & Add Inventory
-                </Text>
-                <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-                  Please select a property from the top navbar selector to view assets, assign items, or add new inventory.
-                </Text>
-              </View>
-            </GlassCard>
+            <PropertyRequiredBanner
+              title="Select Property for Inventory & Assets"
+              description="Track property assets, assign items to units, and run move-in checklists by selecting a property below."
+              icon="inventory"
+              properties={properties}
+              selectedPropertyId={propertyId}
+              onSelectProperty={setSelectedPropertyId}
+            />
           ) : (
             <>
               {/* Desktop search for registry */}

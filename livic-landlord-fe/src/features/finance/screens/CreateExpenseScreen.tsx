@@ -24,6 +24,7 @@ import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useChargeConfig } from '@/src/features/finance/hooks/useChargeConfig';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 // Sub-components
 import { ChargeIdentityCard } from '../components/billing/ChargeIdentityCard';
@@ -41,6 +42,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const { propertyId: paramPropertyId, chargeId } = useLocalSearchParams<{ propertyId?: string, chargeId?: string }>();
   const { isDesktop } = useResponsive();
   const insets = useSafeAreaInsets();
+  const { properties } = useProperties();
   const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
   const propertyId = selectedPropertyId || validParamId || null;
@@ -165,9 +167,23 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
     );
   }
 
-  const renderContent = () => (
-    <View style={styles.contentContainer}>
-      <View style={isDesktop ? styles.desktopMainRow : null}>
+  const renderContent = () => {
+    if (!propertyId) {
+      return (
+        <PropertyRequiredBanner
+          title="Select Property for Charge Setup"
+          description="Select which property this charge rule applies to before configuring its rates."
+          icon="receipt"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+        />
+      );
+    }
+
+    return (
+      <View style={styles.contentContainer}>
+        <View style={isDesktop ? styles.desktopMainRow : null}>
         <View style={isDesktop ? styles.desktopFormCol : null}>
           {/* Card 1: Charge Identity */}
           <ChargeIdentityCard
@@ -261,7 +277,8 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         </LinearGradient>
       </TouchableOpacity>
     </View>
-  );
+    );
+  };
 
   return (
     <PageShell

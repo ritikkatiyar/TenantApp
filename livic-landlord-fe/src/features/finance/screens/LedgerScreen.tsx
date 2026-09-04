@@ -24,6 +24,7 @@ import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { useLedger } from '@/src/features/finance/hooks/useLedger';
 
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 // Sub-components
 import { LedgerTable } from '../components/billing/LedgerTable';
@@ -236,30 +237,14 @@ export default function LedgerScreen({ token }: { token: string | null }) {
       </View>
 
       {!propertyId ? (
-        <GlassCard
-          style={{
-            marginVertical: 20,
-            minHeight: 280,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          contentStyle={{
-            padding: 48,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-              Select a Property
-            </Text>
-            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-              Please select a property from the top navigation bar to view its general ledger transactions.
-            </Text>
-          </View>
-        </GlassCard>
+        <PropertyRequiredBanner
+          title="Select Property to View Ledger"
+          description="Accounting entries, payments, and receivables are organized per property. Select a property to view transactions."
+          icon="account-balance-wallet"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+        />
       ) : (
         <LedgerTable
           ledger={accumulatedLedger}

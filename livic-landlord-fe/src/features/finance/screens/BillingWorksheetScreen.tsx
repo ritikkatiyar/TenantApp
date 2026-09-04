@@ -29,6 +29,7 @@ import { SkeletonRow } from '@/src/components/common/feedback/Skeleton';
 
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 // Sub-components
 import { WorksheetFloorList } from '../components/billing/WorksheetFloorList';
@@ -127,30 +128,14 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
   const renderContent = () => {
     if (!propertyId) {
       return (
-        <GlassCard
-          style={{
-            marginVertical: 20,
-            minHeight: 280,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          contentStyle={{
-            padding: 48,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-              Select a Property
-            </Text>
-            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-              Please select a property from the top navigation bar to view and manage its billing worksheet entries.
-            </Text>
-          </View>
-        </GlassCard>
+        <PropertyRequiredBanner
+          title="Select Property for Billing Worksheet"
+          description="Billing worksheets calculate tenant utilities and consumption per building. Select a property to continue."
+          icon="description"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+        />
       );
     }
     if (!properties || properties.length === 0) {

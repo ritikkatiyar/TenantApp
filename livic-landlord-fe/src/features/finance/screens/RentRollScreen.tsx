@@ -26,6 +26,7 @@ import { StatCard } from '@/src/components/common/display/StatCard';
 import { SectionHeader } from '@/src/components/common/display/SectionHeader';
 import { ActionButton } from '@/src/components/common/inputs/ActionButton';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 import { useRentRoll } from '@/src/features/finance/hooks/useRentRoll';
 import type { RentCycleResponse } from '@/src/features/finance/api/rentCycle.api';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -258,17 +259,14 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
 
     if (!propertyId) {
       return (
-        <View style={{ flex: 1, padding: theme.Spacing.lg, justifyContent: 'center', alignItems: 'center' }}>
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ padding: theme.Spacing.xl, borderRadius: 24, alignItems: 'center', maxWidth: 500, width: '100%', backgroundColor: theme.Colors.glassFill, borderWidth: 1.5, borderColor: theme.Colors.glassStroke }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0, 104, 117, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: theme.Spacing.md }}>
-              <MaterialIcons name="business" size={32} color={theme.Colors.primary} />
-            </View>
-            <Text style={{ fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: theme.Spacing.sm, textAlign: 'center' }}>Select a Property</Text>
-            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 }}>
-              Please select a property from the top navigation bar to view rent cycles and compile invoices.
-            </Text>
-          </BlurView>
-        </View>
+        <PropertyRequiredBanner
+          title="Select Property for Rent Roll"
+          description="Rent cycles, invoicing, and billing worksheets are compiled per property. Select a property to continue."
+          icon="receipt-long"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+        />
       );
     }
 
@@ -314,30 +312,14 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
         </View>
 
         {!propertyId ? (
-          <GlassCard
-            style={{
-              marginVertical: 20,
-              minHeight: 280,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            contentStyle={{
-              padding: 48,
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-            }}
-          >
-            <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-              <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-              <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-                Select Property to Generate Draft
-              </Text>
-              <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-                Please select a property from the top navbar selector to view or generate a draft billing worksheet.
-              </Text>
-            </View>
-          </GlassCard>
+          <PropertyRequiredBanner
+            title="Select Property to Generate Draft"
+            description="Select a property below to run pre-flight checks and compile a draft billing worksheet."
+            icon="fact-check"
+            properties={properties}
+            selectedPropertyId={propertyId}
+            onSelectProperty={setSelectedPropertyId}
+          />
         ) : !hasGenerated ? (
           <PreFlightChecklistCard
             checklist={checklist}
