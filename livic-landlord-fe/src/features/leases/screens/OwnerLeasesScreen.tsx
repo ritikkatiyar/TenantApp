@@ -12,6 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
+import { GlassCard } from '@/src/components/common/display/GlassCard';
+import { EmptyState } from '@/src/components/common/display/EmptyState';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { formatCurrency, formatCompactCurrency } from '@/src/utils/formatters';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
@@ -185,8 +187,8 @@ export default function OwnerLeasesScreen() {
             )}
           </View>
 
-          {/* Main Panel */}
-          <BlurView intensity={65} tint={isDark ? 'dark' : 'light'} style={styles.panel}>
+          {/* Main Content Area */}
+          <View style={styles.tabContentContainer}>
             {isLoadingData && filteredLeases.length === 0 ? (
               <View style={styles.loadingBox}>
                 <ActivityIndicator size="large" color={theme.Colors.primary} />
@@ -225,7 +227,7 @@ export default function OwnerLeasesScreen() {
                 currentPropertyName={currentPropertyName}
               />
             )}
-          </BlurView>
+          </View>
  
 
       {/* Modals */}
@@ -283,13 +285,11 @@ function LeasesTab({
 }: any) {
   if (filteredLeases.length === 0) {
     return (
-      <View style={styles.emptyState}>
-        <LinearGradient colors={['rgba(0,104,117,0.1)', 'rgba(0,114,255,0.1)']} style={styles.emptyIconCircle}>
-          <MaterialIcons name="vpn-key" size={32} color={theme.Colors.primary} />
-        </LinearGradient>
-        <Text style={styles.emptyTitle}>No Active Leases</Text>
-        <Text style={styles.emptySubtitle}>Book rooms or convert bookings to generate tenancy contracts for this property.</Text>
-      </View>
+      <EmptyState
+        iconName="vpn-key"
+        title="No Active Leases"
+        description="Book rooms or convert bookings to generate tenancy contracts for this property."
+      />
     );
   }
   return (
@@ -297,44 +297,68 @@ function LeasesTab({
       {filteredLeases.map((l: LeaseResponse) => {
         const hasNotice = Boolean(l.moveOutDate);
         return (
-          <BlurView key={l.id} intensity={45} tint={isDark ? 'dark' : 'light'} style={[styles.leaseCard, hasNotice && styles.leaseCardAlert]}>
-            {hasNotice && <LinearGradient colors={[theme.Colors.error, '#ef4444']} style={styles.alertStripe} />}
-            <View style={styles.leaseCardInner}>
-              <View style={styles.tenantAvatarCircle}>
-                <Text style={styles.tenantAvatarText}>{(l.tenantName || 'T').substring(0, 2).toUpperCase()}</Text>
-              </View>
-              <View style={styles.leaseMainInfo}>
-                <View style={styles.leaseTopRow}>
-                  <View style={styles.unitBadge}>
-                    <MaterialIcons name="meeting-room" size={12} color={theme.Colors.primary} />
-                    <Text style={styles.unitBadgeText}>Unit {l.unitNumber}</Text>
-                  </View>
-                  <StatusPill status={hasNotice ? 'ENDING_SOON' : l.status || 'ACTIVE'} />
+          <GlassCard key={l.id} style={[styles.leaseCard, hasNotice && styles.leaseCardAlert]}>
+            {/* Header Row: Tenant identity on left, Unit & Status Badges on right */}
+            <View style={styles.cardHeader}>
+              <View style={styles.headerLeft}>
+                <View style={styles.tenantAvatarCircle}>
+                  <Text style={styles.tenantAvatarText}>{(l.tenantName || 'T').substring(0, 2).toUpperCase()}</Text>
                 </View>
-                <Text style={styles.tenantName}>{l.tenantName || 'Active Tenant'}</Text>
-                <Text style={styles.tenantContact}>{l.tenantPhone || 'No contact specified'}</Text>
-                <View style={styles.leaseDetailsRow}>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>MONTHLY RENT</Text>
-                    <Text style={styles.detailValue}>{formatCurrency(l.monthlyRentAmount)}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>SECURITY DEPOSIT</Text>
-                    <Text style={styles.detailValue}>{formatCurrency(l.securityDeposit ?? 0)}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Text style={styles.detailLabel}>MOVE-IN</Text>
-                    <Text style={styles.detailValueSecondary}>{l.moveInDate}</Text>
-                  </View>
-                  {l.moveOutDate && (
-                    <View style={styles.detailItem}>
-                      <Text style={[styles.detailLabel, { color: theme.Colors.error }]}>EXPECTED VACATE</Text>
-                      <Text style={[styles.detailValueSecondary, { color: theme.Colors.error, fontWeight: '800' }]}>{l.moveOutDate}</Text>
-                    </View>
-                  )}
+                <View style={styles.tenantTextContainer}>
+                  <Text style={styles.tenantName}>{l.tenantName || 'Active Tenant'}</Text>
+                  <Text style={styles.tenantContact}>{l.tenantPhone || 'No contact specified'}</Text>
                 </View>
               </View>
-              <View style={[styles.leaseActionsCol, { gap: 8 }]}>
+
+              <View style={styles.headerRight}>
+                <View style={styles.unitBadge}>
+                  <MaterialIcons name="meeting-room" size={13} color={theme.Colors.primary} />
+                  <Text style={styles.unitBadgeText}>
+                    {l.propertyName ? `${l.propertyName} · ` : ''}Unit {l.unitNumber || '—'}
+                  </Text>
+                </View>
+                <StatusPill status={hasNotice ? 'ENDING_SOON' : l.status || 'ACTIVE'} />
+              </View>
+            </View>
+
+            {/* Notice Alert Banner if move-out scheduled */}
+            {hasNotice && (
+              <View style={styles.noticeAlertBar}>
+                <MaterialIcons name="warning-amber" size={16} color={theme.Colors.error} />
+                <Text style={styles.noticeAlertText}>
+                  Notice Served · Vacating on {l.moveOutDate}
+                </Text>
+              </View>
+            )}
+
+            {/* Financial Details Row */}
+            <View style={styles.leaseDetailsRow}>
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>MONTHLY RENT</Text>
+                <Text style={styles.detailValue}>{formatCurrency(l.monthlyRentAmount)}</Text>
+              </View>
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>SECURITY DEPOSIT</Text>
+                <Text style={styles.detailValue}>{formatCurrency(l.securityDeposit ?? 0)}</Text>
+              </View>
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>MOVE-IN</Text>
+                <Text style={styles.detailValueSecondary}>{l.moveInDate || '—'}</Text>
+              </View>
+              {l.moveOutDate && (
+                <View style={styles.detailItem}>
+                  <Text style={[styles.detailLabel, { color: theme.Colors.error }]}>EXPECTED VACATE</Text>
+                  <Text style={[styles.detailValueSecondary, { color: theme.Colors.error, fontWeight: '800' }]}>{l.moveOutDate}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Footer with Contract ID and Horizontal Action Buttons */}
+            <View style={styles.cardFooter}>
+              <View style={styles.footerLeft}>
+                <Text style={styles.leaseIdText}>ID: #{l.id?.substring(0, 8)}</Text>
+              </View>
+              <View style={styles.leaseActionsRow}>
                 <ActionButton
                   label="Edit Terms"
                   icon="edit"
@@ -345,7 +369,7 @@ function LeasesTab({
                 <ActionButton
                   label="Inventory"
                   icon="inventory-2"
-                  variant="primary"
+                  variant="outline"
                   size="sm"
                   onPress={() => onInventory(l)}
                 />
@@ -360,7 +384,7 @@ function LeasesTab({
                 )}
               </View>
             </View>
-          </BlurView>
+          </GlassCard>
         );
       })}
 
@@ -383,68 +407,101 @@ function LeasesTab({
 function BookingsTab({ filteredBookings, isDark, styles, theme, onCashToken, onOnlinePay, onConvert, onForfeit, onRefund }: any) {
   if (filteredBookings.length === 0) {
     return (
-      <View style={styles.emptyState}>
-        <LinearGradient colors={['rgba(79,70,229,0.1)', 'rgba(124,58,237,0.1)']} style={styles.emptyIconCircle}>
-          <MaterialIcons name="bookmark-border" size={32} color={theme.Colors.secondary} />
-        </LinearGradient>
-        <Text style={styles.emptyTitle}>No Pending Bookings</Text>
-        <Text style={styles.emptySubtitle}>Click &apos;Book Room&apos; above to reserve rooms for prospective tenants.</Text>
-      </View>
+      <EmptyState
+        iconName="bookmark-border"
+        title="No Pending Bookings"
+        description="Click 'Book Room' above to reserve rooms for prospective tenants."
+      />
     );
   }
   return (
     <View style={styles.listContainer}>
       {filteredBookings.map((b: UnitBookingResponse) => (
-        <BlurView key={b.id} intensity={45} tint={isDark ? 'dark' : 'light'} style={styles.leaseCard}>
-          <View style={styles.leaseCardInner}>
-            <View style={[styles.tenantAvatarCircle, { backgroundColor: 'rgba(79,70,229,0.1)' }]}>
-              <Text style={[styles.tenantAvatarText, { color: theme.Colors.secondary }]}>{(b.prospectiveTenantName || 'P').substring(0, 2).toUpperCase()}</Text>
-            </View>
-            <View style={styles.leaseMainInfo}>
-              <View style={styles.leaseTopRow}>
-                <View style={styles.unitBadge}>
-                  <MaterialIcons name="meeting-room" size={12} color={theme.Colors.primary} />
-                  <Text style={styles.unitBadgeText}>Unit {b.unitNumber}</Text>
-                </View>
-                <StatusPill status={b.status} />
+        <GlassCard key={b.id} style={styles.leaseCard}>
+          <View style={styles.cardHeader}>
+            <View style={styles.headerLeft}>
+              <View style={[styles.tenantAvatarCircle, { backgroundColor: 'rgba(79,70,229,0.1)' }]}>
+                <Text style={[styles.tenantAvatarText, { color: theme.Colors.secondary }]}>{(b.prospectiveTenantName || 'P').substring(0, 2).toUpperCase()}</Text>
               </View>
-              <Text style={styles.tenantName}>{b.prospectiveTenantName}</Text>
-              <Text style={styles.tenantContact}>{b.prospectiveTenantPhone}{b.prospectiveTenantEmail ? ` · ${b.prospectiveTenantEmail}` : ''}</Text>
-              <View style={styles.leaseDetailsRow}>
-                <View style={styles.detailItem}><Text style={styles.detailLabel}>TOKEN AMOUNT</Text><Text style={styles.detailValue}>{formatCurrency(b.tokenAmount)}</Text></View>
-                <View style={styles.detailItem}><Text style={styles.detailLabel}>EXPECTED MOVE-IN</Text><Text style={styles.detailValueSecondary}>{b.expectedMoveInDate}</Text></View>
+              <View style={styles.tenantTextContainer}>
+                <Text style={styles.tenantName}>{b.prospectiveTenantName}</Text>
+                <Text style={styles.tenantContact}>{b.prospectiveTenantPhone}{b.prospectiveTenantEmail ? ` · ${b.prospectiveTenantEmail}` : ''}</Text>
               </View>
             </View>
-            <View style={styles.leaseActionsCol}>
+
+            <View style={styles.headerRight}>
+              <View style={styles.unitBadge}>
+                <MaterialIcons name="meeting-room" size={13} color={theme.Colors.primary} />
+                <Text style={styles.unitBadgeText}>Unit {b.unitNumber || '—'}</Text>
+              </View>
+              <StatusPill status={b.status} />
+            </View>
+          </View>
+
+          <View style={styles.leaseDetailsRow}>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>TOKEN AMOUNT</Text>
+              <Text style={styles.detailValue}>{formatCurrency(b.tokenAmount)}</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailLabel}>EXPECTED MOVE-IN</Text>
+              <Text style={styles.detailValueSecondary}>{b.expectedMoveInDate || '—'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.cardFooter}>
+            <View style={styles.footerLeft}>
+              <Text style={styles.leaseIdText}>Booking #{b.id?.substring(0, 8)}</Text>
+            </View>
+            <View style={styles.leaseActionsRow}>
               {b.status === 'BOOKED' && !b.paymentTransactionId && (
                 <>
-                  <TouchableOpacity style={styles.actionBtnOutline} onPress={() => onCashToken(b.id)}>
-                    <MaterialIcons name="payments" size={14} color={theme.Colors.primary} />
-                    <Text style={styles.actionBtnText}>Cash Token</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionBtnOutline} onPress={() => onOnlinePay(b.id)}>
-                    <MaterialIcons name="link" size={14} color={theme.Colors.primary} />
-                    <Text style={styles.actionBtnText}>Online Pay</Text>
-                  </TouchableOpacity>
+                  <ActionButton
+                    label="Cash Token"
+                    icon="payments"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => onCashToken(b.id)}
+                  />
+                  <ActionButton
+                    label="Online Pay"
+                    icon="link"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => onOnlinePay(b.id)}
+                  />
                 </>
               )}
               {b.status === 'BOOKED' && (
-                <TouchableOpacity style={styles.actionBtnPrimary} onPress={() => onConvert(b.id)}>
-                  <LinearGradient colors={[theme.Colors.primary, '#10b981']} style={styles.actionBtnInner}>
-                    <MaterialIcons name="check-circle" size={14} color={theme.Colors.surfaceContainerLowest} />
-                    <Text style={styles.actionBtnTextPrimary}>Convert to Lease</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+                <ActionButton
+                  label="Convert to Lease"
+                  icon="check-circle"
+                  variant="primary"
+                  size="sm"
+                  onPress={() => onConvert(b.id)}
+                />
               )}
               {b.status === 'BOOKED' && (
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  <TouchableOpacity style={styles.actionBtnTextBtn} onPress={() => onForfeit(b.id)}><Text style={styles.forfeitText}>Forfeit</Text></TouchableOpacity>
-                  <TouchableOpacity style={styles.actionBtnTextBtn} onPress={() => onRefund(b.id)}><Text style={styles.refundText}>Refund</Text></TouchableOpacity>
-                </View>
+                <>
+                  <ActionButton
+                    label="Forfeit"
+                    icon="cancel"
+                    variant="danger"
+                    size="sm"
+                    onPress={() => onForfeit(b.id)}
+                  />
+                  <ActionButton
+                    label="Refund"
+                    icon="replay"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => onRefund(b.id)}
+                  />
+                </>
               )}
             </View>
           </View>
-        </BlurView>
+        </GlassCard>
       ))}
     </View>
   );
@@ -453,32 +510,36 @@ function BookingsTab({ filteredBookings, isDark, styles, theme, onCashToken, onO
 function VacanciesTab({ vacatingUnits, isDark, styles, theme, currentPropertyName }: any) {
   if (vacatingUnits.length === 0) {
     return (
-      <View style={styles.emptyState}>
-        <LinearGradient colors={['rgba(186,26,26,0.1)', 'rgba(186,26,26,0.1)']} style={styles.emptyIconCircle}>
-          <MaterialIcons name="door-sliding" size={32} color={theme.Colors.error} />
-        </LinearGradient>
-        <Text style={styles.emptyTitle}>No Vacancies or Notices</Text>
-        <Text style={styles.emptySubtitle}>No tenants have served move-out notice for this property.</Text>
-      </View>
+      <EmptyState
+        iconName="door-sliding"
+        title="No Vacancies or Notices"
+        description="No tenants have served move-out notice for this property."
+      />
     );
   }
   return (
     <View style={styles.listContainer}>
       {vacatingUnits.map((v: any, i: number) => (
-        <BlurView key={v.id || i} intensity={45} tint={isDark ? 'dark' : 'light'} style={styles.leaseCard}>
-          <View style={styles.leaseCardInner}>
-            <View style={[styles.tenantAvatarCircle, { backgroundColor: 'rgba(186,26,26,0.1)' }]}>
-              <MaterialIcons name="door-sliding" size={22} color={theme.Colors.error} />
+        <GlassCard key={v.id || i} style={[styles.leaseCard, styles.leaseCardAlert]}>
+          <View style={styles.cardHeader}>
+            <View style={styles.headerLeft}>
+              <View style={[styles.tenantAvatarCircle, { backgroundColor: 'rgba(186,26,26,0.1)' }]}>
+                <MaterialIcons name="door-sliding" size={22} color={theme.Colors.error} />
+              </View>
+              <View style={styles.tenantTextContainer}>
+                <Text style={styles.tenantName}>Unit {v.unitNumber || v.name}</Text>
+                <Text style={styles.tenantContact}>{v.propertyName || currentPropertyName}</Text>
+              </View>
             </View>
-            <View style={styles.leaseMainInfo}>
-              <Text style={styles.tenantName}>Unit {v.unitNumber || v.name}</Text>
-              <Text style={styles.tenantContact}>{v.propertyName || currentPropertyName}</Text>
-              <Text style={[styles.detailValueSecondary, { color: theme.Colors.error, marginTop: 4 }]}>
-                Move-Out Scheduled: {v.expectedVacateDate || 'Notice Active'}
-              </Text>
-            </View>
+            <StatusPill status="ENDING_SOON" />
           </View>
-        </BlurView>
+          <View style={styles.noticeAlertBar}>
+            <MaterialIcons name="warning-amber" size={16} color={theme.Colors.error} />
+            <Text style={styles.noticeAlertText}>
+              Move-Out Scheduled: {v.expectedVacateDate || 'Notice Active'}
+            </Text>
+          </View>
+        </GlassCard>
       ))}
     </View>
   );

@@ -131,21 +131,36 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
 
     private LeaseDTOs.LeaseResponse enrichLease(LeaseTbl lease) {
         UserSummaryDTO user = userFacade.getUserById(lease.getUserId()).orElse(null);
-        return toResponse(lease, user);
+        UnitSummaryDTO unit = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+        String fullName = user != null ? user.fullName() : "Unknown User";
+        String phone = user != null ? user.phoneNumber() : "";
+        String unitNumber = unit != null ? unit.unitNumber() : "N/A";
+        String propertyName = (unit != null && unit.propertyId() != null)
+                ? propertyFacade.getPropertyById(unit.propertyId()).map(PropertySummaryDTO::name).orElse("N/A")
+                : "N/A";
+        return LeaseMapper.toResponse(lease, unitNumber, propertyName, fullName, phone);
     }
 
     private List<LeaseDTOs.LeaseResponse> enrichLeases(List<LeaseTbl> leases) {
+        if (leases == null || leases.isEmpty()) {
+            return List.of();
+        }
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(
                 leases.stream().map(LeaseTbl::getUserId).collect(Collectors.toSet())
         );
+        Map<UUID, UnitSummaryDTO> unitsMap = unitFacade.getUnitsByIds(
+                leases.stream().map(LeaseTbl::getUnitId).collect(Collectors.toSet())
+        );
         return leases.stream()
-                .map(lease -> toResponse(lease, usersMap.get(lease.getUserId())))
+                .map(lease -> {
+                    UserSummaryDTO user = usersMap.get(lease.getUserId());
+                    UnitSummaryDTO unit = unitsMap.get(lease.getUnitId());
+                    String fullName = user != null ? user.fullName() : "Unknown User";
+                    String phone = user != null ? user.phoneNumber() : "";
+                    String unitNumber = unit != null ? unit.unitNumber() : "N/A";
+                    String propertyName = "N/A";
+                    return LeaseMapper.toResponse(lease, unitNumber, propertyName, fullName, phone);
+                })
                 .toList();
-    }
-
-    private LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease, UserSummaryDTO user) {
-        String fullName = user != null ? user.fullName() : "Unknown User";
-        String phone = user != null ? user.phoneNumber() : "";
-        return LeaseMapper.toResponseWithDetails(lease, fullName, phone);
     }
 }
