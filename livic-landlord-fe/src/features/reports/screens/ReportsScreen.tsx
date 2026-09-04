@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TextInput,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
@@ -37,82 +38,79 @@ const STATUS_OPTIONS = [
 
 export default function ReportsScreen() {
   const { theme, isDark } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-
-  const { accessToken } = useAuth();
+  const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const { isDesktop } = useResponsive();
-  const { properties } = useProperties();
+  const { accessToken } = useAuth();
   const { selectedPropertyId } = useGlobalPropertySelection();
+  const { properties } = useProperties();
 
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
   const [billingMonth, setBillingMonth] = useState<string>(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const pageSize = 20;
 
-  const [isLoading, setIsLoading] = useState(false);
   const [statements, setStatements] = useState<RentCycleResponse[]>([]);
-  const [page, setPage] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(20);
-  const [totalPages, setTotalPages] = useState<number>(0);
-
-  const [totalElements, setTotalElements] = useState<number>(0);
-  const [totalRevenue, setTotalRevenue] = useState<number>(0);
-  const [publishedCount, setPublishedCount] = useState<number>(0);
-  const [pendingDraftsCount, setPendingDraftsCount] = useState<number>(0);
   const [accumulatedStatements, setAccumulatedStatements] = useState<RentCycleResponse[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [publishedCount, setPublishedCount] = useState(0);
+  const [pendingDraftsCount, setPendingDraftsCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const loadStatements = useCallback(
-    async (targetPage: number = 0) => {
+    async (pageToLoad: number) => {
       if (!accessToken) return;
+      if (pageToLoad === 0) {
+        setIsLoading(true);
+      } else {
+        setIsFetchingMore(true);
+      }
+
       try {
-        if (targetPage === 0) {
-          setIsLoading(true);
-        } else {
-          setIsFetchingMore(true);
-        }
-        const data = await listRentCycles(
+        const res = await listRentCycles(
           billingMonth,
           accessToken,
           selectedPropertyId || undefined,
-          targetPage,
+          pageToLoad,
           pageSize,
           statusFilter !== 'ALL' ? statusFilter : undefined,
           searchQuery.trim() || undefined
         );
 
-        // Sort statements floor and room wise
-        const sortedContent = [...(data.content || [])].sort((a, b) =>
-          (a.unitNumber || '').localeCompare(b.unitNumber || '', undefined, {
-            numeric: true,
-            sensitivity: 'base',
-          })
-        );
+        let filtered = res.content || [];
 
-        setAccumulatedStatements((prev) => {
-          if (targetPage === 0) return sortedContent;
-          const existingIds = new Set(prev.map((i) => i.id));
-          const newItems = sortedContent.filter((i) => !existingIds.has(i.id));
-          return [...prev, ...newItems];
-        });
+        setStatements(filtered);
+        setTotalElements(res.totalElements || 0);
+        setTotalPages(res.totalPages || 1);
+        setPage(pageToLoad);
 
-        setStatements(sortedContent);
-        setTotalElements(data.totalElements || 0);
-        setTotalPages(data.totalPages || 0);
-        setPage(targetPage);
-        setTotalRevenue(data.totalExpectedRevenue || 0);
-        setPublishedCount(data.publishedCount || 0);
-        setPendingDraftsCount(data.pendingDraftsCount || 0);
+        if (pageToLoad === 0) {
+          setAccumulatedStatements(filtered);
+        } else {
+          setAccumulatedStatements((prev) => {
+            const existingIds = new Set(prev.map((s) => s.id));
+            const newUnique = filtered.filter((s) => !existingIds.has(s.id));
+            return [...prev, ...newUnique];
+          });
+        }
+
+        setTotalRevenue(res.totalExpectedRevenue || 0);
+        setPublishedCount(res.publishedCount || 0);
+        setPendingDraftsCount(res.pendingDraftsCount || 0);
       } catch (err: any) {
-        console.warn('[Reports] Error loading statements:', err.message);
+        console.warn('[Reports] Failed to fetch cycles:', err.message);
       } finally {
         setIsLoading(false);
         setIsFetchingMore(false);
       }
     },
-    [accessToken, billingMonth, selectedPropertyId, pageSize, statusFilter, searchQuery]
+    [accessToken, billingMonth, selectedPropertyId, statusFilter, searchQuery]
   );
 
   const handleLoadMore = useCallback(() => {
@@ -166,49 +164,54 @@ export default function ReportsScreen() {
       contentContainerStyle={[styles.container, isDesktop && styles.containerDesktop]}
     >
       {/* KPI Stats Overview */}
-      <View style={styles.kpiRow}>
+      <View style={[styles.kpiRow, isDesktop && styles.kpiRowDesktop]}>
         <StatCard
-          label="TOTAL STATEMENTS"
+          label="Statements"
           value={totalElements}
           loading={isLoading}
-          helperText={`Records for ${billingMonth}`}
+          helperText={`for ${billingMonth}`}
           iconName="receipt-long"
           iconColor={theme.Colors.primary}
           valueColor={theme.Colors.primary}
+          style={isDesktop ? { flex: 1 } : styles.kpiCardMobile}
         />
         <StatCard
-          label="TOTAL BILLED"
+          label="Total Billed"
           value={`₹${totalRevenue.toLocaleString()}`}
           loading={isLoading}
-          helperText={`${publishedCount} published invoices`}
+          helperText={`${publishedCount} published`}
           iconName="payments"
           iconColor={theme.Colors.secondary}
           valueColor={isDark ? '#A78BFA' : theme.Colors.secondary}
+          style={isDesktop ? { flex: 1 } : styles.kpiCardMobile}
         />
         <StatCard
-          label="PAGE COLLECTED"
+          label="Collected"
           value={`₹${totalCollected.toLocaleString()}`}
           loading={isLoading}
-          helperText={`${statements.filter((s) => s.status === 'PAID').length} paid on this page`}
+          helperText={`${statements.filter((s) => s.status === 'PAID').length} paid`}
           iconName="check-circle"
           iconColor={theme.Colors.tertiary}
           valueColor={theme.Colors.tertiary}
+          style={isDesktop ? { flex: 1 } : styles.kpiCardMobile}
         />
         <StatCard
-          label="PENDING DRAFTS"
+          label="Pending"
           value={pendingDraftsCount}
           loading={isLoading}
-          helperText="Drafts awaiting publishing"
+          helperText={`${pendingDraftsCount} drafts`}
           iconName="pending"
           iconColor={theme.Colors.tertiary}
           valueColor={theme.Colors.tertiary}
+          style={isDesktop ? { flex: 1 } : styles.kpiCardMobile}
         />
       </View>
 
       {/* Header & Filter Controls Card */}
       <GlassCard style={styles.glassCard}>
         <View style={styles.headerRow}>
-          <View>
+          <View style={styles.titleSection}>
+            <Text style={styles.kicker}>STATEMENTS & AUDIT</Text>
             <Text style={styles.sectionTitle}>Monthly Statements</Text>
             <Text style={styles.sectionSubtitle}>
               Select property and month to inspect and download tenant invoices
@@ -218,24 +221,27 @@ export default function ReportsScreen() {
           {/* Month Selector */}
           <View style={styles.monthSelector}>
             <TouchableOpacity onPress={() => adjustMonth(-1)} style={styles.monthArrow}>
-              <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
+              <MaterialIcons name="chevron-left" size={22} color={theme.Colors.primary} />
             </TouchableOpacity>
-            <Text style={styles.monthLabel}>
-              {new Date(billingMonth + '-02').toLocaleDateString(undefined, {
-                month: 'long',
-                year: 'numeric',
-              })}
-            </Text>
+            <View style={styles.monthLabelWrapper}>
+              <MaterialIcons name="calendar-today" size={14} color={theme.Colors.primary} />
+              <Text style={styles.monthLabel}>
+                {new Date(billingMonth + '-02').toLocaleDateString(undefined, {
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </Text>
+            </View>
             <TouchableOpacity onPress={() => adjustMonth(1)} style={styles.monthArrow}>
-              <MaterialIcons name="chevron-right" size={24} color={theme.Colors.primary} />
+              <MaterialIcons name="chevron-right" size={22} color={theme.Colors.primary} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Search & Status Filters */}
-        <View style={styles.filterControlsRow}>
-          <View style={styles.searchBox}>
-            <MaterialIcons name="search" size={20} color={theme.Colors.onSurfaceVariant} />
+        <View style={[styles.filterControlsRow, isDesktop && styles.filterControlsRowDesktop]}>
+          <View style={[styles.searchBox, isDesktop && styles.searchBoxDesktop]}>
+            <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search by tenant name or unit..."
@@ -251,7 +257,12 @@ export default function ReportsScreen() {
           </View>
 
           {/* Status Filter Chips */}
-          <View style={styles.statusChipsWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.statusChipsScroll}
+            style={styles.statusChipsContainer}
+          >
             {STATUS_OPTIONS.map((opt) => (
               <FilterPill
                 key={opt.value}
@@ -260,7 +271,7 @@ export default function ReportsScreen() {
                 onPress={() => setStatusFilter(opt.value)}
               />
             ))}
-          </View>
+          </ScrollView>
         </View>
       </GlassCard>
 
