@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: {
@@ -55,8 +56,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   titleContainer: {},
   titleLine: {
+    fontFamily: SerifHeadlineFont,
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '800',
     color: theme.Colors.onSurface,
     lineHeight: 36,
     letterSpacing: -0.4,
@@ -306,6 +308,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   titleLineDesktop: {
     ...theme.Typography.headlineLg,
+    fontFamily: SerifHeadlineFont,
     color: theme.Colors.onSurface,
     letterSpacing: -0.5,
   },

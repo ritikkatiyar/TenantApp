@@ -113,8 +113,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   titleLineDesktop: {
+    fontFamily: SerifHeadlineFont,
     fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '900',
+    fontWeight: '800',
     color: theme.Colors.onSurface,
     letterSpacing: -0.5,
   },
@@ -187,6 +188,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: theme.Spacing.md,
   },
   titleLine: {
+    fontFamily: SerifHeadlineFont,
     fontSize: theme.Typography.headlineXl.fontSize,
     fontWeight: '800',
     color: theme.Colors.onSurface,
