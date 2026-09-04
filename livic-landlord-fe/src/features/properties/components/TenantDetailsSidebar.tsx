@@ -144,11 +144,11 @@ export function TenantDetailsSidebar({
             )}
 
             <View style={{ flexDirection: 'row', gap: 12, marginTop: theme.Spacing.md }}>
-              <TouchableOpacity style={[styles.statusToggle, { flex: 1 }]} onPress={() => setIsCreatingNewTenant(false)}>
-                <Text style={styles.statusToggleText}>CANCEL</Text>
+              <TouchableOpacity style={styles.cancelTenantBtn} onPress={() => setIsCreatingNewTenant(false)}>
+                <Text style={styles.cancelTenantBtnText}>CANCEL</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.statusToggle, styles.statusActiveOccupied, { flex: 1 }]} onPress={handleCreateAndSelectTenant} disabled={tenantCreating}>
-                {tenantCreating ? <ActivityIndicator size="small" color={theme.Colors.surfaceContainerLowest} /> : <Text style={[styles.statusToggleText, styles.statusTextActive]}>CREATE & ASSIGN</Text>}
+              <TouchableOpacity style={styles.createAssignBtn} onPress={handleCreateAndSelectTenant} disabled={tenantCreating}>
+                {tenantCreating ? <ActivityIndicator size="small" color={theme.Colors.onPrimary} /> : <Text style={styles.createAssignBtnText}>CREATE & ASSIGN</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -367,20 +367,36 @@ export function TenantDetailsSidebar({
 
             <View style={styles.statusContainer}>
               <TouchableOpacity 
-                style={[styles.statusToggle, selectedBlock.status === 'VACANT' && styles.statusActiveVacant]}
+                style={[
+                  styles.statusToggle, 
+                  selectedBlock.status === 'VACANT' && styles.statusActiveVacant,
+                  Boolean(selectedBlock.activeLeaseId) && styles.statusDisabled,
+                ]}
                 onPress={() => updateUnitDetails(selectedBlock.id, { status: 'VACANT' })}
                 disabled={Boolean(selectedBlock.activeLeaseId)}
               >
-                <Text style={[styles.statusToggleText, selectedBlock.status === 'VACANT' && styles.statusTextActive]}>VACANT</Text>
+                {selectedBlock.status === 'VACANT' && <View style={styles.statusDotVacant} />}
+                <Text style={[styles.statusToggleText, selectedBlock.status === 'VACANT' && styles.statusTextVacant]}>VACANT</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.statusToggle, selectedBlock.status === 'OCCUPIED' && styles.statusActiveOccupied]}
+                style={[
+                  styles.statusToggle, 
+                  selectedBlock.status === 'OCCUPIED' && styles.statusActiveOccupied,
+                  Boolean(selectedBlock.activeLeaseId) && styles.statusDisabled,
+                ]}
                 onPress={() => updateUnitDetails(selectedBlock.id, { status: 'OCCUPIED' })}
                 disabled={Boolean(selectedBlock.activeLeaseId)}
               >
-                <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextActive]}>OCCUPIED</Text>
+                {selectedBlock.status === 'OCCUPIED' && <View style={styles.statusDotOccupied} />}
+                <Text style={[styles.statusToggleText, selectedBlock.status === 'OCCUPIED' && styles.statusTextOccupied]}>OCCUPIED</Text>
               </TouchableOpacity>
             </View>
+            {Boolean(selectedBlock.activeLeaseId) && (
+              <View style={styles.statusLockedHint}>
+                <MaterialIcons name="lock-outline" size={12} color={theme.Colors.onSurfaceVariant} />
+                <Text style={styles.statusLockedText}>Status synced with active lease</Text>
+              </View>
+            )}
           </>
         )}
       </ScrollView>
