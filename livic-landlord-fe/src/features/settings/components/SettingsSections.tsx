@@ -2,7 +2,9 @@ import React from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   ActivityIndicator,
+  Alert,
   Clipboard,
+  Platform,
   Switch,
   Text,
   TouchableOpacity,
@@ -10,6 +12,8 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
@@ -174,6 +178,33 @@ export function SettingsTabContent({
   styles,
   theme,
 }: SettingsTabContentProps) {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to sign out of Livic Landlord?')) {
+        signOut().then(() => router.replace('/login'));
+      }
+    } else {
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out of Livic Landlord?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              await signOut();
+              router.replace('/login');
+            },
+          },
+        ]
+      );
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centerLoading}>
@@ -407,6 +438,47 @@ export function SettingsTabContent({
               );
             })}
           </View>
+        </GlassCard>
+
+        <GlassCard style={[styles.prefCard, { marginTop: 16 }]}>
+          <View style={styles.prefCardHeader}>
+            <MaterialIcons name="person" size={22} color={theme.Colors.primary} />
+            <Text style={styles.prefCardTitle}>Account & Session</Text>
+          </View>
+          <View style={styles.prefItem}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.prefItemName}>{user?.fullName || 'Active Landlord'}</Text>
+              <Text style={styles.prefItemDesc}>{user?.email || 'Authenticated User'}</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={{
+              marginTop: 16,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              backgroundColor: theme.Colors.error + '18',
+              borderWidth: 1,
+              borderColor: theme.Colors.error + '40',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="logout" size={18} color={theme.Colors.error} />
+            <Text
+              style={{
+                fontSize: theme.Typography.bodyMedium.fontSize,
+                fontWeight: '700',
+                color: theme.Colors.error,
+              }}
+            >
+              Sign Out of Account
+            </Text>
+          </TouchableOpacity>
         </GlassCard>
       </View>
     </View>

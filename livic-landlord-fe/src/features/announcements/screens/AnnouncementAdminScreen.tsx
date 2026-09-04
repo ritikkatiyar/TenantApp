@@ -129,14 +129,15 @@ export default function AnnouncementAdminScreen({ onLogout }: AnnouncementAdminS
 
   return (
     <PageShell scrollable={false} edges={['top', 'left', 'right']}>
-        {/* Header with toggle for mobile */}
+        {/* Sub-header with toggle for mobile */}
         <View style={styles.mobileHeader}>
-          <Text style={styles.mobileHeaderTitle}>Announcements</Text>
+          <Text style={styles.mobileSubtitle}>Broadcast notices & alerts</Text>
           <TouchableOpacity
             style={styles.toggleHistoryBtn}
             onPress={() => setShowHistory(!showHistory)}
+            activeOpacity={0.75}
           >
-            <MaterialIcons name={showHistory ? "edit" : "history"} size={22} color={theme.Colors.primary} />
+            <MaterialIcons name={showHistory ? "edit" : "history"} size={18} color={theme.Colors.primary} />
             <Text style={styles.toggleHistoryText}>{showHistory ? "Compose" : "History"}</Text>
           </TouchableOpacity>
         </View>

@@ -9,12 +9,15 @@ import {
   TextInput,
   ScrollView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useProperties } from '@/src/hooks/useProperties';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useRouter } from 'expo-router';
 
 interface MobileHeaderProps {
   title: string;
@@ -26,6 +29,32 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress }
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { signOut } = useAuth();
+
+  const handleLogoutPress = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to sign out of Livic Landlord?')) {
+        signOut().then(() => router.replace('/login'));
+      }
+    } else {
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out of Livic Landlord?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              await signOut();
+              router.replace('/login');
+            },
+          },
+        ]
+      );
+    }
+  };
 
   const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const { properties } = useProperties();
@@ -82,15 +111,26 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress }
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.notificationButton}
-            activeOpacity={0.7}
-            onPress={onNotificationPress}
-            disabled={!onNotificationPress}
-          >
-            <Ionicons name="notifications-outline" size={23} color={theme.Colors.onSurface} />
-            <View style={styles.notificationBadge} />
-          </TouchableOpacity>
+          <View style={styles.headerRightActions}>
+            <TouchableOpacity
+              style={styles.notificationButton}
+              activeOpacity={0.7}
+              onPress={onNotificationPress}
+              disabled={!onNotificationPress}
+            >
+              <Ionicons name="notifications-outline" size={20} color={theme.Colors.onSurface} />
+              <View style={styles.notificationBadge} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.headerLogoutButton}
+              activeOpacity={0.7}
+              onPress={handleLogoutPress}
+              accessibilityLabel="Sign Out"
+            >
+              <MaterialIcons name="logout" size={19} color={theme.Colors.error} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Mobile Property Selection Modal / Bottom Sheet */}
@@ -253,6 +293,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   notificationButton: {
     padding: theme.Spacing.sm,
     borderRadius: 20,
@@ -260,6 +305,15 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderWidth: 1,
     borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)',
     position: 'relative',
+  },
+  headerLogoutButton: {
+    padding: theme.Spacing.sm,
+    borderRadius: 20,
+    backgroundColor: isDark ? 'rgba(255, 59, 48, 0.12)' : 'rgba(255, 59, 48, 0.08)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 59, 48, 0.25)' : 'rgba(255, 59, 48, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   notificationBadge: {
     position: 'absolute',

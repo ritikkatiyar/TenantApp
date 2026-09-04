@@ -30,11 +30,11 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
     return null;
   }
 
-  const isHomeActive = pathname === '/tenant-home';
+  const isHomeActive = pathname === '/command-center' || pathname === '/';
 
   const handleHomePress = () => {
     if (!isHomeActive) {
-      router.push('/tenant-home' as any);
+      router.push('/command-center' as any);
     }
   };
 
@@ -104,8 +104,8 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
                 end={{ x: 1, y: 1 }}
                 style={styles.heroCameraButton}
               >
-                <MaterialIcons name="center-focus-strong" size={28} color="#ffffff" />
-                <View style={[styles.cameraDotBadge, { backgroundColor: '#00d4ff' }]} />
+                <MaterialIcons name="center-focus-strong" size={28} color={theme.Colors.surfaceContainerLowest} />
+                <View style={[styles.cameraDotBadge, { backgroundColor: theme.Colors.primary }]} />
               </LinearGradient>
             </TouchableOpacity>
 

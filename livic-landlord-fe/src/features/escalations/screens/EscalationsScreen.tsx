@@ -3,7 +3,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -95,24 +94,8 @@ export default function EscalationsScreen() {
     }
   };
 
-  const renderGlassyHeader = () => (
-    <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-      <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-      <View style={styles.headerContent}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-        </TouchableOpacity>
-        <View style={styles.titleWrapper}>
-          <Text style={styles.compactTitleText}>Escalations</Text>
-        </View>
-        <View style={{ width: 36 }} />
-      </View>
-    </View>
-  );
-
   return (
     <PageShell scrollable={false} edges={isDesktop ? ['top'] : []}>
-      {!isDesktop && renderGlassyHeader()}
 
       <Animated.ScrollView
         contentContainerStyle={[

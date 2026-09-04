@@ -303,6 +303,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                 </View>
               ))}
             </View>
+            <ListFooter />
             {hasMore && (
               <View style={{ paddingVertical: 24, alignItems: 'center', justifyContent: 'center' }}>
                 <ActivityIndicator size="small" color={theme.Colors.primary} />
