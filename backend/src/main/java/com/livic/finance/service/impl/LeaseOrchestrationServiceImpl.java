@@ -24,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -151,6 +153,12 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
         Map<UUID, UnitSummaryDTO> unitsMap = unitFacade.getUnitsByIds(
                 leases.stream().map(LeaseTbl::getUnitId).collect(Collectors.toSet())
         );
+        Set<UUID> propertyIds = unitsMap.values().stream()
+                .map(UnitSummaryDTO::propertyId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<UUID, PropertySummaryDTO> propertiesMap = propertyFacade.getPropertiesByIds(propertyIds);
+
         return leases.stream()
                 .map(lease -> {
                     UserSummaryDTO user = usersMap.get(lease.getUserId());
@@ -159,6 +167,14 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
                     String phone = user != null ? user.phoneNumber() : "";
                     String unitNumber = unit != null ? unit.unitNumber() : "N/A";
                     String propertyName = "N/A";
+                    if (unit != null && unit.propertyId() != null) {
+                        PropertySummaryDTO property = propertiesMap.get(unit.propertyId());
+                        if (property != null && property.name() != null) {
+                            propertyName = property.name();
+                        } else if (unit.propertyName() != null && !unit.propertyName().isBlank()) {
+                            propertyName = unit.propertyName();
+                        }
+                    }
                     return LeaseMapper.toResponse(lease, unitNumber, propertyName, fullName, phone);
                 })
                 .toList();

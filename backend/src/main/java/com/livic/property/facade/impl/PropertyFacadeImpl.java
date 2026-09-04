@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +35,17 @@ public class PropertyFacadeImpl implements PropertyFacade {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Map<UUID, PropertySummaryDTO> getPropertiesByIds(Collection<UUID> propertyIds) {
+        if (propertyIds == null || propertyIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return propertyQueryService.getPropertiesByIds(propertyIds).stream()
+                .map(PropertySummaryDTO::from)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(PropertySummaryDTO::id, p -> p, (a, b) -> a));
     }
 
     @Override
