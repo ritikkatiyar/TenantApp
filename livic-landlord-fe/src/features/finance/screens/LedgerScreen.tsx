@@ -267,7 +267,6 @@ export default function LedgerScreen({ token }: { token: string | null }) {
 
   const renderMobileContent = () => (
     <View style={{ flex: 1 }}>
-      {renderGlassyHeader()}
       <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
         <Text style={styles.screenTitle}>General Ledger</Text>
         <Text style={styles.screenSubtitle}>View all dynamic billing transactions and record collections</Text>

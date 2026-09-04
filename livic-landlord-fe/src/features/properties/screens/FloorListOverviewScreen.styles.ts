@@ -55,11 +55,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   titleContainer: {},
   titleLine: {
-    fontSize: theme.Typography.headlineXl.fontSize,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '700',
     color: theme.Colors.onSurface,
-    lineHeight: 52,
-    letterSpacing: -1,
+    lineHeight: 36,
+    letterSpacing: -0.4,
   },
   propertyBadge: {
     flexDirection: 'row',

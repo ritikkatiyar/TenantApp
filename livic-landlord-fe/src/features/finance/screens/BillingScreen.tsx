@@ -270,22 +270,8 @@ export default function BillingScreen({ token }: BillingScreenProps) {
       scrollable={true}
       header={null}
       edges={isDesktop ? ['top'] : []}
-      contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 68 + insets.top }]}
+      contentContainerStyle={[styles.scrollContent, !isDesktop && { paddingTop: 16 }]}
     >
-      {!isDesktop && (
-        <View style={[styles.headerContainer, !isDesktop && { paddingTop: insets.top, height: 56 + insets.top }]}>
-          <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-            </TouchableOpacity>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.headerTitle}>SUBSCRIPTION & BILLING</Text>
-            </View>
-            <View style={{ width: 36 }} />
-          </View>
-        </View>
-      )}
           <View style={isDesktop ? styles.desktopInner : null}>
             {isDesktop && (
               <View style={styles.titleContainer}>

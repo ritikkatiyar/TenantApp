@@ -287,16 +287,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       edges={isDesktop ? ['top'] : []}
     >
 
-      {!isDesktop && <FloatingBackButton />}
 
-      {/* Floating Header for Mobile */}
-      {!isDesktop && (
-        <Animated.View style={[styles.headerContainer, { opacity: headerOpacity }]}>
-          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={[styles.headerContent, { paddingTop: insets.top }]}>
-            <Text style={styles.headerTitle}>{isEditMode ? 'MODIFY CHARGE' : 'CREATE CHARGE'}</Text>
-          </BlurView>
-        </Animated.View>
-      )}
 
       <Animated.ScrollView
         onScroll={Animated.event(

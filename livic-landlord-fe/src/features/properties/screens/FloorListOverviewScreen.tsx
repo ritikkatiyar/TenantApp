@@ -317,23 +317,9 @@ export default function FloorListOverviewScreen({
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
-        {/* Glassy Overlay Header */}
-        <View style={styles.headerContainer}>
-          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-            </TouchableOpacity>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.compactTitleText}>Floor Overview</Text>
-            </View>
-            <View style={{ width: 36 }} />
-          </View>
-        </View>
-
         <Animated.ScrollView 
           style={styles.container}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: 76 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: 80 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.Colors.primary} />
@@ -345,8 +331,7 @@ export default function FloorListOverviewScreen({
           scrollEventThrottle={16}
         >
           <Animated.View style={[styles.largeTitleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.titleLine}>Floor</Text>
-            <Text style={styles.titleLine}>Overview</Text>
+            <Text style={styles.titleLine}>Floor Overview</Text>
             <View style={styles.propertyBadge}>
               <View style={styles.propertyIconWrapper}>
                 <MaterialIcons name="business" size={14} color={theme.Colors.surfaceContainerLowest} />

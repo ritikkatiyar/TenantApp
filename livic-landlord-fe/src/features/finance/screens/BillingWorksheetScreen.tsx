@@ -285,14 +285,16 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
   const renderMobileShell = () => (
     <View style={[styles.gradient, { flex: 1 }]}>
-      <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-        <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-          </TouchableOpacity>
-          <View style={styles.titleWrapper}>
-            <Text style={styles.compactTitleText}>Worksheets</Text>
+      <View style={[styles.filterSection, { paddingTop: 68 + insets.top }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={[styles.mobileDropdownWrapper, { flex: 1, marginBottom: 0 }]}>
+            <GlassDropdown 
+              options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
+              value={selectedChargeId}
+              onChange={setSelectedChargeId}
+              placeholder="Select Charge"
+              icon="receipt-long"
+            />
           </View>
           <TouchableOpacity 
             style={[styles.headerGradientTouch, (isSaving || entries.length === 0) && { opacity: 0.5 }]}
@@ -316,18 +318,6 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               )}
             </LinearGradient>
           </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={[styles.filterSection, { paddingTop: 68 + insets.top }]}>
-        <View style={styles.mobileDropdownWrapper}>
-          <GlassDropdown 
-            options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
-            value={selectedChargeId}
-            onChange={setSelectedChargeId}
-            placeholder="Select Charge"
-            icon="receipt-long"
-          />
         </View>
         
         <View style={styles.monthSelectorRow}>

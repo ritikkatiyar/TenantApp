@@ -1,5 +1,4 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import { SerifHeadlineFont } from '@/src/theme/Theme';
 import React, { useState } from 'react';
 import {
   View,
@@ -219,8 +218,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: 0,
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: isDark ? 'rgba(11, 17, 24, 0.85)' : 'rgba(255, 255, 255, 0.88)',
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+    backgroundColor: isDark ? 'rgba(9, 13, 18, 0.60)' : 'rgba(255, 255, 255, 0.70)',
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
@@ -275,11 +274,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 4,
   },
   titleText: {
-    fontFamily: SerifHeadlineFont,
-    fontSize: 20,
-    fontWeight: '800',
+    fontFamily: 'Inter',
+    fontSize: 16,
+    fontWeight: '600',
     color: theme.Colors.onSurface,
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
   headerRightActions: {
     flexDirection: 'row',
