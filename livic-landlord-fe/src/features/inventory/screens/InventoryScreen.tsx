@@ -23,7 +23,6 @@ import { AddItemModal } from '@/src/features/inventory/components/AddItemModal';
 
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
-import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
@@ -106,25 +105,17 @@ export default function InventoryScreen() {
             </View>
           )}
 
-          {/* Mobile property selector + search + add row */}
+          {/* Mobile search + add row */}
           {!isDesktop && (
-            <View style={{ gap: 10 }}>
-              {properties.length > 0 && (
-                <PropertySelector
-                  properties={properties}
-                  selectedPropertyId={propertyId}
-                  onSelectProperty={setSelectedPropertyId}
-                />
+            <View style={styles.mobileTopBar}>
+              {leaseId && (
+                <TouchableOpacity
+                  style={styles.mobileBackBtn}
+                  onPress={() => router.push('/leases')}
+                >
+                  <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+                </TouchableOpacity>
               )}
-              <View style={styles.mobileTopBar}>
-                {leaseId && (
-                  <TouchableOpacity
-                    style={styles.mobileBackBtn}
-                    onPress={() => router.push('/leases')}
-                  >
-                    <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
-                  </TouchableOpacity>
-                )}
                 <View style={styles.searchBox}>
                   <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
                   <TextInput
@@ -149,7 +140,6 @@ export default function InventoryScreen() {
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
-            </View>
           )}
 
           {/* Tab selector */}

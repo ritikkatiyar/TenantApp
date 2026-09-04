@@ -134,15 +134,6 @@ export default function OwnerLeasesScreen() {
             </View>
           </View>
 
-          {!isDesktop && properties.length > 0 && (
-            <PropertySelector
-              properties={properties}
-              selectedPropertyId={selectedPropertyId}
-              onSelectProperty={setSelectedPropertyId}
-              allowAll={true}
-            />
-          )}
-
           {/* Stats */}
           <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>
             {stats.map((stat, i) => (
