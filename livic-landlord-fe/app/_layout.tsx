@@ -224,7 +224,6 @@ export default function RootLayout() {
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = isDesktop;
   const hideHeader = hideNavigation || AUTH_OR_STANDALONE_ROUTES.includes(cleanPathname);
-  const showBackButton = !isPrimaryRoute && !hideHeader;
 
   return (
     <SafeAreaProvider>
@@ -282,14 +281,6 @@ export default function RootLayout() {
                           <MobileHeader 
                             title={getHeaderTitle(pathname)} 
                             onNotificationPress={() => router.push('/escalations')}
-                            showBackButton={showBackButton}
-                            onBackPress={() => {
-                              if (cleanPathname.startsWith('/expenses/')) {
-                                router.push('/expenses');
-                              } else {
-                                router.back();
-                              }
-                            }}
                           />
                         )}
                         <ScreenWrapper isAuth={hideNavigation}>

@@ -62,17 +62,6 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
         <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
         <View style={styles.headerContainer}>
           <View style={styles.headerLeftGroup}>
-            {showBackButton && (
-              <TouchableOpacity
-                style={styles.backButton}
-                activeOpacity={0.7}
-                onPress={onBackPress}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="arrow-back" size={18} color={theme.Colors.onSurface} />
-              </TouchableOpacity>
-            )}
-
             {/* Compact Mobile Property Selector Trigger */}
             <TouchableOpacity
               style={styles.propertySelectorPill}
