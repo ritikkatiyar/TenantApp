@@ -65,7 +65,7 @@ export function PageShell({
   const customPaddingTop = flattenedCustomStyle?.paddingTop ?? flattenedCustomStyle?.padding;
   const effectivePaddingTop = isDesktop
     ? (customPaddingTop ?? 24)
-    : Math.max(mobileHeaderOffset + 12, typeof customPaddingTop === 'number' ? customPaddingTop : 0);
+    : Math.max(mobileHeaderOffset + 16, typeof customPaddingTop === 'number' ? customPaddingTop : 0);
 
   const customPaddingBottom = flattenedCustomStyle?.paddingBottom ?? flattenedCustomStyle?.padding;
   const effectivePaddingBottom = isDesktop
@@ -152,14 +152,14 @@ const createStyles = (
       flexGrow: 1,
       width: '100%',
       paddingHorizontal: isDesktop ? 32 : theme.Spacing.containerPadding,
-      paddingTop: isDesktop ? 24 : (mobileHeaderOffset + 12),
+      paddingTop: isDesktop ? 24 : (mobileHeaderOffset + 16),
       paddingBottom: isDesktop ? 40 : (mobileBottomOffset + 24),
     },
     flatContainer: {
       flex: 1,
       width: '100%',
       paddingHorizontal: isDesktop ? 32 : theme.Spacing.containerPadding,
-      paddingTop: isDesktop ? 24 : (mobileHeaderOffset + 12),
+      paddingTop: isDesktop ? 24 : (mobileHeaderOffset + 16),
       paddingBottom: isDesktop ? 40 : (mobileBottomOffset + 24),
     },
   });

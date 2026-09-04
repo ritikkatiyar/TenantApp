@@ -46,6 +46,10 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
     <>
       {Platform.OS === 'web' && (
         <style dangerouslySetInnerHTML={{ __html: `
+          .mobile-header-container {
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+          }
           @media (min-width: 900px) {
             .mobile-header-container {
               display: none !important;
@@ -215,7 +219,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     overflow: 'hidden',
     borderBottomWidth: 1,
     borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: isDark ? 'rgba(19, 28, 38, 0.4)' : 'rgba(248, 249, 255, 0.4)',
+    backgroundColor: isDark ? 'rgba(11, 17, 24, 0.85)' : 'rgba(255, 255, 255, 0.88)',
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
