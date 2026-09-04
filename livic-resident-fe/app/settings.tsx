@@ -118,8 +118,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 24,
   },
   heroTitle: {
-    fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '800',
+    ...theme.Typography.headlineMd,
     marginBottom: 4,
   },
   heroSubtitle: {

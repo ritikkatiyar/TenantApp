@@ -155,8 +155,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   scrollContentDesktop: { padding: theme.Spacing.xl, maxWidth: 1200, width: '100%', alignSelf: 'center' },
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 18 },
   kicker: { fontFamily: 'Inter', fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
-  title: { fontFamily: 'Inter', fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '800', lineHeight: 38, color: theme.Colors.onSurface, marginTop: 6 },
-  titleMobile: { fontSize: theme.Typography.headlineMedium.fontSize, lineHeight: 36 },
+  title: { ...theme.Typography.headlineLg, color: theme.Colors.onSurface, lineHeight: 38, marginTop: 6 },
+  titleMobile: { ...theme.Typography.headlineMedium, lineHeight: 36 },
   subtitle: { fontFamily: 'Inter', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '400', lineHeight: 24, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm, maxWidth: 700 },
   titleBlock: { maxWidth: 720 },
   reportButtonWrapper: {

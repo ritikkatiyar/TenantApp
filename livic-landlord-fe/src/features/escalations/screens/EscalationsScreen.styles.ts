@@ -62,8 +62,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginBottom: 24,
     },
     titleLineDesktop: {
-      fontSize: theme.Typography.headlineLg.fontSize,
-      fontWeight: '800',
+      ...theme.Typography.headlineLg,
       color: theme.Colors.onSurface,
       lineHeight: 38,
       letterSpacing: -0.5,

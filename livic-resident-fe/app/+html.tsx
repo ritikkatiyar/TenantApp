@@ -28,6 +28,7 @@ export default function HTML({ children }: { children: React.ReactNode }) {
             height: 100%;
             margin: 0;
             padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           }
           @media (min-width: ${Breakpoints.desktop}px) {
             [data-responsive-layout="mobile"],

@@ -1,4 +1,5 @@
 import { StyleSheet, Platform } from 'react-native';
+import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
@@ -80,7 +81,8 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginBottom: 3,
     },
     sectionTitle: {
-      fontSize: 22,
+      fontFamily: SerifHeadlineFont,
+      fontSize: 24,
       fontWeight: '800',
       color: theme.Colors.onSurface,
       letterSpacing: -0.4,

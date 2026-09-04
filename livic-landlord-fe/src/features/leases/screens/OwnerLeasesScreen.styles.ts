@@ -21,7 +21,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   propertyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: theme.Colors.primary },
   desktopTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: theme.Spacing.md, marginTop: 10 },
   desktopTitleWrapper: { flex: 1 },
-  desktopTitle: { fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '900', color: theme.Colors.onSurface, letterSpacing: -0.5 },
+  desktopTitle: { ...theme.Typography.headlineLg, color: theme.Colors.onSurface, letterSpacing: -0.5 },
   desktopSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs, fontWeight: '600' },
   desktopActions: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md },
 
@@ -30,7 +30,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   btnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 0.5 },
 
   mobileHeader: { paddingHorizontal: theme.Spacing.md, paddingTop: theme.Spacing.md, paddingBottom: theme.Spacing.sm },
-  mobileTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', color: theme.Colors.onSurface, letterSpacing: -0.5 },
+  mobileTitle: { ...theme.Typography.headlineMd, color: theme.Colors.onSurface, letterSpacing: -0.5 },
   mobileSub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontWeight: '600' },
 
   filterBar: { flexDirection: 'row', paddingHorizontal: theme.Spacing.md, gap: 12, alignItems: 'center', marginTop: 10 },

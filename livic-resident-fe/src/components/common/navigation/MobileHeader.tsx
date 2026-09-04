@@ -1,4 +1,5 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { SerifHeadlineFont } from '@/src/theme/Theme';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -115,9 +116,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
   },
   titleText: {
-    fontSize: theme.Typography.titleLarge.fontSize,
+    fontFamily: SerifHeadlineFont,
+    fontSize: 20,
     fontWeight: '800',
     color: theme.Colors.onSurface,
+    letterSpacing: -0.3,
   },
   notificationButton: {
     padding: theme.Spacing.sm,

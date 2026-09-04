@@ -24,8 +24,7 @@ export const createStyles = (theme: any, isDark: boolean, isDesktop: boolean) =>
       gap: 10,
     },
     mobileTitle: {
-      fontSize: theme.Typography.titleLarge.fontSize,
-      fontWeight: theme.Typography.titleLarge.fontWeight || '800',
+      ...theme.Typography.titleLarge,
       color: theme.Colors.onBackground,
     },
     demoBadge: {

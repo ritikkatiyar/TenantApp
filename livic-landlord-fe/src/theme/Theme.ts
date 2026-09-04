@@ -189,9 +189,9 @@ export const Typography = {
     lineHeight: 32,
   },
   titleLarge: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 22,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
     lineHeight: 28,
   },
   titleMedium: {

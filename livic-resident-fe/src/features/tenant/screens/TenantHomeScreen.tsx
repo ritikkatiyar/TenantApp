@@ -278,7 +278,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   mobileScrollPadding: { paddingTop: theme.Spacing.xl * 2.2 },
   greetingHeader: { marginBottom: theme.Spacing.xs },
   kicker: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, marginBottom: theme.Spacing.xs },
-  greetingText: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
+  greetingText: { ...theme.Typography.headlineMd, color: theme.Colors.onBackground },
   greetingSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2 },
 
   glassCard: {

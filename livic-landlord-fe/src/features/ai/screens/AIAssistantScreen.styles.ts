@@ -60,7 +60,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     elevation: 4,
   },
   workspaceTitle: {
-    fontSize: theme.Typography.bodyLg.fontSize,
+    fontFamily: theme.Typography.headlineSmall.fontFamily,
+    fontSize: 20,
     fontWeight: '800',
     color: theme.Colors.onSurface,
   },

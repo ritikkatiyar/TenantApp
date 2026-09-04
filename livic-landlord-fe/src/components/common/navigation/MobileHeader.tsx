@@ -1,4 +1,5 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
+import { SerifHeadlineFont } from '@/src/theme/Theme';
 import React, { useState } from 'react';
 import {
   View,
@@ -274,9 +275,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 4,
   },
   titleText: {
-    fontSize: theme.Typography.titleMedium.fontSize,
+    fontFamily: SerifHeadlineFont,
+    fontSize: 20,
     fontWeight: '800',
     color: theme.Colors.onSurface,
+    letterSpacing: -0.3,
   },
   headerRightActions: {
     flexDirection: 'row',

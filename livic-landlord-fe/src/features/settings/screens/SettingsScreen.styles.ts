@@ -18,8 +18,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginBottom: 24,
     },
     heroTitle: {
-      fontSize: theme.Typography.headlineMd.fontSize,
-      fontWeight: '900',
+      ...theme.Typography.headlineLg,
       color: theme.Colors.onSurface,
       letterSpacing: -0.5,
     },
@@ -122,8 +121,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginBottom: 18,
     },
     sectionTitle: {
-      fontSize: theme.Typography.titleLarge.fontSize,
-      fontWeight: '800',
+      ...theme.Typography.titleLarge,
       color: theme.Colors.onSurface,
     },
     sectionSub: {
