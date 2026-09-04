@@ -17,8 +17,6 @@ import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
-import { listRentCycles } from '@/src/features/finance/api/rentCycle.api';
-import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { createStyles } from './SettingsMenuScreen.styles';
@@ -36,14 +34,10 @@ export default function SettingsMenuScreen() {
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties, isLoading } = useProperties();
-  const { accessToken } = useAuth();
   const { showToast } = useToast();
   const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
   const propertyId = selectedPropertyId || validParamId || null;
-
-  const [pendingCount, setPendingCount] = useState<number | null>(null);
-  const [publishedCount, setPublishedCount] = useState<number | null>(null);
 
   const largeTitleOpacity = scrollY.interpolate({
     inputRange: [0, 70],
@@ -63,24 +57,7 @@ export default function SettingsMenuScreen() {
       duration: 420,
       useNativeDriver: true,
     }).start();
-
-    // Try to fetch quick stats
-    const fetchStats = async () => {
-      try {
-        if (!accessToken) return;
-        const today = new Date();
-        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        const data = await listRentCycles(month, accessToken);
-        if (data && data.content) {
-          setPendingCount(data.content.filter((i: any) => i.status === 'PENDING').length);
-          setPublishedCount(data.content.filter((i: any) => i.status === 'PUBLISHED').length);
-        }
-      } catch {
-        // silent — stats are optional
-      }
-    };
-    fetchStats();
-  }, [accessToken]);
+  }, []);
 
   const querySuffix = propertyId ? `?propertyId=${propertyId}` : '';
 
@@ -133,45 +110,6 @@ export default function SettingsMenuScreen() {
 
   const renderMobileContent = () => (
     <Animated.View style={{ opacity: fadeAnim }}>
-      {/* Quick Stats Hero */}
-      <BlurView intensity={55} tint={isDark ? 'dark' : 'light'} style={styles.statsHero}>
-        <LinearGradient
-          colors={['rgba(0, 168, 204, 0.12)', 'rgba(99, 102, 241, 0.08)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.statsGradient}
-        >
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>
-                {publishedCount !== null ? publishedCount : '—'}
-              </Text>
-              <Text style={styles.statLabel}>Published</Text>
-              <View style={[styles.statDot, { backgroundColor: theme.Colors.primary }]} />
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, pendingCount && pendingCount > 0 ? styles.statWarning : null]}>
-                {pendingCount !== null ? pendingCount : '—'}
-              </Text>
-              <Text style={styles.statLabel}>Pending</Text>
-              <View style={[styles.statDot, { backgroundColor: theme.Colors.tertiary }]} />
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>
-                {publishedCount !== null && pendingCount !== null
-                  ? publishedCount + pendingCount
-                  : '—'}
-              </Text>
-              <Text style={styles.statLabel}>Total</Text>
-              <View style={[styles.statDot, { backgroundColor: theme.Colors.secondary }]} />
-            </View>
-          </View>
-          <Text style={styles.statsSubtitle}>This billing cycle</Text>
-        </LinearGradient>
-      </BlurView>
-
       {/* Workflow Label */}
       <View style={styles.workflowLabelRow}>
         <View style={styles.workflowLine} />
