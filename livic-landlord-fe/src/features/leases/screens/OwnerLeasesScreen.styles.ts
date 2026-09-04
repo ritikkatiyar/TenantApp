@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
-  scrollContent: { padding: theme.Spacing.md, paddingBottom: 120, gap: theme.Spacing.md },
+  scrollContent: { gap: theme.Spacing.md },
   scrollContentDesktop: { paddingTop: 24, paddingHorizontal: 32, paddingBottom: 40, width: '100%' },
 
   desktopHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.xs },

@@ -8,7 +8,6 @@ import {
   Modal, 
   ActivityIndicator, 
   Platform, 
-  useWindowDimensions, 
   ScrollView as RNScrollView 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +22,7 @@ import Animated, {
   FadeInUp,
   FadeOutDown
 } from 'react-native-reanimated';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 // Hooks & Components
 import { useFloorLayoutViewer, UnitBlock } from '../hooks/useFloorLayoutViewer';
@@ -53,8 +53,7 @@ interface FloorLayoutViewerModalProps {
 export default function FloorLayoutViewerModal({ visible, propertyId, floorNumber, token, onClose }: FloorLayoutViewerModalProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isDesktop = windowWidth >= 900;
+  const { isDesktop } = useResponsive();
   
   const {
     blocks,

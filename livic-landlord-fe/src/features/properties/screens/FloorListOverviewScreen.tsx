@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Alert,
   Animated,
-  useWindowDimensions,
   TextInput
 } from 'react-native';
 
@@ -18,11 +17,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { getProperty } from '@/src/features/properties/api/property.api';
 import { getFloorSummaries, FloorSummaryResponse, generateBatchUnits } from '@/src/features/properties/api/unit.api';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
@@ -53,9 +52,7 @@ export default function FloorListOverviewScreen({
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
-  const router = useRouter();
+  const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
 
   const [propertyName, setPropertyName] = useState('Loading...');
@@ -182,7 +179,7 @@ export default function FloorListOverviewScreen({
               <MaterialIcons 
                 name={floor.configured ? "check-circle" : "warning"} 
                 size={12} 
-                color={floor.configured ? "#00c853" : "#ff3d00"} 
+                color={floor.configured ? theme.Colors.primary : theme.Colors.error} 
               />
               <Text style={[styles.statusText, floor.configured ? styles.textConfigured : styles.textNotConfigured]}>
                 {floor.configured ? 'Configured' : 'Not Configured'}

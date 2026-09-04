@@ -1,8 +1,10 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { saveUserPreference, SaveUserPreferenceRequest } from '@/src/features/user/api/userPreference.api';
 import { validateAndApplyJoinCode } from '@/src/features/properties/api/rolePermission.api';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
@@ -25,6 +27,8 @@ const MODULES = [
 export default function OnboardingScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsive();
   const [selectedModule, setSelectedModule] = useState<SaveUserPreferenceRequest['activeMode'] | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -94,7 +98,13 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={[
+        styles.content, 
+        { paddingTop: isDesktop ? 60 : Math.max(insets.top + 24, 48) }
+      ]}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Welcome to Livic</Text>
         <Text style={styles.subtitle}>How do you plan to use Livic today?</Text>
@@ -187,7 +197,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingTop: 60,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 640,
   },
   header: {
     marginBottom: 24,

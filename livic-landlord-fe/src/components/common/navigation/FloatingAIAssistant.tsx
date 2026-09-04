@@ -38,6 +38,7 @@ const EXAMPLES = [
 
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { accessToken } = useAuth();
   const { theme, isDark } = useAppTheme();
   const brandGradient = ['#00d4ff', '#0072ff'] as const;
@@ -55,7 +56,6 @@ export default function FloatingAIAssistant() {
   const [isSending, setIsSending] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   
   // Animations
   const animValue = useRef(new Animated.Value(0)).current; // 0: closed, 1: open

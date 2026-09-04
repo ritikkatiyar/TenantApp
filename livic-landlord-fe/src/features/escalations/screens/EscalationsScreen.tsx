@@ -1,20 +1,16 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   TextInput,
   ActivityIndicator,
-  useWindowDimensions,
-  Animated,
+  ScrollView,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useIssues } from '@/src/features/issues/hooks/useIssues';
 import { useProperties } from '@/src/hooks/useProperties';
@@ -22,19 +18,16 @@ import { StatCard } from '@/src/components/common/display/StatCard';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import IssueDetailModal from '@/src/features/issues/components/IssueDetailModal';
 import Pagination from '@/src/components/common/navigation/Pagination';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { createStyles } from './EscalationsScreen.styles';
 
 export default function EscalationsScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
+  const { isDesktop } = useResponsive();
 
   const { accessToken } = useAuth();
   const { properties } = useProperties();
-  const scrollY = useRef(new Animated.Value(0)).current;
 
   const {
     issues,
@@ -81,65 +74,56 @@ export default function EscalationsScreen() {
 
   const getStatusColor = (status: string, escStatus?: string) => {
     if (escStatus === 'ESCALATED') {
-      return { bg: '#fee2e2', text: '#ef4444', label: 'ESCALATED' };
+      return { bg: theme.Colors.error + '22', text: theme.Colors.error, label: 'ESCALATED' };
     }
     switch (status) {
       case 'RESOLVED':
       case 'CLOSED':
-        return { bg: '#d1fae5', text: theme.Colors.primary, label: status };
+        return { bg: theme.Colors.primary + '22', text: theme.Colors.primary, label: status };
       case 'IN_PROGRESS':
-        return { bg: '#fef3c7', text: '#d97706', label: 'IN PROGRESS' };
+        return { bg: theme.Colors.secondary + '22', text: theme.Colors.secondary, label: 'IN PROGRESS' };
       default:
-        return { bg: '#e0f2fe', text: '#0284c7', label: 'OPEN' };
+        return { bg: theme.Colors.tertiary + '22', text: theme.Colors.tertiary, label: 'OPEN' };
     }
   };
 
   return (
-    <PageShell scrollable={false} edges={isDesktop ? ['top'] : []}>
-
-      <Animated.ScrollView
-        contentContainerStyle={[
-          isDesktop ? styles.desktopScroll : styles.mobileScroll,
-          !isDesktop && { paddingTop: 68 + insets.top },
-        ]}
-        showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
+    <PageShell
+      scrollable={true}
+      edges={isDesktop ? ['top'] : []}
+      contentContainerStyle={isDesktop ? styles.desktopScroll : styles.mobileScroll}
+    >
+      <View style={isDesktop ? styles.desktopInner : null}>
+        {/* Header Titles */}
+        {isDesktop && (
+          <View style={styles.titleContainer}>
+            <Text style={styles.titleLineDesktop}>Escalations & Issues</Text>
+            <Text style={styles.subtitle}>
+              Track resident maintenance reports, safety alerts, and SLA violations.
+            </Text>
+          </View>
         )}
-        scrollEventThrottle={16}
-      >
-        <View style={isDesktop ? styles.desktopInner : null}>
-          {/* Header Titles */}
-          {isDesktop && (
-            <View style={styles.titleContainer}>
-              <Text style={styles.titleLineDesktop}>Escalations & Issues</Text>
-              <Text style={styles.subtitle}>
-                Track resident maintenance reports, safety alerts, and SLA violations.
-              </Text>
-            </View>
-          )}
 
-          {/* Metrics Dashboard Row */}
-          <View style={styles.metricsRow}>
-            <StatCard
-              label="Total Tickets"
-              value={metrics.total}
-              loading={isLoading}
-              iconName="confirmation-number"
-              iconColor={theme.Colors.primary}
-              valueColor={theme.Colors.primary}
-              style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
-            />
-            <StatCard
-              label="Open Issues"
-              value={metrics.open}
-              loading={isLoading}
-              iconName="error-outline"
-              iconColor={theme.Colors.secondary}
-              valueColor={isDark ? '#A78BFA' : theme.Colors.secondary}
-              style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
-            />
+        {/* Metrics Dashboard Row */}
+        <View style={styles.metricsRow}>
+          <StatCard
+            label="Total Tickets"
+            value={metrics.total}
+            loading={isLoading}
+            iconName="confirmation-number"
+            iconColor={theme.Colors.primary}
+            valueColor={theme.Colors.primary}
+            style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+          />
+          <StatCard
+            label="Open Issues"
+            value={metrics.open}
+            loading={isLoading}
+            iconName="error-outline"
+            iconColor={theme.Colors.secondary}
+            valueColor={theme.Colors.secondary}
+            style={isDesktop ? { flex: 1 } : { flexBasis: '46%' }}
+          />
             <StatCard
               label="In Progress"
               value={metrics.inProgress}
@@ -297,8 +281,6 @@ export default function EscalationsScreen() {
             <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           )}
         </View>
-        <View style={{ height: 120 }} />
-      </Animated.ScrollView>
       <IssueDetailModal
         visible={!!selectedIssueId}
         issueId={selectedIssueId}

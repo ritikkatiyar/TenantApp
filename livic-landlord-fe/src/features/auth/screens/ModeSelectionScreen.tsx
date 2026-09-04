@@ -1,11 +1,12 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 interface ModeSelectionScreenProps {
   onSelectMode: (mode: string) => Promise<void>;
@@ -33,8 +34,7 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const handlePress = async (id: string) => {
@@ -67,7 +67,7 @@ export default function ModeSelectionScreen({ onSelectMode, isLoading }: ModeSel
             <MaterialIcons 
               name={mode.icon as any} 
               size={36} 
-              color={mode.disabled ? '#a0aab2' : isSelected ? theme.Colors.primary : theme.Colors.primary} 
+              color={mode.disabled ? theme.Colors.outline : theme.Colors.primary} 
             />
           </View>
           <Text style={[styles.cardLabel, mode.disabled && styles.labelDisabled]}>

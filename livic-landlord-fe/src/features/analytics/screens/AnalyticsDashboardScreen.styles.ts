@@ -8,9 +8,6 @@ export const createStyles = (theme: any, isDark: boolean, isDesktop: boolean) =>
       alignItems: 'center',
     },
     scrollContent: {
-      paddingHorizontal: 20,
-      paddingTop: 88,
-      paddingBottom: 100,
       gap: 20,
     },
     scrollContentDesktop: {

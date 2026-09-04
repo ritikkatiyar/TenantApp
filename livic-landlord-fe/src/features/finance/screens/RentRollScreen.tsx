@@ -502,7 +502,7 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
           }
         }}
         edges={[]} 
-        contentContainerStyle={[styles.mobileScroll, { paddingTop: 68 + insets.top }]}
+        contentContainerStyle={isDesktop ? styles.desktopScroll : styles.mobileScroll}
       >
         {renderContent()}
       </PageShell>

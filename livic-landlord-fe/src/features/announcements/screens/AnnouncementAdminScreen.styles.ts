@@ -84,7 +84,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   iconButton: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.Colors.glassFill, borderWidth: 1, borderColor: theme.Colors.glassStroke },
   mobileAvatar: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.Colors.primaryContainer },
   mobileAvatarText: { color: theme.Colors.primary, fontWeight: '800' },
-  mobileContent: { paddingHorizontal: theme.Spacing.md, paddingTop: 18, paddingBottom: 40, gap: 18 },
+  mobileContent: { gap: 18 },
   segmentContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.Spacing.sm, marginTop: theme.Spacing.xs },
   segmentButtonWrapper: { minWidth: '30%', flexGrow: 1 },
   segmentButtonGradient: { paddingVertical: 10, paddingHorizontal: theme.Spacing.sm, alignItems: 'center', borderRadius: 10, borderWidth: 1, borderColor: 'transparent' },

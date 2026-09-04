@@ -7,12 +7,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Pressable,
-  useWindowDimensions,
   ScrollView,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 const UNIT_TYPE_OPTIONS = [
   { label: '1 BHK', value: 'ONE_BHK', icon: 'home', desc: 'Standard single bedroom apartment' },
@@ -37,8 +37,8 @@ export default function UnitTypeSelectionModal({
 }: UnitTypeSelectionModalProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
 
   return (
     <Modal
@@ -48,7 +48,7 @@ export default function UnitTypeSelectionModal({
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
-        <View style={[styles.modalContainer, isDesktop ? styles.desktopModal : styles.mobileModal]}>
+        <View style={[styles.modalContainer, isWide ? styles.desktopModal : styles.mobileModal]}>
           <BlurView tint="light" intensity={90} style={styles.blurContainer}>
             <View style={styles.header}>
               <View>

@@ -101,7 +101,7 @@ export default function OwnerLeasesScreen() {
       edges={isDesktop ? ['top'] : []}
       onScroll={handleScroll}
       onEndReached={handleLoadMoreLeases}
-      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
+      contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
 
           {/* Header */}

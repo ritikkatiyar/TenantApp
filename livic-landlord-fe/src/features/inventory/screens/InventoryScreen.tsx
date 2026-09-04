@@ -2,20 +2,18 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import {
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 import { useInventory, type InventoryTab } from '@/src/features/inventory/hooks/useInventory';
 import { InventoryRegistryView } from '@/src/features/inventory/components/InventoryRegistryView';
@@ -35,8 +33,7 @@ export default function InventoryScreen() {
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
   const { showToast } = useToast();
 
@@ -84,7 +81,7 @@ export default function InventoryScreen() {
       scrollable={true}
       onEndReached={refresh}
       edges={isDesktop ? ['top'] : []}
-      contentContainerStyle={[styles.scroll, isDesktop ? styles.scrollDesktop : { paddingTop: 88 }]}
+      contentContainerStyle={[styles.scroll, isDesktop && styles.scrollDesktop]}
     >
 
           {/* Desktop page header */}
@@ -260,7 +257,7 @@ export default function InventoryScreen() {
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
-  scroll: { padding: theme.Spacing.md, paddingBottom: 120, gap: theme.Spacing.md },
+  scroll: { gap: theme.Spacing.md },
   scrollDesktop: { paddingTop: 24, paddingHorizontal: 32, paddingBottom: 40, width: '100%' },
 
   pageHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.sm },
