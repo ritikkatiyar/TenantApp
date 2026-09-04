@@ -617,4 +617,27 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
+  loadingMoreBox: {
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  loadingMoreText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '700',
+  },
+  scrollHintBox: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollHintText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '600',
+    opacity: 0.7,
+  },
 });

@@ -104,6 +104,28 @@ public class UserFacadeImpl implements UserFacade {
 
     @Override
     @Transactional
+    public void markOnboardingDone(UUID userId, UserMode defaultMode) {
+        Optional<UserPreferenceTbl> existingOpt = userPreferenceCrudService.findByUserId(userId);
+        if (existingOpt.isPresent()) {
+            UserPreferenceTbl preference = existingOpt.get();
+            preference.setOnboardingDone(true);
+            if (preference.getActiveMode() == null && defaultMode != null) {
+                preference.setActiveMode(defaultMode);
+            }
+            userPreferenceCrudService.save(preference);
+        } else {
+            UserPreferenceTbl preference = UserPreferenceTbl.builder()
+                    .userId(userId)
+                    .activeMode(defaultMode != null ? defaultMode : UserMode.RENTAL)
+                    .onboardingDone(true)
+                    .build();
+            userPreferenceCrudService.save(preference);
+        }
+        log.info("onboarding_marked_done userId={} mode={}", userId, defaultMode);
+    }
+
+    @Override
+    @Transactional
     public void registerDeviceToken(UUID userId, String expoPushToken, DevicePlatform platform) {
         Optional<UserDeviceTokenTbl> existingOpt = userDeviceTokenCrudService.findByExpoPushToken(expoPushToken);
         if (existingOpt.isPresent()) {

@@ -1,20 +1,16 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import {
-  ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
   ActivityIndicator,
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { formatCurrency, formatCompactCurrency } from '@/src/utils/formatters';
@@ -22,7 +18,7 @@ import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
-import Pagination from '@/src/components/common/navigation/Pagination';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { createStyles } from './OwnerLeasesScreen.styles';
 import { useOwnerLeases } from '../hooks/useOwnerLeases';
 import {
@@ -37,8 +33,7 @@ export default function OwnerLeasesScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
 
   const data = useOwnerLeases();
@@ -46,14 +41,14 @@ export default function OwnerLeasesScreen() {
     properties, selectedPropertyId, setSelectedPropertyId,
     activeTab, setActiveTab, searchQuery, setSearchQuery,
     filteredLeases, filteredBookings, vacatingUnits, availableUnits,
-    isLoadingData, currentLeasesPage, setCurrentLeasesPage,
-    totalLeasesElements, totalLeasesPages,
+    isLoadingData, isFetchingMore, hasMoreLeases, handleLoadMoreLeases,
+    totalLeasesElements,
     isBookingModalVisible, setIsBookingModalVisible,
     isNoticeModalVisible, setIsNoticeModalVisible,
     isCashModalVisible, setIsCashModalVisible,
     isConversionModalVisible, setIsConversionModalVisible,
     isEditTermsModalVisible, setIsEditTermsModalVisible,
-    selectedBookingId, setSelectedBookingId,
+    setSelectedBookingId,
     setSelectedLeaseId,
     editingLease, isSavingTerms,
     noticeMoveOutDate, setNoticeMoveOutDate,
@@ -73,12 +68,6 @@ export default function OwnerLeasesScreen() {
     handleConvertBookingToLease, handleOpenEditTerms, handleSaveTerms,
   } = data;
 
-  const STAT_GRAD: [string, string][] = React.useMemo(() => [
-    [theme.Colors.primary, '#06b6d4'],
-    [theme.Colors.error, '#ef4444'],
-    [theme.Colors.secondary, '#7c3aed'],
-    [theme.Colors.primary, '#10b981'],
-  ], [theme]);
   const STAT_COLORS = React.useMemo(() => [
     theme.Colors.primary, theme.Colors.error, theme.Colors.secondary, theme.Colors.primary,
   ], [theme]);
@@ -96,8 +85,8 @@ export default function OwnerLeasesScreen() {
     { label: 'Monthly Rent Roll', value: formatCompactCurrency(totalRentRoll), helper: 'Contracted revenue', icon: 'calculate' as const },
   ];
   const TABS = [
-    { id: 'leases' as const, label: 'Lease Registry', icon: 'vpn-key' as const, count: activeLeasesDisplayCount },
-    { id: 'bookings' as const, label: 'Pending Bookings', icon: 'bookmark' as const, count: filteredBookings.length },
+    { id: 'leases' as const, label: 'Active Leases', icon: 'description' as const, count: activeLeasesDisplayCount },
+    { id: 'bookings' as const, label: 'Pending Bookings', icon: 'bookmark' as const, count: pendingBookingsCount },
     { id: 'vacancies' as const, label: 'Vacating & Notices', icon: 'door-sliding' as const, count: vacatingUnits.length },
   ];
 
@@ -106,16 +95,11 @@ export default function OwnerLeasesScreen() {
     router.push(`/inventory?tab=${tab}&leaseId=${lease.id}`);
   };
 
-  const handleLoadMoreLeases = () => {
-    if (currentLeasesPage + 1 < totalLeasesPages && !isLoadingData) {
-      setCurrentLeasesPage(prev => prev + 1);
-    }
-  };
-
   return (
     <PageShell
       scrollable={true}
       edges={isDesktop ? ['top'] : []}
+      onScroll={handleScroll}
       onEndReached={handleLoadMoreLeases}
       contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
     >
@@ -189,25 +173,29 @@ export default function OwnerLeasesScreen() {
 
           {/* Main Panel */}
           <BlurView intensity={65} tint={isDark ? 'dark' : 'light'} style={styles.panel}>
-            {isLoadingData ? (
+            {isLoadingData && filteredLeases.length === 0 ? (
               <View style={styles.loadingBox}>
                 <ActivityIndicator size="large" color={theme.Colors.primary} />
                 <Text style={styles.loadingText}>Syncing lease records...</Text>
               </View>
             ) : activeTab === 'leases' ? (
               <LeasesTab
-                filteredLeases={filteredLeases} isDark={isDark}
-                styles={styles} theme={theme}
-                currentLeasesPage={currentLeasesPage} setCurrentLeasesPage={setCurrentLeasesPage}
-                totalLeasesPages={totalLeasesPages} totalLeasesElements={totalLeasesElements}
+                filteredLeases={filteredLeases}
+                isDark={isDark}
+                styles={styles}
+                theme={theme}
+                isFetchingMore={isFetchingMore}
+                hasMore={hasMoreLeases}
                 onEditTerms={handleOpenEditTerms}
                 onInventory={openInventory}
                 onServeNotice={(id: string) => { setSelectedLeaseId(id); setIsNoticeModalVisible(true); }}
               />
             ) : activeTab === 'bookings' ? (
               <BookingsTab
-                filteredBookings={filteredBookings} isDark={isDark}
-                styles={styles} theme={theme}
+                filteredBookings={filteredBookings}
+                isDark={isDark}
+                styles={styles}
+                theme={theme}
                 onCashToken={(id: string) => { setSelectedBookingId(id); setIsCashModalVisible(true); }}
                 onOnlinePay={handleOnlineTokenPayment}
                 onConvert={(id: string) => { setSelectedBookingId(id); setIsConversionModalVisible(true); }}
@@ -216,16 +204,14 @@ export default function OwnerLeasesScreen() {
               />
             ) : (
               <VacanciesTab
-                vacatingUnits={vacatingUnits} isDark={isDark}
-                styles={styles} theme={theme} currentPropertyName={currentPropertyName}
+                vacatingUnits={vacatingUnits}
+                isDark={isDark}
+                styles={styles}
+                theme={theme}
+                currentPropertyName={currentPropertyName}
               />
             )}
           </BlurView>
-
-          {/* Pagination (leases tab) */}
-          {activeTab === 'leases' && totalLeasesPages > 1 && (
-            <Pagination page={currentLeasesPage} totalPages={totalLeasesPages} onPageChange={setCurrentLeasesPage} />
-          )}
  
 
       {/* Modals */}
@@ -270,7 +256,17 @@ export default function OwnerLeasesScreen() {
 
 // ── Private sub-components (kept in same file to avoid over-splitting) ────────
 
-function LeasesTab({ filteredLeases, isDark, styles, theme, currentLeasesPage, setCurrentLeasesPage, totalLeasesPages, totalLeasesElements, onEditTerms, onInventory, onServeNotice }: any) {
+function LeasesTab({
+  filteredLeases,
+  isDark,
+  styles,
+  theme,
+  isFetchingMore,
+  hasMore,
+  onEditTerms,
+  onInventory,
+  onServeNotice,
+}: any) {
   if (filteredLeases.length === 0) {
     return (
       <View style={styles.emptyState}>
@@ -353,6 +349,19 @@ function LeasesTab({ filteredLeases, isDark, styles, theme, currentLeasesPage, s
           </BlurView>
         );
       })}
+
+      {isFetchingMore && (
+        <View style={styles.loadingMoreBox}>
+          <ActivityIndicator size="small" color={theme.Colors.primary} />
+          <Text style={styles.loadingMoreText}>Loading more leases...</Text>
+        </View>
+      )}
+
+      {!isFetchingMore && hasMore && (
+        <View style={styles.scrollHintBox}>
+          <Text style={styles.scrollHintText}>Scroll down to load more leases...</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -365,7 +374,7 @@ function BookingsTab({ filteredBookings, isDark, styles, theme, onCashToken, onO
           <MaterialIcons name="bookmark-border" size={32} color={theme.Colors.secondary} />
         </LinearGradient>
         <Text style={styles.emptyTitle}>No Pending Bookings</Text>
-        <Text style={styles.emptySubtitle}>Click "Book Room" above to reserve rooms for prospective tenants.</Text>
+        <Text style={styles.emptySubtitle}>Click &apos;Book Room&apos; above to reserve rooms for prospective tenants.</Text>
       </View>
     );
   }

@@ -33,7 +33,7 @@ export default function OnboardingScreen() {
   const [joining, setJoining] = useState(false);
 
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { accessToken, setContext } = useAuth();
 
   const handleComplete = async () => {
     if (!selectedModule) return;
@@ -59,6 +59,16 @@ export default function OnboardingScreen() {
     setJoining(true);
     try {
       const res = await validateAndApplyJoinCode(accessToken!, inviteCode.trim());
+
+      try {
+        await saveUserPreference({
+          activeMode: 'RENTAL',
+          onboardingDone: true
+        }, accessToken!);
+      } catch {
+        // Backend marks onboarding done upon code application
+      }
+      setContext(null);
 
       Alert.alert(
         'Welcome!',
@@ -206,8 +216,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: theme.Colors.surface || '#fff',
-    shadowColor: '#000',
+    backgroundColor: theme.Colors.surface,
+    shadowColor: theme.Colors.shadow || theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -238,7 +248,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? 'rgba(0, 229, 255, 0.05)' : 'rgba(0, 104, 117, 0.05)',
   },
   icon: {
-    fontSize: 32,
+    fontSize: theme.Typography.headlineLarge.fontSize,
     marginBottom: 12,
   },
   cardTitle: {
@@ -273,7 +283,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   inviteInput: {
-    fontSize: 24,
+    fontSize: theme.Typography.headlineSmall.fontSize,
     fontWeight: '800',
     letterSpacing: 4,
     textAlign: 'center',

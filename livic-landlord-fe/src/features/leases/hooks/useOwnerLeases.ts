@@ -36,6 +36,7 @@ export function useOwnerLeases() {
   const [vacatingUnits, setVacatingUnits] = useState<any[]>([]);
   const [availableUnits, setAvailableUnits] = useState<UnitResponse[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [currentLeasesPage, setCurrentLeasesPage] = useState(0);
   const [totalLeasesElements, setTotalLeasesElements] = useState(0);
   const [totalLeasesPages, setTotalLeasesPages] = useState(0);
@@ -70,8 +71,9 @@ export function useOwnerLeases() {
     if (!accessToken) return;
     try {
       setIsLoadingData(true);
+      setCurrentLeasesPage(0);
       const [leasesRes, bookingsData, vacatingData, allUnits] = await Promise.all([
-        listActiveLeasesByProperty(selectedPropertyId, accessToken, currentLeasesPage, 20),
+        listActiveLeasesByProperty(selectedPropertyId, accessToken, 0, 20),
         listUnitBookings(accessToken),
         selectedPropertyId ? getVacatingUnits(selectedPropertyId, accessToken) : Promise.resolve([]),
         selectedPropertyId ? getAllFloorsLayout(selectedPropertyId, accessToken).catch(() => []) : Promise.resolve([]),
@@ -87,9 +89,35 @@ export function useOwnerLeases() {
     } finally {
       setIsLoadingData(false);
     }
-  }, [accessToken, selectedPropertyId, currentLeasesPage, showToast]);
+  }, [accessToken, selectedPropertyId, showToast]);
 
-  useEffect(() => { loadScreenData(); }, [loadScreenData]);
+  useEffect(() => {
+    loadScreenData();
+  }, [loadScreenData]);
+
+  const handleLoadMoreLeases = useCallback(async () => {
+    if (activeTab !== 'leases' || isLoadingData || isFetchingMore || !accessToken) return;
+    if (currentLeasesPage + 1 >= totalLeasesPages) return;
+
+    const nextPage = currentLeasesPage + 1;
+    try {
+      setIsFetchingMore(true);
+      const leasesRes = await listActiveLeasesByProperty(selectedPropertyId, accessToken, nextPage, 20);
+      const newItems = leasesRes.content || [];
+      setLeases(prev => {
+        const existingIds = new Set(prev.map(l => l.id));
+        const unique = newItems.filter(l => !existingIds.has(l.id));
+        return [...prev, ...unique];
+      });
+      setCurrentLeasesPage(nextPage);
+      setTotalLeasesElements(leasesRes.totalElements || 0);
+      setTotalLeasesPages(leasesRes.totalPages || 0);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to load more leases', 'error');
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [activeTab, isLoadingData, isFetchingMore, currentLeasesPage, totalLeasesPages, selectedPropertyId, accessToken, showToast]);
 
   const handleServeNotice = async () => {
     if (!selectedLeaseId || !noticeMoveOutDate.trim() || !accessToken) {
@@ -237,6 +265,8 @@ export function useOwnerLeases() {
     properties, isPropsLoading, selectedPropertyId, setSelectedPropertyId,
     activeTab, setActiveTab, searchQuery, setSearchQuery,
     leases, bookings, vacatingUnits, availableUnits, isLoadingData,
+    isFetchingMore, hasMoreLeases: currentLeasesPage + 1 < totalLeasesPages,
+    handleLoadMoreLeases, loadScreenData,
     filteredLeases, filteredBookings,
     currentLeasesPage, setCurrentLeasesPage, totalLeasesElements, totalLeasesPages,
     isBookingModalVisible, setIsBookingModalVisible,
