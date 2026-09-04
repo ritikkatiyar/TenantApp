@@ -15,7 +15,7 @@ import { GlassCard } from '@/src/components/common/display/GlassCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -52,10 +52,19 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   const {
     charges,
     isLoading,
+    refetch,
     deactivateConfig,
     reactivateConfig,
     deleteConfig,
   } = useExpenseConfiguration(propertyId, token);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (propertyId && token) {
+        refetch();
+      }
+    }, [refetch, propertyId, token])
+  );
 
   const [confirmModal, setConfirmModal] = useState<{
     visible: boolean;

@@ -13,6 +13,7 @@ export function useChargeConfig(chargeId: string | null | undefined, token: stri
   const createMutation = useMutation({
     mutationFn: (request: ChargeConfigRequest) => createChargeConfig(request, token!),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['propertyChargesAll'] });
       queryClient.invalidateQueries({ queryKey: ['propertyCharges'] });
     }
   });
@@ -20,6 +21,7 @@ export function useChargeConfig(chargeId: string | null | undefined, token: stri
   const updateMutation = useMutation({
     mutationFn: (request: ChargeConfigRequest) => updateChargeConfig(chargeId!, request, token!),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['propertyChargesAll'] });
       queryClient.invalidateQueries({ queryKey: ['propertyCharges'] });
       queryClient.invalidateQueries({ queryKey: ['chargeConfig', chargeId] });
     }
