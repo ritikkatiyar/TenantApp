@@ -4,8 +4,6 @@ import { Theme } from '@/src/theme/Theme';
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    padding: Theme.Spacing.containerPadding,
-    paddingTop: Platform.OS === 'web' ? 24 : 88,
   },
   containerDesktop: {
     paddingTop: 24,

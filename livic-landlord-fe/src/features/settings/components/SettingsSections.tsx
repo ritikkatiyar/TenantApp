@@ -233,8 +233,10 @@ export function SettingsTabContent({
               <GlassCard key={item.id} style={styles.roleCard}>
                 <View style={styles.roleCardTop}>
                   <View style={styles.roleTitleGroup}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={styles.roleName}>{item.fullName || item.title}</Text>
+                    <View style={styles.roleNameRow}>
+                      <Text style={styles.roleName} numberOfLines={1} ellipsizeMode="tail">
+                        {item.fullName || item.title}
+                      </Text>
                       {canEdit && handleOpenEditDetails && (
                         <TouchableOpacity
                           onPress={() => handleOpenEditDetails(item)}
@@ -245,10 +247,16 @@ export function SettingsTabContent({
                         </TouchableOpacity>
                       )}
                     </View>
-                    <Text style={[styles.roleDesc, { marginTop: 2 }]}>{item.email || item.title}</Text>
-                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                    <Text style={styles.roleDesc} numberOfLines={1} ellipsizeMode="tail">
+                      {item.email || item.title}
+                    </Text>
+                    <View style={styles.roleBadgeRow}>
                       <View style={isFullAccess ? styles.systemRolePill : styles.customRolePill}>
-                        <Text style={isFullAccess ? styles.systemRolePillText : styles.customRolePillText}>
+                        <Text
+                          style={isFullAccess ? styles.systemRolePillText : styles.customRolePillText}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
                           {item.title} ({isFullAccess ? 'Full Access' : 'Custom Access'})
                         </Text>
                       </View>

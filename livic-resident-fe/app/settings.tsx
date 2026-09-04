@@ -106,7 +106,7 @@ export default function ResidentSettingsScreen() {
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
-    padding: 20,
+    paddingHorizontal: 20,
     maxWidth: 900,
     alignSelf: 'center',
     width: '100%',

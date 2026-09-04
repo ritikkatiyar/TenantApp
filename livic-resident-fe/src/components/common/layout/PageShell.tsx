@@ -57,13 +57,50 @@ export function PageShell({
     }
   };
 
+  const flattenedCustomStyle = React.useMemo(
+    () => (contentContainerStyle ? (StyleSheet.flatten(contentContainerStyle) as ViewStyle) : undefined),
+    [contentContainerStyle]
+  );
+
+  const customPaddingTop = flattenedCustomStyle?.paddingTop ?? flattenedCustomStyle?.padding;
+  const effectivePaddingTop = isDesktop
+    ? (customPaddingTop ?? 24)
+    : Math.max(mobileHeaderOffset + 12, typeof customPaddingTop === 'number' ? customPaddingTop : 0);
+
+  const customPaddingBottom = flattenedCustomStyle?.paddingBottom ?? flattenedCustomStyle?.padding;
+  const effectivePaddingBottom = isDesktop
+    ? (customPaddingBottom ?? 40)
+    : Math.max(mobileBottomOffset + 24, typeof customPaddingBottom === 'number' ? customPaddingBottom : 0);
+
+  const resolvedScrollContentStyle = React.useMemo(() => {
+    return [
+      styles.scrollContent,
+      contentContainerStyle,
+      !isDesktop && {
+        paddingTop: effectivePaddingTop,
+        paddingBottom: effectivePaddingBottom,
+      },
+    ];
+  }, [styles.scrollContent, contentContainerStyle, isDesktop, effectivePaddingTop, effectivePaddingBottom]);
+
+  const resolvedFlatContentStyle = React.useMemo(() => {
+    return [
+      styles.flatContainer,
+      contentContainerStyle,
+      !isDesktop && {
+        paddingTop: effectivePaddingTop,
+        paddingBottom: effectivePaddingBottom,
+      },
+    ];
+  }, [styles.flatContainer, contentContainerStyle, isDesktop, effectivePaddingTop, effectivePaddingBottom]);
+
   const container = (
     <SafeAreaView edges={edges} style={[styles.safeArea, style]}>
       {header}
       {scrollable ? (
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
+          contentContainerStyle={resolvedScrollContentStyle}
           showsVerticalScrollIndicator={false}
           onScroll={handleCombinedScroll}
           scrollEventThrottle={16}
@@ -71,7 +108,7 @@ export function PageShell({
           {children}
         </ScrollView>
       ) : (
-        <View style={[styles.flatContainer, contentContainerStyle]}>
+        <View style={resolvedFlatContentStyle}>
           {children}
         </View>
       )}

@@ -4,8 +4,7 @@ import { Theme } from '@/src/theme/Theme';
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
     container: {
-      padding: Theme.Spacing.containerPadding,
-      paddingTop: Platform.OS === 'web' ? 24 : 88,
+      gap: 16,
     },
     containerDesktop: {
       paddingTop: 24,
@@ -136,24 +135,43 @@ export const createStyles = (theme: any, isDark: boolean) =>
       gap: 14,
     },
     roleCard: {
-      padding: 20,
+      padding: 16,
       borderRadius: 18,
     },
     roleCardTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 8,
+      alignItems: 'flex-start',
+      marginBottom: 10,
+      gap: 12,
     },
     roleTitleGroup: {
+      flex: 1,
+      minWidth: 0,
+      gap: 4,
+    },
+    roleNameRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      flexWrap: 'wrap',
+      gap: 6,
     },
     roleName: {
       fontSize: theme.Typography.bodyLarge.fontSize,
       fontWeight: '800',
       color: theme.Colors.onSurface,
+      flexShrink: 1,
+    },
+    roleDesc: {
+      fontSize: theme.Typography.bodySmall.fontSize,
+      color: theme.Colors.onSurfaceVariant,
+      lineHeight: 18,
+    },
+    roleBadgeRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+      marginTop: 2,
     },
     customRolePill: {
       backgroundColor: 'rgba(0, 104, 117, 0.08)',
@@ -162,6 +180,8 @@ export const createStyles = (theme: any, isDark: boolean) =>
       borderRadius: 8,
       borderWidth: 1,
       borderColor: 'rgba(0, 104, 117, 0.2)',
+      alignSelf: 'flex-start',
+      maxWidth: '100%',
     },
     customRolePillText: {
       fontSize: theme.Typography.labelSmall.fontSize,
@@ -175,25 +195,24 @@ export const createStyles = (theme: any, isDark: boolean) =>
       borderRadius: 8,
       borderWidth: 1,
       borderColor: 'rgba(107, 122, 125, 0.2)',
+      alignSelf: 'flex-start',
+      maxWidth: '100%',
     },
     systemRolePillText: {
       fontSize: theme.Typography.labelSmall.fontSize,
       fontWeight: '700',
       color: theme.Colors.onSurfaceVariant,
     },
-    roleDesc: {
-      fontSize: theme.Typography.bodyMedium.fontSize,
-      color: theme.Colors.onSurfaceVariant,
-      lineHeight: 19,
-    },
     roleCardBottom: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginTop: 16,
-      paddingTop: 14,
+      marginTop: 14,
+      paddingTop: 12,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0, 0, 0, 0.05)',
+      borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+      flexWrap: 'wrap',
+      gap: 10,
     },
     permCountTag: {
       flexDirection: 'row',
@@ -260,12 +279,14 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     inviteMetaRow: {
       flexDirection: 'row',
-      gap: 16,
+      flexWrap: 'wrap',
+      gap: 12,
       marginBottom: 16,
     },
     inviteMetaCol: {
       flex: 1,
-      backgroundColor: 'rgba(255, 255, 255, 0.6)',
+      minWidth: 120,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.6)',
       padding: 12,
       borderRadius: 12,
       borderWidth: 1,

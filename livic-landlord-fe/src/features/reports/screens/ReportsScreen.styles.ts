@@ -4,7 +4,6 @@ export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
     container: {
       paddingHorizontal: 16,
-      paddingTop: 12,
       paddingBottom: 40,
     },
     containerDesktop: {
