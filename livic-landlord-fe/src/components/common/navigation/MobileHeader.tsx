@@ -47,6 +47,11 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
       {Platform.OS === 'web' && (
         <style dangerouslySetInnerHTML={{ __html: `
           .mobile-header-container {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9999 !important;
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
           }
@@ -61,7 +66,7 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress, 
         // @ts-ignore
         dataSet={{ mobileHeader: 'true', responsiveLayout: 'mobile' }}
         className="mobile-header-container"
-        style={[styles.headerWrapper, { paddingTop: insets.top, height: 56 + insets.top }]}
+        style={[styles.headerWrapper, { paddingTop: insets.top, minHeight: 56 + insets.top }]}
       >
         <BlurView intensity={70} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
         <View style={styles.headerContainer}>
@@ -229,6 +234,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   headerContainer: {
     height: 56,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

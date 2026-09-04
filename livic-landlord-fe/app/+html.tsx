@@ -41,6 +41,22 @@ export default function HTML({ children }: { children: React.ReactNode }) {
             [data-responsive-layout="desktop"] {
               display: none !important;
             }
+            [data-mobile-header="true"],
+            .mobile-header-container {
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              z-index: 9999 !important;
+            }
+            [data-bottom-nav="true"],
+            .mobile-bottom-nav-container {
+              position: fixed !important;
+              bottom: 20px !important;
+              left: 0 !important;
+              right: 0 !important;
+              z-index: 9999 !important;
+            }
           }
         ` }} />
       </head>

@@ -61,6 +61,13 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
     <>
       {Platform.OS === 'web' && (
         <style dangerouslySetInnerHTML={{ __html: `
+          .mobile-bottom-nav-container {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9999 !important;
+          }
           @media (min-width: 900px) {
             .mobile-bottom-nav-container {
               display: none !important;
