@@ -105,6 +105,16 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   filterSection: { paddingHorizontal: theme.Spacing.lg, marginBottom: 20 },
   
+  desktopMonthSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 12,
+    height: 48,
+    borderWidth: 1,
+    borderColor: theme.Colors.glassStroke,
+  },
   monthSelector: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     backgroundColor: theme.Colors.glassFill,
@@ -141,12 +151,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   rowCard: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 20,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(0, 104, 117, 0.1)',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 104, 117, 0.1)',
   },
-  rowError: { backgroundColor: 'rgba(254, 226, 226, 0.4)', borderRadius: 12, paddingHorizontal: theme.Spacing.sm },
+  rowError: { backgroundColor: isDark ? 'rgba(255, 107, 107, 0.12)' : 'rgba(254, 226, 226, 0.4)', borderRadius: 12, paddingHorizontal: theme.Spacing.sm },
   
   rowLeft: { flex: 2 },
-  unitName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onBackground },
+  unitName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onSurface },
   tenantName: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginVertical: 2 },
   prevReading: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
   
@@ -159,13 +170,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest, 
     borderRadius: 10,
     borderWidth: 1, 
-    borderColor: 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)',
     width: '100%', 
     paddingVertical: 10, 
     paddingHorizontal: 12,
     fontSize: theme.Typography.bodyLarge.fontSize, 
     fontWeight: '600', 
-    color: theme.Colors.onBackground, 
+    color: theme.Colors.onSurface, 
     textAlign: 'right',
   },
   inputError: { borderColor: theme.Colors.error, color: theme.Colors.error },
@@ -187,8 +198,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.xl,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
   },
   topbarTabs: {
     flexDirection: 'row',
@@ -215,14 +226,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: theme.Colors.glassStroke,
   },
   backButtonTextDesktop: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
-    color: theme.Colors.onBackground,
+    color: theme.Colors.onSurface,
   },
   avatar: {
     width: 38,
@@ -414,7 +425,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: theme.Spacing.md,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+    borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.1)',
   },
   pageButton: {
     flexDirection: 'row',

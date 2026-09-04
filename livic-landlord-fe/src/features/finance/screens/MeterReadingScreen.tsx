@@ -174,7 +174,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
               
               <View style={{ width: 300 }}>
                 <Text style={styles.filterLabelCaps}>BILLING PERIOD</Text>
-                <View style={styles.monthSelector}>
+                <View style={styles.desktopMonthSelector}>
                   <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.monthBtn}>
                     <MaterialIcons name="chevron-left" size={24} color={theme.Colors.primary} />
                   </TouchableOpacity>

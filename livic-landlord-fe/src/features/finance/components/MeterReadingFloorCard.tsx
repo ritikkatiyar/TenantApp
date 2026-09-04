@@ -257,7 +257,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 10,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)',
     paddingHorizontal: 12,
     fontSize: theme.Typography.bodyMedium.fontSize,
     color: theme.Colors.onSurface,
@@ -287,9 +287,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: theme.Spacing.md,
-    backgroundColor: 'rgba(0, 104, 117, 0.02)',
+    backgroundColor: isDark ? 'transparent' : 'rgba(0, 104, 117, 0.02)',
     borderTopWidth: 1,
-    borderTopColor: (isDark ? 'rgba(0, 229, 255, 0.08)' : 'rgba(0, 104, 117, 0.04)'),
+    borderTopColor: (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.04)'),
   },
   pageButton: {
     flexDirection: 'row',
@@ -305,7 +305,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   pageButtonDisabled: {
     opacity: 0.5,
     backgroundColor: 'transparent',
-    borderColor: 'rgba(0, 0, 0, 0.05)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
   },
   pageButtonText: {
     fontSize: theme.Typography.bodySmall.fontSize,
