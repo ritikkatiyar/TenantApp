@@ -27,7 +27,7 @@ export function RateCalculationCard({
   isDark,
 }: RateCalculationCardProps) {
   const { theme } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const unitScrollRef = useRef<ScrollView>(null);
   const scrollTimeout = useRef<any>(null);
@@ -47,21 +47,24 @@ export function RateCalculationCard({
         {[
           { title: 'Fixed Rate', sub: 'Standard monthly fee' },
           { title: 'Metered/Consumption', sub: 'Based on usage units' }
-        ].map((method, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.radioRow}
-            onPress={() => setCalcMethod(method.title)}
-          >
-            <View style={styles.radioCircle}>
-              {calcMethod === method.title && <View style={styles.radioDot} />}
-            </View>
-            <View>
-              <Text style={styles.radioTitle}>{method.title}</Text>
-              <Text style={styles.radioSub}>{method.sub}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+        ].map((method, index) => {
+          const isActive = calcMethod === method.title;
+          return (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.radioRow}
+              onPress={() => setCalcMethod(method.title)}
+            >
+              <View style={[styles.radioCircle, isActive ? styles.radioCircleActive : styles.radioCircleInactive]}>
+                {isActive && <View style={styles.radioDot} />}
+              </View>
+              <View>
+                <Text style={styles.radioTitle}>{method.title}</Text>
+                <Text style={styles.radioSub}>{method.sub}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {calcMethod === 'Fixed Rate' ? (
@@ -72,7 +75,7 @@ export function RateCalculationCard({
             <TextInput 
               style={styles.inputWithIcon} 
               placeholder="0.00" 
-              placeholderTextColor="#849495"
+              placeholderTextColor={theme.Colors.outlineVariant}
               keyboardType="numeric"
               value={baseRate}
               onChangeText={setBaseRate}
@@ -88,7 +91,7 @@ export function RateCalculationCard({
               <TextInput 
                 style={styles.inputWithIcon} 
                 placeholder="0.00" 
-                placeholderTextColor="#849495"
+                placeholderTextColor={theme.Colors.outlineVariant}
                 keyboardType="numeric"
                 value={baseRate}
                 onChangeText={setBaseRate}
@@ -102,14 +105,14 @@ export function RateCalculationCard({
                     key={unit}
                     style={[
                       styles.unitBtn,
-                      unitType === unit && { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
+                      unitType === unit && (isDark ? styles.unitBtnActiveDark : styles.unitBtnActiveLight),
                     ]}
                     onPress={() => setUnitType(unit)}
                     activeOpacity={0.8}
                   >
                     <Text style={[
                       styles.unitText,
-                      unitType === unit && { color: theme.Surface.card, fontWeight: '800' },
+                      unitType === unit && (isDark ? styles.unitTextActiveDark : styles.unitTextActiveLight),
                     ]}>{unit}</Text>
                   </TouchableOpacity>
                 ))}
@@ -117,7 +120,9 @@ export function RateCalculationCard({
             ) : (
               <View style={styles.mobileUnitsScrollWrapper}>
                 <LinearGradient 
-                  colors={['transparent', 'rgba(255,255,255,0.6)', 'rgba(255,255,255,0.6)', 'transparent']} 
+                  colors={isDark 
+                    ? ['transparent', 'rgba(15, 23, 32, 0.8)', 'rgba(15, 23, 32, 0.8)', 'transparent']
+                    : ['transparent', 'rgba(255, 255, 255, 0.6)', 'rgba(255, 255, 255, 0.6)', 'transparent']} 
                   locations={[0, 0.22, 0.78, 1]}
                   style={StyleSheet.absoluteFillObject} 
                 />
@@ -176,13 +181,13 @@ export function RateCalculationCard({
   );
 }
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create({
   card: {
     borderRadius: 24,
     padding: theme.Spacing.lg,
     borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.glassStroke,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : theme.Colors.glassFill,
     overflow: 'hidden',
     marginBottom: 20,
   },
@@ -199,8 +204,8 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   label: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
-    color: theme.Colors.primary,
+    fontWeight: '700',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1,
     marginBottom: theme.Spacing.sm,
   },
@@ -218,9 +223,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: theme.Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  radioCircleActive: {
+    borderColor: theme.Colors.primary,
+  },
+  radioCircleInactive: {
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.25)' : theme.Colors.outlineVariant,
   },
   radioDot: {
     width: 10,
@@ -242,8 +252,8 @@ const createStyles = (theme: any) => StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.glassStroke,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.md,
@@ -279,25 +289,41 @@ const createStyles = (theme: any) => StyleSheet.create({
   unitBtn: {
     paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.glassStroke,
+  },
+  unitBtnActiveDark: {
+    backgroundColor: 'rgba(0, 229, 255, 0.15)',
+    borderColor: theme.Colors.primary,
+  },
+  unitBtnActiveLight: {
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   unitText: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
+  unitTextActiveDark: {
+    color: theme.Colors.primary,
+    fontWeight: '800',
+  },
+  unitTextActiveLight: {
+    color: theme.Colors.onPrimary,
+    fontWeight: '800',
+  },
   mobileUnitsScrollWrapper: {
     width: 100,
     height: 90,
     position: 'relative',
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.glassStroke,
     borderTopRightRadius: 14,
     borderBottomRightRadius: 14,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.glassFill,
   },
   scrollItem: {
     height: 40,

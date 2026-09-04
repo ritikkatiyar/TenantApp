@@ -25,7 +25,7 @@ export function AdvancedLogicCard({
   isDark,
 }: AdvancedLogicCardProps) {
   const { theme } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
     <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
@@ -42,7 +42,7 @@ export function AdvancedLogicCard({
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setApplySalesTax(val);
           }}
-          trackColor={{ false: '#d1d5db', true: '#00F0FF' }}
+          trackColor={{ false: isDark ? 'rgba(255, 255, 255, 0.16)' : '#d1d5db', true: theme.Colors.primary }}
           thumbColor="#ffffff"
         />
       </View>
@@ -55,7 +55,7 @@ export function AdvancedLogicCard({
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setAutoCarryForward(val);
           }}
-          trackColor={{ false: '#d1d5db', true: '#00F0FF' }}
+          trackColor={{ false: isDark ? 'rgba(255, 255, 255, 0.16)' : '#d1d5db', true: theme.Colors.primary }}
           thumbColor="#ffffff"
         />
       </View>
@@ -72,7 +72,7 @@ export function AdvancedLogicCard({
         <TextInput 
           style={styles.inputWithIcon} 
           placeholder="5" 
-          placeholderTextColor="#849495"
+          placeholderTextColor={theme.Colors.outlineVariant}
           keyboardType="numeric"
           value={lateFee}
           onChangeText={setLateFee}
@@ -83,13 +83,13 @@ export function AdvancedLogicCard({
   );
 }
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create({
   card: {
     borderRadius: 24,
     padding: theme.Spacing.lg,
     borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.glassStroke,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : theme.Colors.glassFill,
     overflow: 'hidden',
     marginBottom: 20,
   },
@@ -118,9 +118,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 240, 255, 0.12)',
+    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.12)' : 'rgba(0, 102, 204, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 240, 255, 0.24)',
+    borderColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 102, 204, 0.18)',
   },
   badgeText: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -129,8 +129,8 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   label: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
-    color: theme.Colors.primary,
+    fontWeight: '700',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1,
     marginBottom: theme.Spacing.sm,
   },
@@ -138,8 +138,8 @@ const createStyles = (theme: any) => StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.glassStroke,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.glassFill,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.md,

@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 
@@ -29,7 +28,7 @@ export function ChargeIdentityCard({
   isDark,
 }: ChargeIdentityCardProps) {
   const { theme } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
     <BlurView intensity={40} tint={isDark ? 'dark' : 'light'} style={styles.card}>
@@ -43,7 +42,7 @@ export function ChargeIdentityCard({
         <TextInput 
           style={styles.input} 
           placeholder="e.g. Electricity, Sanitation Service" 
-          placeholderTextColor="#849495"
+          placeholderTextColor={theme.Colors.outlineVariant}
           value={expenseName}
           onChangeText={(val) => {
             setExpenseName(val);
@@ -62,14 +61,14 @@ export function ChargeIdentityCard({
               key={cat}
               style={[
                 styles.categoryButton,
-                isActive && { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
+                isActive && (isDark ? styles.categoryButtonActiveDark : styles.categoryButtonActiveLight),
               ]}
               onPress={() => setChargeCategory(cat)}
               activeOpacity={0.8}
             >
               <Text style={[
                 styles.categoryText,
-                isActive && { color: theme.Surface.card, fontWeight: '800' },
+                isActive && (isDark ? styles.categoryTextActiveDark : styles.categoryTextActiveLight),
               ]}>{cat}</Text>
             </TouchableOpacity>
           );
@@ -88,14 +87,9 @@ export function ChargeIdentityCard({
               activeOpacity={0.8}
             >
               {isActive ? (
-                <LinearGradient
-                  colors={['#00d4ff', '#0072ff']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.segmentButtonGradient}
-                >
-                  <Text style={styles.segmentTextActive}>{freq}</Text>
-                </LinearGradient>
+                <View style={[styles.segmentButtonActive, isDark ? styles.segmentButtonActiveDark : styles.segmentButtonActiveLight]}>
+                  <Text style={[styles.segmentTextActive, isDark && { color: theme.Colors.primary }]}>{freq}</Text>
+                </View>
               ) : (
                 <View style={styles.segmentButtonInactive}>
                   <Text style={styles.segmentText}>{freq}</Text>
@@ -109,13 +103,13 @@ export function ChargeIdentityCard({
   );
 }
 
-const createStyles = (theme: any) => StyleSheet.create({
+const createStyles = (theme: any, isDark: boolean = false) => StyleSheet.create({
   card: {
     borderRadius: 24,
     padding: theme.Spacing.lg,
     borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.glassStroke,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : theme.Colors.glassFill,
     overflow: 'hidden',
     marginBottom: 20,
   },
@@ -132,8 +126,8 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   label: {
     fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
-    color: theme.Colors.primary,
+    fontWeight: '700',
+    color: theme.Colors.onSurfaceVariant,
     letterSpacing: 1,
     marginBottom: theme.Spacing.sm,
   },
@@ -141,8 +135,8 @@ const createStyles = (theme: any) => StyleSheet.create({
     height: 48,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: theme.Colors.glassStroke,
-    backgroundColor: theme.Colors.glassFill,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.glassStroke,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.glassFill,
     justifyContent: 'center',
     paddingHorizontal: theme.Spacing.md,
     marginBottom: 20,
@@ -169,34 +163,58 @@ const createStyles = (theme: any) => StyleSheet.create({
   categoryButton: {
     paddingVertical: theme.Spacing.sm,
     paddingHorizontal: 14,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : theme.Colors.glassFill,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.glassStroke,
+  },
+  categoryButtonActiveDark: {
+    backgroundColor: 'rgba(0, 229, 255, 0.15)',
+    borderColor: theme.Colors.primary,
+  },
+  categoryButtonActiveLight: {
+    backgroundColor: theme.Colors.primary,
+    borderColor: theme.Colors.primary,
   },
   categoryText: {
     fontSize: theme.Typography.bodySmall.fontSize,
     fontWeight: '600',
     color: theme.Colors.onSurfaceVariant,
   },
+  categoryTextActiveDark: {
+    color: theme.Colors.primary,
+    fontWeight: '800',
+  },
+  categoryTextActiveLight: {
+    color: theme.Colors.onPrimary,
+    fontWeight: '800',
+  },
   segmentContainer: {
     flexDirection: 'row',
     height: 48,
     borderRadius: 16,
-    backgroundColor: theme.Colors.glassFill,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: theme.Colors.glassStroke,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.Colors.glassStroke,
     padding: theme.Spacing.xs,
   },
   segmentButtonWrapper: {
     flex: 1,
     height: '100%',
   },
-  segmentButtonGradient: {
+  segmentButtonActive: {
     flex: 1,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  segmentButtonActiveDark: {
+    backgroundColor: 'rgba(0, 229, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: theme.Colors.primary,
+  },
+  segmentButtonActiveLight: {
+    backgroundColor: theme.Colors.primary,
   },
   segmentButtonInactive: {
     flex: 1,
