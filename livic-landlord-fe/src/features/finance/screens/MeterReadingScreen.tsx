@@ -110,7 +110,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
   const renderDesktopShell = () => (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      colors={theme.Colors.backgroundGradient as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.desktopShell}
@@ -306,7 +306,7 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
 
   const renderMobileShell = () => (
     <LinearGradient
-      colors={['#d4f5f9', '#e8f8fb', '#e2e0fb']}
+      colors={theme.Colors.backgroundGradient as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.gradient}
