@@ -36,6 +36,7 @@ export default function DesktopNavBar({
   properties = [],
   selectedPropertyId,
   onPropertyChange,
+  title,
   searchQuery,
   onSearchChange,
   searchPlaceholder = 'Search property or portfolio...',
@@ -94,6 +95,8 @@ export default function DesktopNavBar({
             <MaterialIcons name="arrow-back" size={18} color={theme.Colors.onBackground} />
             <Text style={styles.backButtonTextDesktop}>{backText}</Text>
           </TouchableOpacity>
+        ) : title ? (
+          <Text style={styles.navBarTitle}>{title}</Text>
         ) : null}
       </View>
 
@@ -235,6 +238,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   topbarLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+  },
+  navBarTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.Colors.onSurface,
+    letterSpacing: -0.3,
   },
   topbarRight: {
     flexDirection: 'row',

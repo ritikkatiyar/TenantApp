@@ -13,6 +13,34 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingBottom: 40,
       width: '100%',
     },
+    pageHeader: {
+      marginBottom: 16,
+    },
+    pageHeaderDesktop: {
+      marginBottom: 20,
+    },
+    pageKicker: {
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 1.2,
+      color: theme.Colors.primary,
+      textTransform: 'uppercase',
+      marginBottom: 4,
+    },
+    pageTitle: {
+      fontFamily: SerifHeadlineFont,
+      fontSize: 28,
+      fontWeight: '800',
+      color: theme.Colors.onSurface,
+      letterSpacing: -0.5,
+      marginBottom: 4,
+    },
+    pageSubtitle: {
+      fontSize: theme.Typography.bodyMedium.fontSize,
+      color: theme.Colors.onSurfaceVariant,
+      lineHeight: 20,
+      maxWidth: 720,
+    },
     kpiRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',

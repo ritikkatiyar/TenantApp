@@ -118,6 +118,7 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
       {/* 2. Main Desktop Column with Persistent Pinned Topbar */}
       <View style={{ flex: 1, flexDirection: 'column' }}>
         <DesktopNavBar 
+          title={getHeaderTitle(pathname)}
           properties={(properties || []).map((p: any) => ({ id: p.id, name: p.name }))}
           selectedPropertyId={selectedPropertyId}
           onPropertyChange={setSelectedPropertyId}

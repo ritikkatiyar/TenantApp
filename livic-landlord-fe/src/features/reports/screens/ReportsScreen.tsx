@@ -163,6 +163,17 @@ export default function ReportsScreen() {
       onEndReached={handleLoadMore}
       contentContainerStyle={[styles.container, isDesktop && styles.containerDesktop]}
     >
+      {/* Page Header */}
+      <View style={[styles.pageHeader, isDesktop && styles.pageHeaderDesktop]}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.pageKicker}>FINANCIAL INTELLIGENCE</Text>
+          <Text style={styles.pageTitle}>Financial Reports</Text>
+          <Text style={styles.pageSubtitle}>
+            Audit monthly rent collections, inspect published statements, and track billing health.
+          </Text>
+        </View>
+      </View>
+
       {/* KPI Stats Overview */}
       <View style={[styles.kpiRow, isDesktop && styles.kpiRowDesktop]}>
         <StatCard
