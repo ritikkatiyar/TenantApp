@@ -268,7 +268,7 @@ export default function SettingsMenuScreen() {
           <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>
             FINANCIAL MANAGEMENT
           </Text>
-          <Text style={{ fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '800', color: theme.Colors.onBackground, letterSpacing: -0.5 }}>
+          <Text style={[{ ...theme.Typography.headlineLg, color: theme.Colors.onBackground }]}>
             Finance & Billing
           </Text>
           <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>

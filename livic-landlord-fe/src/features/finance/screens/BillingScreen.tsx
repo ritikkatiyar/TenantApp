@@ -415,8 +415,7 @@ const createStyles = (theme: any, isDark: boolean, isDesktop: boolean = false) =
     marginBottom: theme.Spacing.lg,
   },
   titleLineDesktop: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontWeight: '900',
+    ...theme.Typography.headlineLg,
     color: theme.Colors.onSurface,
   },
   subtitleDesktop: {

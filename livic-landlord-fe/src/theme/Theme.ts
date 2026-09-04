@@ -148,39 +148,42 @@ export interface TypographyStyle extends Omit<TextStyle, 'fontWeight'> {
   letterSpacing?: number;
 }
 
+export const SerifHeadlineFont = 'Playfair Display, Georgia, "Times New Roman", serif';
+export const SansFont = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
 export const Typography = {
   displayLarge: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 57,
-    fontWeight: 'normal' as const,
+    fontWeight: '800' as const,
     lineHeight: 64,
   },
   displayMedium: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 45,
-    fontWeight: 'normal' as const,
+    fontWeight: '800' as const,
     lineHeight: 52,
   },
   displaySmall: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 36,
-    fontWeight: 'normal' as const,
+    fontWeight: '800' as const,
     lineHeight: 44,
   },
   headlineLarge: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 32,
     fontWeight: '800' as const,
     lineHeight: 40,
   },
   headlineMedium: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 28,
-    fontWeight: '700' as const,
+    fontWeight: '800' as const,
     lineHeight: 36,
   },
   headlineSmall: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 24,
     fontWeight: '700' as const,
     lineHeight: 32,
@@ -254,19 +257,19 @@ export const Typography = {
     lineHeight: 56,
   },
   headlineXl: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 48,
     fontWeight: '800' as const,
     lineHeight: 56,
   },
   headlineLg: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 32,
     fontWeight: '800' as const,
     lineHeight: 40,
   },
   headlineMd: {
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
     fontSize: 28,
     fontWeight: '700' as const,
     lineHeight: 36,

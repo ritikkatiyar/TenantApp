@@ -375,9 +375,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   screenTitle: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontFamily: 'Outfit',
-    fontWeight: '900',
+    ...theme.Typography.headlineLg,
     color: theme.Colors.onSurface,
   },
   screenSubtitle: {
@@ -388,9 +386,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     lineHeight: 18,
   },
   screenTitleDesktop: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontFamily: 'Outfit',
-    fontWeight: '900',
+    ...theme.Typography.headlineLg,
     color: theme.Colors.onSurface,
   },
   screenSubtitleDesktop: {

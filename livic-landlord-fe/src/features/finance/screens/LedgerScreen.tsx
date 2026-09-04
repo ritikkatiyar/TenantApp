@@ -344,9 +344,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   desktopInner: { width: '100%', maxWidth: 1080, paddingTop: theme.Spacing.lg },
   titleContainer: { marginTop: 10, marginBottom: 20 },
   screenTitle: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontFamily: 'Outfit',
-    fontWeight: '900',
+    ...theme.Typography.headlineLg,
     color: theme.Colors.onSurface,
   },
   screenSubtitle: {

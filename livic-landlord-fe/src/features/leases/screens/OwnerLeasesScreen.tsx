@@ -18,7 +18,6 @@ import { EmptyState } from '@/src/components/common/display/EmptyState';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { formatCurrency, formatCompactCurrency } from '@/src/utils/formatters';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
-import { PropertySelector } from '@/src/components/common/display/PropertySelector';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { useResponsive } from '@/src/hooks/useResponsive';
@@ -115,15 +114,6 @@ export default function OwnerLeasesScreen() {
               <Text style={styles.subtitle}>Manage active tenancies, notice periods, unit bookings, and move-in/out inventory.</Text>
             </View>
             <View style={styles.headerActions}>
-              {isDesktop && properties.length > 0 && (
-                <PropertySelector
-                  properties={properties}
-                  selectedPropertyId={selectedPropertyId}
-                  onSelectProperty={setSelectedPropertyId}
-                  allowAll={true}
-                  style={{ marginRight: 12 }}
-                />
-              )}
               <ActionButton
                 label="Book Room"
                 icon="bookmark-add"

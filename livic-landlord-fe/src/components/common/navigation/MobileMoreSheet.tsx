@@ -157,13 +157,6 @@ export default function MobileMoreSheet({ visible, onClose }: MobileMoreSheetPro
               <TouchableOpacity style={styles.themeToggle} onPress={handleThemeToggle} activeOpacity={0.7}>
                 <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={24} color={theme.Colors.primary} />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.themeToggle, { marginLeft: 8, borderColor: theme.Colors.error + '40', backgroundColor: theme.Colors.error + '1A' }]}
-                onPress={handleLogout}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons name="logout" size={24} color={theme.Colors.error} />
-              </TouchableOpacity>
             </View>
 
             {/* Subscription Upgrade Plan Banner */}

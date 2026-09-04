@@ -73,7 +73,7 @@ export function AnnouncementHistoryList({
             <Text style={styles.emptyText}>No announcement logs for this property.</Text>
           </View>
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.scrollContent}>
             {(announcements || []).map((item) => {
               const sevColor = getSeverityColor(item.severity);
               const catIcon = getCategoryIcon(item.category);
@@ -109,7 +109,7 @@ export function AnnouncementHistoryList({
                 </View>
               );
             })}
-          </ScrollView>
+          </View>
         )}
       </View>
     </BlurView>
