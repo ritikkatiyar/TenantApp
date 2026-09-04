@@ -84,11 +84,11 @@ export function TenantDetailsSidebar({
   updateUnitDetails,
   isDesktop = false,
 }: TenantDetailsSidebarProps) {
-  const { theme } = useAppTheme();
-  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   return (
-    <BlurView intensity={70} tint="light" style={[styles.desktopCard, { flex: 1 }]}>
+    <BlurView intensity={65} tint={isDark ? "dark" : "light"} style={[styles.desktopCard, { flex: 1 }]}>
       <View style={styles.sheetHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.sheetUnitTitle}>Unit {selectedBlock.unitNumber}</Text>

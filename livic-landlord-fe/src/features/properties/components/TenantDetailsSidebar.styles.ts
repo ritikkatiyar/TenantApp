@@ -1,12 +1,12 @@
 import { StyleSheet } from 'react-native';
 
-export const createStyles = (theme: any) =>
+export const createStyles = (theme: any, isDark: boolean = false) =>
   StyleSheet.create({
     desktopCard: {
       borderRadius: 24,
-      backgroundColor: theme.Colors.glassFill,
+      backgroundColor: isDark ? 'rgba(15, 23, 32, 0.70)' : theme.Colors.glassFill,
       borderWidth: 1.5,
-      borderColor: theme.Colors.glassStroke,
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : theme.Colors.glassStroke,
       overflow: 'hidden',
     },
     sheetHeader: {
@@ -15,7 +15,7 @@ export const createStyles = (theme: any) =>
       paddingHorizontal: 20,
       paddingVertical: theme.Spacing.md,
       borderBottomWidth: 1,
-      borderBottomColor: 'rgba(0,0,0,0.05)',
+      borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.05)',
     },
     sheetUnitTitle: {
       fontSize: theme.Typography.headlineSmall.fontSize,
@@ -32,7 +32,7 @@ export const createStyles = (theme: any) =>
       width: 32,
       height: 32,
       borderRadius: 16,
-      backgroundColor: 'rgba(0,0,0,0.03)',
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.03)',
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -69,9 +69,9 @@ export const createStyles = (theme: any) =>
     inputWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.Colors.surfaceContainerLow,
+      backgroundColor: isDark ? 'rgba(15, 23, 32, 0.85)' : theme.Colors.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.outlineVariant,
       borderRadius: 12,
       paddingHorizontal: 12,
       height: 48,
@@ -86,7 +86,7 @@ export const createStyles = (theme: any) =>
     statusToggle: {
       height: 44,
       borderRadius: 12,
-      backgroundColor: 'rgba(0,0,0,0.03)',
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0,0,0,0.03)',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
@@ -107,12 +107,12 @@ export const createStyles = (theme: any) =>
     tenantListContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: 'rgba(0,0,0,0.02)',
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
       padding: 10,
       borderRadius: 12,
     },
     tenantTag: {
-      backgroundColor: 'rgba(0, 104, 117, 0.08)',
+      backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(0, 104, 117, 0.08)',
       paddingHorizontal: theme.Spacing.sm,
       paddingVertical: theme.Spacing.xs,
       borderRadius: 6,
