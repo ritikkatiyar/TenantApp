@@ -316,8 +316,13 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <BlurView intensity={35} tint="dark" style={styles.modalOverlay}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={StyleSheet.absoluteFillObject}
+          onPress={onClose}
+        />
         <View style={styles.modalContent}>
           <LinearGradient
             colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
@@ -326,15 +331,24 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
             style={{ flex: 1 }}
           >
             <GestureHandlerRootView style={{ flex: 1 }}>
-              <SafeAreaView style={styles.safeArea}>
-                <View style={styles.header}>
-                  <TouchableOpacity onPress={onClose} style={styles.backButton}>
-                    <MaterialIcons name="arrow-back" size={24} color={theme.Colors.onSurface} />
-                  </TouchableOpacity>
-                  <View style={styles.titleContainer}>
-                    <Text style={styles.titleLine}>Floor {floorNumber}</Text>
-                    <Text style={styles.titleLine}>Layout & Tenants</Text>
+              <View style={{ flex: 1 }}>
+                <View style={styles.dragHandleContainer}>
+                  <View style={styles.dragHandle} />
+                </View>
+
+                <View style={styles.mobilePopupHeader}>
+                  <View style={styles.mobileTitleBlock}>
+                    <Text style={styles.mobileKicker}>ISOMETRIC VIEW</Text>
+                    <Text style={styles.mobileTitleText}>Floor {floorNumber} Layout & Tenants</Text>
                   </View>
+                  <TouchableOpacity 
+                    onPress={onClose} 
+                    style={styles.mobileCloseBtn}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <MaterialIcons name="close" size={20} color={theme.Colors.onSurface} />
+                  </TouchableOpacity>
                 </View>
 
                 <GestureDetector gesture={composedGesture}>
@@ -357,9 +371,9 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                 </GestureDetector>
 
                 {!selectedBlock && (
-                  <View style={{ paddingHorizontal: theme.Spacing.lg, paddingBottom: theme.Spacing.lg }}>
+                  <View style={styles.mobileBottomActionContainer}>
                     <TouchableOpacity 
-                      activeOpacity={0.8}
+                      activeOpacity={0.85}
                       onPress={onClose}
                       style={styles.saveButton}
                     >
@@ -387,14 +401,6 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                         resetTenantAssignmentForm();
                       }}
                     />
-
-                    <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-                      <View style={styles.header}>
-                        <TouchableOpacity onPress={() => setSelectedUnitId(null)} style={styles.backButton}>
-                          <MaterialIcons name="arrow-back" size={24} color={theme.Colors.onSurface} />
-                        </TouchableOpacity>
-                      </View>
-                    </SafeAreaView>
                   </View>
                 )}
 
@@ -403,14 +409,14 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                     <Animated.View 
                       entering={FadeInUp}
                       exiting={FadeOutDown}
-                      style={[styles.detailSheetWrapper, { bottom: 80 }]}
+                      style={[styles.detailSheetWrapper, { bottom: 16 }]}
                     >
                       {renderDetailsSidebar()}
                     </Animated.View>
                   );
                 })()}
 
-              </SafeAreaView>
+              </View>
             </GestureHandlerRootView>
           </LinearGradient>
         </View>

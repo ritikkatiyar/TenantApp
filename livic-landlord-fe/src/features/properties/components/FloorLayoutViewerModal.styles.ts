@@ -1,18 +1,87 @@
 import { StyleSheet } from 'react-native';
+import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 const CELL_SIZE = 60;
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(0, 0, 0, 0.55)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
   },
   modalContent: {
     width: '100%',
-    height: '100%',
+    maxWidth: 440,
+    height: '92%',
+    maxHeight: 780,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.85)',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: isDark ? 0.6 : 0.25,
+    shadowRadius: 30,
+    elevation: 16,
+  },
+  dragHandleContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  dragHandle: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.15)',
+  },
+  mobilePopupHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.Spacing.lg,
+    paddingTop: theme.Spacing.xs,
+    paddingBottom: theme.Spacing.sm,
+  },
+  mobileTitleBlock: {
+    flex: 1,
+    paddingRight: theme.Spacing.sm,
+  },
+  mobileKicker: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    color: theme.Colors.primary,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  mobileTitleText: {
+    fontFamily: SerifHeadlineFont,
+    fontSize: 20,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+    letterSpacing: -0.3,
+    lineHeight: 26,
+  },
+  mobileCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  mobileBottomActionContainer: {
+    paddingHorizontal: theme.Spacing.lg,
+    paddingBottom: theme.Spacing.lg,
+    paddingTop: theme.Spacing.xs,
   },
   modalContentDesktop: {
     width: '85%',
@@ -352,7 +421,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   saveButtonText: {
     fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
-    color: theme.Colors.surfaceContainerLowest,
+    color: '#ffffff',
     letterSpacing: 0.5,
   },
   warningContainer: {
