@@ -10,7 +10,6 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { getActiveLease, LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { Theme } from '@/src/theme/Theme';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 import { getPropertyDetails, PropertyDetailsResponse } from '@/src/features/property/api/property.api';
@@ -55,9 +54,8 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
       scrollable={true}
       header={isDesktop ? <DesktopNavBar title="My Unit & Property Lease" /> : null}
       edges={isDesktop ? ['top'] : []}
-      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
+      contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
-      {!isDesktop && <FloatingBackButton />}
           {/* Main Unit Card */}
           <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
             <View style={styles.mainCardHeaderRow}>
@@ -131,7 +129,7 @@ export default function TenantPropertyScreen({ token, onLogout }: TenantProperty
                 end={{ x: 1, y: 0 }}
                 style={styles.leaseBtn}
               >
-                <MaterialIcons name="description" size={20} color={theme.Colors.surfaceContainerLowest} />
+                <MaterialIcons name="description" size={20} color="#ffffff" />
                 <Text style={styles.leaseBtnText}>View Digital Lease Contract</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -244,7 +242,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   leaseLabel: { color: isDark ? '#94A3B8' : theme.Colors.outlineVariant, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '600', marginBottom: 2 },
   leaseValue: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
   leaseBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
-  leaseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
+  leaseBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
   leaseSignedText: { color: isDark ? '#94A3B8' : theme.Colors.outlineVariant, fontSize: theme.Typography.bodySmall.fontSize, textAlign: 'center', marginTop: 12 },
 
   sectionHeader: { marginTop: 4 },
@@ -264,7 +262,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalContractTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.primary, marginBottom: 12 },
   modalContractText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 22 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
+  modalCloseBtnText: { color: isDark ? '#090D12' : '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
 });
 
 function getAmenityMeta(name: string): { icon: React.ComponentProps<typeof MaterialIcons>['name']; sub: string } {

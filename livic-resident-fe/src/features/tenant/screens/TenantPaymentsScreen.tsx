@@ -10,7 +10,6 @@ import { getTenantRentCycles, markRentCyclePaid, RentCycle, fetchStatementHtml }
 import { getActiveLease, LeaseResponse } from '@/src/features/tenant/api/lease.api';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
@@ -98,10 +97,8 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
       scrollable={!loading}
       header={isDesktop ? <DesktopNavBar title="Billing & Rent Payments" /> : null}
       edges={isDesktop ? ['top'] : []}
-      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
+      contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
-      {!isDesktop && <FloatingBackButton />}
-
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color={theme.Colors.primary} />
@@ -144,7 +141,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                   end={{ x: 1, y: 0 }}
                   style={[styles.payBtn, (activeCycle?.status === 'PAID' || paySuccess) && styles.payBtnDisabled]}
                 >
-                  <MaterialIcons name="bolt" size={20} color={theme.Colors.surfaceContainerLowest} />
+                  <MaterialIcons name="bolt" size={20} color="#ffffff" />
                   <Text style={styles.payBtnText}>
                     {activeCycle?.status === 'PAID' || paySuccess ? 'Rent Settled ✓' : 'Pay Rent Now'}
                   </Text>
@@ -330,7 +327,7 @@ export default function TenantPaymentsScreen({ token, onLogout }: TenantPayments
                           end={{ x: 1, y: 0 }}
                           style={styles.modalPayBtn}
                         >
-                          <MaterialIcons name="lock" size={20} color={theme.Colors.surfaceContainerLowest} />
+                          <MaterialIcons name="lock" size={20} color="#ffffff" />
                           <Text style={styles.modalPayBtnText}>Confirm & Pay ₹{activeCycle?.totalAmount?.toLocaleString() || '10,000.00'}</Text>
                         </LinearGradient>
                       </TouchableOpacity>
@@ -390,7 +387,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   cycleActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   payBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14 },
   payBtnDisabled: { opacity: 0.7 },
-  payBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
+  payBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
   invoiceBtn: { flex: 1, backgroundColor: isDark ? 'rgba(27, 38, 51, 0.9)' : 'rgba(255, 255, 255, 0.8)', borderWidth: 1, borderColor: isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(0, 104, 117, 0.2)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 14, minWidth: 140 },
   invoiceBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
 
@@ -420,10 +417,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   historyFooterText: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
 
   promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
-  promoTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', marginBottom: 8, zIndex: 1 },
+  promoTitle: { color: '#ffffff', fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', marginBottom: 8, zIndex: 1 },
   promoDesc: { color: 'rgba(255, 255, 255, 0.9)', fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20, marginBottom: 18, width: '82%', zIndex: 1 },
-  promoBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
-  promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  promoBtn: { backgroundColor: '#ffffff', alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
+  promoBtnText: { color: '#006875', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
   promoIcon: { position: 'absolute', right: -25, bottom: -25 },
 
   securityCard: { backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
@@ -443,13 +440,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   checkoutValue: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onBackground, fontWeight: '800' },
 
   modalPayBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
-  modalPayBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
+  modalPayBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
 
   successIconBox: { marginBottom: 12 },
   successTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground, marginBottom: 6 },
   successDesc: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 14, alignItems: 'center', width: '100%' },
-  modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
+  modalCloseBtnText: { color: isDark ? '#090D12' : '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
 });
 
 

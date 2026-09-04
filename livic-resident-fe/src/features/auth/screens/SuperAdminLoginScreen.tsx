@@ -97,7 +97,7 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
                   <MaterialIcons name="mail-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="resident@tenantliving.com"
+                    placeholder="resident@livic.app"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}

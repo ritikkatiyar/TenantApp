@@ -80,7 +80,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
       scrollable={!loading}
       header={isDesktop ? <DesktopNavBar title="Resident Dashboard" activeTab="Home" /> : null}
       edges={isDesktop ? ['top'] : []}
-      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
+      contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
 
       {loading ? (
@@ -102,7 +102,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
             {criticalUnread.map((ann) => (
               <View key={ann.id} style={styles.criticalBanner}>
                 <View style={styles.criticalBannerLeft}>
-                  <MaterialIcons name="error" size={22} color={theme.Colors.surfaceContainerLowest} />
+                  <MaterialIcons name="error" size={22} color="#ffffff" />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.criticalTitle}>{ann.title}</Text>
                     <Text style={styles.criticalText} numberOfLines={2}>{ann.content}</Text>
@@ -170,7 +170,7 @@ export default function TenantHomeScreen({ token, onLogout }: TenantHomeScreenPr
               >
                 <View style={styles.actionStripLeft}>
                   <View style={styles.actionStripIcon}>
-                    <MaterialIcons name="electric-bolt" size={24} color={theme.Colors.surfaceContainerLowest} />
+                    <MaterialIcons name="electric-bolt" size={24} color="#ffffff" />
                   </View>
                   <View style={{ flex: 1, marginLeft: 14 }}>
                     <Text style={styles.actionStripTitle}>Log Maintenance Request</Text>
@@ -314,10 +314,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   actionStrip: { borderRadius: 24, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
   actionStripLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   actionStripIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.25)', alignItems: 'center', justifyContent: 'center' },
-  actionStripTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.surfaceContainerLowest },
+  actionStripTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: '#ffffff' },
   actionStripSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: 'rgba(255, 255, 255, 0.9)', marginTop: 2 },
-  actionStripBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, paddingHorizontal: theme.Spacing.md, paddingVertical: 10, borderRadius: 14 },
-  actionStripBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  actionStripBtn: { backgroundColor: '#ffffff', paddingHorizontal: theme.Spacing.md, paddingVertical: 10, borderRadius: 14 },
+  actionStripBtnText: { color: '#006875', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
 
   noticeHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.md },
   noticeSectionTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onBackground },
@@ -332,7 +332,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   noticeItemUnread: { backgroundColor: isDark ? '#141E2A' : theme.Colors.surfaceContainerLowest, borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : theme.Colors.primaryContainer, shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   noticeItemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.Spacing.sm },
   noticeBadge: { paddingHorizontal: theme.Spacing.sm, paddingVertical: theme.Spacing.xs, borderRadius: 6 },
-  noticeBadgeText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
+  noticeBadgeText: { color: '#ffffff', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', letterSpacing: 0.5 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.Colors.primary },
   noticeTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onBackground, marginBottom: theme.Spacing.xs },
   noticeSummary: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 20 },
@@ -340,10 +340,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   criticalBanner: { backgroundColor: theme.Colors.error, borderRadius: 20, padding: theme.Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   criticalBannerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 },
-  criticalTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800' },
+  criticalTitle: { color: '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800' },
   criticalText: { color: 'rgba(255, 255, 255, 0.95)', fontSize: theme.Typography.bodyMedium.fontSize, marginTop: 2 },
   criticalDismissBtn: { backgroundColor: 'rgba(255, 255, 255, 0.25)', paddingHorizontal: 14, paddingVertical: theme.Spacing.sm, borderRadius: 10 },
-  criticalDismissText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
+  criticalDismissText: { color: '#ffffff', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700' },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(11, 28, 48, 0.75)', justifyContent: 'center', padding: 20 },
   modalContent: { backgroundColor: isDark ? '#131C26' : theme.Colors.surfaceContainerLowest, borderRadius: 24, padding: theme.Spacing.lg, shadowColor: 'black', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 10 },
@@ -352,7 +352,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   modalMeta: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginBottom: theme.Spacing.md },
   modalBody: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 24 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, marginTop: 20, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
+  modalCloseBtnText: { color: isDark ? '#090D12' : '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
 });
 
 

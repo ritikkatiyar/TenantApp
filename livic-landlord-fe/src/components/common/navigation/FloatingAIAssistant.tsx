@@ -261,7 +261,7 @@ export default function FloatingAIAssistant() {
                 end={{ x: 1, y: 1 }}
                 style={styles.bubbleGradient}
               >
-                <MaterialIcons name="chat" size={24} color={theme.Colors.onPrimary} />
+                <MaterialIcons name="chat" size={24} color="#ffffff" />
               </LinearGradient>
             </Animated.View>
           </TouchableOpacity>
@@ -395,7 +395,7 @@ export default function FloatingAIAssistant() {
                   end={{ x: 1, y: 0 }}
                   style={styles.sendGradient}
                 >
-                  <MaterialIcons name="send" size={16} color={theme.Colors.onPrimary} />
+                  <MaterialIcons name="send" size={16} color="#ffffff" />
                 </LinearGradient>
               </TouchableOpacity>
             </View>

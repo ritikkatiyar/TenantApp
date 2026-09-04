@@ -72,13 +72,44 @@ function MainAppLayout() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const bgColor = isDark ? '#090D12' : '#F3FBFC';
+      document.body.style.backgroundColor = bgColor;
+      document.documentElement.style.backgroundColor = bgColor;
+      const rootEl = document.getElementById('root');
+      if (rootEl) rootEl.style.backgroundColor = bgColor;
 
+      const style = document.createElement('style');
+      style.innerHTML = `
+        html, body, #root {
+          background-color: ${bgColor} !important;
+          overscroll-behavior-y: none;
+        }
+        ::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: rgba(0, 104, 117, 0.15);
+          border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 104, 117, 0.35);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, [isDark]);
+
+  const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/onboarding', '/'];
   const hideNavigation = pathname === '/login' || pathname === '/signup';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = isDesktop;
-  const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
+  const hideHeader = hideNavigation || AUTH_OR_STANDALONE_ROUTES.includes(cleanPathname) || cleanPathname === '/ai';
 
   return (
     <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>

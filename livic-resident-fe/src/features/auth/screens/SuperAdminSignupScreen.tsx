@@ -145,7 +145,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                   <TextInput
                     ref={emailInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="super@admin.system"
+                    placeholder="resident@livic.app"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}
