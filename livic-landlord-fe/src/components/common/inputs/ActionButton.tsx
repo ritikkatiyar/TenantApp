@@ -43,7 +43,7 @@ export function ActionButton({
 
   const isInteractionDisabled = disabled || loading;
   const iconSize = size === 'sm' ? 16 : size === 'lg' ? 22 : 18;
-  const iconColor = variant === 'primary' || variant === 'danger' ? theme.Colors.surfaceContainerLowest : theme.Colors.primary;
+  const iconColor = variant === 'primary' || variant === 'danger' ? '#ffffff' : theme.Colors.primary;
 
   const renderIcon = () => {
     if (loading) {
@@ -98,12 +98,18 @@ export function ActionButton({
     return style;
   }, [style]);
 
-  if (variant === 'primary' && !isInteractionDisabled) {
+  if (variant === 'primary') {
     return (
       <TouchableOpacity
         onPress={onPress}
+        disabled={isInteractionDisabled}
         activeOpacity={0.85}
-        style={[styles.button, styles.primaryShadow, sanitizedStyle]}
+        style={[
+          styles.button,
+          styles.primaryShadow,
+          isInteractionDisabled && { opacity: 0.55 },
+          sanitizedStyle,
+        ]}
       >
         <LinearGradient
           colors={['#00d4ff', '#0072ff']}
@@ -128,9 +134,8 @@ export function ActionButton({
         return styles.outline;
       case 'ghost':
         return styles.ghost;
-      case 'primary':
       default:
-        return styles.primaryDisabled;
+        return styles.outline;
     }
   };
 
@@ -210,7 +215,7 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', ful
       fontSize,
       fontWeight: '800',
       letterSpacing: 0.5,
-      color: theme.Colors.surfaceContainerLowest,
+      color: '#ffffff',
       textAlign: 'center',
     },
     textSecondary: {
@@ -223,10 +228,10 @@ const createStyles = (theme: any, isDark: boolean, size: 'sm' | 'md' | 'lg', ful
       color: theme.Colors.primary,
     },
     textDanger: {
-      color: theme.Colors.surfaceContainerLowest,
+      color: '#ffffff',
     },
     textDisabled: {
-      color: theme.Colors.onSurfaceVariant,
+      color: '#ffffff',
     },
     iconLeft: {
       marginRight: theme.Spacing.xs + 2,
