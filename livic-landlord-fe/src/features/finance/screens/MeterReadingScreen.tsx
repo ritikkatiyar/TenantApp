@@ -7,7 +7,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { PageShell } from '@/src/components/common/layout/PageShell';
@@ -312,7 +311,6 @@ export default function MeterReadingScreen({ token }: { token: string | null }) 
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
-        <FloatingBackButton onPress={() => router.back()} />
 
         {/* Filters */}
         <View style={[styles.filterSection, { paddingTop: 64 }]}>

@@ -36,7 +36,6 @@ import { createStyles } from './RentRollScreen.styles';
 import { PreFlightChecklistCard } from '../components/billing/PreFlightChecklistCard';
 import { RecordCashModal } from '../components/billing/RecordCashModal';
 import { RentRollInvoiceList } from '../components/billing/RentRollInvoiceList';
-import { RentRollHeader } from '../components/billing/RentRollHeader';
 
 export default function RentRollScreen({ token: propToken }: { token?: string | null } = {}) {
   const { accessToken } = useAuth();
@@ -359,7 +358,18 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
                 />
               </View>
 
-              {isDesktop && pendingCount > 0 && (
+              {!hasGenerated && (
+                <View style={styles.actionGroup}>
+                  <ActionButton
+                    title="GENERATE DRAFT INVOICES"
+                    onPress={handleGenerate}
+                    loading={isGenerating}
+                    style={styles.publishBtn}
+                  />
+                </View>
+              )}
+
+              {pendingCount > 0 && (
                 <View style={styles.actionGroup}>
                   <ActionButton
                     title={publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
@@ -378,7 +388,7 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
                 </View>
               )}
 
-              {isDesktop && publishedCount > 0 && (
+              {publishedCount > 0 && (
                 <ActionButton
                   title="REVERT TO DRAFT (UNPUBLISH)"
                   onPress={handleUnpublish}
@@ -459,36 +469,18 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <RentRollHeader
-        hasGenerated={hasGenerated}
-        isGenerating={isGenerating}
-        checklist={checklist}
-        handleGenerate={handleGenerate}
-        pendingCount={pendingCount}
-        isPublishing={isPublishing}
-        handlePublish={handlePublish}
-        isUnpublishing={isUnpublishing}
-        handleUnpublish={handleUnpublish}
-        router={router}
-        insets={insets}
-        isDark={isDark}
-        theme={theme}
-        styles={styles}
-      />
-      <PageShell 
-        scrollable 
-        onEndReached={() => {
-          if (!isLoading && page + 1 < totalPages) {
-            setPage(page + 1);
-          }
-        }}
-        edges={[]} 
-        contentContainerStyle={isDesktop ? styles.desktopScroll : styles.mobileScroll}
-      >
-        {renderContent()}
-      </PageShell>
-    </View>
+    <PageShell 
+      scrollable 
+      onEndReached={() => {
+        if (!isLoading && page + 1 < totalPages) {
+          setPage(page + 1);
+        }
+      }}
+      edges={[]} 
+      contentContainerStyle={isDesktop ? styles.desktopScroll : styles.mobileScroll}
+    >
+      {renderContent()}
+    </PageShell>
   );
 }
 
