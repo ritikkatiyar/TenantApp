@@ -24,9 +24,9 @@ import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
 import ErrorBoundary from '@/src/components/common/feedback/ErrorBoundary';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useProperties } from '@/src/hooks/useProperties';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient, type LinearGradientProps } from 'expo-linear-gradient';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-import { LightColors, Breakpoints } from '@/src/theme/Theme';
+import { LightColors, Breakpoints, Spacing, Rounded, Timing } from '@/src/theme/Theme';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/command-center': 'Portfolio',
@@ -96,7 +96,10 @@ const queryClient = new QueryClient({
 
 import { PropertySelectionProvider, useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 
-const LinearGradientWithDataSet = LinearGradient as React.ComponentType<any>;
+type LinearGradientWithWebProps = LinearGradientProps & {
+  dataSet?: Record<string, string | number | boolean | undefined>;
+};
+const LinearGradientWithDataSet = LinearGradient as React.ComponentType<LinearGradientWithWebProps>;
 
 function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
   const { theme } = useAppTheme();
@@ -168,8 +171,31 @@ function NavigationThemeWrapper({ children }: { children: React.ReactNode }) {
       const bgColor = theme.Colors.background;
       document.documentElement.style.backgroundColor = bgColor;
       document.body.style.backgroundColor = bgColor;
+
+      let scrollbarStyle = document.getElementById('livic-scrollbar-styles');
+      if (!scrollbarStyle) {
+        scrollbarStyle = document.createElement('style');
+        scrollbarStyle.id = 'livic-scrollbar-styles';
+        document.head.appendChild(scrollbarStyle);
+      }
+      scrollbarStyle.textContent = `
+        ::-webkit-scrollbar {
+          width: ${Spacing.unit}px;
+          height: ${Spacing.unit}px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: ${theme.Colors.scrollbarThumb};
+          border-radius: ${Rounded.full}px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: ${theme.Colors.scrollbarThumbHover};
+        }
+      `;
     }
-  }, [theme.Colors.background]);
+  }, [theme.Colors.background, theme.Colors.scrollbarThumb, theme.Colors.scrollbarThumbHover]);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.Colors.background }}>
@@ -210,20 +236,6 @@ export default function RootLayout() {
         *:focus {
           outline: none !important;
         }
-        ::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: rgba(0, 104, 117, 0.15);
-          border-radius: 999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: rgba(0, 104, 117, 0.35);
-        }
       `;
       document.head.appendChild(style);
     }
@@ -254,7 +266,7 @@ export default function RootLayout() {
                               headerShown: false, 
                               contentStyle: { backgroundColor: 'transparent' },
                               animation: 'fade',
-                              animationDuration: 220,
+                              animationDuration: Timing.normal,
                             }}>
                               <Stack.Screen name="index" />
                               <Stack.Screen name="login" />
@@ -300,7 +312,7 @@ export default function RootLayout() {
                               headerShown: false, 
                               contentStyle: { backgroundColor: 'transparent' },
                               animation: 'fade',
-                              animationDuration: 220,
+                              animationDuration: Timing.normal,
                             }}>
                               <Stack.Screen name="index" />
                               <Stack.Screen name="login" />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollViewStyleReset } from 'expo-router/html';
-import { Breakpoints } from '@/src/theme/Theme';
+import { Breakpoints, DarkColors, SansFont } from '@/src/theme/Theme';
 
 export default function HTML({ children }: { children: React.ReactNode }) {
   return (
@@ -23,12 +23,12 @@ export default function HTML({ children }: { children: React.ReactNode }) {
 
         <style dangerouslySetInnerHTML={{ __html: `
           html, body, #root {
-            background-color: #090D12;
+            background-color: ${DarkColors.background};
             min-height: 100%;
             height: 100%;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: ${SansFont};
           }
           @media (min-width: ${Breakpoints.desktop}px) {
             [data-responsive-layout="mobile"],

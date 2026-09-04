@@ -52,7 +52,9 @@ export const LightColors = {
   glassStroke: 'rgba(255, 255, 255, 0.85)',
   accentGradientStart: "#00e0ff",
   accentGradientEnd: "#0070ea",
-  backgroundGradient: ["#d4f5f9", "#e8f8fb", "#e2e0fb"] as string[],
+  backgroundGradient: ["#d4f5f9", "#e8f8fb", "#e2e0fb"] as [string, string, ...string[]],
+  scrollbarThumb: "rgba(0, 104, 117, 0.20)",
+  scrollbarThumbHover: "rgba(0, 104, 117, 0.40)",
 };
 
 export const DarkColors = {
@@ -107,7 +109,9 @@ export const DarkColors = {
   glassStroke: 'rgba(255, 255, 255, 0.10)',
   accentGradientStart: "#00E5FF",
   accentGradientEnd: "#0070EA",
-  backgroundGradient: ["#090D12", "#0F1720", "#141E2A"] as string[],
+  backgroundGradient: ["#090D12", "#0F1720", "#141E2A"] as [string, string, ...string[]],
+  scrollbarThumb: "rgba(0, 229, 255, 0.20)",
+  scrollbarThumbHover: "rgba(0, 229, 255, 0.40)",
 };
 
 export const Colors = LightColors;
@@ -149,7 +153,17 @@ export interface TypographyStyle extends Omit<TextStyle, 'fontWeight'> {
 }
 
 export const SerifHeadlineFont = 'Playfair Display, Georgia, "Times New Roman", serif';
-export const SansFont = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+export const SansFont = 'Inter, sans-serif';
+
+export const Fonts = {
+  headline: SerifHeadlineFont,
+  serifHeadline: SerifHeadlineFont,
+  playfairDisplay: 'Playfair Display',
+  body: 'Inter',
+  inter: 'Inter',
+  mono: 'JetBrains Mono',
+  sans: SansFont,
+} as const;
 
 export const Typography = {
   displayLarge: {
@@ -336,6 +350,15 @@ export const Rounded = {
   default: 12,
 };
 
+export const Timing = {
+  quick: 150,
+  normal: 220,
+  smooth: 300,
+  slow: 500,
+} as const;
+
+export const AnimationDuration = Timing.normal;
+
 export type ColorTokens = typeof LightColors;
 export type SurfaceTokens = typeof LightSurface;
 
@@ -344,8 +367,10 @@ export function getTheme(isDark: boolean) {
     Colors: isDark ? DarkColors : LightColors,
     Surface: isDark ? DarkSurface : LightSurface,
     Typography,
+    Fonts,
     Spacing,
     Rounded,
+    Timing,
   };
 }
 
@@ -353,8 +378,10 @@ export const Theme = {
   Colors,
   Surface,
   Typography,
+  Fonts,
   Spacing,
   Rounded,
+  Timing,
 };
 
 export const Breakpoints = {
