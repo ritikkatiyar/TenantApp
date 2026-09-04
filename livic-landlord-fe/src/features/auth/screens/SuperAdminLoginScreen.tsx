@@ -90,14 +90,14 @@ export default function SuperAdminLoginScreen({ onLogin, onNavigateToSignup }: S
 
             {/* Login Form */}
             <View style={styles.formContainer}>
-              {/* Resident Email Input */}
+              {/* Landlord Email Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>EMAIL ADDRESS</Text>
                 <View style={styles.inputWrapper}>
                   <MaterialIcons name="mail-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="resident@tenantliving.com"
+                    placeholder="landlord@livic.app"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}
