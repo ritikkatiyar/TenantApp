@@ -22,6 +22,13 @@ export default function HTML({ children }: { children: React.ReactNode }) {
         <ScrollViewStyleReset />
 
         <style dangerouslySetInnerHTML={{ __html: `
+          html, body, #root {
+            background-color: #090D12;
+            min-height: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+          }
           @media (min-width: ${Breakpoints.desktop}px) {
             [data-responsive-layout="mobile"],
             [data-mobile-header="true"],

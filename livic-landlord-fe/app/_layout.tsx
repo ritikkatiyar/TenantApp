@@ -139,10 +139,10 @@ function MobileLayoutShell({ children }: { children: React.ReactNode }) {
   const { theme } = useAppTheme();
   return (
     <LinearGradient
-      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
+      colors={(theme.Colors.backgroundGradient || ['#090D12', '#0F1720', '#141E2A']) as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={{ flex: 1, flexDirection: 'column' }}
+      style={{ flex: 1, minHeight: '100%', flexDirection: 'column', backgroundColor: theme.Colors.background }}
     >
       {children}
     </LinearGradient>
@@ -150,22 +150,32 @@ function MobileLayoutShell({ children }: { children: React.ReactNode }) {
 }
 
 function NavigationThemeWrapper({ children }: { children: React.ReactNode }) {
-  const { isDark } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const navTheme = React.useMemo(() => {
     const base = isDark ? DarkTheme : DefaultTheme;
     return {
       ...base,
       colors: {
         ...base.colors,
-        background: 'transparent',
+        background: theme.Colors.background,
       },
     };
-  }, [isDark]);
+  }, [isDark, theme]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const bgColor = theme.Colors.background;
+      document.documentElement.style.backgroundColor = bgColor;
+      document.body.style.backgroundColor = bgColor;
+    }
+  }, [theme.Colors.background]);
 
   return (
-    <ThemeProvider value={navTheme}>
-      {children}
-    </ThemeProvider>
+    <View style={{ flex: 1, backgroundColor: theme.Colors.background }}>
+      <ThemeProvider value={navTheme}>
+        {children}
+      </ThemeProvider>
+    </View>
   );
 }
 
