@@ -15,7 +15,7 @@ import { GlassCard } from '@/src/components/common/display/GlassCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useResponsive } from '@/src/hooks/useResponsive';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -27,6 +27,7 @@ import { useExpenseConfiguration } from '@/src/features/finance/hooks/useExpense
 import { createStyles } from './ExpenseConfigurationScreen.styles';
 
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 // Sub-components
 import { ExpenseConfigCard } from '../components/billing/ExpenseConfigCard';
@@ -51,10 +52,19 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
   const {
     charges,
     isLoading,
+    refetch,
     deactivateConfig,
     reactivateConfig,
     deleteConfig,
   } = useExpenseConfiguration(propertyId, token);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (propertyId && token) {
+        refetch();
+      }
+    }, [refetch, propertyId, token])
+  );
 
   const [confirmModal, setConfirmModal] = useState<{
     visible: boolean;
@@ -177,30 +187,14 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
 
     if (!propertyId) {
       return (
-        <GlassCard
-          style={{
-            marginVertical: 20,
-            minHeight: 280,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          contentStyle={{
-            padding: 48,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-              Select a Property
-            </Text>
-            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-              Please select a property from the top navigation bar to view and manage its charge configurations.
-            </Text>
-          </View>
-        </GlassCard>
+        <PropertyRequiredBanner
+          title="Select Property for Expense Setup"
+          description="Select a property below to view, configure, and manage its utility and maintenance charges."
+          icon="receipt-long"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+        />
       );
     }
 
@@ -301,50 +295,35 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
 
   const renderMobileShell = () => (
     <View style={[styles.gradient, { flex: 1 }]}>
-      <Animated.View style={[styles.headerContainer, { opacity: headerOpacity, paddingTop: insets.top, height: 56 + insets.top }]}>
-        <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-          </TouchableOpacity>
-          <View style={styles.titleWrapper}>
-            <Text style={styles.compactTitleText}>Configurations</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.headerCreateTouch}
-            onPress={handleConfigureExpense}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#00d4ff', '#0072ff']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.headerCreateInner}
-            >
-              <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
-              <Text style={styles.headerCreateText}>ADD</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-
-      <Animated.ScrollView
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true, listener: handleScroll }
-        )}
+      <ScrollView
+        onScroll={handleScroll}
         scrollEventThrottle={16}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: 68 + insets.top }
-        ]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.inner}>
-          <Animated.View style={[styles.titleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.screenTitle}>Billing Elements</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.kicker}>FINANCE CONFIGURATION</Text>
+            <View style={styles.titleActionRow}>
+              <Text style={styles.screenTitle}>Billing Configurations</Text>
+              <TouchableOpacity 
+                style={styles.headerCreateTouch}
+                onPress={handleConfigureExpense}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#00d4ff', '#0072ff']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.headerCreateInner}
+                >
+                  <MaterialIcons name="add" size={16} color={theme.Colors.surfaceContainerLowest} />
+                  <Text style={styles.headerCreateText}>ADD</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.screenSubtitle}>Configure ledger charge codes, utility scales and automation thresholds</Text>
-          </Animated.View>
+          </View>
 
           {renderContent()}
 
@@ -361,7 +340,7 @@ export default function ExpenseConfigurationScreen({ token }: { token: string | 
             </TouchableOpacity>
           )}
         </View>
-      </Animated.ScrollView>
+      </ScrollView>
     </View>
   );
 

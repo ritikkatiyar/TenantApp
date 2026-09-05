@@ -1,11 +1,14 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { saveUserPreference, SaveUserPreferenceRequest } from '@/src/features/user/api/userPreference.api';
 import { validateAndApplyJoinCode } from '@/src/features/properties/api/rolePermission.api';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { setLocalOnboardingStatus } from '@/src/components/common/layout/OnboardingGate';
 
 const MODULES = [
   {
@@ -25,6 +28,8 @@ const MODULES = [
 export default function OnboardingScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsive();
   const [selectedModule, setSelectedModule] = useState<SaveUserPreferenceRequest['activeMode'] | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +38,7 @@ export default function OnboardingScreen() {
   const [joining, setJoining] = useState(false);
 
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { accessToken, setContext } = useAuth();
 
   const handleComplete = async () => {
     if (!selectedModule) return;
@@ -43,7 +48,8 @@ export default function OnboardingScreen() {
         activeMode: selectedModule,
         onboardingDone: true
       }, accessToken!);
-      router.replace('/(tabs)' as any);
+      setLocalOnboardingStatus(accessToken, true);
+      router.replace('/command-center' as any);
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to save setup preference');
     } finally {
@@ -60,6 +66,17 @@ export default function OnboardingScreen() {
     try {
       const res = await validateAndApplyJoinCode(accessToken!, inviteCode.trim());
 
+      try {
+        await saveUserPreference({
+          activeMode: 'RENTAL',
+          onboardingDone: true
+        }, accessToken!);
+      } catch {
+        // Backend marks onboarding done upon code application
+      }
+      setLocalOnboardingStatus(accessToken, true);
+      setContext(null);
+
       Alert.alert(
         'Welcome!',
         `Successfully joined ${res.propertyName || 'the property'} as ${res.title || 'Member'}!`,
@@ -70,7 +87,7 @@ export default function OnboardingScreen() {
               if (res.title?.toLowerCase() === 'resident' || res.title?.toLowerCase() === 'tenant') {
                 router.replace('/tenant-home' as any);
               } else {
-                router.replace('/(tabs)' as any);
+                router.replace('/command-center' as any);
               }
             }
           }
@@ -84,7 +101,13 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={[
+        styles.content, 
+        { paddingTop: isDesktop ? 60 : Math.max(insets.top + 24, 48) }
+      ]}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Welcome to Livic</Text>
         <Text style={styles.subtitle}>How do you plan to use Livic today?</Text>
@@ -177,7 +200,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   content: {
     padding: 24,
-    paddingTop: 60,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 640,
   },
   header: {
     marginBottom: 24,
@@ -206,8 +231,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: theme.Colors.surface || '#fff',
-    shadowColor: '#000',
+    backgroundColor: theme.Colors.surface,
+    shadowColor: theme.Colors.shadow || theme.Colors.onSurface,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -238,7 +263,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: isDark ? 'rgba(0, 229, 255, 0.05)' : 'rgba(0, 104, 117, 0.05)',
   },
   icon: {
-    fontSize: 32,
+    fontSize: theme.Typography.headlineLarge.fontSize,
     marginBottom: 12,
   },
   cardTitle: {
@@ -273,7 +298,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 8,
   },
   inviteInput: {
-    fontSize: 24,
+    fontSize: theme.Typography.headlineSmall.fontSize,
     fontWeight: '800',
     letterSpacing: 4,
     textAlign: 'center',

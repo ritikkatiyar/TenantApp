@@ -22,6 +22,15 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress }
     <>
       {Platform.OS === 'web' && (
         <style dangerouslySetInnerHTML={{ __html: `
+          .mobile-header-container {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9999 !important;
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+          }
           @media (min-width: 900px) {
             .mobile-header-container {
               display: none !important;
@@ -33,7 +42,7 @@ export default function MobileHeader({ title, onMenuPress, onNotificationPress }
         // @ts-ignore
         dataSet={{ mobileHeader: 'true', responsiveLayout: 'mobile' }}
         className="mobile-header-container"
-        style={[styles.headerWrapper, { paddingTop: insets.top, height: 56 + insets.top }]}
+        style={[styles.headerWrapper, { paddingTop: insets.top, minHeight: 56 + insets.top }]}
       >
       <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
       <View style={styles.headerContainer}>
@@ -74,8 +83,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: 0,
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: isDark ? 'rgba(19, 28, 38, 0.4)' : 'rgba(248, 249, 255, 0.4)',
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+    backgroundColor: isDark ? 'rgba(9, 13, 18, 0.60)' : 'rgba(255, 255, 255, 0.70)',
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
@@ -88,6 +97,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   headerContainer: {
     height: 56,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -111,9 +121,11 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: 12,
   },
   titleText: {
-    fontSize: theme.Typography.titleLarge.fontSize,
-    fontWeight: '800',
+    fontFamily: 'Inter',
+    fontSize: 16,
+    fontWeight: '600',
     color: theme.Colors.onSurface,
+    letterSpacing: -0.2,
   },
   notificationButton: {
     padding: theme.Spacing.sm,

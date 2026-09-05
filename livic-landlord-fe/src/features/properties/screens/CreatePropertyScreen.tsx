@@ -6,16 +6,13 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
   Animated,
-  useWindowDimensions
+  ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
@@ -46,7 +43,6 @@ export default function CreatePropertyScreen({ onBack, onSaveAndConfigure, userT
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const { isDesktop } = useResponsive();
-  const router = useRouter();
 
   const { handleScroll } = useScrollNav();
 

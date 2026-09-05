@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +16,7 @@ import ActionButton from '@/src/components/common/inputs/ActionButton';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import Building3DView from '@/src/features/properties/components/Building3DView';
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { useEditProperty } from '@/src/features/properties/hooks/useEditProperty';
 import { createStyles } from './EditPropertyScreen.styles';
 
@@ -46,8 +46,7 @@ export default function EditPropertyScreen({
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
 
   const {
     name,
@@ -79,7 +78,7 @@ export default function EditPropertyScreen({
   React.useEffect(() => {
     if (globalUnitsPerFloor && parseInt(globalUnitsPerFloor, 10) > 0) {
       const timer = setTimeout(() => {
-        if (width >= 900) {
+        if (isDesktop) {
           unitTypeDropdownRefDesktop.current?.open();
         } else {
           unitTypeDropdownRefMobile.current?.open();
@@ -87,7 +86,7 @@ export default function EditPropertyScreen({
       }, 200);
       return () => clearTimeout(timer);
     }
-  }, [globalUnitsPerFloor, width]);
+  }, [globalUnitsPerFloor, isDesktop]);
 
   const renderFormFieldsContent = (showSave = true) => (
     <>

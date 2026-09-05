@@ -62,7 +62,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.md,
   },
   headerSaveText: {
-    color: theme.Surface.card,
+    color: theme.Colors.surfaceContainerLowest,
     fontWeight: '800',
     fontSize: theme.Typography.bodySmall.fontSize,
     letterSpacing: 0.5,
@@ -97,7 +97,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 18,
   },
   floatingSaveText: {
-    color: theme.Surface.card,
+    color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyLarge.fontSize,
     fontWeight: '800',
     letterSpacing: 1,
@@ -105,6 +105,16 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
 
   filterSection: { paddingHorizontal: theme.Spacing.lg, marginBottom: 20 },
   
+  desktopMonthSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.Colors.glassFill,
+    borderRadius: 12,
+    height: 48,
+    borderWidth: 1,
+    borderColor: theme.Colors.glassStroke,
+  },
   monthSelector: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     backgroundColor: theme.Colors.glassFill,
@@ -141,12 +151,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   rowCard: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 20,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(0, 104, 117, 0.1)',
+    borderBottomWidth: 1,
+    borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 104, 117, 0.1)',
   },
-  rowError: { backgroundColor: 'rgba(254, 226, 226, 0.4)', borderRadius: 12, paddingHorizontal: theme.Spacing.sm },
+  rowError: { backgroundColor: isDark ? 'rgba(255, 107, 107, 0.12)' : 'rgba(254, 226, 226, 0.4)', borderRadius: 12, paddingHorizontal: theme.Spacing.sm },
   
   rowLeft: { flex: 2 },
-  unitName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onBackground },
+  unitName: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700', color: theme.Colors.onSurface },
   tenantName: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginVertical: 2 },
   prevReading: { fontSize: theme.Typography.labelSmall.fontSize, color: theme.Colors.onSurfaceVariant, fontWeight: '600' },
   
@@ -159,13 +170,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: theme.Colors.surfaceContainerLowest, 
     borderRadius: 10,
     borderWidth: 1, 
-    borderColor: 'rgba(0, 104, 117, 0.15)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)',
     width: '100%', 
     paddingVertical: 10, 
     paddingHorizontal: 12,
     fontSize: theme.Typography.bodyLarge.fontSize, 
     fontWeight: '600', 
-    color: theme.Colors.onBackground, 
+    color: theme.Colors.onSurface, 
     textAlign: 'right',
   },
   inputError: { borderColor: theme.Colors.error, color: theme.Colors.error },
@@ -187,8 +198,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.Spacing.xl,
     borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: theme.Colors.glassStroke,
+    backgroundColor: theme.Colors.glassFill,
   },
   topbarTabs: {
     flexDirection: 'row',
@@ -215,14 +226,14 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.md,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: theme.Colors.glassStroke,
   },
   backButtonTextDesktop: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
-    color: theme.Colors.onBackground,
+    color: theme.Colors.onSurface,
   },
   avatar: {
     width: 38,
@@ -257,9 +268,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   titleLineDesktop: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontWeight: '800',
-    color: theme.Colors.onBackground,
+    ...theme.Typography.headlineLg,
+    color: theme.Colors.onSurface,
   },
   desktopSubtitle: {
     fontSize: theme.Typography.bodyMedium.fontSize,
@@ -285,7 +295,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: theme.Spacing.sm,
   },
   desktopSaveButtonText: {
-    color: theme.Surface.card,
+    color: theme.Colors.surfaceContainerLowest,
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -304,13 +314,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: theme.Spacing.sm,
   },
   emptyStateCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: theme.Colors.glassFill,
     borderRadius: 24,
     padding: theme.Spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.glassStroke,
   },
   desktopGrid: {
     flexDirection: 'row',
@@ -328,7 +338,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 24,
     padding: theme.Spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
     shadowColor: theme.Colors.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
@@ -351,11 +361,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   summaryMetricItem: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : 'rgba(255, 255, 255, 0.6)',
     padding: theme.Spacing.md,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderColor: theme.Colors.glassStroke,
   },
   summaryMetricLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -367,11 +377,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   summaryMetricValue: {
     fontSize: theme.Typography.titleLarge.fontSize,
     fontWeight: '800',
-    color: theme.Colors.onBackground,
+    color: theme.Colors.onSurface,
   },
   previewDivider: {
     height: 1,
-    backgroundColor: 'rgba(0, 104, 117, 0.1)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.1)',
     marginVertical: theme.Spacing.md,
   },
   summaryRow: {
@@ -387,7 +397,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   summaryValue: {
     fontSize: theme.Typography.bodyMedium.fontSize,
-    color: theme.Colors.onBackground,
+    color: theme.Colors.onSurface,
     fontWeight: '700',
   },
   warningAlertBox: {
@@ -414,7 +424,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginTop: theme.Spacing.md,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.3)',
+    borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.1)',
   },
   pageButton: {
     flexDirection: 'row',
@@ -463,9 +473,9 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 104, 117, 0.05)',
+    backgroundColor: isDark ? 'rgba(0, 229, 255, 0.1)' : 'rgba(0, 104, 117, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(0, 104, 117, 0.1)',
+    borderColor: isDark ? 'rgba(0, 229, 255, 0.2)' : 'rgba(0, 104, 117, 0.1)',
   },
   controlLinkText: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -476,6 +486,6 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   controlSeparator: {
     width: 1,
     height: 12,
-    backgroundColor: 'rgba(0, 104, 117, 0.15)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 104, 117, 0.15)',
   },
 });

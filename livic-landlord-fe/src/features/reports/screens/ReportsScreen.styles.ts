@@ -1,10 +1,11 @@
 import { StyleSheet, Platform } from 'react-native';
+import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) =>
   StyleSheet.create({
     container: {
-      padding: theme.Spacing.containerPadding,
-      paddingTop: Platform.OS === 'web' ? 24 : 88,
+      paddingHorizontal: 16,
+      paddingBottom: 40,
     },
     containerDesktop: {
       paddingTop: 24,
@@ -12,11 +13,48 @@ export const createStyles = (theme: any, isDark: boolean) =>
       paddingBottom: 40,
       width: '100%',
     },
+    pageHeader: {
+      marginBottom: 16,
+    },
+    pageHeaderDesktop: {
+      marginBottom: 20,
+    },
+    pageKicker: {
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 1.2,
+      color: theme.Colors.primary,
+      textTransform: 'uppercase',
+      marginBottom: 4,
+    },
+    pageTitle: {
+      fontFamily: SerifHeadlineFont,
+      fontSize: 28,
+      fontWeight: '800',
+      color: theme.Colors.onSurface,
+      letterSpacing: -0.5,
+      marginBottom: 4,
+    },
+    pageSubtitle: {
+      fontSize: theme.Typography.bodyMedium.fontSize,
+      color: theme.Colors.onSurfaceVariant,
+      lineHeight: 20,
+      maxWidth: 720,
+    },
     kpiRow: {
       flexDirection: 'row',
       flexWrap: 'wrap',
+      gap: 10,
+      marginBottom: 16,
+    },
+    kpiRowDesktop: {
       gap: 16,
       marginBottom: 20,
+    },
+    kpiCardMobile: {
+      flexBasis: '47%',
+      flexGrow: 1,
+      minWidth: 140,
     },
     kpiCard: {
       flex: 1,
@@ -47,46 +85,66 @@ export const createStyles = (theme: any, isDark: boolean) =>
       color: theme.Colors.onSurfaceVariant,
     },
     glassCard: {
-      marginBottom: 20,
-      padding: 20,
+      marginBottom: 16,
+      padding: 16,
+      borderRadius: 20,
     },
     headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       flexWrap: 'wrap',
-      gap: 16,
+      gap: 12,
+    },
+    titleSection: {
+      flex: 1,
+      minWidth: 200,
+    },
+    kicker: {
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 1.2,
+      color: theme.Colors.primary,
+      textTransform: 'uppercase',
+      marginBottom: 3,
     },
     sectionTitle: {
-      ...theme.Typography.headlineMd,
-      color: theme.Colors.onBackground,
+      fontFamily: SerifHeadlineFont,
+      fontSize: 24,
+      fontWeight: '800',
+      color: theme.Colors.onSurface,
+      letterSpacing: -0.4,
     },
     sectionSubtitle: {
-      ...theme.Typography.labelMuted,
-      color: theme.Colors.outline,
-      marginTop: 4,
-      maxWidth: 540,
+      fontSize: theme.Typography.bodySmall.fontSize,
+      color: theme.Colors.onSurfaceVariant,
+      marginTop: 2,
+      lineHeight: 18,
     },
     monthSelector: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.Colors.surfaceContainerLowest,
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.55)',
       borderRadius: theme.Rounded.full,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: theme.Colors.glassStroke,
     },
     monthArrow: {
-      padding: 4,
+      padding: 6,
+      borderRadius: 16,
+    },
+    monthLabelWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginHorizontal: 8,
     },
     monthLabel: {
-      fontSize: theme.Typography.bodyMedium.fontSize,
+      fontSize: 13,
       fontWeight: '700',
-      color: theme.Colors.onBackground,
-      marginHorizontal: 12,
-      minWidth: 130,
-      textAlign: 'center',
+      color: theme.Colors.onSurface,
     },
     propertyTabsWrap: {
       flexDirection: 'row',
@@ -133,24 +191,31 @@ export const createStyles = (theme: any, isDark: boolean) =>
       color: theme.Colors.surfaceContainerLowest,
     },
     filterControlsRow: {
+      flexDirection: 'column',
+      gap: 10,
+      marginTop: 14,
+    },
+    filterControlsRowDesktop: {
       flexDirection: 'row',
       alignItems: 'center',
-      flexWrap: 'wrap',
       gap: 12,
       marginTop: 16,
     },
     searchBox: {
-      flex: 1,
-      minWidth: 260,
-      height: 44,
-      backgroundColor: theme.Colors.surfaceContainerLowest,
+      width: '100%',
+      height: 42,
+      backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.5)',
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: theme.Colors.outlineVariant,
+      borderColor: theme.Colors.glassStroke,
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: 12,
       gap: 8,
+    },
+    searchBoxDesktop: {
+      flex: 1,
+      minWidth: 260,
     },
     searchInput: {
       flex: 1,
@@ -160,6 +225,11 @@ export const createStyles = (theme: any, isDark: boolean) =>
     statusChipsContainer: {
       flexDirection: 'row',
       gap: 8,
+    },
+    statusChipsScroll: {
+      flexDirection: 'row',
+      gap: 8,
+      paddingVertical: 2,
     },
     statusChip: {
       paddingHorizontal: 14,
@@ -252,12 +322,12 @@ export const createStyles = (theme: any, isDark: boolean) =>
     },
     mobileCard: {
       width: '100%',
-      backgroundColor: 'rgba(255,255,255,0.7)',
+      backgroundColor: theme.Colors.glassFill,
       borderRadius: 16,
-      padding: 16,
+      padding: 14,
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.9)',
-      marginBottom: 12,
+      borderColor: theme.Colors.glassStroke,
+      marginBottom: 10,
     },
     mobileCardHeader: {
       flexDirection: 'row',
@@ -267,7 +337,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
     mobileTenantName: {
       fontSize: theme.Typography.bodyLarge.fontSize,
       fontWeight: '800',
-      color: theme.Colors.onBackground,
+      color: theme.Colors.onSurface,
     },
     mobileCardDetail: {
       flexDirection: 'row',
@@ -276,9 +346,9 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginTop: 10,
     },
     mobileDetailLabel: {
-      fontSize: theme.Typography.bodyMedium.fontSize,
-      color: theme.Colors.outline,
-      fontWeight: '500',
+      fontSize: theme.Typography.bodySmall.fontSize,
+      color: theme.Colors.onSurfaceVariant,
+      fontWeight: '600',
     },
     mobileDueDate: {
       fontSize: theme.Typography.bodySmall.fontSize,
@@ -288,15 +358,15 @@ export const createStyles = (theme: any, isDark: boolean) =>
     mobileAmountsRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginTop: 12,
+      marginTop: 10,
       paddingTop: 8,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(0,0,0,0.04)',
+      borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
     },
     mobileAmount: {
       fontSize: theme.Typography.bodyMedium.fontSize,
       fontWeight: '700',
-      color: theme.Colors.onBackground,
+      color: theme.Colors.onSurface,
     },
     paginationBar: {
       flexDirection: 'row',

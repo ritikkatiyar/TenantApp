@@ -10,7 +10,6 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { getMaintenanceTickets, getTicketHealthStats, createMaintenanceTicket, MaintenanceTicket, TicketHealthStats } from '@/src/features/tenant/api/maintenance.api';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 interface TenantMaintenanceScreenProps {
@@ -89,10 +88,8 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
       scrollable={true}
       header={isDesktop ? <DesktopNavBar title="Support & Maintenance" /> : null}
       edges={isDesktop ? ['top'] : []}
-      contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
+      contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
-      {!isDesktop && <FloatingBackButton />}
-
           {/* New Ticket Form Glass Card */}
           <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.glassCard}>
             <View style={styles.formHeaderRow}>
@@ -170,10 +167,10 @@ export default function TenantMaintenanceScreen({ token, onLogout }: TenantMaint
                 style={[styles.submitBtn, (!title.trim() || !description.trim() || submitting) && styles.submitBtnDisabled]}
               >
                 {submitting ? (
-                  <ActivityIndicator color={theme.Colors.surfaceContainerLowest} />
+                  <ActivityIndicator color="#ffffff" />
                 ) : (
                   <>
-                    <MaterialIcons name="send" size={18} color={theme.Colors.surfaceContainerLowest} />
+                    <MaterialIcons name="send" size={18} color="#ffffff" />
                     <Text style={styles.submitBtnText}>Submit Service Request</Text>
                   </>
                 )}
@@ -363,22 +360,22 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   pickerChipActive: { backgroundColor: theme.Colors.primary, borderColor: theme.Colors.primary },
   pickerChipActivePrio: { backgroundColor: theme.Colors.error, borderColor: theme.Colors.error },
   pickerChipText: { fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', color: theme.Colors.onSurfaceVariant },
-  pickerChipTextActive: { color: theme.Colors.surfaceContainerLowest },
+  pickerChipTextActive: { color: '#ffffff' },
 
   uploadBox: { borderWidth: 2, borderColor: isDark ? 'rgba(0, 229, 255, 0.3)' : 'rgba(0, 104, 117, 0.25)', borderStyle: 'dashed', borderRadius: 16, padding: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(15, 23, 32, 0.6)' : 'rgba(255, 255, 255, 0.4)', marginTop: 18, marginBottom: 18 },
   uploadText: { fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '700', color: theme.Colors.primary, marginTop: 6 },
   
   submitBtn: { paddingVertical: 14, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   submitBtnDisabled: { opacity: 0.5 },
-  submitBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
+  submitBtnText: { color: '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' },
 
   promoCard: { borderRadius: 24, padding: 22, position: 'relative', overflow: 'hidden', shadowColor: theme.Colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
   promoBadge: { backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginBottom: 12 },
-  promoBadgeText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800' },
-  promoTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', marginBottom: 6, zIndex: 1 },
+  promoBadgeText: { color: '#ffffff', fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800' },
+  promoTitle: { color: '#ffffff', fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', marginBottom: 6, zIndex: 1 },
   promoDesc: { color: 'rgba(255,255,255,0.9)', fontSize: theme.Typography.bodyMedium.fontSize, lineHeight: 20, marginBottom: 16, width: '80%', zIndex: 1 },
-  promoBtn: { backgroundColor: theme.Colors.surfaceContainerLowest, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
-  promoBtnText: { color: theme.Colors.primary, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
+  promoBtn: { backgroundColor: '#ffffff', flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, zIndex: 1 },
+  promoBtnText: { color: '#006875', fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800' },
   promoBgIcon: { position: 'absolute', right: -25, bottom: -25 },
 
   healthCard: { backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.65)', borderRadius: 24, padding: 22, borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.8)', overflow: 'hidden' },
@@ -411,6 +408,6 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   aiHelpTitle: { fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '800', color: theme.Colors.primary, marginBottom: 12 },
   aiHelpText: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, lineHeight: 22 },
   modalCloseBtn: { backgroundColor: theme.Colors.primary, paddingVertical: 14, borderRadius: 14, alignItems: 'center', width: '100%' },
-  modalCloseBtnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
+  modalCloseBtnText: { color: isDark ? '#090D12' : '#ffffff', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '700' }
 });
 

@@ -11,6 +11,7 @@ import com.livic.property.mapper.PropertyJoinCodeMapper;
 import com.livic.property.service.interfaces.PropertyJoinCodeCrudService;
 import com.livic.property.service.interfaces.PropertyJoinCodeService;
 import com.livic.property.service.interfaces.PropertyQueryService;
+import com.livic.user.domain.UserMode;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +68,9 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
                 : new HashSet<>();
 
         String code = generateRandomCode(property.getName(), effectiveTitle);
+        while (propertyJoinCodeCrudService.findByCode(code).isPresent()) {
+            code = generateRandomCode(property.getName(), effectiveTitle);
+        }
 
         PropertyJoinCodeTbl joinCode = PropertyJoinCodeTbl.builder()
                 .property(property)
@@ -128,6 +132,9 @@ public class PropertyJoinCodeServiceImpl implements PropertyJoinCodeService {
                 permissionCodes,
                 joinCode.getCreatedBy()
         );
+
+        // Mark onboarding done so user is not blocked by the onboarding gate
+        userFacade.markOnboardingDone(userId, UserMode.RENTAL);
 
         joinCode.setUsesCount(joinCode.getUsesCount() + 1);
         if (joinCode.getUsesCount() >= joinCode.getMaxUses()) {

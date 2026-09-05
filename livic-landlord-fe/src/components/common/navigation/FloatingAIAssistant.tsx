@@ -38,6 +38,7 @@ const EXAMPLES = [
 
 export default function FloatingAIAssistant() {
   const { isDesktop } = useResponsive();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const { accessToken } = useAuth();
   const { theme, isDark } = useAppTheme();
   const brandGradient = ['#00d4ff', '#0072ff'] as const;
@@ -55,7 +56,6 @@ export default function FloatingAIAssistant() {
   const [isSending, setIsSending] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   
   // Animations
   const animValue = useRef(new Animated.Value(0)).current; // 0: closed, 1: open
@@ -261,7 +261,7 @@ export default function FloatingAIAssistant() {
                 end={{ x: 1, y: 1 }}
                 style={styles.bubbleGradient}
               >
-                <MaterialIcons name="chat" size={24} color={theme.Colors.onPrimary} />
+                <MaterialIcons name="chat" size={24} color="#ffffff" />
               </LinearGradient>
             </Animated.View>
           </TouchableOpacity>
@@ -395,7 +395,7 @@ export default function FloatingAIAssistant() {
                   end={{ x: 1, y: 0 }}
                   style={styles.sendGradient}
                 >
-                  <MaterialIcons name="send" size={16} color={theme.Colors.onPrimary} />
+                  <MaterialIcons name="send" size={16} color="#ffffff" />
                 </LinearGradient>
               </TouchableOpacity>
             </View>

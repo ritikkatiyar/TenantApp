@@ -10,6 +10,7 @@ export interface PropertySelectorProps {
   onSelectProperty: (propertyId: string) => void;
   label?: string;
   style?: ViewStyle;
+  allowAll?: boolean;
 }
 
 export function PropertySelector({
@@ -18,15 +19,19 @@ export function PropertySelector({
   onSelectProperty,
   label,
   style,
+  allowAll = false,
 }: PropertySelectorProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const router = useRouter();
 
-  const options: DropdownOption[] = (properties || []).map((p) => ({
-    label: p.name,
-    value: p.id,
-  }));
+  const options: DropdownOption[] = [];
+  if (allowAll) {
+    options.push({ label: 'All Properties', value: '' });
+  }
+  (properties || []).forEach((p) => {
+    options.push({ label: p.name, value: p.id });
+  });
 
   if (options.length === 0) {
     options.push({ label: '+ Create Property', value: 'create_new_prop' });

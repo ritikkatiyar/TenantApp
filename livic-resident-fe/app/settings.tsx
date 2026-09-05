@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { MaterialIcons } from '@expo/vector-icons';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
-import FloatingBackButton from '@/src/components/common/navigation/FloatingBackButton';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useResponsive } from '@/src/hooks/useResponsive';
@@ -20,7 +19,6 @@ export default function ResidentSettingsScreen() {
       edges={isDesktop ? ['top'] : []}
       contentContainerStyle={[styles.container, isDesktop && styles.containerDesktop]}
     >
-      {!isDesktop && <FloatingBackButton onPress={() => router.back()} />}
       <View style={styles.heroSection}>
         <Text style={[styles.heroTitle, { color: theme.Colors.onBackground }]}>Settings & Preferences</Text>
         <Text style={[styles.heroSubtitle, { color: theme.Colors.onSurfaceVariant }]}>
@@ -106,7 +104,7 @@ export default function ResidentSettingsScreen() {
 
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
-    padding: 20,
+    paddingHorizontal: 20,
     maxWidth: 900,
     alignSelf: 'center',
     width: '100%',
@@ -118,8 +116,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 24,
   },
   heroTitle: {
-    fontSize: theme.Typography.headlineMd.fontSize,
-    fontWeight: '800',
+    ...theme.Typography.headlineMd,
     marginBottom: 4,
   },
   heroSubtitle: {

@@ -14,6 +14,7 @@ import com.livic.user.service.interfaces.UserPreferenceCrudService;
 import com.livic.user.service.interfaces.UserQueryService;
 import com.livic.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -100,6 +102,28 @@ public class UserFacadeImpl implements UserFacade {
         return userPreferenceCrudService.findByUserId(userId)
                 .map(UserPreferenceTbl::getActiveMode)
                 .orElse(UserMode.RENTAL);
+    }
+
+    @Override
+    @Transactional
+    public void markOnboardingDone(UUID userId, UserMode defaultMode) {
+        Optional<UserPreferenceTbl> existingOpt = userPreferenceCrudService.findByUserId(userId);
+        if (existingOpt.isPresent()) {
+            UserPreferenceTbl preference = existingOpt.get();
+            preference.setOnboardingDone(true);
+            if (preference.getActiveMode() == null && defaultMode != null) {
+                preference.setActiveMode(defaultMode);
+            }
+            userPreferenceCrudService.save(preference);
+        } else {
+            UserPreferenceTbl preference = UserPreferenceTbl.builder()
+                    .userId(userId)
+                    .activeMode(defaultMode != null ? defaultMode : UserMode.RENTAL)
+                    .onboardingDone(true)
+                    .build();
+            userPreferenceCrudService.save(preference);
+        }
+        log.info("onboarding_marked_done userId={} mode={}", userId, defaultMode);
     }
 
     @Override

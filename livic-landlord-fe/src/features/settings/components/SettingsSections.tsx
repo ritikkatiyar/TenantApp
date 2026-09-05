@@ -2,7 +2,9 @@ import React from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   ActivityIndicator,
+  Alert,
   Clipboard,
+  Platform,
   Switch,
   Text,
   TouchableOpacity,
@@ -10,6 +12,8 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/src/features/auth/context/AuthProvider';
 
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { StatusPill } from '@/src/components/common/display/StatusPill';
@@ -174,6 +178,9 @@ export function SettingsTabContent({
   styles,
   theme,
 }: SettingsTabContentProps) {
+  const { user } = useAuth();
+  const router = useRouter();
+
   if (loading) {
     return (
       <View style={styles.centerLoading}>
@@ -202,8 +209,10 @@ export function SettingsTabContent({
               <GlassCard key={item.id} style={styles.roleCard}>
                 <View style={styles.roleCardTop}>
                   <View style={styles.roleTitleGroup}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={styles.roleName}>{item.fullName || item.title}</Text>
+                    <View style={styles.roleNameRow}>
+                      <Text style={styles.roleName} numberOfLines={1} ellipsizeMode="tail">
+                        {item.fullName || item.title}
+                      </Text>
                       {canEdit && handleOpenEditDetails && (
                         <TouchableOpacity
                           onPress={() => handleOpenEditDetails(item)}
@@ -214,10 +223,16 @@ export function SettingsTabContent({
                         </TouchableOpacity>
                       )}
                     </View>
-                    <Text style={[styles.roleDesc, { marginTop: 2 }]}>{item.email || item.title}</Text>
-                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                    <Text style={styles.roleDesc} numberOfLines={1} ellipsizeMode="tail">
+                      {item.email || item.title}
+                    </Text>
+                    <View style={styles.roleBadgeRow}>
                       <View style={isFullAccess ? styles.systemRolePill : styles.customRolePill}>
-                        <Text style={isFullAccess ? styles.systemRolePillText : styles.customRolePillText}>
+                        <Text
+                          style={isFullAccess ? styles.systemRolePillText : styles.customRolePillText}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
                           {item.title} ({isFullAccess ? 'Full Access' : 'Custom Access'})
                         </Text>
                       </View>
@@ -406,6 +421,19 @@ export function SettingsTabContent({
                 </TouchableOpacity>
               );
             })}
+          </View>
+        </GlassCard>
+
+        <GlassCard style={[styles.prefCard, { marginTop: 16 }]}>
+          <View style={styles.prefCardHeader}>
+            <MaterialIcons name="person" size={22} color={theme.Colors.primary} />
+            <Text style={styles.prefCardTitle}>Account Profile</Text>
+          </View>
+          <View style={styles.prefItem}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.prefItemName}>{user?.fullName || 'Active Landlord'}</Text>
+              <Text style={styles.prefItemDesc}>{user?.email || 'Authenticated User'}</Text>
+            </View>
           </View>
         </GlassCard>
       </View>

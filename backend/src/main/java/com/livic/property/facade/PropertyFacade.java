@@ -5,13 +5,17 @@ import com.livic.property.dto.PropertySummaryDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface PropertyFacade {
 
     Optional<PropertySummaryDTO> getPropertyById(UUID propertyId);
+
+    Map<UUID, PropertySummaryDTO> getPropertiesByIds(Collection<UUID> propertyIds);
 
     Page<PropertySummaryDTO> getPropertiesByUserId(UUID userId, Pageable pageable);
 

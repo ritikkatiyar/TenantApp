@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   container: {
@@ -290,8 +291,8 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flex: 1,
   },
   titleLineDesktop: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontWeight: '900',
+    ...theme.Typography.headlineLg,
+    fontFamily: SerifHeadlineFont,
     color: theme.Colors.onSurface,
   },
   subtitleDesktop: {

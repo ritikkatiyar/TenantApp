@@ -8,13 +8,13 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  ActivityIndicator,
-  useWindowDimensions
+  ActivityIndicator
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/src/theme/Theme';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import {
   IssueResponse,
   getIssueDetails,
@@ -41,8 +41,7 @@ export default function IssueDetailModal({
 }: IssueDetailModalProps) {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 800;
+  const { isDesktop } = useResponsive();
 
   const [issue, setIssue] = useState<IssueResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);

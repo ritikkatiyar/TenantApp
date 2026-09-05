@@ -9,8 +9,7 @@ import {
   ActivityIndicator,
   Platform,
   Keyboard,
-  ScrollView as RNScrollView,
-  useWindowDimensions
+  ScrollView as RNScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,7 +21,7 @@ import Animated, {
   FadeIn,
   FadeOut
 } from 'react-native-reanimated';
-import { Href, useRouter } from 'expo-router';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { GestureHandlerRootView, GestureDetector } from 'react-native-gesture-handler';
 
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
@@ -68,9 +67,7 @@ export default function FloorEditorScreen({
   const [typeSelectionModalVisible, setTypeSelectionModalVisible] = useState(false);
   const [pendingBlockId, setPendingBlockId] = useState<string | null>(null);
   const [pendingBlockNum, setPendingBlockNum] = useState<string>('');
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isDesktop = windowWidth >= 900;
-  const router = useRouter();
+  const { isDesktop } = useResponsive();
 
   const {
     activeTool,

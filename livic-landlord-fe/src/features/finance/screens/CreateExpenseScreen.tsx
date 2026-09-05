@@ -24,6 +24,7 @@ import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { useChargeConfig } from '@/src/features/finance/hooks/useChargeConfig';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 // Sub-components
 import { ChargeIdentityCard } from '../components/billing/ChargeIdentityCard';
@@ -41,6 +42,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
   const { propertyId: paramPropertyId, chargeId } = useLocalSearchParams<{ propertyId?: string, chargeId?: string }>();
   const { isDesktop } = useResponsive();
   const insets = useSafeAreaInsets();
+  const { properties } = useProperties();
   const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
   const propertyId = selectedPropertyId || validParamId || null;
@@ -165,9 +167,23 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
     );
   }
 
-  const renderContent = () => (
-    <View style={styles.contentContainer}>
-      <View style={isDesktop ? styles.desktopMainRow : null}>
+  const renderContent = () => {
+    if (!propertyId) {
+      return (
+        <PropertyRequiredBanner
+          title="Select Property for Charge Setup"
+          description="Select which property this charge rule applies to before configuring its rates."
+          icon="receipt"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+        />
+      );
+    }
+
+    return (
+      <View style={styles.contentContainer}>
+        <View style={isDesktop ? styles.desktopMainRow : null}>
         <View style={isDesktop ? styles.desktopFormCol : null}>
           {/* Card 1: Charge Identity */}
           <ChargeIdentityCard
@@ -261,7 +277,8 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
         </LinearGradient>
       </TouchableOpacity>
     </View>
-  );
+    );
+  };
 
   return (
     <PageShell
@@ -270,16 +287,7 @@ export default function CreateExpenseScreen({ token }: { token: string | null })
       edges={isDesktop ? ['top'] : []}
     >
 
-      {!isDesktop && <FloatingBackButton />}
 
-      {/* Floating Header for Mobile */}
-      {!isDesktop && (
-        <Animated.View style={[styles.headerContainer, { opacity: headerOpacity }]}>
-          <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={[styles.headerContent, { paddingTop: insets.top }]}>
-            <Text style={styles.headerTitle}>{isEditMode ? 'MODIFY CHARGE' : 'CREATE CHARGE'}</Text>
-          </BlurView>
-        </Animated.View>
-      )}
 
       <Animated.ScrollView
         onScroll={Animated.event(
@@ -358,9 +366,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   screenTitle: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontFamily: 'Outfit',
-    fontWeight: '900',
+    ...theme.Typography.headlineLg,
     color: theme.Colors.onSurface,
   },
   screenSubtitle: {
@@ -371,9 +377,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     lineHeight: 18,
   },
   screenTitleDesktop: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontFamily: 'Outfit',
-    fontWeight: '900',
+    ...theme.Typography.headlineLg,
     color: theme.Colors.onSurface,
   },
   screenSubtitleDesktop: {

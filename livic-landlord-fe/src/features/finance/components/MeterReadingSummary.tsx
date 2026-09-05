@@ -80,7 +80,7 @@ export function MeterReadingSummary({
 
       {readingsEntered < totalUnits && (
         <View style={styles.warningAlertBox}>
-          <MaterialIcons name="info-outline" size={18} color="#765a00" />
+          <MaterialIcons name="info-outline" size={18} color={theme.Colors.tertiary} />
           <Text style={styles.warningAlertText}>
             {totalUnits - readingsEntered} unit(s) are missing current month readings.
           </Text>
@@ -96,7 +96,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 20,
     backgroundColor: theme.Colors.glassFill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.75)',
+    borderColor: theme.Colors.glassStroke,
     overflow: 'hidden',
   },
   summaryCardTitle: {
@@ -114,10 +114,10 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   summaryMetricItem: {
     flex: 1,
     padding: theme.Spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.65)' : 'rgba(255, 255, 255, 0.5)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: theme.Colors.glassStroke,
   },
   summaryMetricLabel: {
     fontSize: theme.Typography.labelSmall.fontSize,
@@ -135,7 +135,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   previewDivider: {
     height: 1,
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 104, 117, 0.08)',
     marginVertical: 18,
   },
   summaryRow: {
@@ -160,9 +160,9 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(239, 108, 0, 0.06)',
+    backgroundColor: isDark ? 'rgba(243, 191, 38, 0.1)' : 'rgba(239, 108, 0, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 108, 0, 0.15)',
+    borderColor: isDark ? 'rgba(243, 191, 38, 0.25)' : 'rgba(239, 108, 0, 0.15)',
     padding: 14,
     borderRadius: 14,
     marginTop: 20,

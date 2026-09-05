@@ -354,15 +354,13 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     marginBottom: 20,
   },
   titleLine: {
-    fontSize: theme.Typography.headlineXl.fontSize,
-    fontWeight: '800',
+    ...theme.Typography.headlineXl,
     color: theme.Colors.onBackground,
     lineHeight: 52,
     letterSpacing: -1,
   },
   mainTitle: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontWeight: '800',
+    ...theme.Typography.headlineLg,
     lineHeight: 38,
     color: theme.Colors.onBackground,
   },

@@ -47,15 +47,11 @@ export const createStyles = (theme: any, isDark: boolean) =>
       letterSpacing: 1,
     },
     mobileScroll: {
-      paddingHorizontal: 24,
-      paddingTop: 76,
-      paddingBottom: 60,
+      width: '100%',
     },
     desktopScroll: {
-      paddingTop: 24,
-      paddingHorizontal: 32,
-      paddingBottom: 40,
       alignItems: 'center',
+      width: '100%',
     },
     desktopInner: {
       width: '100%',
@@ -66,8 +62,7 @@ export const createStyles = (theme: any, isDark: boolean) =>
       marginBottom: 24,
     },
     titleLineDesktop: {
-      fontSize: theme.Typography.headlineLg.fontSize,
-      fontWeight: '800',
+      ...theme.Typography.headlineLg,
       color: theme.Colors.onSurface,
       lineHeight: 38,
       letterSpacing: -0.5,

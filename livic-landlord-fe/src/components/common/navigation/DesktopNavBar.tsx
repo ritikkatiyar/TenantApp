@@ -36,6 +36,7 @@ export default function DesktopNavBar({
   properties = [],
   selectedPropertyId,
   onPropertyChange,
+  title,
   searchQuery,
   onSearchChange,
   searchPlaceholder = 'Search property or portfolio...',
@@ -235,6 +236,13 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   topbarLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+  },
+  navBarTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.Colors.onSurface,
+    letterSpacing: -0.3,
   },
   topbarRight: {
     flexDirection: 'row',

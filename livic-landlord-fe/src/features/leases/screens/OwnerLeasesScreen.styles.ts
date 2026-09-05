@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
-  scrollContent: { padding: theme.Spacing.md, paddingBottom: 120, gap: theme.Spacing.md },
+  scrollContent: { gap: theme.Spacing.md },
   scrollContentDesktop: { paddingTop: 24, paddingHorizontal: 32, paddingBottom: 40, width: '100%' },
 
   desktopHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.xs },
@@ -21,7 +21,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   propertyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '700', color: theme.Colors.primary },
   desktopTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: theme.Spacing.md, marginTop: 10 },
   desktopTitleWrapper: { flex: 1 },
-  desktopTitle: { fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '900', color: theme.Colors.onSurface, letterSpacing: -0.5 },
+  desktopTitle: { ...theme.Typography.headlineLg, color: theme.Colors.onSurface, letterSpacing: -0.5 },
   desktopSub: { fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.xs, fontWeight: '600' },
   desktopActions: { flexDirection: 'row', alignItems: 'center', gap: theme.Spacing.md },
 
@@ -30,7 +30,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   btnText: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyMedium.fontSize, fontWeight: '800', letterSpacing: 0.5 },
 
   mobileHeader: { paddingHorizontal: theme.Spacing.md, paddingTop: theme.Spacing.md, paddingBottom: theme.Spacing.sm },
-  mobileTitle: { fontSize: theme.Typography.headlineMd.fontSize, fontWeight: '800', color: theme.Colors.onSurface, letterSpacing: -0.5 },
+  mobileTitle: { ...theme.Typography.headlineMd, color: theme.Colors.onSurface, letterSpacing: -0.5 },
   mobileSub: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontWeight: '600' },
 
   filterBar: { flexDirection: 'row', paddingHorizontal: theme.Spacing.md, gap: 12, alignItems: 'center', marginTop: 10 },
@@ -97,15 +97,32 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gridContainerDesktop: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.Spacing.lg },
   gridItemDesktop: { width: '48%' },
 
-  leaseCard: {
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.7)',
-    padding: 20,
+  tabContentContainer: {
+    width: '100%',
     gap: theme.Spacing.md,
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  leaseCard: {
+    borderRadius: 20,
+    width: '100%',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
   cardTitle: { fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface },
   cardSubtitle: { fontSize: theme.Typography.bodySmall.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 2, fontWeight: '600' },
 
@@ -323,19 +340,22 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   listContainer: {
     gap: theme.Spacing.md,
   },
-  leaseCardInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.Spacing.md,
-  },
   tenantAvatarCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
+    backgroundColor: isDark ? 'rgba(0, 104, 117, 0.25)' : 'rgba(0, 104, 117, 0.08)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(0, 104, 117, 0.35)' : 'rgba(0, 104, 117, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  leaseMainInfo: {
+  tenantAvatarText: {
+    fontSize: theme.Typography.titleMedium.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.primary,
+  },
+  tenantTextContainer: {
     flex: 1,
   },
   tenantName: {
@@ -347,10 +367,125 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: 2,
+    fontWeight: '500',
+  },
+  unitBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: isDark ? 'rgba(0, 104, 117, 0.25)' : 'rgba(0, 104, 117, 0.08)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(0, 104, 117, 0.35)' : 'rgba(0, 104, 117, 0.15)',
+  },
+  unitBadgeText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.primary,
+  },
+  noticeAlertBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+    marginTop: 10,
+  },
+  noticeAlertText: {
+    fontSize: theme.Typography.bodySmall.fontSize,
+    fontWeight: '700',
+    color: theme.Colors.error,
+  },
+  leaseDetailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginVertical: 12,
+  },
+  detailItem: {
+    flex: 1,
+    minWidth: 95,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 104, 117, 0.04)',
+    borderWidth: 1,
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 104, 117, 0.08)',
+  },
+  detailLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: theme.Colors.onSurfaceVariant,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  detailValue: {
+    fontSize: theme.Typography.titleMedium.fontSize,
+    fontWeight: '800',
+    color: theme.Colors.onSurface,
+    marginTop: 4,
   },
   detailValueSecondary: {
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '700',
+    color: theme.Colors.onSurfaceVariant,
+    marginTop: 4,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    gap: 10,
+  },
+  footerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  leaseIdText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '600',
+  },
+  mobileActionsContainer: {
+    marginTop: 10,
+    gap: 8,
+  },
+  cardFooterMobile: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  mobileActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  tabsScrollView: {
+    marginVertical: 14,
+  },
+  tabsScrollContent: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingVertical: 4,
+  },
+  leaseActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  leaseActionsCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   unitChip: {
     flexDirection: 'row',
@@ -380,27 +515,6 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     gap: theme.Spacing.md,
     width: '100%',
-  },
-  detailLabel: {
-    fontSize: theme.Typography.labelSmall.fontSize - 2,
-    fontWeight: '800',
-    color: theme.Colors.onSurfaceVariant,
-    letterSpacing: 0.5,
-  },
-  detailItem: {
-    flex: 1,
-    minWidth: 100,
-  },
-  detailValue: {
-    fontSize: theme.Typography.bodyMedium.fontSize,
-    fontWeight: '700',
-    color: theme.Colors.onSurface,
-    marginTop: theme.Spacing.xs,
-  },
-  leaseActionsCol: {
-    flexDirection: 'column',
-    gap: theme.Spacing.sm,
-    minWidth: 140,
   },
   actionBtnOutlineDanger: {
     flexDirection: 'row',
@@ -437,38 +551,11 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     gap: theme.Spacing.sm,
     alignItems: 'center',
   },
-  tenantAvatarText: {
-    fontSize: theme.Typography.bodyLarge.fontSize,
-    fontWeight: '800',
-    color: theme.Colors.primary,
-  },
   leaseTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
-  },
-  unitBadge: {
-    backgroundColor: 'rgba(0, 104, 117, 0.08)',
-    paddingHorizontal: 10,
-    paddingVertical: theme.Spacing.xs,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(0,104,117,0.1)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.Spacing.xs,
-  },
-  unitBadgeText: {
-    fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
-    color: theme.Colors.primary,
-  },
-  leaseDetailsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 14,
-    marginTop: 12,
   },
   statsRowDesktop: {
     flexDirection: 'row',
@@ -616,5 +703,28 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: theme.Typography.bodyMedium.fontSize,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  loadingMoreBox: {
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  loadingMoreText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '700',
+  },
+  scrollHintBox: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollHintText: {
+    fontSize: theme.Typography.labelSmall.fontSize,
+    color: theme.Colors.onSurfaceVariant,
+    fontWeight: '600',
+    opacity: 0.7,
   },
 });

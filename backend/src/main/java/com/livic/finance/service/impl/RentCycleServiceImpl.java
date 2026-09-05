@@ -227,11 +227,13 @@ public class RentCycleServiceImpl implements RentCycleService {
     public RentCycleDTOs.RentCycleListResponse list(UUID currentUserId, UUID propertyId, UUID leaseId, String billingMonth, RentCycleStatus status, String search, Pageable pageable) {
         List<UUID> targetPropertyIds = new ArrayList<>();
 
+        boolean isTenantView = false;
         if (currentUserId != null) {
             Optional<LeaseTbl> tenantLeaseOpt = leaseQueryService.findByUserIdAndStatus(currentUserId, LeaseStatus.ACTIVE);
             if (tenantLeaseOpt.isPresent()) {
                 leaseId = tenantLeaseOpt.get().getId();
                 propertyId = null;
+                isTenantView = true;
             } else {
                 List<PropertySummaryDTO> userProperties = propertyFacade.getPropertiesByUserId(currentUserId);
                 List<UUID> ownedPropertyIds = userProperties.stream().map(PropertySummaryDTO::id).toList();
@@ -258,6 +260,13 @@ public class RentCycleServiceImpl implements RentCycleService {
             targetPropertyIds.add(propertyId);
         }
 
+        if (isTenantView && status == RentCycleStatus.PENDING) {
+            return new RentCycleDTOs.RentCycleListResponse(
+                    List.of(), 0, 0, pageable.getPageSize(), pageable.getPageNumber(),
+                    new RentCycleDTOs.RentRollMetricsDTO(BigDecimal.ZERO, 0L, 0L)
+            );
+        }
+
         Specification<RentCycleTbl> spec;
         if (leaseId != null) {
             spec = Specification.where(RentCycleSpecifications.hasLeaseId(leaseId));
@@ -269,6 +278,10 @@ public class RentCycleServiceImpl implements RentCycleService {
 
         spec = spec.and(RentCycleSpecifications.hasBillingMonth(billingMonth))
                 .and(RentCycleSpecifications.hasStatus(status));
+
+        if (isTenantView && status == null) {
+            spec = spec.and(RentCycleSpecifications.hasStatusNot(RentCycleStatus.PENDING));
+        }
 
         if (search != null && !search.trim().isEmpty()) {
             List<UUID> matchingUnitIds = unitFacade.getUnitIdsByUnitNumberSearch(search);

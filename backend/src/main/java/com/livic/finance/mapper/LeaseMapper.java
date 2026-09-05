@@ -3,10 +3,10 @@ package com.livic.finance.mapper;
 import com.livic.common.domain.LeaseStatus;
 import com.livic.finance.domain.LeaseTbl;
 import com.livic.finance.dto.LeaseDTOs;
-import com.livic.property.domain.UnitTbl;
-import com.livic.user.domain.UserTbl;
+import com.livic.property.dto.PropertySummaryDTO;
+import com.livic.property.dto.UnitSummaryDTO;
+import com.livic.user.dto.UserSummaryDTO;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 public final class LeaseMapper {
@@ -28,6 +28,29 @@ public final class LeaseMapper {
 
     public static LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease) {
         return toResponse(lease, null, null, null, null);
+    }
+
+    public static LeaseDTOs.LeaseResponse toResponse(
+            LeaseTbl lease,
+            UnitSummaryDTO unit,
+            PropertySummaryDTO property,
+            UserSummaryDTO user
+    ) {
+        String unitNumber = (unit != null && unit.unitNumber() != null && !unit.unitNumber().isBlank())
+                ? unit.unitNumber()
+                : "N/A";
+        String propertyName = (property != null && property.name() != null && !property.name().isBlank())
+                ? property.name()
+                : ((unit != null && unit.propertyName() != null && !unit.propertyName().isBlank())
+                        ? unit.propertyName()
+                        : "N/A");
+        String tenantName = (user != null && user.fullName() != null && !user.fullName().isBlank())
+                ? user.fullName()
+                : "Unknown User";
+        String tenantPhone = (user != null && user.phoneNumber() != null)
+                ? user.phoneNumber()
+                : "";
+        return toResponse(lease, unitNumber, propertyName, tenantName, tenantPhone);
     }
 
     public static LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease, String unitNumber, String propertyName, String tenantName, String tenantPhone) {
@@ -52,29 +75,5 @@ public final class LeaseMapper {
 
     public static LeaseDTOs.LeaseResponse toResponseWithDetails(LeaseTbl lease, String tenantName, String tenantPhone) {
         return toResponse(lease, null, null, tenantName, tenantPhone);
-    }
-    /**
-     * Enriches a basic LeaseResponse (returned by the service layer) with user display fields.
-     * Used by the orchestration layer after fetching tenant details from UserFacade.
-     */
-    public static LeaseDTOs.LeaseResponse withUserDetails(LeaseDTOs.LeaseResponse response,
-                                                           String tenantName, String tenantPhone) {
-        return new LeaseDTOs.LeaseResponse(
-                response.id(),
-                response.userId(),
-                response.unitId(),
-                response.unitNumber(),
-                response.propertyName(),
-                tenantName,
-                tenantPhone,
-                response.monthlyRentAmount(),
-                response.securityDeposit(),
-                response.splitStrategy(),
-                response.moveInDate(),
-                response.moveOutDate(),
-                response.status(),
-                response.createdAt(),
-                response.updatedAt()
-        );
     }
 }

@@ -117,7 +117,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                   <MaterialIcons name="person-outline" size={20} color={theme.Colors.outlineVariant} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="Ada Tenant"
+                    placeholder="Alex Morgan"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={fullName}
                     onChangeText={setFullName}
@@ -145,7 +145,7 @@ export default function SuperAdminSignupScreen({ onSignup, onNavigateToLogin }: 
                   <TextInput
                     ref={emailInputRef}
                     style={[styles.input, { paddingRight: 44 }]}
-                    placeholder="super@admin.system"
+                    placeholder="landlord@livic.app"
                     placeholderTextColor={theme.Colors.outlineVariant}
                     value={email}
                     onChangeText={setEmail}

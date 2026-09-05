@@ -55,24 +55,39 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 40,
   },
   inner: { width: '100%' },
   titleContainer: {
-    marginTop: 10,
+    marginTop: 6,
     marginBottom: theme.Spacing.lg,
+  },
+  kicker: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    color: theme.Colors.primary,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  titleActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   screenTitle: {
     fontSize: theme.Typography.headlineLg.fontSize,
-    fontFamily: 'Outfit',
-    fontWeight: '900',
+    fontWeight: '800',
     color: theme.Colors.onSurface,
+    letterSpacing: -0.5,
   },
   screenSubtitle: {
     fontSize: theme.Typography.bodySmall.fontSize,
     color: theme.Colors.onSurfaceVariant,
     marginTop: theme.Spacing.xs,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 18,
   },
   emptyCard: {
@@ -179,8 +194,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   largeTitleContainer: { flex: 1 },
   titleLineDesktop: {
-    fontSize: theme.Typography.headlineLg.fontSize,
-    fontWeight: '900',
+    ...theme.Typography.headlineLg,
     color: theme.Colors.onSurface,
   },
   subtitleDesktop: {

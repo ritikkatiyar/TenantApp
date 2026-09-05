@@ -19,13 +19,13 @@ The project utilizes a centralized theme structure defined in `src/theme/Theme.t
 - **Accent Gradients**: Key visual triggers (active segment selections, call-to-action buttons) must use `accentGradientStart` (`#00e0ff`) to `accentGradientEnd` (`#0070ea`).
 
 ### B. Typography Hierarchy
-All text components must select from the predefined typography styles. Default system font references are banned.
+All text components must select from the predefined typography styles. Default system font references are banned. Approved font families are `Playfair Display` (`SerifHeadlineFont` for luxury editorial headlines), `Inter` (body, labels, controls), `Manrope` (metrics, section headers), and `JetBrains Mono` (caps and codes).
 
 | Token | Family | Size | Weight | Line Height | Purpose |
 | :--- | :--- | :--- | :--- | :--- | :--- |
+| `displayLarge` / `headlineXl` | `Playfair Display` / `Manrope` | 32px - 57px | 800 (ExtraBold) | 38px - 64px | Screen title & hero headline headers |
 | `displayMetrics` | `Manrope` | 48px | 800 (ExtraBold) | 56px | Large layout display figures |
-| `headlineXl` | `Manrope` | 32px | 800 (ExtraBold) | 38px | Screen title headers |
-| `headlineLg` | `Manrope` | 24px | 700 (Bold) | 31px | Section headers |
+| `headlineLg` | `Playfair Display` / `Manrope` | 24px - 32px | 700 - 800 (Bold) | 31px - 40px | Section headers |
 | `bodyLg` | `Inter` | 18px | 400 (Regular) | 28px | Interactive body/readable text |
 | `bodyMd` | `Inter` | 16px | 400 (Regular) | 24px | Standard paragraphs |
 | `labelCaps` | `JetBrains Mono` | 12px | 700 (Bold) | 14px | Form field labels (uppercase) |

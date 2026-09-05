@@ -29,6 +29,7 @@ import { SkeletonRow } from '@/src/components/common/feedback/Skeleton';
 
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 // Sub-components
 import { WorksheetFloorList } from '../components/billing/WorksheetFloorList';
@@ -127,30 +128,14 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
   const renderContent = () => {
     if (!propertyId) {
       return (
-        <GlassCard
-          style={{
-            marginVertical: 20,
-            minHeight: 280,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          contentStyle={{
-            padding: 48,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-              Select a Property
-            </Text>
-            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-              Please select a property from the top navigation bar to view and manage its billing worksheet entries.
-            </Text>
-          </View>
-        </GlassCard>
+        <PropertyRequiredBanner
+          title="Select Property for Billing Worksheet"
+          description="Billing worksheets calculate tenant utilities and consumption per building. Select a property to continue."
+          icon="description"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+        />
       );
     }
     if (!properties || properties.length === 0) {
@@ -300,14 +285,16 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
 
   const renderMobileShell = () => (
     <View style={[styles.gradient, { flex: 1 }]}>
-      <View style={[styles.headerContainer, { paddingTop: insets.top, height: 56 + insets.top }]}>
-        <BlurView intensity={45} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFillObject} />
-        <View style={styles.headerContent}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-          </TouchableOpacity>
-          <View style={styles.titleWrapper}>
-            <Text style={styles.compactTitleText}>Worksheets</Text>
+      <View style={[styles.filterSection, { paddingTop: 68 + insets.top }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={[styles.mobileDropdownWrapper, { flex: 1, marginBottom: 0 }]}>
+            <GlassDropdown 
+              options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
+              value={selectedChargeId}
+              onChange={setSelectedChargeId}
+              placeholder="Select Charge"
+              icon="receipt-long"
+            />
           </View>
           <TouchableOpacity 
             style={[styles.headerGradientTouch, (isSaving || entries.length === 0) && { opacity: 0.5 }]}
@@ -331,18 +318,6 @@ export default function BillingWorksheetScreen({ token }: { token: string | null
               )}
             </LinearGradient>
           </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={[styles.filterSection, { paddingTop: 68 + insets.top }]}>
-        <View style={styles.mobileDropdownWrapper}>
-          <GlassDropdown 
-            options={charges.map(c => ({ label: c.chargeName, value: c.id }))}
-            value={selectedChargeId}
-            onChange={setSelectedChargeId}
-            placeholder="Select Charge"
-            icon="receipt-long"
-          />
         </View>
         
         <View style={styles.monthSelectorRow}>

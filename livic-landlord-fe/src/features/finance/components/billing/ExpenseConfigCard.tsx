@@ -67,7 +67,7 @@ export function ExpenseConfigCard({
         !charge.isActive && { opacity: 0.7 }
       ]}
     >
-      <GlassCard style={{ padding: 20 }}>
+      <GlassCard style={[styles.glassCardInner, isDesktop && styles.glassCardDesktop]}>
         <TouchableOpacity 
           activeOpacity={0.7}
           onPress={() => {
@@ -125,38 +125,44 @@ export function ExpenseConfigCard({
             ) : null}
           </View>
 
-          {!charge.isSystemRequired ? (
-            <View style={{ flexDirection: 'row', gap: theme.Spacing.sm, alignItems: 'center' }}>
-              {charge.isActive ? (
-                <ActionButton
-                  label="Deactivate"
-                  icon="remove-circle-outline"
-                  variant="danger"
-                  size="sm"
-                  onPress={() => onDeactivate(charge.id)}
-                />
-              ) : (
-                <>
+          <View style={styles.footerRightContainer}>
+            {!charge.isSystemRequired ? (
+              <View style={{ flexDirection: 'row', gap: theme.Spacing.sm, alignItems: 'center' }}>
+                {charge.isActive ? (
                   <ActionButton
-                    label="Reactivate"
-                    icon="restore"
-                    variant="outline"
-                    size="sm"
-                    onPress={() => onReactivate(charge.id)}
-                  />
-                  <ActionButton
-                    label="Delete"
-                    icon="delete-outline"
+                    label="Deactivate"
+                    icon="remove-circle-outline"
                     variant="danger"
                     size="sm"
-                    onPress={() => onDelete(charge.id)}
+                    onPress={() => onDeactivate(charge.id)}
                   />
-                </>
-              )}
-            </View>
-          ) : (
-            <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.labelSmall.fontSize, fontStyle: 'italic' }}>System Required</Text>
-          )}
+                ) : (
+                  <>
+                    <ActionButton
+                      label="Reactivate"
+                      icon="restore"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => onReactivate(charge.id)}
+                    />
+                    <ActionButton
+                      label="Delete"
+                      icon="delete-outline"
+                      variant="danger"
+                      size="sm"
+                      onPress={() => onDelete(charge.id)}
+                    />
+                  </>
+                )}
+              </View>
+            ) : (
+              <View style={styles.systemRequiredBadge}>
+                <Text style={{ color: theme.Colors.onSurfaceVariant, fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '600' }}>
+                  System Required
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </GlassCard>
     </View>
@@ -242,6 +248,30 @@ const createStyles = (theme: any, isDesktop: boolean) => StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.05)',
     paddingTop: theme.Spacing.md,
+    minHeight: 44,
+  },
+  footerRightContainer: {
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  systemRequiredBadge: {
+    height: 30,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(148, 163, 184, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  glassCardInner: {
+    padding: 20,
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  glassCardDesktop: {
+    minHeight: 175,
   },
   footerLeft: {
     flexDirection: 'row',

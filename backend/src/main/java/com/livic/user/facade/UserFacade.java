@@ -28,6 +28,8 @@ public interface UserFacade {
 
     UserMode getActiveModeForUser(UUID userId);
 
+    void markOnboardingDone(UUID userId, UserMode defaultMode);
+
     void registerDeviceToken(UUID userId, String expoPushToken, DevicePlatform platform);
 
     List<String> getActiveDeviceTokens(UUID userId);

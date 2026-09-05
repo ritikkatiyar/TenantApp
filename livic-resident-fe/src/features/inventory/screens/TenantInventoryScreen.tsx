@@ -180,7 +180,7 @@ export default function TenantInventoryScreen() {
                 end={{ x: 1, y: 0 }}
                 style={styles.reportButton}
               >
-                <MaterialIcons name="report-problem" size={20} color={theme.Colors.surfaceContainerLowest} />
+                <MaterialIcons name="report-problem" size={20} color="#ffffff" />
                 <Text style={styles.reportButtonText}>Report Item Issue</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -268,7 +268,7 @@ export default function TenantInventoryScreen() {
                     <View style={styles.amenityOverlay} />
                     <View style={styles.amenityContent}>
                       <View style={styles.amenityTitleRow}>
-                        <MaterialIcons name={amenity.icon} size={22} color={theme.Colors.surfaceContainerLowest} />
+                        <MaterialIcons name={amenity.icon} size={22} color="#ffffff" />
                         <Text style={styles.amenityTitle}>{amenity.name}</Text>
                       </View>
                       <Text style={styles.amenityMeta}>{amenity.meta}</Text>
@@ -352,7 +352,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     paddingHorizontal: theme.Spacing.md,
     gap: theme.Spacing.sm,
   },
-  reportButtonText: { color: theme.Colors.onPrimary, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize },
+  reportButtonText: { color: '#ffffff', fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize },
   bentoGrid: { gap: 18 },
   bentoGridDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   snapshotCard: {
@@ -411,7 +411,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   amenitySection: { gap: theme.Spacing.md },
   bookButtonWrapper: { borderRadius: theme.Rounded.lg, overflow: 'hidden' },
   bookButton: { paddingHorizontal: theme.Spacing.md, paddingVertical: 12 },
-  bookButtonText: { color: theme.Colors.onPrimary, fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize },
+  bookButtonText: { color: '#ffffff', fontWeight: '800', fontSize: theme.Typography.bodyMedium.fontSize },
   amenityGrid: { gap: 14 },
   amenityGridDesktop: { flexDirection: 'row' },
   amenityCard: { flex: 1, minHeight: 230, borderRadius: theme.Rounded.lg, overflow: 'hidden', backgroundColor: theme.Colors.surfaceVariant },
@@ -419,7 +419,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   amenityOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.34)' },
   amenityContent: { flex: 1, justifyContent: 'flex-end', padding: 18, gap: 5 },
   amenityTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  amenityTitle: { color: theme.Colors.surfaceContainerLowest, fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', flex: 1 },
+  amenityTitle: { color: '#ffffff', fontSize: theme.Typography.bodyLg.fontSize, fontWeight: '800', flex: 1 },
   amenityMeta: { color: 'rgba(255,255,255,0.84)', fontWeight: '600', fontSize: theme.Typography.bodyMedium.fontSize },
   emptyBox: { padding: 32, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(186, 201, 204, 0.4)' },
   emptyTitle: { fontSize: theme.Typography.titleLarge.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 6 },

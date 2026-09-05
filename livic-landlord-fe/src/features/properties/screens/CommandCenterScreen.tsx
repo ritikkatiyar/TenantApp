@@ -2,19 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
-  TouchableOpacity, 
-  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
   Animated,
-  useWindowDimensions,
   TextInput
 } from 'react-native';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { useProperties } from '@/src/hooks/useProperties';
@@ -22,12 +17,11 @@ import { useGlobalPropertySelection } from '@/src/context/PropertySelectionConte
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import type { PropertyResponse } from '@/src/types/property';
 import FloorLayoutViewerModal from '@/src/features/properties/components/FloorLayoutViewerModal';
-import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { SkeletonCardGrid } from '@/src/components/common/feedback/Skeleton';
 import { StatCard } from '@/src/components/common/display/StatCard';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
-import Pagination from '@/src/components/common/navigation/Pagination';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 import { getAnalyticsSummary, getPortfolioOccupancy } from '@/src/features/analytics/api/analytics.api';
 import { useIssues } from '@/src/features/issues/hooks/useIssues';
@@ -48,10 +42,8 @@ interface CommandCenterScreenProps {
 }
 
 export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogout }: CommandCenterScreenProps) {
-  const router = useRouter();
   const { theme, isDark } = useAppTheme();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
   const { accessToken } = useAuth();
   const { searchQuery, setSearchQuery } = useGlobalPropertySelection();
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -65,7 +57,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     };
   }, [searchQuery]);
 
-  const { properties, isLoading, refreshProperties, deleteProperty, togglePropertyActive } = useProperties(debouncedSearchQuery);
+  const { properties, isLoading, deleteProperty, togglePropertyActive } = useProperties(debouncedSearchQuery);
   const [visibleCount, setVisibleCount] = useState(6);
 
   useEffect(() => {
@@ -82,7 +74,6 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
   const hasMore = visibleCount < properties.length;
 
   const { showToast } = useToast();
-  const { handleScroll: handleNavScroll } = useScrollNav();
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // Real analytics states
@@ -202,8 +193,6 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
     />
   );
 
-  const renderPropertyItem = ({ item }: { item: PropertyResponse }) => renderPropertyCard(item);
-
   const ListHeader = () => (
     <Animated.View style={[styles.titleContainer, !isDesktop && { opacity: largeTitleOpacity }]}>
       {isDesktop ? (
@@ -303,6 +292,7 @@ export default function CommandCenterScreen({ onNavigateToCreateProperty, onLogo
                 </View>
               ))}
             </View>
+            <ListFooter />
             {hasMore && (
               <View style={{ paddingVertical: 24, alignItems: 'center', justifyContent: 'center' }}>
                 <ActivityIndicator size="small" color={theme.Colors.primary} />

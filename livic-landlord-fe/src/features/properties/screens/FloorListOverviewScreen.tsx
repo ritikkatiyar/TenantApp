@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Alert,
   Animated,
-  useWindowDimensions,
   TextInput
 } from 'react-native';
 
@@ -18,11 +17,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAppTheme } from '@/src/theme/ThemeContext';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { formatErrorMessage } from '@/src/utils/errors';
 import { getProperty } from '@/src/features/properties/api/property.api';
 import { getFloorSummaries, FloorSummaryResponse, generateBatchUnits } from '@/src/features/properties/api/unit.api';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 
 import GlassDropdown from '@/src/components/common/inputs/GlassDropdown';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
@@ -53,9 +52,7 @@ export default function FloorListOverviewScreen({
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
-  const router = useRouter();
+  const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
 
   const [propertyName, setPropertyName] = useState('Loading...');
@@ -182,7 +179,7 @@ export default function FloorListOverviewScreen({
               <MaterialIcons 
                 name={floor.configured ? "check-circle" : "warning"} 
                 size={12} 
-                color={floor.configured ? "#00c853" : "#ff3d00"} 
+                color={floor.configured ? theme.Colors.primary : theme.Colors.error} 
               />
               <Text style={[styles.statusText, floor.configured ? styles.textConfigured : styles.textNotConfigured]}>
                 {floor.configured ? 'Configured' : 'Not Configured'}
@@ -320,23 +317,9 @@ export default function FloorListOverviewScreen({
       style={styles.gradient}
     >
       <SafeAreaView style={styles.safeArea} edges={[]}>
-        {/* Glassy Overlay Header */}
-        <View style={styles.headerContainer}>
-          <BlurView intensity={45} tint="light" style={StyleSheet.absoluteFillObject} />
-          <View style={styles.headerContent}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <MaterialIcons name="arrow-back" size={22} color={theme.Colors.onSurface} />
-            </TouchableOpacity>
-            <View style={styles.titleWrapper}>
-              <Text style={styles.compactTitleText}>Floor Overview</Text>
-            </View>
-            <View style={{ width: 36 }} />
-          </View>
-        </View>
-
         <Animated.ScrollView 
           style={styles.container}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: 76 }]}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: 80 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.Colors.primary} />
@@ -348,8 +331,7 @@ export default function FloorListOverviewScreen({
           scrollEventThrottle={16}
         >
           <Animated.View style={[styles.largeTitleContainer, { opacity: largeTitleOpacity }]}>
-            <Text style={styles.titleLine}>Floor</Text>
-            <Text style={styles.titleLine}>Overview</Text>
+            <Text style={styles.titleLine}>Floor Overview</Text>
             <View style={styles.propertyBadge}>
               <View style={styles.propertyIconWrapper}>
                 <MaterialIcons name="business" size={14} color={theme.Colors.surfaceContainerLowest} />

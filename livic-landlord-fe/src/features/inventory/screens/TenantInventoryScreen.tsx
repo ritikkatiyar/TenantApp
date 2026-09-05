@@ -1,13 +1,13 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { PageShell } from '@/src/components/common/layout/PageShell';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
 import { inventoryItems, tenantAmenities, type InventoryItem } from '@/src/features/inventory/mockInventoryData';
 import { BlurView } from 'expo-blur';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
+import { useResponsive } from '@/src/hooks/useResponsive';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 
 const tenantVisibleItems = inventoryItems.filter((item) => item.location === 'Unit 402' || item.shared);
@@ -16,26 +16,16 @@ export default function TenantInventoryScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
 
   return (
-    <LinearGradient
-      colors={theme.Colors.backgroundGradient as [string, string, string]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.root}
+    <PageShell
+      scrollable
+      edges={isDesktop ? ['top'] : []}
+      contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop]}
     >
-      <SafeAreaView style={styles.safeArea} edges={isDesktop ? ['top'] : []}>
-
-        <ScrollView
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.scrollContent, isDesktop ? styles.scrollContentDesktop : { paddingTop: 88 }]}
-        >
-          <View style={styles.header}>
+      <View style={styles.header}>
             {isDesktop && (
               <View style={styles.titleBlock}>
                 <Text style={styles.kicker}>READ ONLY</Text>
@@ -120,9 +110,7 @@ export default function TenantInventoryScreen() {
               ))}
             </View>
           </View>
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+    </PageShell>
   );
 }
 
@@ -163,12 +151,12 @@ function MetricRow({ label, value, theme, styles }: { label: string; value: stri
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 120, gap: theme.Spacing.lg },
+  scrollContent: { gap: theme.Spacing.lg },
   scrollContentDesktop: { padding: theme.Spacing.xl, maxWidth: 1200, width: '100%', alignSelf: 'center' },
   header: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 18 },
   kicker: { fontFamily: 'Inter', fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '700', lineHeight: 14, letterSpacing: 1.2, color: theme.Colors.primary, textTransform: 'uppercase' },
-  title: { fontFamily: 'Inter', fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '800', lineHeight: 38, color: theme.Colors.onSurface, marginTop: 6 },
-  titleMobile: { fontSize: theme.Typography.headlineMedium.fontSize, lineHeight: 36 },
+  title: { ...theme.Typography.headlineLg, color: theme.Colors.onSurface, lineHeight: 38, marginTop: 6 },
+  titleMobile: { ...theme.Typography.headlineMedium, lineHeight: 36 },
   subtitle: { fontFamily: 'Inter', fontSize: theme.Typography.bodyLarge.fontSize, fontWeight: '400', lineHeight: 24, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm, maxWidth: 700 },
   titleBlock: { maxWidth: 720 },
   reportButtonWrapper: {

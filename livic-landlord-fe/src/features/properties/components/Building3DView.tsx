@@ -147,24 +147,39 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     }
   };
 
-  // Group units by floor and calculate bounding box
-  let minX = 999, maxX = 0, minY = 999, maxY = 0;
+  // 1. Group units by floor
   const floors = units.reduce((acc, unit) => {
-    if (unit.gridX < minX) minX = unit.gridX;
-    if (unit.gridX + unit.gridWidth - 1 > maxX) maxX = unit.gridX + unit.gridWidth - 1;
-    if (unit.gridY < minY) minY = unit.gridY;
-    if (unit.gridY + unit.gridHeight - 1 > maxY) maxY = unit.gridY + unit.gridHeight - 1;
-
     if (!acc[unit.floor]) acc[unit.floor] = [];
     acc[unit.floor].push(unit);
     return acc;
   }, {} as Record<number, UnitResponse[]>);
 
-  const gridW = Math.max(maxX - minX + 1, 1);
-  const gridH = Math.max(maxY - minY + 1, 1);
-
   const floorNumbers = Object.keys(floors).map(Number).sort((a, b) => a - b);
   const numFloors = floorNumbers.length > 0 ? floorNumbers.length : 1;
+
+  // 2. Compute bounds per floor so units on every floor align in a clean, vertical stack
+  let maxSpanX = 2;
+  let maxSpanY = 2;
+  const floorBounds: Record<number, { minX: number; minY: number; spanX: number; spanY: number }> = {};
+
+  floorNumbers.forEach(f => {
+    const fUnits = floors[f];
+    let fMinX = 999, fMaxX = 0, fMinY = 999, fMaxY = 0;
+    fUnits.forEach(u => {
+      if (u.gridX < fMinX) fMinX = u.gridX;
+      if (u.gridX + u.gridWidth - 1 > fMaxX) fMaxX = u.gridX + u.gridWidth - 1;
+      if (u.gridY < fMinY) fMinY = u.gridY;
+      if (u.gridY + u.gridHeight - 1 > fMaxY) fMaxY = u.gridY + u.gridHeight - 1;
+    });
+    const spanX = Math.max(fMaxX - fMinX + 1, 1);
+    const spanY = Math.max(fMaxY - fMinY + 1, 1);
+    floorBounds[f] = { minX: fMinX, minY: fMinY, spanX, spanY };
+    if (spanX > maxSpanX) maxSpanX = spanX;
+    if (spanY > maxSpanY) maxSpanY = spanY;
+  });
+
+  const gridW = Math.max(maxSpanX, 2);
+  const gridH = Math.max(maxSpanY, 2);
 
   floorNumbers.forEach(floorNum => {
     if (!floorElevations[floorNum]) {
@@ -172,22 +187,23 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
     }
   });
 
-  const availableWidth = containerDimensions ? containerDimensions.width - 20 : 280;
+  const availableWidth = containerDimensions ? containerDimensions.width - 24 : 260;
   const availableHeight = containerDimensions ? containerDimensions.height : maxContainerHeight;
 
   const rawIsoWidth = (gridW + gridH) * 0.707;
   let dynamicCellSize = Math.floor(availableWidth / (rawIsoWidth || 1));
 
-  const targetH = availableHeight * 0.95;
-  const heightDivisor = (gridW + gridH) * 0.5 + (numFloors - 1) * 3.2;
-  const maxCellSizeHeight = Math.floor((targetH - 10) / (heightDivisor || 1));
+  // Tight, cohesive floor spacing (1.35x - 1.5x) so multi-story buildings look like one unified architectural model
+  const floorSpacingFactor = numFloors > 6 ? 1.2 : numFloors >= 4 ? 1.38 : 1.6;
+  const heightDivisor = (gridW + gridH) * 0.5 + (numFloors - 1) * floorSpacingFactor;
+  const maxCellSizeHeight = Math.floor((availableHeight * 0.72) / (heightDivisor || 1));
 
   dynamicCellSize = Math.min(dynamicCellSize, maxCellSizeHeight);
 
-  if (dynamicCellSize > 35) dynamicCellSize = 35;
-  if (dynamicCellSize < 12) dynamicCellSize = 12;
+  if (dynamicCellSize > 32) dynamicCellSize = 32;
+  if (dynamicCellSize < 13) dynamicCellSize = 13;
 
-  const dynamicFloorHeight = dynamicCellSize * 3.5;
+  const dynamicFloorHeight = Math.round(dynamicCellSize * floorSpacingFactor);
   const buildingWidth = gridW * dynamicCellSize;
   const buildingHeight = gridH * dynamicCellSize;
   const minFloor = floorNumbers.length > 0 ? floorNumbers[0] : 1;
@@ -362,8 +378,11 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
           >
             {floorNumbers.map((floorNum) => {
               const elevationAnim = floorElevations[floorNum] || new Animated.Value(0);
-              const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset / 2 - 10;
+              const baseTranslateY = -(floorNum - minFloor) * dynamicFloorHeight + stackHeightOffset / 2 + 10;
               const isHovered = floorNum === hoveredFloor;
+              const b = floorBounds[floorNum] || { minX: 0, minY: 0, spanX: gridW, spanY: gridH };
+              const offsetX = Math.floor((gridW - b.spanX) / 2) * dynamicCellSize;
+              const offsetY = Math.floor((gridH - b.spanY) / 2) * dynamicCellSize;
               
               return (
                 <Animated.View
@@ -411,8 +430,8 @@ export default function Building3DView({ propertyId, token, onFloorClick, resetR
                   >
                     <View style={styles.floorLayer}>
                       {floors[floorNum].map((unit) => {
-                        const left = (unit.gridX - minX) * dynamicCellSize;
-                        const top = (unit.gridY - minY) * dynamicCellSize;
+                        const left = offsetX + (unit.gridX - b.minX) * dynamicCellSize;
+                        const top = offsetY + (unit.gridY - b.minY) * dynamicCellSize;
                         const width = unit.gridWidth * dynamicCellSize;
                         const height = unit.gridHeight * dynamicCellSize;
 
@@ -518,24 +537,24 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     right: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.82)',
-    borderColor: 'rgba(255, 255, 255, 0.95)',
+    gap: 8,
+    backgroundColor: isDark ? 'rgba(15, 23, 32, 0.88)' : 'rgba(255, 255, 255, 0.92)',
+    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : theme.Colors.outlineVariant,
     borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: theme.Spacing.sm,
-    paddingVertical: theme.Spacing.xs,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     zIndex: 20,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: isDark ? 0.35 : 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.Spacing.xs,
+    gap: 5,
   },
   legendDot: {
     width: 6,
@@ -543,8 +562,8 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 3,
   },
   legendText: {
-    fontSize: theme.Typography.labelSmall.fontSize,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '700',
     color: theme.Colors.onSurface,
   },
 });

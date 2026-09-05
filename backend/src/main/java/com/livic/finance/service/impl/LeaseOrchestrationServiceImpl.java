@@ -24,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -40,12 +42,6 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
     private final PropertyFacade propertyFacade;
     private final UnitFacade unitFacade;
     private final LeaseCrudService leaseCrudService;
-
-    @Override
-    public List<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId) {
-        List<LeaseTbl> leases = leaseQueryService.findActiveLeasesByProperty(propertyId);
-        return enrichLeases(leases);
-    }
 
     @Override
     public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId, Pageable pageable) {
@@ -108,11 +104,8 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
     @Override
     @Transactional
     public LeaseDTOs.LeaseResponse terminateLease(UUID id) {
-        LeaseDTOs.LeaseResponse response = leaseService.terminateLease(id);
-        UserSummaryDTO user = userFacade.getUserById(response.userId()).orElse(null);
-        String fullName = user != null ? user.fullName() : "Unknown User";
-        String phone = user != null ? user.phoneNumber() : "";
-        return LeaseMapper.withUserDetails(response, fullName, phone);
+        LeaseTbl lease = leaseService.terminateLease(id);
+        return enrichLease(lease);
     }
 
     @Override
@@ -131,21 +124,38 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
 
     private LeaseDTOs.LeaseResponse enrichLease(LeaseTbl lease) {
         UserSummaryDTO user = userFacade.getUserById(lease.getUserId()).orElse(null);
-        return toResponse(lease, user);
+        UnitSummaryDTO unit = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
+        PropertySummaryDTO property = (unit != null && unit.propertyId() != null)
+                ? propertyFacade.getPropertyById(unit.propertyId()).orElse(null)
+                : null;
+        return LeaseMapper.toResponse(lease, unit, property, user);
     }
 
     private List<LeaseDTOs.LeaseResponse> enrichLeases(List<LeaseTbl> leases) {
+        if (leases == null || leases.isEmpty()) {
+            return List.of();
+        }
         Map<UUID, UserSummaryDTO> usersMap = userFacade.getUsersByIds(
                 leases.stream().map(LeaseTbl::getUserId).collect(Collectors.toSet())
         );
-        return leases.stream()
-                .map(lease -> toResponse(lease, usersMap.get(lease.getUserId())))
-                .toList();
-    }
+        Map<UUID, UnitSummaryDTO> unitsMap = unitFacade.getUnitsByIds(
+                leases.stream().map(LeaseTbl::getUnitId).collect(Collectors.toSet())
+        );
+        Set<UUID> propertyIds = unitsMap.values().stream()
+                .map(UnitSummaryDTO::propertyId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<UUID, PropertySummaryDTO> propertiesMap = propertyFacade.getPropertiesByIds(propertyIds);
 
-    private LeaseDTOs.LeaseResponse toResponse(LeaseTbl lease, UserSummaryDTO user) {
-        String fullName = user != null ? user.fullName() : "Unknown User";
-        String phone = user != null ? user.phoneNumber() : "";
-        return LeaseMapper.toResponseWithDetails(lease, fullName, phone);
+        return leases.stream()
+                .map(lease -> {
+                    UserSummaryDTO user = usersMap.get(lease.getUserId());
+                    UnitSummaryDTO unit = unitsMap.get(lease.getUnitId());
+                    PropertySummaryDTO property = (unit != null && unit.propertyId() != null)
+                            ? propertiesMap.get(unit.propertyId())
+                            : null;
+                    return LeaseMapper.toResponse(lease, unit, property, user);
+                })
+                .toList();
     }
 }

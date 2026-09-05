@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { Theme } from '@/src/theme/Theme';
+import { Theme, SerifHeadlineFont } from '@/src/theme/Theme';
 
 export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   gradient: { flex: 1 },
@@ -61,7 +61,7 @@ export const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     color: theme.Colors.onBackground,
     lineHeight: 46,
     letterSpacing: -1,
-    fontFamily: 'Inter',
+    fontFamily: SerifHeadlineFont,
   },
   mobileSubtitle: {
     fontSize: theme.Typography.bodyMedium.fontSize,

@@ -24,34 +24,49 @@ import { ToastProvider } from '@/src/components/common/feedback/ToastContext';
 import ErrorBoundary from '@/src/components/common/feedback/ErrorBoundary';
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import { useProperties } from '@/src/hooks/useProperties';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient, type LinearGradientProps } from 'expo-linear-gradient';
 import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
-import { LightColors, Breakpoints } from '@/src/theme/Theme';
+import { LightColors, Breakpoints, Spacing, Rounded, Timing } from '@/src/theme/Theme';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/command-center': 'Portfolio',
   '/leases': 'Leases',
   '/inventory': 'Items',
   '/expenses': 'Finance',
+  '/expenses/charge-config': 'Charges',
+  '/expenses/billing-worksheet': 'Worksheets',
+  '/expenses/ledger': 'Ledger',
+  '/expenses/rent-roll': 'Rent Roll',
+  '/create-expense': 'New Charge',
   '/reports': 'Reports',
   '/ai': 'AI Desk',
   '/escalations': 'Escalations',
   '/announcements': 'Announcements',
   '/analytics': 'Overview',
   '/settings': 'Settings',
+  '/admin': 'Admin',
+  '/billing': 'Subscription',
+  '/properties/create': 'New Property',
 };
 
 function getHeaderTitle(pathname: string): string {
-  if (ROUTE_TITLES[pathname]) {
-    return ROUTE_TITLES[pathname];
+  const clean = pathname.split('?')[0];
+  if (ROUTE_TITLES[clean]) {
+    return ROUTE_TITLES[clean];
   }
-  if (pathname.startsWith('/properties/')) {
-    if (pathname.includes('/floors/')) {
+  if (clean.startsWith('/properties/')) {
+    if (clean.includes('/floors')) {
       return 'Floor View';
+    }
+    if (clean.includes('/meter-readings')) {
+      return 'Meter Readings';
+    }
+    if (clean.includes('/memberships')) {
+      return 'Members';
     }
     return 'Property Details';
   }
-  if (pathname.startsWith('/expenses')) {
+  if (clean.startsWith('/expenses/')) {
     return 'Finance';
   }
   return 'Livic';
@@ -81,7 +96,10 @@ const queryClient = new QueryClient({
 
 import { PropertySelectionProvider, useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
 
-const LinearGradientWithDataSet = LinearGradient as React.ComponentType<any>;
+type LinearGradientWithWebProps = LinearGradientProps & {
+  dataSet?: Record<string, string | number | boolean | undefined>;
+};
+const LinearGradientWithDataSet = LinearGradient as React.ComponentType<LinearGradientWithWebProps>;
 
 function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
   const { theme } = useAppTheme();
@@ -103,6 +121,7 @@ function DesktopLayoutShell({ children }: { children: React.ReactNode }) {
       {/* 2. Main Desktop Column with Persistent Pinned Topbar */}
       <View style={{ flex: 1, flexDirection: 'column' }}>
         <DesktopNavBar 
+          title={getHeaderTitle(pathname)}
           properties={(properties || []).map((p: any) => ({ id: p.id, name: p.name }))}
           selectedPropertyId={selectedPropertyId}
           onPropertyChange={setSelectedPropertyId}
@@ -124,10 +143,10 @@ function MobileLayoutShell({ children }: { children: React.ReactNode }) {
   const { theme } = useAppTheme();
   return (
     <LinearGradient
-      colors={(theme.Colors.backgroundGradient || ['#d4f5f9', '#e8f8fb', '#e2e0fb']) as [string, string, ...string[]]}
+      colors={(theme.Colors.backgroundGradient || ['#090D12', '#0F1720', '#141E2A']) as [string, string, ...string[]]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={{ flex: 1, flexDirection: 'column' }}
+      style={{ flex: 1, minHeight: '100%', flexDirection: 'column', backgroundColor: theme.Colors.background }}
     >
       {children}
     </LinearGradient>
@@ -135,22 +154,55 @@ function MobileLayoutShell({ children }: { children: React.ReactNode }) {
 }
 
 function NavigationThemeWrapper({ children }: { children: React.ReactNode }) {
-  const { isDark } = useAppTheme();
+  const { theme, isDark } = useAppTheme();
   const navTheme = React.useMemo(() => {
     const base = isDark ? DarkTheme : DefaultTheme;
     return {
       ...base,
       colors: {
         ...base.colors,
-        background: 'transparent',
+        background: theme.Colors.background,
       },
     };
-  }, [isDark]);
+  }, [isDark, theme]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const bgColor = theme.Colors.background;
+      document.documentElement.style.backgroundColor = bgColor;
+      document.body.style.backgroundColor = bgColor;
+
+      let scrollbarStyle = document.getElementById('livic-scrollbar-styles');
+      if (!scrollbarStyle) {
+        scrollbarStyle = document.createElement('style');
+        scrollbarStyle.id = 'livic-scrollbar-styles';
+        document.head.appendChild(scrollbarStyle);
+      }
+      scrollbarStyle.textContent = `
+        ::-webkit-scrollbar {
+          width: ${Spacing.unit}px;
+          height: ${Spacing.unit}px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: ${theme.Colors.scrollbarThumb};
+          border-radius: ${Rounded.full}px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: ${theme.Colors.scrollbarThumbHover};
+        }
+      `;
+    }
+  }, [theme.Colors.background, theme.Colors.scrollbarThumb, theme.Colors.scrollbarThumbHover]);
 
   return (
-    <ThemeProvider value={navTheme}>
-      {children}
-    </ThemeProvider>
+    <View style={{ flex: 1, backgroundColor: theme.Colors.background }}>
+      <ThemeProvider value={navTheme}>
+        {children}
+      </ThemeProvider>
+    </View>
   );
 }
 
@@ -184,30 +236,17 @@ export default function RootLayout() {
         *:focus {
           outline: none !important;
         }
-        ::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: rgba(0, 104, 117, 0.15);
-          border-radius: 999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: rgba(0, 104, 117, 0.35);
-        }
       `;
       document.head.appendChild(style);
     }
   }, []);
 
-  const hideNavigation = pathname === '/login' || pathname === '/signup';
+  const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/onboarding', '/mode-selection', '/'];
+  const hideNavigation = pathname === '/login' || pathname === '/signup' || pathname === '/onboarding' || pathname === '/mode-selection';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = isDesktop;
-  const hideHeader = hideNavigation || pathname === '/' || pathname === '/onboarding' || !isPrimaryRoute;
+  const hideHeader = hideNavigation || AUTH_OR_STANDALONE_ROUTES.includes(cleanPathname);
 
   return (
     <SafeAreaProvider>
@@ -227,11 +266,12 @@ export default function RootLayout() {
                               headerShown: false, 
                               contentStyle: { backgroundColor: 'transparent' },
                               animation: 'fade',
-                              animationDuration: 220,
+                              animationDuration: Timing.normal,
                             }}>
                               <Stack.Screen name="index" />
                               <Stack.Screen name="login" />
                               <Stack.Screen name="signup" />
+                              <Stack.Screen name="mode-selection" />
                               <Stack.Screen name="onboarding" />
                               <Stack.Screen name="command-center" />
                               <Stack.Screen name="ai" />
@@ -240,12 +280,17 @@ export default function RootLayout() {
                               <Stack.Screen name="reports" />
                               <Stack.Screen name="billing" />
                               <Stack.Screen name="expenses/index" />
+                              <Stack.Screen name="expenses/charge-config" />
+                              <Stack.Screen name="expenses/billing-worksheet" />
+                              <Stack.Screen name="expenses/ledger" />
+                              <Stack.Screen name="expenses/rent-roll" />
                               <Stack.Screen name="leases" />
                               <Stack.Screen name="inventory" />
                               <Stack.Screen name="create-expense" />
                               <Stack.Screen name="properties/create" />
                               <Stack.Screen name="properties/[id]/index" />
                               <Stack.Screen name="properties/[id]/meter-readings" />
+                              <Stack.Screen name="properties/[id]/memberships" />
                               <Stack.Screen name="escalations" />
                               <Stack.Screen name="announcements" />
                               <Stack.Screen name="settings" />
@@ -267,11 +312,12 @@ export default function RootLayout() {
                               headerShown: false, 
                               contentStyle: { backgroundColor: 'transparent' },
                               animation: 'fade',
-                              animationDuration: 220,
+                              animationDuration: Timing.normal,
                             }}>
                               <Stack.Screen name="index" />
                               <Stack.Screen name="login" />
                               <Stack.Screen name="signup" />
+                              <Stack.Screen name="mode-selection" />
                               <Stack.Screen name="onboarding" />
                               <Stack.Screen name="command-center" />
                               <Stack.Screen name="ai" />
@@ -280,12 +326,17 @@ export default function RootLayout() {
                               <Stack.Screen name="reports" />
                               <Stack.Screen name="billing" />
                               <Stack.Screen name="expenses/index" />
+                              <Stack.Screen name="expenses/charge-config" />
+                              <Stack.Screen name="expenses/billing-worksheet" />
+                              <Stack.Screen name="expenses/ledger" />
+                              <Stack.Screen name="expenses/rent-roll" />
                               <Stack.Screen name="leases" />
                               <Stack.Screen name="inventory" />
                               <Stack.Screen name="create-expense" />
                               <Stack.Screen name="properties/create" />
                               <Stack.Screen name="properties/[id]/index" />
                               <Stack.Screen name="properties/[id]/meter-readings" />
+                              <Stack.Screen name="properties/[id]/memberships" />
                               <Stack.Screen name="escalations" />
                               <Stack.Screen name="announcements" />
                               <Stack.Screen name="settings" />

@@ -124,8 +124,8 @@ DELIMITER //
 CREATE PROCEDURE seed_moms_pg_load_data()
 BEGIN
     DECLARE owner_id VARCHAR(36);
-    DECLARE manager_id VARCHAR(36);
-    DECLARE caretaker_id VARCHAR(36);
+    DECLARE curr_manager_id VARCHAR(36);
+    DECLARE curr_caretaker_id VARCHAR(36);
     DECLARE password_hash VARCHAR(255);
     
     DECLARE b INT DEFAULT 1;
@@ -138,25 +138,31 @@ BEGIN
     DECLARE curr_tenant_id VARCHAR(36);
     
     SET owner_id = 'b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e';
-    SET manager_id = 'c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f';
-    SET caretaker_id = 'd4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a';
     SET password_hash = '$2a$10$iF2sCXo.GR6uLLooK5FiHubhCvAY8xAr3mYmCIQDEgFuTvOK/PCzq'; -- 'Adm!n@super'
     
-    -- 1. Insert Owner, Manager, Caretaker Users
+    -- 1. Insert Owner User
     INSERT INTO user_tbl (id, auth_uid, full_name, phone_number, password_hash, global_role) VALUES
-    (owner_id, 'owner@moms.com', 'Mom\'s Owner', '9999999991', password_hash, 'USER'),
-    (manager_id, 'manager@moms.com', 'Mom\'s Manager', '9999999992', password_hash, 'USER'),
-    (caretaker_id, 'caretaker@moms.com', 'Mom\'s Caretaker', '9999999993', password_hash, 'USER');
+    (owner_id, 'owner@moms.com', 'Mom\'s Owner', '9999999991', password_hash, 'USER');
     
     -- 2. Add User Preferences for Dashboard Active Modes
     INSERT INTO user_preference_tbl (id, user_id, active_mode, onboarding_done) VALUES
-    (UUID(), owner_id, 'RENTAL', TRUE),
-    (UUID(), manager_id, 'RENTAL', TRUE),
-    (UUID(), caretaker_id, 'RENTAL', TRUE);
+    (UUID(), owner_id, 'RENTAL', TRUE);
     
     -- 3. Loop 10 Buildings
     WHILE b <= 10 DO
         SET prop_id = UUID();
+        SET curr_manager_id = UUID();
+        SET curr_caretaker_id = UUID();
+        
+        -- Insert distinct Manager and Caretaker for Building b
+        INSERT INTO user_tbl (id, auth_uid, full_name, phone_number, password_hash, global_role) VALUES
+        (curr_manager_id, CONCAT('manager_', b, '@moms.com'), CONCAT('Mom\'s Manager ', b), CONCAT('98000000', LPAD(b, 2, '0')), password_hash, 'USER'),
+        (curr_caretaker_id, CONCAT('caretaker_', b, '@moms.com'), CONCAT('Mom\'s Caretaker ', b), CONCAT('97000000', LPAD(b, 2, '0')), password_hash, 'USER');
+        
+        -- Add User Preferences
+        INSERT INTO user_preference_tbl (id, user_id, active_mode, onboarding_done) VALUES
+        (UUID(), curr_manager_id, 'RENTAL', TRUE),
+        (UUID(), curr_caretaker_id, 'RENTAL', TRUE);
         
         -- Insert Property
         INSERT INTO property_tbl (id, name, city, address, total_floors, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
@@ -165,8 +171,8 @@ BEGIN
         -- Map Owner, Manager, Caretaker to this specific Building
         INSERT INTO membership_tbl (id, user_id, property_id, title, access_type, is_active) VALUES
         (UUID(), owner_id, prop_id, 'Owner', 'FULL_ACCESS', TRUE),
-        (UUID(), manager_id, prop_id, 'Manager', 'CUSTOM_ACCESS', TRUE),
-        (UUID(), caretaker_id, prop_id, 'Caretaker', 'CUSTOM_ACCESS', TRUE);
+        (UUID(), curr_manager_id, prop_id, 'Manager', 'CUSTOM_ACCESS', TRUE),
+        (UUID(), curr_caretaker_id, prop_id, 'Caretaker', 'CUSTOM_ACCESS', TRUE);
         
         -- Insert Base Rent Charge Configuration for this Building
         INSERT INTO charge_config_tbl (id, property_id, charge_name, charge_category, billing_frequency, calculation_strategy, base_rate, apply_sales_tax, is_system_required, is_active, auto_carry_forward)
@@ -214,3 +220,79 @@ DELIMITER ;
 
 CALL seed_moms_pg_load_data();
 DROP PROCEDURE seed_moms_pg_load_data;
+
+
+-- 6. Seed Livic Residency (1 Owner, 1 Caretaker, 1 Property, 5 Floors, 2 Units per floor, Rent: 1000, Security: 2000)
+DELIMITER //
+
+CREATE PROCEDURE seed_livic_residency_data()
+BEGIN
+    DECLARE owner_id VARCHAR(36);
+    DECLARE caretaker_id VARCHAR(36);
+    DECLARE prop_id VARCHAR(36);
+    DECLARE password_hash VARCHAR(255);
+    
+    DECLARE f INT DEFAULT 1;
+    DECLARE u INT DEFAULT 1;
+    DECLARE unit_num VARCHAR(10);
+    DECLARE curr_unit_id VARCHAR(36);
+    DECLARE curr_tenant_id VARCHAR(36);
+    
+    SET owner_id = 'e2d3c4b5-a6f7-8b9c-0d1e-3f4a5b6c7d8e';
+    SET caretaker_id = 'f3e4d5c6-b7a8-9c0d-1e2f-4a5b6c7d8e9f';
+    SET prop_id = 'a1b2c3d4-e5f6-7a8b-9c0d-2e3f4a5b6c7d';
+    SET password_hash = '$2a$10$iF2sCXo.GR6uLLooK5FiHubhCvAY8xAr3mYmCIQDEgFuTvOK/PCzq'; -- 'Adm!n@super'
+    
+    -- 1. Insert Owner and Caretaker Users
+    INSERT INTO user_tbl (id, auth_uid, full_name, phone_number, password_hash, global_role) VALUES
+    (owner_id, 'owner@livic.com', 'Livic Owner', '9999999981', password_hash, 'USER'),
+    (caretaker_id, 'caretaker@livic.com', 'Livic Caretaker', '9999999982', password_hash, 'USER');
+    
+    -- 2. Insert User Preferences for Dashboard Active Modes
+    INSERT INTO user_preference_tbl (id, user_id, active_mode, onboarding_done) VALUES
+    (UUID(), owner_id, 'RENTAL', TRUE),
+    (UUID(), caretaker_id, 'RENTAL', TRUE);
+    
+    -- 3. Insert Property (5 floors)
+    INSERT INTO property_tbl (id, name, city, address, total_floors, is_active, allow_partial_payment, auto_bill_day_of_month, auto_bill_time)
+    VALUES (prop_id, 'Livic Residency', 'Bangalore', '100 Feet Road, Indiranagar', 5, TRUE, TRUE, 1, '09:00:00');
+    
+    -- 4. Map Owner (FULL_ACCESS) and Caretaker (CUSTOM_ACCESS) to this Property
+    INSERT INTO membership_tbl (id, user_id, property_id, title, access_type, is_active) VALUES
+    (UUID(), owner_id, prop_id, 'Owner', 'FULL_ACCESS', TRUE),
+    (UUID(), caretaker_id, prop_id, 'Caretaker', 'CUSTOM_ACCESS', TRUE);
+    
+    -- 5. Insert Base Rent Charge Configuration for this Property
+    INSERT INTO charge_config_tbl (id, property_id, charge_name, charge_category, billing_frequency, calculation_strategy, base_rate, apply_sales_tax, is_system_required, is_active, auto_carry_forward)
+    VALUES (UUID(), prop_id, 'Base Rent', 'RENT', 'MONTHLY', 'FIXED_RATE', 1000.00, FALSE, TRUE, TRUE, FALSE);
+    
+    -- 6. Loop 5 Floors, 2 Units per Floor (Total 10 units)
+    WHILE f <= 5 DO
+        SET u = 1;
+        WHILE u <= 2 DO
+            SET unit_num = CONCAT(f, '0', u);
+            SET curr_unit_id = UUID();
+            
+            -- Create Unit
+            INSERT INTO unit_tbl (id, property_id, unit_number, floor, capacity, type, grid_x, grid_y, grid_width, grid_height)
+            VALUES (curr_unit_id, prop_id, unit_num, f, 1, 'SINGLE_UNIT', u, 1, 1, 1);
+            
+            -- Create Tenant for this unit
+            SET curr_tenant_id = UUID();
+            INSERT INTO user_tbl (id, auth_uid, full_name, phone_number, password_hash, global_role)
+            VALUES (curr_tenant_id, CONCAT('tenant_', unit_num, '@livic.com'), CONCAT('Tenant ', unit_num), CONCAT('9988000', unit_num), password_hash, 'USER');
+            
+            -- Create Active Lease (Rent: 1000, Security: 2000)
+            INSERT INTO lease_tbl (id, unit_id, user_id, monthly_rent_amount, security_deposit, move_in_date, status, split_strategy)
+            VALUES (UUID(), curr_unit_id, curr_tenant_id, 1000.00, 2000.00, '2026-08-01', 'ACTIVE', 'FULL_UNIT');
+            
+            SET u = u + 1;
+        END WHILE;
+        SET f = f + 1;
+    END WHILE;
+END //
+
+DELIMITER ;
+
+CALL seed_livic_residency_data();
+DROP PROCEDURE seed_livic_residency_data;

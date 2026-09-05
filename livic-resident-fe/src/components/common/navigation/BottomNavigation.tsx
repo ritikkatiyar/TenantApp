@@ -38,29 +38,17 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
     }
   };
 
-  // Smooth Interpolations for Pill scroll animation (fade away & slide down)
-  const pillTranslateY = navTranslateY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, 90],
-    extrapolate: 'clamp',
-  });
-
-  const pillScale = navTranslateY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0.95],
-    extrapolate: 'clamp',
-  });
-
-  const pillOpacity = navTranslateY.interpolate({
-    inputRange: [0, 60],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
   return (
     <>
       {Platform.OS === 'web' && (
         <style dangerouslySetInnerHTML={{ __html: `
+          .mobile-bottom-nav-container {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9999 !important;
+          }
           @media (min-width: 900px) {
             .mobile-bottom-nav-container {
               display: none !important;
@@ -76,15 +64,7 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
         pointerEvents="box-none"
       >
       {/* Centered Navigation Pill */}
-      <Animated.View
-        style={[
-          styles.pillWrapper,
-          {
-            transform: [{ translateY: pillTranslateY }, { scale: pillScale }],
-            opacity: pillOpacity,
-          },
-        ]}
-      >
+      <View style={styles.pillWrapper}>
         <View style={styles.pillContainer}>
           <BlurView intensity={Platform.OS === 'ios' ? 85 : 95} tint={isDark ? "dark" : "light"} style={styles.pillBlurBackground} />
           <View style={styles.pillContent}>
@@ -118,7 +98,7 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
             </TouchableOpacity>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </View>
     </>
   );

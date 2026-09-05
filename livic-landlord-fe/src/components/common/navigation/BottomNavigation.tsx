@@ -30,37 +30,25 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
     return null;
   }
 
-  const isHomeActive = pathname === '/tenant-home';
+  const isHomeActive = pathname === '/command-center' || pathname === '/';
 
   const handleHomePress = () => {
     if (!isHomeActive) {
-      router.push('/tenant-home' as any);
+      router.push('/command-center' as any);
     }
   };
-
-  // Smooth Interpolations for Pill scroll animation (fade away & slide down)
-  const pillTranslateY = navTranslateY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [0, 90],
-    extrapolate: 'clamp',
-  });
-
-  const pillScale = navTranslateY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0.95],
-    extrapolate: 'clamp',
-  });
-
-  const pillOpacity = navTranslateY.interpolate({
-    inputRange: [0, 60],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
 
   return (
     <>
       {Platform.OS === 'web' && (
         <style dangerouslySetInnerHTML={{ __html: `
+          .mobile-bottom-nav-container {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 9999 !important;
+          }
           @media (min-width: 900px) {
             .mobile-bottom-nav-container {
               display: none !important;
@@ -76,15 +64,7 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
         pointerEvents="box-none"
       >
       {/* Centered Navigation Pill */}
-      <Animated.View
-        style={[
-          styles.pillWrapper,
-          {
-            transform: [{ translateY: pillTranslateY }, { scale: pillScale }],
-            opacity: pillOpacity,
-          },
-        ]}
-      >
+      <View style={styles.pillWrapper}>
         <View style={styles.pillContainer}>
           <BlurView intensity={Platform.OS === 'ios' ? 85 : 95} tint={isDark ? "dark" : "light"} style={styles.pillBlurBackground} />
           <View style={styles.pillContent}>
@@ -104,8 +84,8 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
                 end={{ x: 1, y: 1 }}
                 style={styles.heroCameraButton}
               >
-                <MaterialIcons name="center-focus-strong" size={28} color="#ffffff" />
-                <View style={[styles.cameraDotBadge, { backgroundColor: '#00d4ff' }]} />
+                <MaterialIcons name="center-focus-strong" size={28} color={theme.Colors.surfaceContainerLowest} />
+                <View style={[styles.cameraDotBadge, { backgroundColor: theme.Colors.primary }]} />
               </LinearGradient>
             </TouchableOpacity>
 
@@ -118,7 +98,7 @@ export default function BottomNavigation({ onMorePress, onQRPress }: BottomNavig
             </TouchableOpacity>
           </View>
         </View>
-      </Animated.View>
+      </View>
     </View>
     </>
   );

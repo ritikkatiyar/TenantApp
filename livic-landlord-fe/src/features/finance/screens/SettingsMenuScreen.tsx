@@ -17,11 +17,10 @@ import { PageShell } from '@/src/components/common/layout/PageShell';
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useProperties } from '@/src/hooks/useProperties';
 import { useGlobalPropertySelection } from '@/src/context/PropertySelectionContext';
-import { listRentCycles } from '@/src/features/finance/api/rentCycle.api';
-import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
 import { createStyles } from './SettingsMenuScreen.styles';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 
 export default function SettingsMenuScreen() {
   const { theme, isDark } = useAppTheme();
@@ -35,14 +34,10 @@ export default function SettingsMenuScreen() {
   const { propertyId: paramPropertyId } = useLocalSearchParams<{ propertyId: string }>();
   const { isDesktop } = useResponsive();
   const { properties, isLoading } = useProperties();
-  const { accessToken } = useAuth();
   const { showToast } = useToast();
-  const { selectedPropertyId } = useGlobalPropertySelection();
+  const { selectedPropertyId, setSelectedPropertyId } = useGlobalPropertySelection();
   const validParamId = (paramPropertyId && paramPropertyId !== 'null' && paramPropertyId !== 'undefined') ? paramPropertyId : null;
   const propertyId = selectedPropertyId || validParamId || null;
-
-  const [pendingCount, setPendingCount] = useState<number | null>(null);
-  const [publishedCount, setPublishedCount] = useState<number | null>(null);
 
   const largeTitleOpacity = scrollY.interpolate({
     inputRange: [0, 70],
@@ -62,24 +57,7 @@ export default function SettingsMenuScreen() {
       duration: 420,
       useNativeDriver: true,
     }).start();
-
-    // Try to fetch quick stats
-    const fetchStats = async () => {
-      try {
-        if (!accessToken) return;
-        const today = new Date();
-        const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-        const data = await listRentCycles(month, accessToken);
-        if (data && data.content) {
-          setPendingCount(data.content.filter((i: any) => i.status === 'PENDING').length);
-          setPublishedCount(data.content.filter((i: any) => i.status === 'PUBLISHED').length);
-        }
-      } catch {
-        // silent — stats are optional
-      }
-    };
-    fetchStats();
-  }, [accessToken]);
+  }, []);
 
   const querySuffix = propertyId ? `?propertyId=${propertyId}` : '';
 
@@ -132,45 +110,6 @@ export default function SettingsMenuScreen() {
 
   const renderMobileContent = () => (
     <Animated.View style={{ opacity: fadeAnim }}>
-      {/* Quick Stats Hero */}
-      <BlurView intensity={55} tint={isDark ? 'dark' : 'light'} style={styles.statsHero}>
-        <LinearGradient
-          colors={['rgba(0, 168, 204, 0.12)', 'rgba(99, 102, 241, 0.08)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.statsGradient}
-        >
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>
-                {publishedCount !== null ? publishedCount : '—'}
-              </Text>
-              <Text style={styles.statLabel}>Published</Text>
-              <View style={[styles.statDot, { backgroundColor: theme.Colors.primary }]} />
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, pendingCount && pendingCount > 0 ? styles.statWarning : null]}>
-                {pendingCount !== null ? pendingCount : '—'}
-              </Text>
-              <Text style={styles.statLabel}>Pending</Text>
-              <View style={[styles.statDot, { backgroundColor: theme.Colors.tertiary }]} />
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>
-                {publishedCount !== null && pendingCount !== null
-                  ? publishedCount + pendingCount
-                  : '—'}
-              </Text>
-              <Text style={styles.statLabel}>Total</Text>
-              <View style={[styles.statDot, { backgroundColor: theme.Colors.secondary }]} />
-            </View>
-          </View>
-          <Text style={styles.statsSubtitle}>This billing cycle</Text>
-        </LinearGradient>
-      </BlurView>
-
       {/* Workflow Label */}
       <View style={styles.workflowLabelRow}>
         <View style={styles.workflowLine} />
@@ -267,7 +206,7 @@ export default function SettingsMenuScreen() {
           <Text style={{ fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>
             FINANCIAL MANAGEMENT
           </Text>
-          <Text style={{ fontSize: theme.Typography.headlineMedium.fontSize, fontWeight: '800', color: theme.Colors.onBackground, letterSpacing: -0.5 }}>
+          <Text style={[{ ...theme.Typography.headlineLg, color: theme.Colors.onBackground }]}>
             Finance & Billing
           </Text>
           <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>
@@ -276,32 +215,19 @@ export default function SettingsMenuScreen() {
         </View>
       )}
 
-      {!propertyId ? (
-        <GlassCard
-          style={{
-            marginVertical: 20,
-            minHeight: 280,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          contentStyle={{
-            padding: 48,
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-            <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-            <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-              Select Property to View Finance & Billing
-            </Text>
-            <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-              Please select a property from the top navbar selector to view billing worksheets, rent roll, charge configurations, or ledger.
-            </Text>
-          </View>
-        </GlassCard>
-      ) : isDesktop ? (
+      {!propertyId && (
+        <PropertyRequiredBanner
+          title="Select Active Property"
+          description="Choose a property below to scope your billing worksheets, rent roll, charges, and ledger."
+          icon="account-balance"
+          properties={properties}
+          selectedPropertyId={propertyId}
+          onSelectProperty={setSelectedPropertyId}
+          style={{ marginBottom: theme.Spacing.lg }}
+        />
+      )}
+
+      {isDesktop ? (
         <View style={styles.gridContainer}>
           {menuItems.map((item) => (
             <TouchableOpacity

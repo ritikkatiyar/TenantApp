@@ -2,20 +2,18 @@ import { useAppTheme } from '@/src/theme/ThemeContext';
 import React from 'react';
 import {
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { PageShell } from '@/src/components/common/layout/PageShell';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/src/theme/Theme';
-import DesktopNavBar from '@/src/components/common/navigation/DesktopNavBar';
 import { useScrollNav } from '@/src/components/common/navigation/ScrollContext';
+import { useResponsive } from '@/src/hooks/useResponsive';
 
 import { useInventory, type InventoryTab } from '@/src/features/inventory/hooks/useInventory';
 import { InventoryRegistryView } from '@/src/features/inventory/components/InventoryRegistryView';
@@ -25,7 +23,7 @@ import { AddItemModal } from '@/src/features/inventory/components/AddItemModal';
 
 import { GlassCard } from '@/src/components/common/display/GlassCard';
 import { useToast } from '@/src/components/common/feedback/ToastContext';
-import { PropertySelector } from '@/src/components/common/display/PropertySelector';
+import { PropertyRequiredBanner } from '@/src/components/common/feedback/PropertyRequiredBanner';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
 import FilterPill from '@/src/components/common/inputs/FilterPill';
 import { useRouter } from 'expo-router';
@@ -35,8 +33,7 @@ export default function InventoryScreen() {
   const styles = React.useMemo(() => createStyles(theme, isDark), [theme, isDark]);
 
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const { isDesktop } = useResponsive();
   const { handleScroll } = useScrollNav();
   const { showToast } = useToast();
 
@@ -84,7 +81,7 @@ export default function InventoryScreen() {
       scrollable={true}
       onEndReached={refresh}
       edges={isDesktop ? ['top'] : []}
-      contentContainerStyle={[styles.scroll, isDesktop ? styles.scrollDesktop : { paddingTop: 88 }]}
+      contentContainerStyle={[styles.scroll, isDesktop && styles.scrollDesktop]}
     >
 
           {/* Desktop page header */}
@@ -108,25 +105,17 @@ export default function InventoryScreen() {
             </View>
           )}
 
-          {/* Mobile property selector + search + add row */}
+          {/* Mobile search + add row */}
           {!isDesktop && (
-            <View style={{ gap: 10 }}>
-              {properties.length > 0 && (
-                <PropertySelector
-                  properties={properties}
-                  selectedPropertyId={propertyId}
-                  onSelectProperty={setSelectedPropertyId}
-                />
+            <View style={styles.mobileTopBar}>
+              {leaseId && (
+                <TouchableOpacity
+                  style={styles.mobileBackBtn}
+                  onPress={() => router.push('/leases')}
+                >
+                  <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
+                </TouchableOpacity>
               )}
-              <View style={styles.mobileTopBar}>
-                {leaseId && (
-                  <TouchableOpacity
-                    style={styles.mobileBackBtn}
-                    onPress={() => router.push('/leases')}
-                  >
-                    <MaterialIcons name="arrow-back" size={20} color={theme.Colors.primary} />
-                  </TouchableOpacity>
-                )}
                 <View style={styles.searchBox}>
                   <MaterialIcons name="search" size={18} color={theme.Colors.onSurfaceVariant} />
                   <TextInput
@@ -151,7 +140,6 @@ export default function InventoryScreen() {
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
-            </View>
           )}
 
           {/* Tab selector */}
@@ -168,30 +156,14 @@ export default function InventoryScreen() {
           </View>
 
           {!propertyId ? (
-            <GlassCard
-              style={{
-                marginVertical: 20,
-                minHeight: 280,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              contentStyle={{
-                padding: 48,
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-              }}
-            >
-              <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <MaterialIcons name="domain" size={48} color={theme.Colors.primary} style={{ marginBottom: 16 }} />
-                <Text style={{ fontSize: theme.Typography.titleMedium.fontSize, fontWeight: '800', color: theme.Colors.onSurface, marginBottom: 8, textAlign: 'center' }}>
-                  Select Property to View & Add Inventory
-                </Text>
-                <Text style={{ fontSize: theme.Typography.bodyMedium.fontSize, color: theme.Colors.onSurfaceVariant, textAlign: 'center', maxWidth: 440, lineHeight: 22 }}>
-                  Please select a property from the top navbar selector to view assets, assign items, or add new inventory.
-                </Text>
-              </View>
-            </GlassCard>
+            <PropertyRequiredBanner
+              title="Select Property for Inventory & Assets"
+              description="Track property assets, assign items to units, and run move-in checklists by selecting a property below."
+              icon="inventory"
+              properties={properties}
+              selectedPropertyId={propertyId}
+              onSelectProperty={setSelectedPropertyId}
+            />
           ) : (
             <>
               {/* Desktop search for registry */}
@@ -260,7 +232,7 @@ export default function InventoryScreen() {
 const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   root: { flex: 1 },
   safeArea: { flex: 1 },
-  scroll: { padding: theme.Spacing.md, paddingBottom: 120, gap: theme.Spacing.md },
+  scroll: { gap: theme.Spacing.md },
   scrollDesktop: { paddingTop: 24, paddingHorizontal: 32, paddingBottom: 40, width: '100%' },
 
   pageHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: theme.Spacing.md, marginBottom: theme.Spacing.sm },
@@ -276,7 +248,7 @@ const createStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 8,
   },
   propertyBadgeText: { fontSize: theme.Typography.labelSmall.fontSize, fontWeight: '800', color: theme.Colors.primary },
-  title: { fontSize: theme.Typography.headlineLg.fontSize, fontWeight: '800', color: theme.Colors.onSurface, lineHeight: 38, marginTop: theme.Spacing.xs },
+  title: { ...theme.Typography.headlineLg, color: theme.Colors.onSurface, lineHeight: 38, marginTop: theme.Spacing.xs },
   subtitle: { fontSize: theme.Typography.bodyLarge.fontSize, color: theme.Colors.onSurfaceVariant, marginTop: theme.Spacing.sm, lineHeight: 22, maxWidth: 600 },
   contextLine: { color: theme.Colors.primary, fontSize: theme.Typography.bodySmall.fontSize, fontWeight: '800', marginTop: 6 },
   addBtnWrapper: { borderRadius: 14, overflow: 'hidden' },
