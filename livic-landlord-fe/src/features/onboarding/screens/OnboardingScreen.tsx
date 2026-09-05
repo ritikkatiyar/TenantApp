@@ -8,6 +8,7 @@ import { useResponsive } from '@/src/hooks/useResponsive';
 import { saveUserPreference, SaveUserPreferenceRequest } from '@/src/features/user/api/userPreference.api';
 import { validateAndApplyJoinCode } from '@/src/features/properties/api/rolePermission.api';
 import ActionButton from '@/src/components/common/inputs/ActionButton';
+import { setLocalOnboardingStatus } from '@/src/components/common/layout/OnboardingGate';
 
 const MODULES = [
   {
@@ -47,7 +48,8 @@ export default function OnboardingScreen() {
         activeMode: selectedModule,
         onboardingDone: true
       }, accessToken!);
-      router.replace('/(tabs)' as any);
+      setLocalOnboardingStatus(accessToken, true);
+      router.replace('/command-center' as any);
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to save setup preference');
     } finally {
@@ -72,6 +74,7 @@ export default function OnboardingScreen() {
       } catch {
         // Backend marks onboarding done upon code application
       }
+      setLocalOnboardingStatus(accessToken, true);
       setContext(null);
 
       Alert.alert(
@@ -84,7 +87,7 @@ export default function OnboardingScreen() {
               if (res.title?.toLowerCase() === 'resident' || res.title?.toLowerCase() === 'tenant') {
                 router.replace('/tenant-home' as any);
               } else {
-                router.replace('/(tabs)' as any);
+                router.replace('/command-center' as any);
               }
             }
           }

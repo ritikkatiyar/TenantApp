@@ -105,7 +105,7 @@ function MainAppLayout() {
   }, [isDark]);
 
   const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/onboarding', '/'];
-  const hideNavigation = pathname === '/login' || pathname === '/signup';
+  const hideNavigation = pathname === '/login' || pathname === '/signup' || pathname === '/onboarding';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = isDesktop;

@@ -370,25 +370,6 @@ export default function FloorLayoutViewerModal({ visible, propertyId, floorNumbe
                   </View>
                 </GestureDetector>
 
-                {!selectedBlock && (
-                  <View style={styles.mobileBottomActionContainer}>
-                    <TouchableOpacity 
-                      activeOpacity={0.85}
-                      onPress={onClose}
-                      style={styles.saveButton}
-                    >
-                      <LinearGradient
-                        colors={['#00d4ff', '#0072ff']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.saveButtonGradient}
-                      >
-                        <Text style={styles.saveButtonText}>CLOSE VIEW</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
                 {selectedBlock && (
                   <View style={[StyleSheet.absoluteFillObject, { zIndex: 999 }]}>
                     <BlurView intensity={35} tint="light" style={StyleSheet.absoluteFillObject} />

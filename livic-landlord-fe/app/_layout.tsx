@@ -242,7 +242,7 @@ export default function RootLayout() {
   }, []);
 
   const AUTH_OR_STANDALONE_ROUTES = ['/login', '/signup', '/onboarding', '/mode-selection', '/'];
-  const hideNavigation = pathname === '/login' || pathname === '/signup';
+  const hideNavigation = pathname === '/login' || pathname === '/signup' || pathname === '/onboarding' || pathname === '/mode-selection';
   const cleanPathname = pathname.split('?')[0];
   const isPrimaryRoute = PRIMARY_ROUTES.includes(cleanPathname);
   const showDesktop = isDesktop;

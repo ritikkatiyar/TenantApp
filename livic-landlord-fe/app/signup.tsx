@@ -12,7 +12,7 @@ export default function SignupRoute() {
     <SuperAdminSignupScreen
       onSignup={async (authData: TokenBundle) => {
         await signIn(authData);
-        router.replace('/command-center');
+        router.replace('/onboarding');
       }}
       onNavigateToLogin={() => router.replace('/login')}
     />

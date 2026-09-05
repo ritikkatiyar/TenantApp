@@ -18,9 +18,8 @@ export function getTenantRentCycles(token: string, leaseId?: string): Promise<Re
     method: 'GET',
     token,
   }).then((res) => {
-    if (Array.isArray(res)) return res;
-    if (res && Array.isArray(res.content)) return res.content;
-    return [];
+    const list: RentCycle[] = Array.isArray(res) ? res : (res && Array.isArray(res.content) ? res.content : []);
+    return list.filter((c: RentCycle) => c.status !== 'PENDING');
   }).catch((err) => {
     console.warn('[Payments API] Failed to load rent cycles:', err?.message);
     return [];

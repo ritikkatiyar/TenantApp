@@ -22,7 +22,7 @@ export function ScreenWrapper({ children, contentContainerStyle, isAuth = false 
       duration: 220,
       useNativeDriver: true,
     }).start();
-  }, [children]);
+  }, []);
 
   return (
     <Animated.View style={[styles.container, { backgroundColor: theme.Colors.background }, isDesktop && !isAuth && styles.desktopContainer, { opacity: fadeAnim }, contentContainerStyle]}>

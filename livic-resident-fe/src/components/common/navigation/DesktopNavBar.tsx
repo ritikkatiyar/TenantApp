@@ -29,15 +29,13 @@ export default function DesktopNavBar({
 
   return (
     <BlurView intensity={70} tint={isDark ? "dark" : "light"} style={styles.topbar}>
-      {/* Left Area: Back Button or Page Title */}
+      {/* Left Area: Back Button */}
       <View style={styles.topbarLeft}>
         {onBack ? (
           <TouchableOpacity onPress={onBack} style={styles.backButtonDesktop} activeOpacity={0.7}>
             <MaterialIcons name="arrow-back" size={20} color={theme.Colors.onBackground} />
             <Text style={styles.backButtonTextDesktop}>{backText}</Text>
           </TouchableOpacity>
-        ) : title ? (
-          <Text style={styles.pageTitle}>{title}</Text>
         ) : null}
       </View>
 

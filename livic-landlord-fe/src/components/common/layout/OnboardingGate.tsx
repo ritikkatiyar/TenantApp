@@ -1,20 +1,41 @@
 import { useAppTheme } from '@/src/theme/ThemeContext';
 import React, { useEffect, useState } from 'react';
-import { Redirect, usePathname, useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useAuth } from '@/src/features/auth/context/AuthProvider';
 import { getUserPreference } from '@/src/features/user/api/userPreference.api';
 import { getMyContext } from '@/src/features/auth/api/me.api';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { logger } from '@/src/utils/logger';
+
+function getLocalOnboardingStatus(token: string | null): boolean | null {
+  if (!token) return null;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const val = window.localStorage.getItem(`livic_onboarded_${token.slice(-10)}`);
+      if (val === 'true') return true;
+      if (val === 'false') return false;
+    }
+  } catch {}
+  return null;
+}
+
+export function setLocalOnboardingStatus(token: string | null, status: boolean) {
+  if (!token) return;
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(`livic_onboarded_${token.slice(-10)}`, status ? 'true' : 'false');
+    }
+  } catch {}
+}
 
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { theme } = useAppTheme();
   const { isAuthenticated, isReady, accessToken, context, setContext } = useAuth();
   const pathname = usePathname();
-  // Default to true when authenticated so F5 refresh loads children instantly without blocking spinner
-  const [isOnboarded, setIsOnboarded] = useState<boolean | null>(() => (accessToken ? true : null));
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // Check cached status so already-onboarded users load immediately on refresh
+  const [isOnboarded, setIsOnboarded] = useState<boolean | null>(() => getLocalOnboardingStatus(accessToken));
 
   const isAuthRoute = pathname === '/login' || pathname === '/signup';
   const isOnboardingRoute = pathname === '/onboarding';
@@ -23,9 +44,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     if (!isAuthenticated) {
-      if (isOnboarded !== null) {
-        setIsOnboarded(null);
-      }
+      setIsOnboarded(null);
       return;
     }
 
@@ -44,21 +63,17 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
             }
           }
 
-          if (isOnboarded === null) {
-            const pref = await getUserPreference(accessToken);
-            if (isMounted) {
-              setIsOnboarded(pref.onboardingDone);
-            }
+          const pref = await getUserPreference(accessToken);
+          const done = Boolean(pref?.onboardingDone);
+          setLocalOnboardingStatus(accessToken, done);
+          if (isMounted) {
+            setIsOnboarded(done);
           }
         } catch (error) {
           logger.error('[OnboardingGate] Error during init:', error);
-          // On network failure or error during refresh, assume user is onboarded to prevent lock-out
+          // On network failure or error, fallback to true only if no cached value
           if (isMounted && isOnboarded === null) {
             setIsOnboarded(true);
-          }
-        } finally {
-          if (isMounted) {
-            setLoading(false);
           }
         }
       };
@@ -69,7 +84,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [isReady, isAuthenticated, accessToken]);
+  }, [isReady, isAuthenticated, accessToken, isOnboardingRoute, isAuthRoute]);
 
   // Programmatic redirection for non-authenticated or un-onboarded users
   useEffect(() => {
@@ -92,7 +107,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
 
   const isPendingRedirect = 
     (!isAuthenticated && !isAuthRoute && pathname !== '/') ||
-    (isAuthenticated && !isAuthRoute && !isOnboardingRoute && isOnboarded === false);
+    (isAuthenticated && !isAuthRoute && !isOnboardingRoute && (isOnboarded === false || isOnboarded === null));
 
   if (isPendingRedirect) {
     return (

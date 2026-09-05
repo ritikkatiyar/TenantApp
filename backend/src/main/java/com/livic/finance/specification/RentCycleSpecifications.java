@@ -61,4 +61,10 @@ public class RentCycleSpecifications {
             }
         };
     }
+
+    public static Specification<RentCycleTbl> hasStatusNot(RentCycleStatus status) {
+        return (root, query, cb) -> status == null
+                ? null
+                : cb.notEqual(root.get("status"), status);
+    }
 }

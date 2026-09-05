@@ -39,6 +39,10 @@ public class PaymentStatementServiceImpl implements PaymentStatementService {
         RentCycleTbl rentCycle = rentCycleCrudService.findById(rentCycleId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Rent cycle not found"));
 
+        if (rentCycle.getStatus() == com.livic.finance.domain.RentCycleStatus.PENDING) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Rent cycle invoice has not been published yet");
+        }
+
         UserSummaryDTO tenant = userFacade.getUserById(rentCycle.getLease().getUserId()).orElse(null);
 
         List<RentCycleChargeTbl> charges = rentCycleChargeCrudService.findByRentCycle_Id(rentCycleId);

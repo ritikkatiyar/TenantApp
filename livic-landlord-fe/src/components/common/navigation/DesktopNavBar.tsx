@@ -95,8 +95,6 @@ export default function DesktopNavBar({
             <MaterialIcons name="arrow-back" size={18} color={theme.Colors.onBackground} />
             <Text style={styles.backButtonTextDesktop}>{backText}</Text>
           </TouchableOpacity>
-        ) : title ? (
-          <Text style={styles.navBarTitle}>{title}</Text>
         ) : null}
       </View>
 
