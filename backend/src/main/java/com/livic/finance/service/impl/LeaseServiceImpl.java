@@ -135,7 +135,7 @@ public class LeaseServiceImpl implements LeaseService {
     }
 
     @Override
-    public LeaseDTOs.LeaseResponse terminateLease(UUID id) {
+    public LeaseTbl terminateLease(UUID id) {
         LeaseTbl lease = leaseCrudService.findWithUnitAndPropertyById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
 
@@ -143,16 +143,11 @@ public class LeaseServiceImpl implements LeaseService {
         if (lease.getMoveOutDate() == null) {
             lease.setMoveOutDate(LocalDate.now());
         }
-        LeaseTbl saved = leaseCrudService.save(lease);
-
-        // Map to DTO — entity must not cross the service boundary.
-        // tenantName/tenantPhone are intentionally omitted here;
-        // the orchestration layer enriches them via UserFacade.
-        return LeaseMapper.toResponse(saved);
+        return leaseCrudService.save(lease);
     }
 
     @Override
-    public LeaseTbl updateNoticePeriod(UUID id, java.time.LocalDate moveOutDate) {
+    public LeaseTbl updateNoticePeriod(UUID id, LocalDate moveOutDate) {
         LeaseTbl lease = leaseCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
         lease.setMoveOutDate(moveOutDate);
@@ -160,7 +155,7 @@ public class LeaseServiceImpl implements LeaseService {
     }
 
     @Override
-    public LeaseTbl updateLeaseTerms(UUID id, java.math.BigDecimal monthlyRentAmount, java.math.BigDecimal securityDeposit) {
+    public LeaseTbl updateLeaseTerms(UUID id, BigDecimal monthlyRentAmount, BigDecimal securityDeposit) {
         LeaseTbl lease = leaseCrudService.findById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Lease not found"));
         if (monthlyRentAmount != null) {

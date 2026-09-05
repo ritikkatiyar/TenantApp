@@ -44,12 +44,6 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
     private final LeaseCrudService leaseCrudService;
 
     @Override
-    public List<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId) {
-        List<LeaseTbl> leases = leaseQueryService.findActiveLeasesByProperty(propertyId);
-        return enrichLeases(leases);
-    }
-
-    @Override
     public Page<LeaseDTOs.LeaseResponse> getActiveLeasesByProperty(UUID propertyId, Pageable pageable) {
         Page<LeaseTbl> page = leaseQueryService.findActiveLeasesByProperty(propertyId, pageable);
         List<LeaseDTOs.LeaseResponse> content = enrichLeases(page.getContent());
@@ -110,9 +104,8 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
     @Override
     @Transactional
     public LeaseDTOs.LeaseResponse terminateLease(UUID id) {
-        LeaseDTOs.LeaseResponse response = leaseService.terminateLease(id);
-        UserSummaryDTO user = userFacade.getUserById(response.userId()).orElse(null);
-        return LeaseMapper.withUserDetails(response, resolveFullName(user), resolvePhone(user));
+        LeaseTbl lease = leaseService.terminateLease(id);
+        return enrichLease(lease);
     }
 
     @Override
@@ -129,32 +122,13 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
         return enrichLease(lease);
     }
 
-    private String resolveFullName(UserSummaryDTO user) {
-        return (user != null && user.fullName() != null && !user.fullName().isBlank())
-                ? user.fullName()
-                : "Unknown User";
-    }
-
-    private String resolvePhone(UserSummaryDTO user) {
-        return (user != null && user.phoneNumber() != null) ? user.phoneNumber() : "";
-    }
-
-    private String resolveUnitNumber(UnitSummaryDTO unit) {
-        return (unit != null && unit.unitNumber() != null && !unit.unitNumber().isBlank())
-                ? unit.unitNumber()
-                : "N/A";
-    }
-
     private LeaseDTOs.LeaseResponse enrichLease(LeaseTbl lease) {
         UserSummaryDTO user = userFacade.getUserById(lease.getUserId()).orElse(null);
         UnitSummaryDTO unit = unitFacade.getUnitById(lease.getUnitId()).orElse(null);
-        String fullName = resolveFullName(user);
-        String phone = resolvePhone(user);
-        String unitNumber = resolveUnitNumber(unit);
-        String propertyName = (unit != null && unit.propertyId() != null)
-                ? propertyFacade.getPropertyById(unit.propertyId()).map(PropertySummaryDTO::name).orElse("N/A")
-                : "N/A";
-        return LeaseMapper.toResponse(lease, unitNumber, propertyName, fullName, phone);
+        PropertySummaryDTO property = (unit != null && unit.propertyId() != null)
+                ? propertyFacade.getPropertyById(unit.propertyId()).orElse(null)
+                : null;
+        return LeaseMapper.toResponse(lease, unit, property, user);
     }
 
     private List<LeaseDTOs.LeaseResponse> enrichLeases(List<LeaseTbl> leases) {
@@ -177,19 +151,10 @@ public class LeaseOrchestrationServiceImpl implements LeaseOrchestrationService 
                 .map(lease -> {
                     UserSummaryDTO user = usersMap.get(lease.getUserId());
                     UnitSummaryDTO unit = unitsMap.get(lease.getUnitId());
-                    String fullName = resolveFullName(user);
-                    String phone = resolvePhone(user);
-                    String unitNumber = resolveUnitNumber(unit);
-                    String propertyName = "N/A";
-                    if (unit != null && unit.propertyId() != null) {
-                        PropertySummaryDTO property = propertiesMap.get(unit.propertyId());
-                        if (property != null && property.name() != null) {
-                            propertyName = property.name();
-                        } else if (unit.propertyName() != null && !unit.propertyName().isBlank()) {
-                            propertyName = unit.propertyName();
-                        }
-                    }
-                    return LeaseMapper.toResponse(lease, unitNumber, propertyName, fullName, phone);
+                    PropertySummaryDTO property = (unit != null && unit.propertyId() != null)
+                            ? propertiesMap.get(unit.propertyId())
+                            : null;
+                    return LeaseMapper.toResponse(lease, unit, property, user);
                 })
                 .toList();
     }
