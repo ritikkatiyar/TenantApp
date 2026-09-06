@@ -8,10 +8,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class RentPublishedNotificationListener {
+
+    private static final String DEFAULT_RENT_STATEMENT_TITLE = "Rent Statement Published";
+    private static final DecimalFormat CURRENCY_FORMATTER = new DecimalFormat("#,##0.00");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     private final NotificationService notificationService;
 
@@ -19,51 +28,56 @@ public class RentPublishedNotificationListener {
     public void onRentPublished(RentPublishedEvent event) {
         String tenantUserId = event.getTenantUserId().toString();
         String billingMonth = event.getBillingMonth();
-        String totalAmount = event.getTotalAmount().toString();
-        String dueDate = event.getDueDate().toString();
+        String formattedAmount = formatCurrency(event.getTotalAmount());
+        String formattedDueDate = formatDate(event.getDueDate());
 
         log.info("Sending rent published notifications to tenant: {} for cycle: {}", tenantUserId, event.getRentCycleId());
 
         String emailTitle = "New Rent Statement Published";
         String emailBody = String.format(
                 "Dear Tenant, your rent statement for %s has been published. Total Amount Due: INR %s. Due Date: %s. Please pay online via the app.",
-                billingMonth, totalAmount, dueDate
+                billingMonth, formattedAmount, formattedDueDate
         );
 
-        String pushTitle = "Rent Statement Published";
+        String pushTitle = DEFAULT_RENT_STATEMENT_TITLE;
         String pushBody = String.format(
                 "Your rent of INR %s for %s is ready. Due: %s. Tap to view and pay.",
-                totalAmount, billingMonth, dueDate
+                formattedAmount, billingMonth, formattedDueDate
         );
 
-        String whatsappTitle = "Rent Statement Published";
+        String whatsappTitle = DEFAULT_RENT_STATEMENT_TITLE;
         String whatsappBody = String.format(
                 "Dear Tenant, your rent statement for %s has been published. Total Amount Due: INR %s. Due Date: %s. Please pay online via the Livic app.",
-                billingMonth, totalAmount, dueDate
+                billingMonth, formattedAmount, formattedDueDate
         );
 
-        // 1. Dispatch Email
-        try {
-            notificationService.send(tenantUserId, NotificationChannel.EMAIL, emailTitle, emailBody);
-            log.info("Successfully dispatched rent statement EMAIL to user: {}", tenantUserId);
-        } catch (Exception e) {
-            log.error("Failed to send rent statement EMAIL to user: {}", tenantUserId, e);
-        }
+        dispatchNotification(tenantUserId, NotificationChannel.EMAIL, emailTitle, emailBody);
+        dispatchNotification(tenantUserId, NotificationChannel.PUSH, pushTitle, pushBody);
+        dispatchNotification(tenantUserId, NotificationChannel.WHATSAPP, whatsappTitle, whatsappBody);
+    }
 
-        // 2. Dispatch Mobile Push
+    private void dispatchNotification(String userId, NotificationChannel channel, String title, String body) {
         try {
-            notificationService.send(tenantUserId, NotificationChannel.PUSH, pushTitle, pushBody);
-            log.info("Successfully dispatched rent statement PUSH to user: {}", tenantUserId);
+            notificationService.send(userId, channel, title, body);
+            log.info("Successfully dispatched rent statement {} to user: {}", channel, userId);
         } catch (Exception e) {
-            log.error("Failed to send rent statement PUSH to user: {}", tenantUserId, e);
+            log.error("Failed to send rent statement {} to user: {}", channel, userId, e);
         }
+    }
 
-        // 3. Dispatch WhatsApp
-        try {
-            notificationService.send(tenantUserId, NotificationChannel.WHATSAPP, whatsappTitle, whatsappBody);
-            log.info("Successfully dispatched rent statement WHATSAPP to user: {}", tenantUserId);
-        } catch (Exception e) {
-            log.error("Failed to send rent statement WHATSAPP to user: {}", tenantUserId, e);
+    private String formatCurrency(BigDecimal amount) {
+        if (amount == null) {
+            return "0.00";
         }
+        synchronized (CURRENCY_FORMATTER) {
+            return CURRENCY_FORMATTER.format(amount);
+        }
+    }
+
+    private String formatDate(LocalDate date) {
+        if (date == null) {
+            return "";
+        }
+        return date.format(DATE_FORMATTER);
     }
 }

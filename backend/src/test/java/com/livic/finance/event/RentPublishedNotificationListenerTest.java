@@ -48,21 +48,21 @@ public class RentPublishedNotificationListenerTest {
                 eq(tenantId.toString()),
                 eq(NotificationChannel.EMAIL),
                 contains("Rent Statement Published"),
-                contains("2026-09")
+                contains("25,000.00")
         );
 
         verify(notificationService, times(1)).send(
                 eq(tenantId.toString()),
                 eq(NotificationChannel.PUSH),
                 contains("Rent Statement Published"),
-                contains("25000")
+                contains("25,000.00")
         );
 
         verify(notificationService, times(1)).send(
                 eq(tenantId.toString()),
                 eq(NotificationChannel.WHATSAPP),
                 contains("Rent Statement Published"),
-                contains("2026-09")
+                contains("2026")
         );
     }
 
