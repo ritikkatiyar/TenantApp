@@ -20,6 +20,7 @@ public final class PropertyMapper {
                 .landmark(request.landmark())
                 .totalFloors(request.totalFloors())
                 .amenities(am)
+                .autoBillDayOfMonth(request.autoBillDayOfMonth())
                 .build();
     }
 
@@ -29,6 +30,9 @@ public final class PropertyMapper {
         property.setCity(request.city());
         property.setLandmark(request.landmark());
         property.setTotalFloors(request.totalFloors());
+        if (request.autoBillDayOfMonth() != null) {
+            property.setAutoBillDayOfMonth(request.autoBillDayOfMonth());
+        }
         if (request.amenities() != null) {
             property.getAmenities().clear();
             property.getAmenities().addAll(request.amenities());
@@ -48,7 +52,8 @@ public final class PropertyMapper {
                 property.getTotalFloors(),
                 null,
                 property.isActive(),
-                property.getAmenities() != null ? property.getAmenities() : List.of()
+                property.getAmenities() != null ? property.getAmenities() : List.of(),
+                property.getAutoBillDayOfMonth()
         );
     }
 }

@@ -34,5 +34,9 @@ public interface UserFacade {
 
     List<String> getActiveDeviceTokens(UUID userId);
 
+    com.livic.user.dto.UserNotificationPreferencesDTO getNotificationPreferences(UUID userId);
+
+    com.livic.user.dto.UserNotificationPreferencesDTO updateNotificationPreferences(UUID userId, com.livic.user.dto.UserNotificationPreferencesDTO dto);
+
     List<UUID> getUserIdsBySearch(String searchPattern);
 }

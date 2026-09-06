@@ -17,26 +17,53 @@ public class RentPublishedNotificationListener {
 
     @EventListener
     public void onRentPublished(RentPublishedEvent event) {
-        log.info("Sending rent published notification to tenant: {} for cycle: {}", event.getTenantUserId(), event.getRentCycleId());
+        String tenantUserId = event.getTenantUserId().toString();
+        String billingMonth = event.getBillingMonth();
+        String totalAmount = event.getTotalAmount().toString();
+        String dueDate = event.getDueDate().toString();
 
-        String title = "New Rent Statement Published";
-        String body = String.format(
+        log.info("Sending rent published notifications to tenant: {} for cycle: {}", tenantUserId, event.getRentCycleId());
+
+        String emailTitle = "New Rent Statement Published";
+        String emailBody = String.format(
                 "Dear Tenant, your rent statement for %s has been published. Total Amount Due: INR %s. Due Date: %s. Please pay online via the app.",
-                event.getBillingMonth(),
-                event.getTotalAmount().toString(),
-                event.getDueDate().toString()
+                billingMonth, totalAmount, dueDate
         );
 
+        String pushTitle = "Rent Statement Published";
+        String pushBody = String.format(
+                "Your rent of INR %s for %s is ready. Due: %s. Tap to view and pay.",
+                totalAmount, billingMonth, dueDate
+        );
+
+        String whatsappTitle = "Rent Statement Published";
+        String whatsappBody = String.format(
+                "Dear Tenant, your rent statement for %s has been published. Total Amount Due: INR %s. Due Date: %s. Please pay online via the Livic app.",
+                billingMonth, totalAmount, dueDate
+        );
+
+        // 1. Dispatch Email
         try {
-            notificationService.send(
-                    event.getTenantUserId().toString(),
-                    NotificationChannel.EMAIL,
-                    title,
-                    body
-            );
-            log.info("Successfully sent rent statement notification to user: {}", event.getTenantUserId());
+            notificationService.send(tenantUserId, NotificationChannel.EMAIL, emailTitle, emailBody);
+            log.info("Successfully dispatched rent statement EMAIL to user: {}", tenantUserId);
         } catch (Exception e) {
-            log.error("Failed to send rent statement notification to user: {}", event.getTenantUserId(), e);
+            log.error("Failed to send rent statement EMAIL to user: {}", tenantUserId, e);
+        }
+
+        // 2. Dispatch Mobile Push
+        try {
+            notificationService.send(tenantUserId, NotificationChannel.PUSH, pushTitle, pushBody);
+            log.info("Successfully dispatched rent statement PUSH to user: {}", tenantUserId);
+        } catch (Exception e) {
+            log.error("Failed to send rent statement PUSH to user: {}", tenantUserId, e);
+        }
+
+        // 3. Dispatch WhatsApp
+        try {
+            notificationService.send(tenantUserId, NotificationChannel.WHATSAPP, whatsappTitle, whatsappBody);
+            log.info("Successfully dispatched rent statement WHATSAPP to user: {}", tenantUserId);
+        } catch (Exception e) {
+            log.error("Failed to send rent statement WHATSAPP to user: {}", tenantUserId, e);
         }
     }
 }
