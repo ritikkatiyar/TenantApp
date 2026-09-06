@@ -103,6 +103,17 @@ whatsapp:
 push:
   enabled: ${PUSH_ENABLED:false}
 
+msg91:
+  enabled: ${MSG91_ENABLED:false}
+  auth-key: ${MSG91_AUTH_KEY:}
+  sender-id: ${MSG91_SENDER_ID:LIVIC}
+  sms:
+    enabled: ${MSG91_SMS_ENABLED:false}
+    flow-id: ${MSG91_SMS_FLOW_ID:}
+  whatsapp:
+    enabled: ${MSG91_WHATSAPP_ENABLED:false}
+    integrated-number: ${MSG91_WHATSAPP_INTEGRATED_NUMBER:}
+
 storage:
   provider: ${STORAGE_PROVIDER:CLOUDINARY}
   cloudinary:

@@ -36,6 +36,7 @@ import { createStyles } from './RentRollScreen.styles';
 import { PreFlightChecklistCard } from '../components/billing/PreFlightChecklistCard';
 import { RecordCashModal } from '../components/billing/RecordCashModal';
 import { RentRollInvoiceList } from '../components/billing/RentRollInvoiceList';
+import { PublishInvoicesModal } from '../components/billing/PublishInvoicesModal';
 
 export default function RentRollScreen({ token: propToken }: { token?: string | null } = {}) {
   const { accessToken } = useAuth();
@@ -171,34 +172,49 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
     }
   };
 
-  const handlePublish = async () => {
-    if (!token || !propertyId) return;
-    try {
-      const res = await publishRentCycles();
-      const total = res.succeeded.length + res.failed.length;
-      if (res.failed.length === 0) {
-        showToast("Invoices published to tenants successfully!", "success");
-      } else {
-        const failedDetails = res.failed.map(f => `Unit ${f.unitNumber || 'N/A'}: ${f.reason}`).join('\n');
-        Alert.alert(
-          'Publishing Completed with Failures',
-          `${res.succeeded.length} of ${total} invoices published successfully, ${res.failed.length} failed.\n\nFailures:\n${failedDetails}`,
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (e: any) {
-      showToast(e.message || "Failed to publish invoices.", "error");
-    }
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [targetSingleInvoice, setTargetSingleInvoice] = useState<RentCycleResponse | null>(null);
+
+  const openPublishBatchModal = () => {
+    setTargetSingleInvoice(null);
+    setShowPublishModal(true);
   };
 
-  const handlePublishSingle = async (invoice: RentCycleResponse) => {
+  const openPublishSingleModal = (invoice: RentCycleResponse) => {
+    setTargetSingleInvoice(invoice);
+    setShowPublishModal(true);
+  };
+
+  const handleConfirmPublish = async () => {
     if (!token) return;
-    try {
-      showToast("Publishing invoice...", "info");
-      await publishSingleInvoice(invoice.id);
-      showToast("Invoice published successfully!", "success");
-    } catch (e: any) {
-      showToast(e.message || "Failed to publish invoice.", "error");
+    if (targetSingleInvoice) {
+      try {
+        await publishSingleInvoice(targetSingleInvoice.id);
+        showToast("Invoice published & tenant notified via push, email, and WhatsApp!", "success");
+        setShowPublishModal(false);
+        setTargetSingleInvoice(null);
+      } catch (e: any) {
+        showToast(e.message || "Failed to publish invoice.", "error");
+      }
+    } else {
+      if (!propertyId) return;
+      try {
+        const res = await publishRentCycles();
+        setShowPublishModal(false);
+        const total = res.succeeded.length + res.failed.length;
+        if (res.failed.length === 0) {
+          showToast(`All ${res.succeeded.length} invoices published & tenants notified!`, "success");
+        } else {
+          const failedDetails = res.failed.map(f => `Unit ${f.unitNumber || 'N/A'}: ${f.reason}`).join('\n');
+          Alert.alert(
+            'Publishing Completed with Failures',
+            `${res.succeeded.length} of ${total} invoices published successfully, ${res.failed.length} failed.\n\nFailures:\n${failedDetails}`,
+            [{ text: 'OK' }]
+          );
+        }
+      } catch (e: any) {
+        showToast(e.message || "Failed to publish invoices.", "error");
+      }
     }
   };
 
@@ -373,7 +389,7 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
                 <View style={styles.actionGroup}>
                   <ActionButton
                     title={publishedCount > 0 ? 'PUBLISH TO REMAINING TENANTS' : 'PUBLISH TO TENANTS'}
-                    onPress={handlePublish}
+                    onPress={openPublishBatchModal}
                     loading={isPublishing}
                     style={styles.publishBtn}
                   />
@@ -421,7 +437,7 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
               invoices={invoices}
               debouncedSearchQuery={debouncedSearchQuery}
               onClearSearch={() => setSearchQuery('')}
-              onPublishSingle={handlePublishSingle}
+              onPublishSingle={openPublishSingleModal}
               onOpenCashModal={handleOpenCashModal}
               page={page}
               totalPages={totalPages}
@@ -443,6 +459,19 @@ export default function RentRollScreen({ token: propToken }: { token?: string | 
           setCashNote={setCashNote}
           onClose={() => setShowCashModal(false)}
           onConfirm={handleConfirmCashPayment}
+        />
+
+        <PublishInvoicesModal
+          visible={showPublishModal}
+          count={targetSingleInvoice ? 1 : pendingCount}
+          totalAmount={targetSingleInvoice ? targetSingleInvoice.totalAmount : undefined}
+          billingMonth={billingMonth}
+          isPublishing={isPublishing}
+          onCancel={() => {
+            setShowPublishModal(false);
+            setTargetSingleInvoice(null);
+          }}
+          onConfirm={handleConfirmPublish}
         />
       </View>
     );

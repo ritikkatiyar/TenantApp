@@ -28,6 +28,24 @@ const UNIT_TYPE_OPTIONS = [
   { label: 'Shared Unit', value: 'SHARED_UNIT' },
 ];
 
+const BILLING_DAY_OPTIONS = [
+  { label: 'Disabled (Manual Invoicing Only)', value: '' },
+  ...Array.from({ length: 31 }, (_, i) => {
+    const day = i + 1;
+    const suffix = day === 1 ? 'st of month (Default)' : day === 2 ? 'nd of month' : day === 3 ? 'rd of month' : day === 15 ? 'th (Mid-month)' : day === 31 ? 'st (Month-end)' : 'th of month';
+    return { label: `Day ${day} (${day}${suffix})`, value: String(day) };
+  }),
+];
+
+const PRESET_BILLING_DAYS = [
+  { label: '1st (Default)', value: '1' },
+  { label: '5th', value: '5' },
+  { label: '10th', value: '10' },
+  { label: '15th', value: '15' },
+  { label: '25th', value: '25' },
+  { label: 'Disabled', value: '' },
+];
+
 interface EditPropertyScreenProps {
   propertyId: string;
   userToken: string;
@@ -59,6 +77,8 @@ export default function EditPropertyScreen({
     setLandmark,
     totalFloors,
     setTotalFloors,
+    autoBillDayOfMonth,
+    setAutoBillDayOfMonth,
     globalUnitsPerFloor,
     setGlobalUnitsPerFloor,
     globalUnitType,
@@ -178,6 +198,50 @@ export default function EditPropertyScreen({
             />
           </View>
         )}
+      </View>
+
+      {/* Auto-Billing Cycle Day Selector */}
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>AUTO-BILLING CYCLE DAY (1 - 31)</Text>
+        <GlassDropdown
+          options={BILLING_DAY_OPTIONS}
+          value={autoBillDayOfMonth || ''}
+          onChange={setAutoBillDayOfMonth}
+          placeholder="Select billing cycle day..."
+          icon="calendar-today"
+        />
+
+        {/* Quick Selection Pills */}
+        <View style={[styles.amenitiesContainer, { marginTop: 6 }]}>
+          {PRESET_BILLING_DAYS.map((preset) => {
+            const isSelected = (autoBillDayOfMonth || '') === preset.value;
+            return (
+              <TouchableOpacity
+                key={preset.label}
+                onPress={() => setAutoBillDayOfMonth(preset.value)}
+                activeOpacity={0.75}
+                style={[
+                  styles.amenityChip,
+                  isSelected && styles.amenityChipSelected,
+                  { paddingVertical: 6, paddingHorizontal: 12 },
+                ]}
+              >
+                <MaterialIcons
+                  name={isSelected ? 'check-circle' : 'event'}
+                  size={16}
+                  color={isSelected ? theme.Colors.onPrimaryContainer : theme.Colors.onSurfaceVariant}
+                />
+                <Text style={[styles.amenityChipText, isSelected && styles.amenityChipTextSelected, { fontSize: 13 }]}>
+                  {preset.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <Text style={{ fontSize: 12, color: theme.Colors.onSurfaceVariant, marginTop: 4 }}>
+          Day of the month when monthly rent cycle drafts are automatically generated for active leases.
+        </Text>
       </View>
 
       {/* Property Amenities Selector */}

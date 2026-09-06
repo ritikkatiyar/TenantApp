@@ -16,6 +16,7 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
   const [city, setCity] = useState('');
   const [landmark, setLandmark] = useState('');
   const [totalFloors, setTotalFloors] = useState('');
+  const [autoBillDayOfMonth, setAutoBillDayOfMonth] = useState('');
   const [globalUnitsPerFloor, setGlobalUnitsPerFloor] = useState('');
   const [globalUnitType, setGlobalUnitType] = useState('SINGLE_UNIT');
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,7 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
       setCity(data.city);
       setLandmark(data.landmark || '');
       setTotalFloors(data.totalFloors?.toString() || '');
+      setAutoBillDayOfMonth(data.autoBillDayOfMonth?.toString() || '');
       setSelectedAmenities(data.amenities || ['High-speed Fiber Wi-Fi', 'Covered Parking', '24/7 Security', 'Power Backup']);
       
       const floorSummaries = await getFloorSummaries(propertyId, userToken);
@@ -76,6 +78,7 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
           city, 
           landmark, 
           totalFloors: parseInt(totalFloors, 10),
+          autoBillDayOfMonth: autoBillDayOfMonth ? parseInt(autoBillDayOfMonth, 10) : null,
           amenities: selectedAmenities
         }
       });
@@ -111,6 +114,8 @@ export function useEditProperty({ propertyId, userToken, onBack, onSave }: UseEd
     setLandmark,
     totalFloors,
     setTotalFloors,
+    autoBillDayOfMonth,
+    setAutoBillDayOfMonth,
     globalUnitsPerFloor,
     setGlobalUnitsPerFloor,
     globalUnitType,

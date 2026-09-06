@@ -49,6 +49,12 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
 
+        // Check user's channel preferences
+        if (!isChannelEnabledForUser(recipient.id(), channel)) {
+            log.info("[NotificationService] User {} has disabled {} notifications. Skipping.", recipientUserId, channel);
+            return;
+        }
+
         // Resolve recipient contact addresses based on channel
         List<String> addresses = resolveAddresses(recipient, channel);
         if (addresses.isEmpty()) {
@@ -106,6 +112,10 @@ public class NotificationServiceImpl implements NotificationService {
         for (UUID uuid : uuids) {
             UserSummaryDTO user = recipients.get(uuid);
             if (user == null) continue;
+            if (!isChannelEnabledForUser(user.id(), channel)) {
+                log.info("[NotificationService] User {} has disabled {} notifications. Skipping from bulk dispatch.", user.id(), channel);
+                continue;
+            }
             List<String> addresses = resolveAddresses(user, channel);
             if (addresses.isEmpty()) continue;
 
@@ -150,6 +160,15 @@ public class NotificationServiceImpl implements NotificationService {
             case EMAIL -> (user.authUid() != null && !user.authUid().isBlank()) ? List.of(user.authUid()) : List.of();
             case WHATSAPP, SMS -> (user.phoneNumber() != null && !user.phoneNumber().isBlank()) ? List.of(user.phoneNumber()) : List.of();
             case PUSH -> userFacade.getActiveDeviceTokens(user.id());
+        };
+    }
+
+    private boolean isChannelEnabledForUser(UUID userId, NotificationChannel channel) {
+        com.livic.user.dto.UserNotificationPreferencesDTO prefs = userFacade.getNotificationPreferences(userId);
+        return switch (channel) {
+            case EMAIL -> prefs.emailEnabled();
+            case PUSH -> prefs.pushEnabled();
+            case WHATSAPP, SMS -> prefs.whatsappEnabled();
         };
     }
 }

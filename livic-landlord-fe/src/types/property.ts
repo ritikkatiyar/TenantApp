@@ -5,6 +5,7 @@ export type CreatePropertyRequest = {
   landmark?: string;
   totalFloors?: number;
   amenities?: string[];
+  autoBillDayOfMonth?: number | null;
 };
 
 export type UpdatePropertyRequest = {
@@ -14,6 +15,7 @@ export type UpdatePropertyRequest = {
   landmark?: string;
   totalFloors?: number;
   amenities?: string[];
+  autoBillDayOfMonth?: number | null;
 };
 
 export type PropertyResponse = {
@@ -26,4 +28,5 @@ export type PropertyResponse = {
   ownerId?: string;
   isActive?: boolean;
   amenities?: string[];
+  autoBillDayOfMonth?: number | null;
 };

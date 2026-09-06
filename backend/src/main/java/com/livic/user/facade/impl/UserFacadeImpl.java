@@ -2,12 +2,14 @@ package com.livic.user.facade.impl;
 
 import com.livic.common.domain.UserRole;
 import com.livic.user.domain.DevicePlatform;
+import com.livic.user.domain.ResidentNotificationPreferenceTbl;
 import com.livic.user.domain.UserDeviceTokenTbl;
 import com.livic.user.domain.UserMode;
 import com.livic.user.domain.UserPreferenceTbl;
 import com.livic.user.domain.UserTbl;
 import com.livic.user.dto.UserSummaryDTO;
 import com.livic.user.facade.UserFacade;
+import com.livic.user.repository.ResidentNotificationPreferenceRepository;
 import com.livic.user.service.interfaces.UserCrudService;
 import com.livic.user.service.interfaces.UserDeviceTokenCrudService;
 import com.livic.user.service.interfaces.UserPreferenceCrudService;
@@ -41,6 +43,7 @@ public class UserFacadeImpl implements UserFacade {
 
     private final UserPreferenceCrudService userPreferenceCrudService;
     private final UserDeviceTokenCrudService userDeviceTokenCrudService;
+    private final ResidentNotificationPreferenceRepository residentNotificationPreferenceRepository;
 
     @Override
     public Optional<UserSummaryDTO> getUserById(UUID userId) {
@@ -153,6 +156,35 @@ public class UserFacadeImpl implements UserFacade {
         return userDeviceTokenCrudService.findByUserId(userId).stream()
                 .map(UserDeviceTokenTbl::getExpoPushToken)
                 .toList();
+    }
+
+    @Override
+    public com.livic.user.dto.UserNotificationPreferencesDTO getNotificationPreferences(UUID userId) {
+        return residentNotificationPreferenceRepository.findByUserId(userId)
+                .map(pref -> new com.livic.user.dto.UserNotificationPreferencesDTO(
+                        pref.isEmailEnabled(),
+                        pref.isPushEnabled(),
+                        pref.isWhatsappEnabled()
+                ))
+                .orElse(new com.livic.user.dto.UserNotificationPreferencesDTO(true, true, true));
+    }
+
+    @Override
+    @Transactional
+    public com.livic.user.dto.UserNotificationPreferencesDTO updateNotificationPreferences(UUID userId, com.livic.user.dto.UserNotificationPreferencesDTO dto) {
+        ResidentNotificationPreferenceTbl pref = residentNotificationPreferenceRepository.findByUserId(userId)
+                .orElseGet(() -> ResidentNotificationPreferenceTbl.builder()
+                        .userId(userId)
+                        .build());
+        pref.setEmailEnabled(dto.emailEnabled());
+        pref.setPushEnabled(dto.pushEnabled());
+        pref.setWhatsappEnabled(dto.whatsappEnabled());
+        ResidentNotificationPreferenceTbl saved = residentNotificationPreferenceRepository.save(pref);
+        return new com.livic.user.dto.UserNotificationPreferencesDTO(
+                saved.isEmailEnabled(),
+                saved.isPushEnabled(),
+                saved.isWhatsappEnabled()
+        );
     }
 
     @Override

@@ -15,6 +15,7 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
   const [city, setCity] = useState('');
   const [landmark, setLandmark] = useState('');
   const [totalFloors, setTotalFloors] = useState('');
+  const [autoBillDayOfMonth, setAutoBillDayOfMonth] = useState('1');
   const [globalUnitsPerFloor, setGlobalUnitsPerFloor] = useState('');
   const [globalUnitType, setGlobalUnitType] = useState('SINGLE_UNIT');
   const [loading, setLoading] = useState(false);
@@ -88,6 +89,7 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
           city,
           landmark,
           totalFloors: parseInt(totalFloors, 10),
+          autoBillDayOfMonth: autoBillDayOfMonth ? parseInt(autoBillDayOfMonth, 10) : null,
           amenities: selectedAmenities
         },
       });
@@ -125,6 +127,8 @@ export function useCreateProperty({ userToken, onSaveAndConfigure }: UseCreatePr
     setLandmark,
     totalFloors,
     setTotalFloors,
+    autoBillDayOfMonth,
+    setAutoBillDayOfMonth,
     globalUnitsPerFloor,
     setGlobalUnitsPerFloor,
     globalUnitType,

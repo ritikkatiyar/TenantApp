@@ -11,8 +11,13 @@ public record PropertySummaryDTO(
         String city,
         String landmark,
         Integer totalFloors,
-        boolean active
+        boolean active,
+        Integer autoBillDayOfMonth
 ) {
+    public PropertySummaryDTO(UUID id, String name, String address, String city, String landmark, Integer totalFloors, boolean active) {
+        this(id, name, address, city, landmark, totalFloors, active, null);
+    }
+
     public static PropertySummaryDTO from(PropertyTbl p) {
         if (p == null) {
             return null;
@@ -24,7 +29,8 @@ public record PropertySummaryDTO(
                 p.getCity(),
                 p.getLandmark(),
                 p.getTotalFloors(),
-                p.isActive()
+                p.isActive(),
+                p.getAutoBillDayOfMonth()
         );
     }
 }

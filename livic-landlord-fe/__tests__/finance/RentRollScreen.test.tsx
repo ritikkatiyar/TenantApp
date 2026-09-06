@@ -41,6 +41,13 @@ jest.mock('@/src/components/common/feedback/ToastContext', () => ({
   }),
 }));
 
+jest.mock('@/src/features/auth/context/AuthProvider', () => ({
+  useAuth: () => ({
+    accessToken: 'mock-access-token',
+    user: { id: 'user-123' },
+  }),
+}));
+
 jest.mock('@/src/features/finance/hooks/useRentRoll', () => ({
   useRentRoll: () => ({
     rentCyclesData: {
