@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 public class RentPublishedNotificationListener {
 
     private static final String DEFAULT_RENT_STATEMENT_TITLE = "Rent Statement Published";
-    private static final DecimalFormat CURRENCY_FORMATTER = new DecimalFormat("#,##0.00");
+    private static final String CURRENCY_PATTERN = "#,##0.00";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     private final NotificationService notificationService;
@@ -69,9 +69,7 @@ public class RentPublishedNotificationListener {
         if (amount == null) {
             return "0.00";
         }
-        synchronized (CURRENCY_FORMATTER) {
-            return CURRENCY_FORMATTER.format(amount);
-        }
+        return new DecimalFormat(CURRENCY_PATTERN).format(amount);
     }
 
     private String formatDate(LocalDate date) {
